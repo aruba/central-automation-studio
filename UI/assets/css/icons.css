@@ -1,0 +1,349 @@
+/*--------------------------------
+
+central Web Font
+Generated using nucleoapp.com
+
+-------------------------------- */
+@font-face {
+  font-family: 'central';
+  src: url('../fonts/central.eot');
+  src: url('../fonts/central.eot') format('embedded-opentype'), url('../fonts/central.woff2') format('woff2'), url('../fonts/central.woff') format('woff'), url('../fonts/central.ttf') format('truetype'), url('../fonts/central.svg') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+/*------------------------
+	base class definition
+-------------------------*/
+.central-icon {
+  display: inline-block;
+  font: normal normal normal 1em/1 'central';
+  color: inherit;
+  flex-shrink: 0;
+  speak: none;
+  text-transform: none;
+  /* Better Font Rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/*------------------------
+  change icon size
+-------------------------*/
+/* relative units */
+.central-icon-sm {
+  font-size: 0.8em;
+}
+.central-icon-lg {
+  font-size: 1.2em;
+}
+/* absolute units */
+.central-icon-16 {
+  font-size: 16px;
+}
+.central-icon-32 {
+  font-size: 32px;
+}
+
+/*------------------------
+  spinning icons
+-------------------------*/
+.central-icon-is-spinning {
+  animation: central-icon-spin 1s infinite linear;
+}
+@keyframes central-icon-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+/*------------------------
+  rotated/flipped icons
+-------------------------*/
+.central-icon-rotate-90 {
+  transform: rotate(90deg);
+}
+.central-icon-rotate-180 {
+  transform: rotate(180deg);
+}
+.central-icon-rotate-270 {
+  transform: rotate(270deg);
+}
+.central-icon-flip-y {
+  transform: scaleY(-1);
+}
+.central-icon-flip-x {
+  transform: scaleX(-1);
+}
+/*------------------------
+	icons
+-------------------------*/
+
+.ca-globe::before {
+  content: "\ea02";
+}
+
+.ca-shop-location::before {
+  content: "\ea03";
+}
+
+.ca-square-pin::before {
+  content: "\ea04";
+}
+
+.ca-wifi::before {
+  content: "\ea05";
+}
+
+.ca-world-pin::before {
+  content: "\ea06";
+}
+
+.ca-server-rack::before {
+  content: "\ea07";
+}
+
+.ca-network-connection::before {
+  content: "\ea08";
+}
+
+.ca-content-delivery::before {
+  content: "\ea09";
+}
+
+.ca-pin-add::before {
+  content: "\ea0a";
+}
+
+.ca-c-add::before {
+  content: "\ea0b";
+}
+
+.ca-card-update::before {
+  content: "\ea0c";
+}
+
+.ca-connection::before {
+  content: "\ea0d";
+}
+
+.ca-decentralize::before {
+  content: "\ea0e";
+}
+
+.ca-digital-key::before {
+  content: "\ea0f";
+}
+
+.ca-folder-replace::before {
+  content: "\ea10";
+}
+
+.ca-cable::before {
+  content: "\ea11";
+}
+
+.ca-folder-add::before {
+  content: "\ea12";
+}
+
+.ca-license-key::before {
+  content: "\ea13";
+}
+
+.ca-pin-sync::before {
+  content: "\ea14";
+}
+
+.ca-artificial-intelligence::before {
+  content: "\ea15";
+}
+
+.ca-algorithm::before {
+  content: "\ea16";
+}
+
+.ca-folder-settings::before {
+  content: "\ea17";
+}
+
+.ca-route-alert::before {
+  content: "\ea18";
+}
+
+.ca-unlink::before {
+  content: "\ea19";
+}
+
+.ca-n-check::before {
+  content: "\ea1a";
+}
+
+.ca-file-log::before {
+  content: "\ea1b";
+}
+
+.ca-c-warning::before {
+  content: "\ea1c";
+}
+
+.ca-cpu::before {
+  content: "\ea1d";
+}
+
+.ca-padlock::before {
+  content: "\ea1e";
+}
+
+.ca-contactless-card::before {
+  content: "\ea1f";
+}
+
+.ca-stock-2::before {
+  content: "\ea20";
+}
+
+.ca-research::before {
+  content: "\ea21";
+}
+
+.ca-artificial-brain::before {
+  content: "\ea22";
+}
+
+.ca-api::before {
+  content: "\ea23";
+}
+
+.ca-cloud-data-download::before {
+  content: "\ea24";
+}
+
+.ca-pattern-recognition::before {
+  content: "\ea25";
+}
+
+.ca-file-csv::before {
+  content: "\ea26";
+}
+
+.ca-pin-share::before {
+  content: "\ea27";
+}
+
+.ca-reload::before {
+  content: "\ea28";
+}
+
+.ca-dashboard::before {
+  content: "\ea29";
+}
+
+.ca-dish::before {
+  content: "\ea2a";
+}
+
+.ca-configuration-tools::before {
+  content: "\ea2b";
+}
+
+.ca-check-list::before {
+  content: "\ea2c";
+}
+
+.ca-setup-tools::before {
+  content: "\ea2d";
+}
+
+.ca-multiple-11::before {
+  content: "\ea2e";
+}
+
+.ca-exchange::before {
+  content: "\ea2f";
+}
+
+.ca-a-add::before {
+  content: "\ea30";
+}
+
+.ca-a-share::before {
+  content: "\ea31";
+}
+
+.ca-logic::before {
+  content: "\ea32";
+}
+
+.ca-wifi-protected::before {
+  content: "\ea33";
+}
+
+.ca-male::before {
+  content: "\ea34";
+}
+
+.ca-electronic-circuit::before {
+  content: "\ea35";
+}
+
+.ca-transactions::before {
+  content: "\ea36";
+}
+
+.ca-nodes::before {
+  content: "\ea37";
+}
+
+.ca-network::before {
+  content: "\ea38";
+}
+
+.ca-laptop-1::before {
+  content: "\ea39";
+}
+
+.ca-mobile-phone::before {
+  content: "\ea3a";
+}
+
+.ca-computer-monitor::before {
+  content: "\ea3b";
+}
+
+.ca-apple::before {
+  content: "\ea3c";
+}
+
+.ca-android::before {
+  content: "\ea3d";
+}
+
+.ca-hotspot::before {
+  content: "\ea3e";
+}
+
+.ca-flight-connection::before {
+  content: "\ea3f";
+}
+
+.ca-chart-bar-32::before {
+  content: "\ea40";
+}
+
+.ca-time-clock::before {
+  content: "\ea41";
+}
+
+.ca-opening-times::before {
+  content: "\ea42";
+}
+
+.ca-run-shoes::before {
+  content: "\ea43";
+}
+
+.ca-book-open::before {
+  content: "\ea44";
+}
+

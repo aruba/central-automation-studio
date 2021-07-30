@@ -1,0 +1,674 @@
+/*
+Central Automation v1
+© Aaron Scott (WiFi Downunder) 2021
+*/
+
+
+/*--------------------------------
+
+central Web Font
+Generated using nucleoapp.com
+
+-------------------------------- */
+@font-face {
+  font-family: 'central';
+  src: url('../fonts/central.eot');
+  src: url('../fonts/central.eot') format('embedded-opentype'), url('../fonts/central.woff2') format('woff2'), url('../fonts/central.woff') format('woff'), url('../fonts/central.ttf') format('truetype'), url('../fonts/central.svg') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+/*------------------------
+	base class definition
+-------------------------*/
+.central-icon {
+  display: inline-block;
+  font: normal normal normal 1em/1 'central';
+  speak: none;
+  text-transform: none;
+  /* Better Font Rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.central-icon.icon-bold {
+    font-weight: 700;
+}
+
+/*------------------------
+  change icon size
+-------------------------*/
+
+.central-icon.lg {
+    font-size: 1.33333333em;
+    vertical-align: -16%;
+}
+
+.central-icon.x2 {
+    font-size: 2em;
+}
+
+.central-icon.x3 {
+    font-size: 3em;
+}
+
+/*----------------------------------
+  add a square/circle background
+-----------------------------------*/
+
+.central-icon.square,
+.central-icon.circle {
+    padding: 0.33333333em;
+    vertical-align: -16%;
+    background-color: #eee;
+}
+
+.central-icon.circle {
+    border-radius: 50%;
+}
+
+/*------------------------
+  list icons
+-------------------------*/
+
+.central-icon-ul {
+    padding-left: 0;
+    margin-left: 2.14285714em;
+    list-style-type: none;
+}
+
+.central-icon-ul>li {
+    position: relative;
+}
+
+.central-icon-ul>li>.central-icon {
+    position: absolute;
+    left: -1.57142857em;
+    top: 0.14285714em;
+    text-align: center;
+}
+
+.central-icon-ul>li>.central-icon.lg {
+    top: 0;
+    left: -1.35714286em;
+}
+
+.central-icon-ul>li>.central-icon.circle,
+.central-icon-ul>li>.central-icon.square {
+    top: -0.19047619em;
+    left: -1.9047619em;
+}
+
+.all-icons .font-icon-list .font-icon-detail i {
+    font-size: 32px;
+}
+/*------------------------
+  spinning icons
+-------------------------*/
+
+.central-icon-is-spinning {
+  -webkit-animation: central-icon-spin 1s infinite linear;
+  -moz-animation: central-icon-spin 1s infinite linear;
+  animation: central-icon-spin 1s infinite linear;
+}
+@-webkit-keyframes central-icon-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+@-moz-keyframes central-icon-spin {
+  0% {
+    -moz-transform: rotate(0deg);
+  }
+  100% {
+    -moz-transform: rotate(360deg);
+  }
+}
+@keyframes central-icon-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+/*------------------------
+  rotated/flipped icons
+-------------------------*/
+.central-icon-rotate-90 {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+.central-icon-rotate-180 {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+.central-icon-rotate-270 {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+  -webkit-transform: rotate(270deg);
+  -moz-transform: rotate(270deg);
+  -ms-transform: rotate(270deg);
+  -o-transform: rotate(270deg);
+  transform: rotate(270deg);
+}
+.central-icon-flip-y {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=0);
+  -webkit-transform: scale(-1, 1);
+  -moz-transform: scale(-1, 1);
+  -ms-transform: scale(-1, 1);
+  -o-transform: scale(-1, 1);
+  transform: scale(-1, 1);
+}
+.central-icon-flip-x {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
+  -webkit-transform: scale(1, -1);
+  -moz-transform: scale(1, -1);
+  -ms-transform: scale(1, -1);
+  -o-transform: scale(1, -1);
+  transform: scale(1, -1);
+}
+/*------------------------
+	icons
+-------------------------*/
+
+.ca-globe::before {
+  content: "\ea02";
+}
+
+.ca-shop-location::before {
+  content: "\ea03";
+}
+
+.ca-square-pin::before {
+  content: "\ea04";
+}
+
+.ca-wifi::before {
+  content: "\ea05";
+}
+
+.ca-world-pin::before {
+  content: "\ea06";
+}
+
+.ca-server-rack::before {
+  content: "\ea07";
+}
+
+.ca-network-connection::before {
+  content: "\ea08";
+}
+
+.ca-content-delivery::before {
+  content: "\ea09";
+}
+
+.ca-pin-add::before {
+  content: "\ea0a";
+}
+
+.ca-c-add::before {
+  content: "\ea0b";
+}
+
+.ca-card-update::before {
+  content: "\ea0c";
+}
+
+.ca-connection::before {
+  content: "\ea0d";
+}
+
+.ca-decentralize::before {
+  content: "\ea0e";
+}
+
+.ca-digital-key::before {
+  content: "\ea0f";
+}
+
+.ca-folder-replace::before {
+  content: "\ea10";
+}
+
+.ca-cable::before {
+  content: "\ea11";
+}
+
+.ca-folder-add::before {
+  content: "\ea12";
+}
+
+.ca-license-key::before {
+  content: "\ea13";
+}
+
+.ca-pin-sync::before {
+  content: "\ea14";
+}
+
+.ca-artificial-intelligence::before {
+  content: "\ea15";
+}
+
+.ca-algorithm::before {
+  content: "\ea16";
+}
+
+.ca-folder-settings::before {
+  content: "\ea17";
+}
+
+.ca-route-alert::before {
+  content: "\ea18";
+}
+
+.ca-unlink::before {
+  content: "\ea19";
+}
+
+.ca-n-check::before {
+  content: "\ea1a";
+}
+
+.ca-file-log::before {
+  content: "\ea1b";
+}
+
+.ca-c-warning::before {
+  content: "\ea1c";
+}
+
+.ca-cpu::before {
+  content: "\ea1d";
+}
+
+.ca-padlock::before {
+  content: "\ea1e";
+}
+
+.ca-contactless-card::before {
+  content: "\ea1f";
+}
+
+.ca-stock-2::before {
+  content: "\ea20";
+}
+
+.ca-research::before {
+  content: "\ea21";
+}
+
+.ca-artificial-brain::before {
+  content: "\ea22";
+}
+
+.ca-api::before {
+  content: "\ea23";
+}
+
+.ca-cloud-data-download::before {
+  content: "\ea24";
+}
+
+.ca-pattern-recognition::before {
+  content: "\ea25";
+}
+
+.ca-file-csv::before {
+  content: "\ea26";
+}
+
+.ca-pin-share::before {
+  content: "\ea27";
+}
+
+.ca-reload::before {
+  content: "\ea28";
+}
+
+.ca-dashboard::before {
+  content: "\ea29";
+}
+
+.ca-dish::before {
+  content: "\ea2a";
+}
+
+.ca-configuration-tools::before {
+  content: "\ea2b";
+}
+
+.ca-check-list::before {
+  content: "\ea2c";
+}
+
+.ca-setup-tools::before {
+  content: "\ea2d";
+}
+
+.ca-multiple-11::before {
+  content: "\ea2e";
+}
+
+.ca-exchange::before {
+  content: "\ea2f";
+}
+
+.ca-a-add::before {
+  content: "\ea30";
+}
+
+.ca-a-share::before {
+  content: "\ea31";
+}
+
+.ca-logic::before {
+  content: "\ea32";
+}
+
+.ca-wifi-protected::before {
+  content: "\ea33";
+}
+
+.ca-male::before {
+  content: "\ea34";
+}
+
+.ca-electronic-circuit::before {
+  content: "\ea35";
+}
+
+.ca-transactions::before {
+  content: "\ea36";
+}
+
+.ca-nodes::before {
+  content: "\ea37";
+}
+
+.ca-network::before {
+  content: "\ea38";
+}
+
+.ca-laptop-1::before {
+  content: "\ea39";
+}
+
+.ca-mobile-phone::before {
+  content: "\ea3a";
+}
+
+.ca-computer-monitor::before {
+  content: "\ea3b";
+}
+
+.ca-apple::before {
+  content: "\ea3c";
+}
+
+.ca-android::before {
+  content: "\ea3d";
+}
+
+.ca-hotspot::before {
+  content: "\ea3e";
+}
+
+.ca-flight-connection::before {
+  content: "\ea3f";
+}
+
+.ca-chart-bar-32::before {
+  content: "\ea40";
+}
+
+.ca-time-clock::before {
+  content: "\ea41";
+}
+
+.ca-opening-times::before {
+  content: "\ea42";
+}
+
+.ca-run-shoes::before {
+  content: "\ea43";
+}
+
+.ca-book-open::before {
+  content: "\ea44";
+}
+
+.ca-snow::before {
+  content: "\ea45";
+}
+
+.ca-folder-shared::before {
+  content: "\ea46";
+}
+
+.ca-circle-04::before {
+  content: "\ea47";
+}
+
+.ca-migration::before {
+  content: "\ea48";
+}
+
+.ca-joint-account::before {
+  content: "\ea49";
+}
+
+.ca-tag-cut::before {
+  content: "\ea4a";
+}
+
+.ca-document-copy::before {
+  content: "\ea4b";
+}
+
+.ca-password::before {
+  content: "\ea4c";
+}
+
+
+/*------------------------
+	Extra Styling
+-------------------------*/
+.dropdown-menu .dropdown-item i[class*="central-icon"] {
+    font-size: 18px;
+    text-align: center;
+    line-height: 25px;
+    float: left;
+    padding-right: 10px;
+}
+
+.navbar .navbar-nav .dropdown-menu .dropdown-item .central-icon {
+	margin-top: 0;
+}
+
+.navbar-wrapper .icon-big {
+    font-size: 2em;
+    max-height: 32	px;
+    padding-top: 10px;
+    padding-right: 10px;
+}
+
+.card-body .icon-big {
+    font-size: 3em;
+    max-height: 48	px;
+}
+
+.card .table tbody td:last-child,
+.card .table thead th:last-child {
+    padding-right: 15px;
+    display: block;
+    width: 100%;
+    padding-top: 30px;
+}
+
+.clickable-row{
+	cursor:pointer;
+}
+
+.client-table tbody{
+	cursor:pointer;
+}
+
+.modal.modal-mini .modal-dialog {
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+.modal.modal-small .modal-dialog {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+
+.navbar .navbar-nav .central-icon {
+	font-weight: 700;
+	margin-top: 10px;
+}
+
+.form-check .form-check-label-psk {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    padding-left: 35px;
+    padding-top: 14px;
+    line-height: 26px;
+    margin-bottom: 0;
+    text-transform: capitalize;
+}
+
+.text-neutral,
+.text-neutral:hover {
+    color: #EEEEEE !important;
+}
+
+.text-black,
+.text-black:hover {
+    color: #000000 !important;
+}
+
+.text-minor,
+.text-minor:hover {
+    color: #FBE540 !important;
+}
+
+
+.nav .navbar-search-form .input-group  {
+	float: right;
+	width: 300px;
+	padding: 4px;
+	background-color: rgba(220, 220, 220, 0.2);
+	border-radius: 6px;
+	border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.nav .navbar-search-form .form-control  {
+	color: #444444;
+}	
+
+.nav .navbar-search-form {
+    margin-left: 30px;
+}
+
+.nav .navbar-search-form .nc-icon {
+	padding-top: 4px;
+    color: #AAAAAA;
+}
+
+.navbar .navbar-nav .nav-item .nav-link {
+	padding-bottom: 20px;
+}
+
+.navbar .navbar-nav .nav-item .nav-link:hover {
+    color: #ff8500;
+}
+
+input[type=search]::-webkit-search-cancel-button {
+    -webkit-appearance: searchfield-cancel-button;
+}
+
+.page-header .filter:after {
+    background: transparent linear-gradient(to bottom, #ffa542 0%, #ffa542 100%) repeat scroll 0 0/150% 150%;
+    content: "";
+    display: block;
+    height: 450px;
+    left: 0;
+    opacity: 0.77;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 2;
+}
+
+.icon-massive {
+    font-size: 5em;
+    min-height: 64px;
+}
+
+.icon-very-big {
+    font-size: 4em;
+    min-height: 64px;
+}
+
+.icon-medium {
+    font-size: 2em;
+    min-height: 32px;
+}
+
+.icon-small {
+    font-size: 1em;
+    min-height: 16px;
+}
+
+.text-wrap{
+    white-space:normal;
+}
+.width-150{
+    width:150px;
+}
+
+.text-purple,
+.text-purple:hover {
+    color: #9368E9 !important;
+}
+
+.form-group label {
+	padding-top: 8px;
+	text-align: right;
+}
+
+.form-control.textarea {
+  height: 300px;
+}
+
+.section-header {
+    padding: 20px 20px 0;
+    border-bottom: none !important;
+}
+
+tr.row_selected td {
+	background-color:#F3A950 !important; 
+}
