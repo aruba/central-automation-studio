@@ -22,13 +22,10 @@ See https://central.wifidownunder.com/documentation.html
 Note: Using WSL has not been tested.<br>
 1. Install Docker: https://docs.docker.com/get-docker/
 
-2. Clone repository:<br>
-    `git clone https://github.com/aruba/central-automation-studio.git`
+2. Pull the image:<br>
+    `sudo docker pull arubahpe/central-automation-studio`
 
-3. Navigate to the directory where you cloned the repo. Now build the image:<br>
-    `sudo docker build -t arubahpe/central-automation-studio .`
-
-4. Start a container using the image you just built.<br>
+3. Start a container using the image you just built.<br>
     - With HTTP<br>
         `sudo docker run -it --rm --name containerName -p <port-number>:80 -e API_URL="http://<ip-address>:<port-number>/backend" -e SECURE="False" arubahpe/central-automation-studio`<br>
 
@@ -44,7 +41,7 @@ Note: Using WSL has not been tested.<br>
         `sudo docker run -it --rm --name myContainer -p 443:443 -e API_URL="https://192.168.1.200/backend" -e SECURE="True" -v /etc/ssl/private/apache-selfsigned.key:/usr/local/apache2/conf/apache-private.key -v /etc/ssl/certs/apache-selfsigned.crt:/usr/local/apache2/conf/apache-cert.crt arubahpe/central-automation-studio`<br>
 
         View your container at the specified IP address or FQDN (Fully Qualified Domain Name), ex: https://192.168.1.200/<br>
-        For an example of how to quickly set up a self-signed certificate, see **Step 1** of this article: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04. The Common Name should match the IP address in API_URL. 
+        For an example of how to quickly set up a self-signed certificate, see **Step 1** of this article: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04. The Common Name should match the IP address in API_URL. Note that if you use a self-signed certificate, you may see an error message; click "Advanced" and proceed anyway.
 
     - Environment variables<br>
         The "-e" flag sets an environment variable. There are two environment variables that need to be set: <br>
