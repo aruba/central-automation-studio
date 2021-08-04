@@ -127,7 +127,9 @@ See https://central.wifidownunder.com/documentation.html#architecture-row<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;           |----apache_main.conf: main Apache configuration <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;           |----apache_main_ssl.conf: main Apache configuration with SSL enabled <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;           |----apache_ssl.conf: specific SSL configuration for Apache <br>
-
+/usr/local/apache2/ <br>
+&nbsp;&nbsp;&nbsp;&nbsp;    |----/htdocs/   UI code is located here <br>
+&nbsp;&nbsp;&nbsp;&nbsp;    |----/conf/    If SSL is enabled, the certificate and key are placed here. <br>
 
 
 ### <a name="files"> Important files </a>
