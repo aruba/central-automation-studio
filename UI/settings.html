@@ -12,6 +12,12 @@ Coded by Creative Tim
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
+<!--
+Central Automation v1.6.0
+Updated: 1.6.0
+Aaron Scott (WiFi Downunder) 2022
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -48,10 +54,15 @@ The above copyright notice and this permission notice shall be included in all c
                 <div class="collapse navbar-collapse justify-content-end" id="navbar">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a href="dashboard.html" class="nav-link">
-                                <i class="central-icon ca-dashboard"></i> Dashboard
+                            <a href="hydra-dashboard.html" class="nav-link" id="dashboardLink">
+                                <i class="central-icon ca-dashboard"></i>Dashboard
                             </a>
                         </li>
+                        <li class="nav-item">
+							<a class="nav-link" onclick="showLog()" href="#">
+								<i class="central-icon ca-research"></i>
+							</a>
+						</li>
                         <li class="nav-item dropdown">
 							<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								<i class="nc-icon nc-bullet-list-67"></i>
@@ -60,7 +71,7 @@ The above copyright notice and this permission notice shall be included in all c
 								<a href="documentation.html" class="dropdown-item">
 									<i class="central-icon ca-book-open"></i> Help
 								</a>
-								<a href="settings.html" class="dropdown-item">
+								<a href="hydra-settings.html" class="dropdown-item">
 									<i class="nc-icon nc-settings-gear-64"></i> Settings
 								</a>
 							</div>
@@ -74,78 +85,53 @@ The above copyright notice and this permission notice shall be included in all c
         <div class="full-page register-page section-image" data-color="orange" data-image="assets/img/bg4.jpg">
             <div class="content">
                 <div class="container">
-                <div class="row">
-                	<div class="col-md-6 mx-auto">
-                    	<div class="card card-register card-plain text-center">
-							<div class="card-header ">
-								<div class="row  justify-content-center">
-									<div class="col-md-12">
-										<div class="header-text">
-											<h2 class="card-title">Central API Settings</h2>
-											<h4 class="card-subtitle">	Enter the access details for the Central API</h4>
-											<hr />
+					<div class="row">
+						<div class="col-md-12 mx-auto">
+							<div class="card card-register card-plain text-center">
+								<div class="card-header ">
+									<div class="row  justify-content-center">
+										<div class="col-md-12">
+											<div class="header-text">
+												<h2 class="card-title">Central API Settings</h2>
+												<hr />
+											</div>
 										</div>
 									</div>
 								</div>
-							</div>
-							<div class="card-body ">
-								<div class="row">
-									<div class="col-md-10 mx-auto">
-										<form method="#" action="#">
-											<div class="card card-plain">
-												<div class="content">
-													<form class="form-horizontal">
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Central Cluster</label>
-																<div class="col-md-8">
-																	<select id="clusterselector" class="custom-select" data-title="Select a Cluster..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
-                                    								</select>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Client ID</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Client ID" class="form-control" id="client_id">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Client Secret</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Client Secret" class="form-control" id="client_secret">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Access Token</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Access Token" class="form-control" id="access_token">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Refresh Token</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Refresh Token" class="form-control" id="refresh_token">
-																</div>
-															</div>
-														</div>
-													</form>
+								<div class="card card-body">
+									<div class="row">
+										<div class="col-md-9 mx-auto"></div>
+										<div class="col-md-3 mx-auto">
+											<button type="submit" class="btn btn-fill btn-warning btn-wd" onclick="addAccount()">Add New Central Account</button>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-12 mx-auto">
+											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+												<div class="fresh-datatables">
+													<table id="hydra-table" class="table table-striped table-no-bordered table-hover table-fixed" cellspacing="0" width="100%">
+														<thead>
+															<th>Name</th>
+															<th>Cluster</th>
+															<th>Client ID</th>
+															<th>Client Secret</th>
+															<th>Access Token</th>
+															<th>Refresh Token</th>
+															<th>Actions</th>
+														</thead>
+														<tbody>
+														</tbody>
+													</table>
 												</div>
 											</div>
-										</form>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-					<div class="col-md-6 mx-auto">
+					<div class="row">
+						<div class="col-md-6 mx-auto">
 							<div class="card card-register card-plain text-center">
 								<div class="card-header ">
 									<div class="row  justify-content-center">
@@ -167,16 +153,16 @@ The above copyright notice and this permission notice shall be included in all c
 														<form class="form-horizontal">
 															<div class="form-group">
 																<div class="row">
-																	<label class="col-md-5 control-label">Auto AP Naming</label>
-																	<div class="col-md-7">
+																	<label class="col-md-6 control-label">Auto AP Naming</label>
+																	<div class="col-md-6">
 																		<input type="text" placeholder="{{initials}}-{{model}}-{{number}}" class="form-control" id="ap_naming_format">
 																	</div>
 																</div>
 															</div>
 															<div class="form-group">
 																<div class="row">
-																	<label class="col-md-5 control-label">Switch Port Variable</label>
-																	<div class="col-md-7">
+																	<label class="col-md-6 control-label">Switch Port Variable</label>
+																	<div class="col-md-6">
 																		<input type="text" placeholder="int{{number}}_name" class="form-control" id="port_variable_format">
 																	</div>
 																</div>
@@ -189,6 +175,8 @@ The above copyright notice and this permission notice shall be included in all c
 									</div>
 								</div>
 							</div>
+						</div>
+						<div class="col-md-6 mx-auto">
 							<div class="card card-register card-plain text-center">
 								<div class="card-header ">
 									<div class="row  justify-content-center">
@@ -215,6 +203,17 @@ The above copyright notice and this permission notice shall be included in all c
 																</div>
 															</div>
 														</div>
+														<div class="form-group">
+															<div class="row">
+																<label class="col-md-6 control-label">Client Monitoring</label>
+																<div class="col-md-6">
+																	<select id="load_clients" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+																		<option value="Include">Include</option>
+																		<option value="Do Not Include">Do Not Include</option>
+                                    								</select>
+																</div>
+															</div>
+														</div>
 													</form>
 												</div>
 											</div>
@@ -225,14 +224,132 @@ The above copyright notice and this permission notice shall be included in all c
 						</div>
                     </div>
                     <div class="footer text-center">
-						<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="onFinishSetup()">Save & Test</button>
+						<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="onFinishSetup()">Save & Go To Dashboard</button>
 					</div>
-                </div>
-            </div>
+					</div>
+				</div>
+			</div>
+			<!-- Account Modal -->
+			<div class="modal fade modal-small modal-primary" id="AccountModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="row">
+							<div class="col-md-1"></div>
+							<div class="col-md-10">
+								<div class="card-body">
+									<form class="form-horizontal">
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Name</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="Name" class="form-control" id="account_name">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Cluster</label>
+											<div class="col-md-8">
+												<select id="clusterselector" class="custom-select" data-title="Select a Cluster..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="isCOPSelected()">
+												</select>
+											</div>
+										</div>
+										<div class="row" id="cop_address_row" hidden>
+											<label class="col-md-4">Hostname</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="COP Hostname" class="form-control" id="cop_address">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Central ID</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="Central ID" class="form-control" id="central_id">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Client ID</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="Client ID" class="form-control" id="client_id">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Client Secret</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="Client Secret" class="form-control" id="client_secret">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Access Token</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="Access Token" class="form-control" id="access_token">
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<div class="row">
+											<label class="col-md-4">Refresh Token</label>
+											<div class="col-md-8">
+												<input type="text" placeholder="Refresh Token" class="form-control" id="refresh_token">
+											</div>
+										</div>
+									</div>
+								</form>
+									<br>
+									<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="cancelAccount()">Cancel</button>
+									<button type="submit" class="btn btn-fill btn-warning btn-wd" onclick="testToken()">Save</button>
+								</div>
+							</div>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+			<!--  End Modal -->
+			<!-- Error Log Modal -->
+					<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<div class="row">
+									<div class="col-md-12">
+										<div class="card-header">
+												<h4 class="card-title">Log</h4>
+											</div>
+										<div class="card-body" id="errorBody">
+									
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!--  End Modal -->
         </div>
+        
         <footer class="footer">
             <div class="container">
+           		<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>	
+            	<a data-toggle="modal" data-target="#AccountModal" href="#pablo" id="AccountModalLink"></a>
                 <nav>
+                	<ul class="footer-menu">
+							<li>
+								<a href="javascript:checkReachability();">
+									API Proxy Accessibility
+								</a>
+							</li>
+							<li>
+								<a href="https://api.wifidownunder.com" target="_blank" id="api-proxy-link">
+									<i id="aue-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy
+								</a>
+							</li>
+						</ul>
                     <p class="copyright text-center">
                         ©
                         <script>
@@ -277,6 +394,7 @@ The above copyright notice and this permission notice shall be included in all c
 <script src="assets/js/plugins/bootstrap-table.js"></script>
 <!--  DataTable Plugin -->
 <script src="assets/js/plugins/jquery.dataTables.min.js"></script>
+<script src="assets/js/plugins/ellipsis.js"></script>
 <!--  Full Calendar   -->
 <script src="assets/js/plugins/fullcalendar.min.js"></script>
 <!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
@@ -287,38 +405,48 @@ The above copyright notice and this permission notice shall be included in all c
     $(document).ready(function() {
         demo.checkFullPageBackgroundImage();
         
-        populateCentralClusters();
+        $('#hydra-table').DataTable({
+			"paging": false,
+			"searching": false,
+			"info": false,
+			"autoWidth": false,
+			columnDefs: [ {
+				targets: [2,3,4,5],
+				render: function (data, type, full, meta) {
+                        return "<div class='text-wrap width-150'>" + data + "</div>";
+                }
+            }]
+		});
+		
+		var table = $('#hydra-table').DataTable();
 
-        setTimeout(function() {
-            // after 1000 ms we add the class animated to the login/register card
-            $('.card').removeClass('card-hidden');
-        }, 700)
+        // Edit Account record
+        table.on('click', '.edit', function() {
+            $tr = $(this).closest('tr');
+
+            if ($tr.hasClass('child')) {
+                $tr = $tr.prev('.parent');
+            }
+
+            var data = table.row($tr).data();
+            editAccount(data[2]);
+            //alert('You press on Row: ' + data[0] + ' ' + data[1] + ' ' + data[2] + '\'s row.');
+        });
+
+        // Delete a record
+        table.on('click', '.remove', function(e) {
+            $tr = $(this).closest('tr');
+            var data = table.row($tr).data();
+            deleteAccount(data[2]);
+        });
         
-        // Load up saved details
-		var clientID = localStorage.getItem('client_id');
-		if (clientID != null && clientID != "undefined") {
-			document.getElementById("client_id").value = clientID;
+        if (localStorage.getItem('base_url') && !localStorage.getItem('account_details')) {
+			// Old account settings - need to migrate to v1.6
+			upgradeAccountSettings();
 		}
-		
-		var clientSecret = localStorage.getItem('client_secret');
-		if (clientSecret != null && clientSecret != "undefined") {
-			document.getElementById("client_secret").value = clientSecret;
-		}
-		
-		var baseURL = localStorage.getItem('base_url');
-		if (baseURL != null && baseURL != "undefined") {
-			document.getElementById("clusterselector").value = baseURL;
-		}
-		
-		var accessToken = localStorage.getItem('access_token');
-		if (accessToken != null && accessToken != "undefined") {
-			document.getElementById("access_token").value = accessToken;
-		}
-		
-		var refreshToken = localStorage.getItem('refresh_token');
-		if (refreshToken != null && refreshToken != "undefined") {
-			document.getElementById("refresh_token").value = refreshToken;
-		}
+        
+        populateCentralClusters();
+		loadAccountDetails();
 		
 		var apNaming = localStorage.getItem('ap_naming_format');
 		if (apNaming != null && apNaming != "undefined") {
@@ -334,9 +462,16 @@ The above copyright notice and this permission notice shall be included in all c
 		if (refreshRate != null && refreshRate != "undefined") {
 			document.getElementById("refresh_rate").value = refreshRate;
 		}
+        
+        var reachabilityPromise = new $.Deferred();
+        $.when(checkReachability(reachabilityPromise)).then(function () {
+			console.log("Using "+getAPIURL());
+		});
     });
 </script>
 <!--   Main JS Files   -->
 <script src="assets/js/main.js"></script>
+<script src="assets/js/hydra-main.js"></script>
+<script src="assets/js/hydra.js"></script>
 
 </html>

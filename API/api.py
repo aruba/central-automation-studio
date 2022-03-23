@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, request, json, render_template
-from flask_cors import CORS, cross_origin	
+from flask import Flask, jsonify, request, json, render_template, g
+from flask_cors import CORS, cross_origin
+from datetime import datetime
+import flask
 import logging
 import requests
 import binascii
@@ -154,7 +156,41 @@ def putCommand():
 		# no JSON returned
 		result = jsonify(status=str(response.status_code), reason=response.reason);
 	return result;
+
+
+@app.route('/tools/patchFormDataCommand', methods = ["POST"])
+def patchFormDataCommand():
+	data = request.get_json();
+	url = data['url'];
 	
+	headers = {
+    	'cache-control': "no-cache",
+	  	'Authorization': 'Bearer ' + data['access_token'],
+	  	"Accept": "*/*"
+    };
+    
+	if 'template' in data:
+		payload = data['template'];
+		files = {'template': ('template.txt', payload)}
+		response = requests.request("PATCH", url, headers=headers, files=files);
+	elif 'variables' in data:
+		payload = data['variables'];
+		files = {'variables': ('variables.txt', payload)}
+		response = requests.request("PATCH", url, headers=headers, files=files);
+	else:
+		response = requests.request("PATCH", url, headers=headers);
+
+	#app.logger.debug(response.text)
+	
+	try:
+		result = jsonify(json.loads(response.text));
+		# ...
+	except ValueError:
+		# no JSON returned
+		app.logger.debug("No JSON")
+		result = jsonify(status=str(response.status_code), reason=response.reason);
+	return result;
+
 
 @app.route('/tools/patchCommand', methods = ["POST"])
 def patchCommand():
@@ -182,31 +218,40 @@ def patchCommand():
 	
 @app.route('/tools/deleteCommand', methods = ["POST"])
 def deleteCommand():
-	data = request.get_json();
-	url = data['url'];
-	payload = data['data'];
+    data = request.get_json();
+    url = data['url'];
 	
-	headers = {
-    	'cache-control': "no-cache",
-	  	'Authorization': 'Bearer ' + data['access_token'],
-	  	'Content-Type': 'application/json'
+    headers = {
+        'cache-control': "no-cache",
+        'Authorization': 'Bearer ' + data['access_token'],
+        'Content-Type': 'application/json'
     };
     
-	response = requests.request("DELETE", url, data=payload, headers=headers);
-	
-	app.logger.debug(response.text)
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		result = jsonify(status=str(response.status_code), reason=response.reason);
-	return result;
-	
+    if "data" in data:
+        payload = data['data'];
+        response = requests.request("DELETE", url, data=payload, headers=headers);
+    else:
+        response = requests.request("DELETE", url, headers=headers);
+    
+    app.logger.debug(response.status_code)
+    try:
+    	result = jsonify(json.loads(response.text)), response.status_code;
+    except ValueError:
+    	# no JSON returned
+    	result = jsonify(status=str(response.status_code), reason=response.reason), response.status_code;
+    return result;
+
+
 
 @app.route("/")
 def hello():
     return render_template('index.html')
+
+
+
+@app.route("/reachable")
+def reachable():
+    return flask.request.url_root;
 
     
 

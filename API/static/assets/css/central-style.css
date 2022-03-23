@@ -322,6 +322,11 @@ Generated using nucleoapp.com
 /*------------------------
 	Extra Styling
 -------------------------*/
+.icon-massive {
+    font-size: 5em;
+    min-height: 64px;
+}
+
 .navbar-wrapper .icon-big {
     font-size: 2em;
     max-height: 32	px;
@@ -354,4 +359,8 @@ Generated using nucleoapp.com
 .navbar .navbar-nav .central-icon {
 	font-weight: 700;
 	margin-top: 10px;
+}
+
+.card.card-register .header-text hr {
+  	border-top: 1px solid rgb(255, 140, 0, 0.5)
 }

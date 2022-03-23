@@ -78,7 +78,7 @@ The above copyright notice and this permission notice shall be included in all c
                 <div class="collapse navbar-collapse justify-content-end" id="navbar">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a href="dashboard.html" class="nav-link">
+                            <a href="hydra-dashboard.html" class="nav-link" id="dashboardLink">
                                 <i class="central-icon ca-dashboard"></i>
                             </a>
                         </li>
@@ -106,7 +106,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation v1.3.4</h1>
+                    <h1>Central Automation v1.9.3</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -128,6 +128,9 @@ The above copyright notice and this permission notice shall be included in all c
                                         <a href="#navigation-row">Navigation</a>
                                     </li>
                                     <li>
+                                        <a href="#hydra-row">Hydra</a>
+                                    </li>
+                                    <li>
                                         <a href="#dashboard-row">Dashboard</a>
                                     </li>
                                     <li>
@@ -138,6 +141,9 @@ The above copyright notice and this permission notice shall be included in all c
                                     </li>
                                     <li>
                                         <a href="#msp-row">MSP Workflows</a>
+                                    </li>
+                                    <li>
+                                        <a href="#group-config-row">Group Configuration</a>
                                     </li>
                                     <li>
                                         <a href="#wlan-row">WLAN Deployment</a>
@@ -152,10 +158,22 @@ The above copyright notice and this permission notice shall be included in all c
                                         <a href="#switch-row">Switch Deployment</a>
                                     </li>
                                     <li>
+                                        <a href="#gateway-row">Gateway Deployment</a>
+                                    </li>
+                                    <li>
                                         <a href="#airmatch-row">AirMatch</a>
+                                    </li>
+                                    <li>
+                                        <a href="#clientmatch-row">ClientMatch</a>
                                     </li>
                                     <li hidden>
                                         <a href="#migration-row">Migration</a>
+                                    </li>
+                                    <li>
+                                        <a href="#monitoring-row">Monitoring Features</a>
+                                    </li>
+                                    <li>
+                                        <a href="#experimental-row">Experimental Features</a>
                                     </li>
                                     <li>
                                         <a href="#changes-row">Change Log</a>
@@ -183,7 +201,10 @@ The above copyright notice and this permission notice shall be included in all c
 									In order for you to use this WebUI, you will need to obtain some API information from your Aruba Central account.
 								</p>
 								<p>
-									Follow the steps in the <a href="https://help.central.arubanetworks.com/latest/documentation/online_help/content/api/creating-app.htm" target="_blank">Aruba Central documentation</a> on creating an API application and token using the "Offline Token Mechanism".
+									Follow the steps in the <a href="https://help.central.arubanetworks.com/latest/documentation/online_help/content/nms/api/creating-app.htm" target="_blank">Aruba Central documentation</a> on creating an API application and token using the "Offline Token Mechanism".
+								</p>
+								<p>
+									Obtain the <i>Customer ID</i> from the Account menu in the top right of the Central UI. The Customer Id is required by some APIs (e.g. ClientMatch).
 								</p>
 								<p>
 									Obtain the <i>Client ID</i> and <i>Client Secret</i> from the Apps and Token table in Central. The <i>Refresh Token</i> and <i>Access Token</i> can be retrieved when you download the token that correspondes to your App in the Apps and Tokens table. Enter the information into <a href="settings.html" target="_blank">Central Automation Settings</a> page. Save and test the connection to Central. If successful, jump over to the <a href="dashboard.html" target="_blank">Dashboard</a>.
@@ -193,14 +214,23 @@ The above copyright notice and this permission notice shall be included in all c
 								<h2 class="text-center">System Architecture</h2>
 								<legend></legend>
 								<p>
-									The system is designed in two pieces. The WebUI (where you are reading this documentation from) and an API Proxy service.
-								</p>
-								<p>
-									The WebUI uses Javascript to make API calls to the API Proxy Service (api.wifidownunder.com). All API credentials are maintained in the local storage of <strong>your</strong> web browser. <strong>The API Proxy service does not store any credentials, data or logs from your use of the WebUI to communicate with Aruba Central</strong>. The API Proxy service then uses Python to communicate with Central and return the API response back to the WebUI.
+									The system is designed in two pieces. The WebUI (where you are reading this documentation from) and an API Proxy Server.
 								</p>
 								<div class="img-container">
 									<img src="assets/img/architecture.png" alt="...">
 								</div>
+								<p>
+									The WebUI uses Javascript to make API calls to the API Proxy Server. The API Proxy Server converts those Javascript requests into Python API calls and makes the call to Aruba Central, returning any data back to the WebUI for processing in Javascript.
+								</p>
+								<p>
+									The API Proxy Server is incorporated into the Docker container. API Proxy Server Accessibility is available in the footer of each page
+									<div class="img-container">
+										<img src="assets/img/proxy-status.png" alt="...">
+									</div>
+									
+									All API credentials are maintained in the local storage of <strong>your</strong> web browser. <strong>The API Proxy service does not store any credentials, data or logs from your use of the WebUI to communicate with Aruba Central</strong>. The API Proxy Server then uses Python to communicate with Central and return the API response back to the WebUI.
+								</p>
+								
 							</div>
 							<div class="tim-row" id="navigation-row">
 								<h2 class="text-center">Navigation</h2>
@@ -216,7 +246,40 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>
 								</p>
 								
-								
+							</div>
+							<div class="tim-row" id="hydra-row">	
+								<h2 class="text-center">Hydra</h2>
+								 <div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-api text-warning" id="hydra_icon"></i>
+								</div>
+								<p>
+									The <a href="settings.html">Settings</a> page supports adding more than one Central account. These accounts can be reside in multiple different Central Clusters.
+									<div class="img-container">
+										<img src="assets/img/settings.png" alt="Settings">
+										<p>Account Settings</p>
+									</div>
+									The Hydra dashboard displays high-level information about each account:
+									<ul>
+										<li> Clients </li>
+										<li> Access Points</li>
+										<li> Switches</li>
+										<li> Gateways</li>
+										<li> Sites</li>
+									</ul>
+									<div class="img-container">
+										<img src="assets/img/hydra-dashboard.png" alt="Hydra">
+										<p>Hydra Dashboard</p>
+									</div>
+									APs, Switches, Gateways and Sites can all be clicked on to display additional details about that accounts devices.
+								</p>
+								<p>	
+									Clicking "Go To Account" for an account allows for the rest of the <i>Central Automation</i> functionality to be used against the selected account.
+								</p>
+								<p>	
+									The Breadcrumb in the top left (Central Automation > Account Name) allows the ability to return to the Hydra Dashboard from the individual account dashboard.
+								</p>
+								<p>	
+									The Hydra Dashboard is only shown once more than one account is added in <a href="settings.html">Settings</a>
 							</div>
 							<div class="tim-row" id="dashboard-row">
 								<h2 class="text-center">Dashboard</h2>
@@ -243,20 +306,6 @@ The above copyright notice and this permission notice shall be included in all c
 										<p>Universal Search</p>
 									</div>
 									
-									<h2>Client Statistics</h2>
-									The <a href="clients.html">Client Statistics</a> page is accessible from below the Clients table. The following statistics for Wireless clients are supported:
-									<ul>
-										<li> 802.11 version support (Mix) </li>
-										<li> Band Split (2.4Ghz vs 5GHz)</li>
-										<li> Authentication Type</li>
-										<li> 802.11k support</li>
-										<li> 802.11v support</li>
-										<li> 802.11r support </li>
-									</ul>
-									<div class="img-container">
-										<img src="assets/img/clientStats1.png" alt="Client Stats">
-										<p>Client Statistics</p>
-									</div>
 									<h2>Automated Workflows</h2>
 									Below the overview information tiles, there are tiles to launch the different workflow modules supported by the Central Automation demo:
 									<ul>
@@ -267,13 +316,19 @@ The above copyright notice and this permission notice shall be included in all c
 									<h2>Configuration Deployment</h2>
 									There are tiles to launch the different deployment modules supported by the Central Automation demo:
 									<ul>
+										<li> Group Configuration</li>
 										<li> WLAN Deployment</li>
 										<li> User Role Deployment</li>
 										<li> Authentication Server Deployment</li>
 										<li> Switch Deployment</li>
 										<li> Airmatch</li>
 									</ul>
-									<h2>Configuration Deployment</h2>
+									<h2>Experimental Features</h2>
+									These are the tiles for features that are "in the works" and not fully fleshed out:
+									<ul>
+										<li> AOS-Switch Template Config</li>
+									</ul>
+									<h2>Central Deployment</h2>
 									<ul>
 										<li> Management Tasks </li>
 									</ul>
@@ -300,11 +355,13 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> LICENSE</li>
 										<li> GROUP</li>
 										<li> SITE</li>
+										<li> AP ZONE</li>
 									</ul>
 									If the DEVICE NAME not be included, the device renaming workflows will skip that device during the processing.</br>
 									If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway).</br>
 									If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV.</br>
 									If the SITE is missing, the device will be skipped when assigning devices to a Site. </br>
+									If the AP ZONE is missing, the device will be skipped when assigning an AP Zone to an Access Point. </br>
 									Skipped devices will be listed in the Error Log for the task/automation.</br></br>
 									Let's look at the tasks and automations one by one:
                                 </p>
@@ -327,6 +384,11 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Advanced + Security (for SD-Branch Gateways)</li>
 									</ul>
 									If the LICENSE is missing for a device (or all devices) in the CSV, it is assumed a Foundation license will be assigned. The values in the list above are supported in the CSV for values (not including the parts in brackets)
+                                </p>
+                                <h4>Unlicense Devices</h4>
+                                <p>
+                                	Unassigns the current licenses from all devices in the CSV (using the SERIAL column) </br>
+                                	CSV download from Central Device tables is supported for the upload format. Simply filter in Central for the devices you want to unassign licenses for and download the CSV from Central.
                                 </p>
                                 <h4>Move Devices to Group</h4>
                                 <p>
@@ -369,6 +431,11 @@ The above copyright notice and this permission notice shall be included in all c
 									Site = Full site name, Initials = Site name initials, Model = AP Model, Number = Sequential AP Number per Site, Switch = hostname of the switch, Port = connected port number on the switch.</br>
 									Naming variables need to be enclosed in double curly braces e.g. {{site}} or {{model}} 
                                 </p>
+                                <h4>Set AP Zones</h4>
+                                <p>
+                                	Uses the SERIAL and AP ZONE columns in the CSV file to set the AP Zone on the corresponding Access Point in Aruba Central.
+									If the AP ZONE is missing for an AP (or all APs) in the CSV, the device will not have the AP Zone set.
+                                </p>
                                 <h4>Update Device Variables</h4>
                                 <p>
                                 	Updates/Sets variable values for a device in a template group.
@@ -394,8 +461,11 @@ The above copyright notice and this permission notice shall be included in all c
    name %int1_name%
    %endif%
 </pre>
-                            	 	This example would use the following naming convention in the  <a href="settings.html" target="_blank">Settings</a> page: "int{{number}}_name"	
+                            	 	This example would use the following naming convention in the  <a href="settings.html" target="_blank">Settings</a> page: "int{{number}}_name".
                                 </p>
+								<p>
+									For AOS-S Switches in UI Group, port renaming is now available as well. UI Groups use APIs to modify the switchport names - not variables. As such the "switchport name variable" is not used for UI Groups.
+								</p>
                                 <h2>Automated Tasks</h2>
                                 <p>
                                 	The automated tasks are the individual tasks linked together. Refer to the descriptions above for each individual task.
@@ -427,7 +497,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
                                 <h4>Update Switch Port Descriptions</h4>
                                 <p>
-                                	For APs in the CSV, this task updates the switchport name variable for its connected switch with the DEVICE NAME from the CSV.
+                                	For APs in the site, this task updates the switchport name for its connected switch with the AP name.
                                 	The switchport name variable used is configured in the <a href="settings.html" target="_blank">Settings</a> page.</br>
                                 	The following is an example of the template configuration to utilize this task (using the variable "int1_name" for interface 1):
                                 	<pre class="prettyprint">interface 1
@@ -435,7 +505,10 @@ The above copyright notice and this permission notice shall be included in all c
    name %int1_name%
    %endif%
 </pre>
-                            	 	This example would use the following naming convention in the  <a href="settings.html" target="_blank">Settings</a> page: "int{{number}}_name"	
+                            	 	This example would use the following naming convention in the  <a href="settings.html" target="_blank">Settings</a> page: "int{{number}}_name".
+								</p>
+								<p>
+									For AOS-S Switches in UI Group, port renaming is now available as well. UI Groups use APIs to modify the switchport names - not variables. As such the "switchport name variable" is not used for UI Groups.
                                 </p>
                                 <h2>Automated Tasks</h2>
                                 <p>
@@ -525,6 +598,19 @@ The above copyright notice and this permission notice shall be included in all c
                                 	Creates a new Customer.
 							  	</p>
 							</div>
+							<div class="tim-row" id="group-config-row">
+                                <h2 class="text-center">Group Configuration</h2>
+                                <div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-setup-tools text-warning" id="workflow_ap_icon"></i>
+								</div>
+                                <legend></legend>
+                                <p>
+                                	The <a href="deployment-group.html">Group Configuration</a> allows for the modification of the wireless configuration for a selected group.
+                                </p>
+                                <p>
+                                	<i><strong>Note:</strong> Background updating of the monitoring data is disabled on this page to ensure group lists are not modified whilst editing the group configuration. Use the refresh button in the top right to refresh the data in the page.</i>
+                                </p>
+                            </div>
 							<div class="tim-row" id="wlan-row">
                                 <h2 class="text-center">WLAN Deployment</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -542,6 +628,10 @@ The above copyright notice and this permission notice shall be included in all c
 										<p>Updating a Passphrase</p>
 									</div>
                                 </p>
+                                <p>
+                                	<i><strong>Note:</strong> WLAN configuration requires the WLAN Configuration API enabled on to automatically obtain the passphrases (PSK) used on WLANs being migrated. Reach out to your Aruba SE about getting this API enabled.</br>
+                                	You can alternatively use the <a href="deployment-group.html">Group Configuration</a> which does not attempt to obtain the PSK used in the WLANs. </i>
+                                </p>
                                 <h4>WLAN Configuration</h4>
                                 <p>
                                 	Provides the ability modify the WLAN configuration used by a selected WLAN/SSID, and select which Groups to make the WLAN available in. This makes copying WLAN configuration from one UI Group to another, simple.
@@ -549,6 +639,10 @@ The above copyright notice and this permission notice shall be included in all c
 										<img src="assets/img/wlan.png" alt="WLAN">
 										<p>Deploying a WLAN across multiple Groups</p>
 									</div>
+                                </p>
+                                <p>
+                                	<i><strong>Note:</strong> WLAN configuration requires the WLAN Configuration API enabled on to automatically obtain the passphrases (PSK) used on WLANs being migrated. Reach out to your Aruba SE about getting this API enabled.</br>
+                                	You can alternatively use the <a href="deployment-group.html">Group Configuration</a> which does not attempt to obtain the PSK used in the WLANs. </i>
                                 </p>
                             </div>
                             <div class="tim-row" id="user-role-row">
@@ -644,30 +738,91 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>
 								</p>
                             </div>
+                            <div class="tim-row" id="gateway-row">
+                                <h2 class="text-center">Gateway Deployment</h2>
+                                <div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-window-code text-warning" id="gateway_icon"></i>
+								</div>
+                                <legend></legend>
+                                <p>
+                                	The <a href="deployment-gateway.html">Gateway Deployment</a> workflows support of configuration for Gateways using Config Snippets. 
+								</p>
+								<p>
+									Select the Group or Device and enter the structured CLI commands. The following should be noted:
+									<ul>
+										<li>CLI snippets in structured format - just like what you would enter on the CLI</li>
+										<li>"no" commands are acceptable, but are subject to the same limitations as with the CLI (eg, it's not possible to delete config that's in use/referenced)</li>
+										<li>In order to go back one step you have to enter an exclamation mark - ! (just as if we were pasting the whole confing via ssh).</li>
+									</ul>
+								</p>
+                            </div>
                             <div class="tim-row" id="airmatch-row">
-                                <h2 class="text-center">AirMatch Workflows</h2>
+                                <h2 class="text-center">AirMatch</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-hotspot text-warning" id="workflow_airmatch_icon"></i>
 								</div>
                                 <legend></legend>
-                                <p>
+                                <p>					
+                                	The <a href="deployment-airmatch.html">AirMatch</a> page provides the ability to force AirMatch to "run now" in different modes, as well as display various information from AirMatch:
                                 	<div class="img-container">
-										<img src="assets/img/airmatch.png" alt="AirMatch">
-										<p>AirMatch Run Now</p>
+										<img src="assets/img/airmatch2.png" alt="AirMatch Run Now">
+										<p>AirMatch Lastest Optimization</p>
 									</div>
-                                	The <a href="airmatch.html">AirMatch</a> Workflows provide the ability to force AirMatch to "run now", as well as display various information from AirMatch:
-                                	<ul>
-										<li> Latest AirMatch solution information</li>
+									<ul>
+										<li> Latest AirMatch optimization information</li>
+										<li> Previous 10 AirMatch optimizations (clickable for more details)</li>
 										<li> Channel Usage (Primary Channel usage)</li>
 										<li> EIRP Distribution</li>
 										<li> AirMatch Events</li>
 										<li> AirMatch History</li>
 										<li> Static Radios</li>
 									</ul>
+								</p>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/static.png" alt="Static Radios">
+										<p>Static Radios Table</p>
+									</div>
+									The Static radio table supports "Unfreezing" AP radios by using the action button in the right of the table - setting them back to be managed by AirMatch. 
+								</p>
+								<p>
+									The "Freeze AP Radios" button at the bottom of the Static Radio table enables changing an AP from AirMatch/ARM managed into a static channel and power configuration. This allows for an AP to have its current channel and power configuration to be set as the static settings for that AP (somewhat like the AOS 6.x ARM Maintain mode)
                                 </p>
                             </div>
+                            <div class="tim-row" id="clientmatch-row">
+                                <h2 class="text-center">ClientMatch</h2>
+                                <div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-crossroad text-warning" id="workflow_clientmatch_icon"></i>
+								</div>
+                                <legend></legend>
+                                <p>					
+                                	The <a href="deployment-clientmatch.html">ClientMatch</a> page for AOS10 Deployments provides the ability to enable/disable ClientMatch and the ClientMatch Load Balancer, as well as display various information from ClientMatch:
+                                	<div class="img-container">
+										<img src="assets/img/clientmatch1.png" alt="ClientMatch controls">
+										<p>ClientMatch Controls</p>
+									</div>
+									<ul>
+										<li> The state of ClientMatch can be controlled by clicking on the state buttons</li>
+										<li> Unsteerable Clients - with the ability to remove the client from the unsteerable list</li>
+										<li> Recent ClientMatch events</li>
+									</ul>
+								</p>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/clientmatch2.png" alt="Unsteerable">
+										<p>Unsteerable Clients</p>
+									</div>
+									The Unsteerable Clients table supports "Make Steerable" by using the action button in the right of the table. 
+								</p>
+								<p> The ClientMatch service control requires the Central Customer ID for your account to be entered in <a href="settings.html">Settings</a>. The Central Customer ID can be found in the account menu in the top right of Central.
+									<div class="img-container">
+										<img src="assets/img/CID.png" alt="Customer ID">
+										<p>Central Customer ID Location</p>
+									</div>
+								</p>
+                            </div>
                             <div class="tim-row" id="migration-row" hidden>
-                                <h2 class="text-center">Migration Workflows</h2>
+                                <h2 class="text-center">Account Migration</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-migration text-warning" id="workflow_migration_icon"></i>
 								</div>
@@ -677,15 +832,141 @@ The above copyright notice and this permission notice shall be included in all c
 										<img src="assets/img/migration.png" alt="Migration">
 										<p>Migration Options</p>
 									</div>
-                                	The <a href="migration.html">Migration</a> Workflows provide the ability to copy data from one Central account to another. Currently supported data that can be migrated includes:
+                                	The <a href="migration.html">Account Migration</a> provides the ability to copy data from one Central account to another. Currently supported data that can be migrated includes:
                                 	<ul>
 										<li> Groups</li>
 										<li> Sites</li>
 										<li> Labels</li>
 										<li> WLAN GUI Config</li>
 										<li> Templates and Variables</li>
+										<li> APs in WLAN UI Groups</li>
+										<li> APs and Switches in Template Groups</li>
 									</ul>
-									The "Accounts" section allows for the entry of the destination Central account information.
+									The "Accounts" section allows for the entry of the destination Central account information.</br></br>
+									Feature Notes:
+									<ul>
+										<li> WLAN UI Group configuration migration requires the WLAN Configuration API enabled on to automatically obtain the passphrases (PSK) used on WLANs being migrated. Reach out to your Aruba SE about getting this API enabled.</li>
+										<li> Auto-Assign Licenses is disabled on both source and destination automatically.</li>
+										<li> Device migration (UI Group and Template Group) will cause the device to be unassigned a license in the source account.</li>
+										<li> Auto Device Licensing will set the license type from the source account for each device on the device on the destination account. Ensure the licenses on the destination account are of the same type - or manually enable Auto-Assign licenses after the migration</li>
+										<li> Device Variables require the device to have already been added to the destination account. If both Device Variables and Devices are selected as options, devices will be migrated first to ensure variables are successfully migrated.</li>
+									</ul>
+									Usage Recommendations:
+									<ol type="1">
+										<li>Migrate Groups and Configuration first, then verify in the destination Central account.</li>
+										<li>Migrate Devices, then verify in the destination Central account that devices have been assigned the correct group (Device Inventory)</li>
+										<li>Assigning devices to sites requires the migrated devices to have "checked into" the destination Central account.</li>
+										<li>Sites and Labels can be migrated at any time.</li>
+									</ol>
+                                </p>
+                            </div>
+                           <div class="tim-row" id="monitoring-row">
+                                <h2 class="text-center">Monitoring Features</h2>
+                                <div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-cctv text-warning" id="workflow_monitoring_icon"></i>
+								</div>
+                                <legend></legend>
+                                <p>
+                                	This section contains a handful of additional Monitoring features, including Client Statistics, AP Reboot and IP Address Management Monitoring.
+                                </p>
+                                <h2>Client Statistics</h2>
+								The <a href="clients.html">Client Statistics</a> page is also accessible from the bottom of the Clients table. The following statistics for clients are supported:
+								<ul>
+									<li> 802.11 version support (Mix) </li>
+									<li> Band Split (2.4Ghz vs 5GHz vs 6GHz)</li>
+									<li> Authentication Type</li>
+									<li> Randomized MAC Addresses</li>
+									<li> 802.11k support</li>
+									<li> 802.11v support</li>
+									<li> 802.11r support </li>
+								</ul>
+								Each section of the graphs is clickable and will display the matching clients in a table.
+								<div class="img-container">
+									<img src="assets/img/clientStats1.png" alt="Client Stats">
+									<p>Client Statistics</p>
+								</div>
+								
+								<h2>AP Reboot</h2>
+								The <a href="monitoring-reboot.html">AP Reboot</a> page is also accessible from the bottom of the  Access Points table. The following is supported:
+								<ul>
+									<li> Reboot of an entire Virtual Controller Cluster </li>
+									<li> Reboot of multiple Virtual Controller Clusters</li>
+									<li> Reboot of individual APs</li>
+									<li> Reboot of multiple individual APs</li>
+									<li> Multi-select is supported (using the checkboxes in the first column)</li>
+								</ul>
+								<p> Use the checkbox at the top of the first column to select everything that is visible – this works nicely with the Search function at the top right of the table. Filter down the APs/VCs list to what you want and then click the select all.</p>
+								<div class="img-container">
+									<img src="assets/img/reboot.png" alt="Tiles">
+									<p>AP Reboot</p>
+								</div>
+								
+								<h2>IPAM Monitoring</h2>
+								The <a href="monitoring-ipam.html">IP Address Management Monitoring</a> provides the ability to see which IP addresses (Inner IP Pools and Shared DHCP Pools) are assigned to Microbranch APs
+						
+                            </div>
+                            <div class="tim-row" id="experimental-row">
+                                <h2 class="text-center">Experimental Features</h2>
+                                <div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-chemistry text-warning" id="workflow_experimental_icon"></i>
+								</div>
+                                <legend></legend>
+                                <p>
+                                	<div class="img-container">
+										<img src="assets/img/template-vlan.png" alt="AOSS-VLANs">
+										<p>AOS-Switch Template VLAN Configuration</p>
+									</div>
+                                	The <a href="experimental-switching.html">AOS-Switch Template Configuration</a> provides the following GUI abilities for AOS-Switches configured using templates:
+                                	<ul>
+										<li> Add VLANs</li>
+										<li> Edit existing VLANs</li>
+										<li> Edit DNS Servers</li>
+									</ul>
+									Feature Notes:
+									<ul>
+										<li> Templates with and without variables are supported</li>
+										<li> Variables in existing templates are dynamically learned and modified</li>
+										<li> If variables are not used in a template, the template is directly modified (e.g. in the case where you use a template per switch)</li>
+										<li> VLANs created using this feature will utilize variables for IP address, Tagged and Untagged ports. VLAN Name will be written to the template</li>
+										<li> VLANs can be configured with no IP Address, DHCP or a Static IP</li>
+										<li> If "uplink" ports has been configured for the switch in Aruba Central, the uplinks will be automatically included in the tagged VLANs list</li>
+										<li> Template configuration for VLANs created in this feature have the following structure:
+										<pre class="prettyprint">vlan 50
+   name "Test VLAN"
+   %if vlan50.untagged%
+   untagged %vlan50.untagged%
+   %endif%
+   %if vlan50.tagged%
+   tagged %vlan50.tagged%
+   %endif%
+   %if vlan50.ip%
+   ip address %vlan50.ip%
+   %endif%
+   exit
+</pre></li>
+										<ul>
+											<li> IP Address variable (vlanX.ip) will contain both the IP Address and the Subnet Mask </li>
+										</ul>
+									</ul>
+									<div class="img-container">
+									<img src="assets/img/template-dns.png" alt="AOSS-DNS">
+									<p>AOS-Switch Template DNS Configuration</p>
+									</div>
+									<ul>
+										<li> Template configuration for DNS Servers created/managed in this feature have the following structure if variables are being used for System settings:
+										<pre class="prettyprint">%if dns1.ip%
+ip dns server-address priority 1 %dns1.ip%
+%endif%
+%if dns2.ip%
+ip dns server-address priority 2 %dns2.ip%
+%endif%
+</pre></li>
+										<ul>
+											<li> DNS server configuration (dnsX.ip by default) will use existing variables if they exist in the template. </li>
+											<li> If statements will be added to the template automatically if variables are being used </li>
+										</ul>
+									</ul>
+									
                                 </p>
                             </div>
                             <div class="tim-row" id="changes-row">
@@ -693,7 +974,205 @@ The above copyright notice and this permission notice shall be included in all c
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation will be documented below:</br>
-                                	<h4>Version 1.3.4 (2021/07/01)</h4>
+									<h4>Version 1.9.3 (2022/03/23)</h4>
+									<ul>
+										<li> <strong>Error Log</strong> is now just <strong>Log</strong>. It contains more information than before, including information level log messages - not just errors. Errors are coloured in <span style="color:#FB404B">red</span> and start with a "-". Log is be auto displayed if an error occurs. Log is available in the menu bar on the top right</li>
+									</ul>
+									<h4>Version 1.9.2 (2022/03/18)</h4>
+									<ul>
+										<li> Added support for bulk Device Archiving using CSV workflows</li>
+										<li> Updated API calls for Adding Devices automation</li>
+										<li> Improved error handling for Adding Devices automation</li>
+										<li> IPAM Monitoring now lists actual pool names (not IDs), and displays number of clients per subnet for DHCP pools</li>
+										<li> Client Health details as a tooltip now listed failed client reason</li>
+									</ul>
+									<h4>Version 1.9.1 (2022/03/15)</h4>
+									<ul>
+										<li> Fix for downloading Device Inventory - now pulls data from correct APIs, and includes all APs (not just IAPs)</li>
+									</ul>
+									<h4>Version 1.9.0 (2022/03/14) - <i>"Many Names"</i></h4>
+                                	<ul>
+										<li> Update Switchport names now supported on AOS-Switch in UI Groups. This is available in <a href="#csv-row">CSV Upload Workflows</a> and <a href="#site-row">Site Workflows</a> - <strong>Available with Central 2.5.5</strong></li>
+										<li> <a href="#architecture-row">Proxy Server</a> in use now marked in bold in the footer</li>
+										<li> UI tweaks</li>
+										<li> Support for downloading entire Device Inventory as CSV - available in the Management Tasks section on the Dashboard</li>
+									</ul>
+                                	<h4>Version 1.8.5 (2022/03/01)</h4>
+                                	<ul>
+										<li> Added Health details as a tooltip to the Status column on the Lists (Clients, APs, Switches and Gateways)</li>
+									</ul>
+									<h4>Version 1.8.4 (2022/02/28)</h4>
+                                	<ul>
+										<li> <a href="#architecture-row">Proxy Server</a> status now available in the footer of every page. If proxy servers are unavailable, check accessibility directly via clicking on the proxy status in the footer</li>
+									</ul>
+                                	<h4>Version 1.8.3 (2022/02/15)</h4>
+                                	<ul>
+										<li> <a href="#architecture-row">Proxy Server</a> failover is now implemented site-wide. Note: Previous users may need to perform a hard-refresh of the pages to force the Javascript to reload in the browser (Shift key + Page reload)</li>
+									</ul>
+                                	<h4>Version 1.8.2 (2022/02/10)</h4>
+                                	<ul>
+										<li> Improved <a href="#architecture-row">Proxy Server</a> scalability and response times by adding additional nodes (1 in the US and 1 in Europe)</li>
+									</ul>
+                                	<h4>Version 1.8.1 (2022/02/09)</h4>
+                                	<ul>
+										<li> Improvements to error handling when adding devices via CSV</li>
+									</ul>
+									<h4>Version 1.8.0 (2022/02/01) - <i>"Match Maker"</i></h4>
+                                	<ul>
+                                		<li> New Central Services section in the dashboard featuring:</li>
+                                		<ul>
+											<li><a href="#airmatch-row">AirMatch</a></li>
+											<li><a href="#clientmatch-row">ClientMatch</a></li>
+										</ul>
+                                		<li> AirMatch Improvements</li>
+                                		<ul>
+											<li> Added support for <a href="#airmatch-row">Freezing and Unfreezing radios</a></li>
+											<li> Added support for different run now types in AirMatch</li>
+											<li> Improved display of the latest AirMatch optimization</li>
+											<li> Improved handling of RF Domains and Partitions in the optimization details</li>
+											<li> Last 11 AirMatch optimizations are now available - Latest one + 10 more in the table!</li>
+											<li> Improved discoverability of viewing the latest optimization details</li>
+											<li> AirMatch Events now filter out events where channel and bandwidth do not change</li>
+										</ul>
+										<li><a href="#clientmatch-row">ClientMatch</a></li>
+										<ul>
+											<li> Added support for controlling the ClientMatch service in AOS10</li>
+										</ul>
+										<li> Added Central ID in the account settings. This is needed for some API calls (starting with ClientMatch)</li>
+									</ul>
+									<h4>Version 1.7.5 (2022/01/16)</h4>
+                                	<ul>
+										<li> <a href="#gateway-row">Gateway Config Snippets</a> support added</li>
+										<li> Improvements to <a href="#monitoring-row">IP Address Management</a> Monitoring. Now shows the Pool information as well</li>
+									</ul>
+									<h4>Version 1.7.4 (2022/01/10)</h4>
+                                	<ul>
+										<li> <a href="#monitoring-row">IP Address Management</a> Monitoring support added</li>
+										<li> Improved discoverability of <a href="#dashboard-row">Client Statistics and AP Reboot</a> by adding tiles to the <a href="#monitoring-row">Monitoring Features</a> section</li>
+										<li> Improved legibility of deep links in tables (now in bold)</li>
+									</ul>
+									<h4>Version 1.7.3 (2022/01/05)</h4>
+                                	<ul>
+										<li> Workaround for Safari related Regex bug</li>
+									</ul>
+                                	<h4>Version 1.7.2 (2021/12/22)</h4>
+                                	<ul>
+										<li> UXI Status for the Sites table now links deep links to the UXI Dashboard</li>
+										<li> AP List now denotes if an AP is the Virtual Controller</li>
+										<li> AirMatch Optimization details table features a tooltip of valid channels for any given radio (Channels that were available to be selected from for that particular radio)</li>
+									</ul>
+									<h4>Version 1.7.1 (2021/12/17)</h4>
+                                	<ul>
+										<li> Fixed sorting of AirMatch tables based on Date</li>
+										<li> Added ability to view AirMatch Optimization details - just click on the row in the "AirMatch Last Run" table</li>
+										<li> AirMatch History removed</li>
+										<li> AirMatch Radar & Noise Events added</li>
+										<li> Additional information in the AirMatch Events table</li>
+										<li> AirMatch Channel Usage is blank due to an issue with the associated API</li>
+										<li> Fix for missing information from Central that could throw an error in the Client table</li>
+									</ul>
+                                	<h4>Version 1.7.0 (2021/12/14) - <i>"Many Reboots"</i></h4>
+                                	<ul>
+										<li> Added support for <a href="#dashboard-row">rebooting of multiple APs</a> at the same time</li>
+										<li> Improved notifications for status</li>
+									</ul>
+                                	<h4>Version 1.6.1 (2021/12/12)</h4>
+                                	<ul>
+										<li> Fixed a bug that could stop Auto Renaming Access Points from working</li>
+									</ul>
+                                	<h4>Version 1.6.0 (2021/12/03) - <i>"Many Arms"</i></h4>
+                                	<ul>
+										<li> Hail <a href="#hydra-row">Hydra!</a></li>
+										<ul>
+											<li> Support for multiple accounts </li>
+										</ul>
+										<li> Bug Fixes/Improvements</li>
+										<ul>
+											<li> Physical Layer Information (Site Workflows) no longer lists Mesh Point APs and correctly displays switch hostname</li>
+											<li> <a href="#experimental-row">Experimental Switching</a> fixes for changes in Central 2.5.4</li>
+											<li> Client, Device, Groups and Site lists now are clickable only from the Name column - deep linked to Central</li>
+											<li> AI Insights in the Sites list is now clickable - deep linked to Central</li>
+											<li> <a href="#dashboard-row">Client Statistics</a> now includes support for 6GHz clients and Randomized MAC Addresses</li>
+											<li> Dark mode improvements</li>
+											<li> <a href="#switch-row">Template Switching</a> fixes that stopped switches being listed</li>
+											<li> <a href="#airmatch-row">AirMatch</a> API response differences corrected</li>
+											<li> Corrected an issue where groups might listed twice</li>
+										</ul>
+									</ul>
+                                	<h4>Version 1.5.4 (2021/11/24)</h4>
+                                	<ul>
+										<li> Large reduction in API calls to assign and un-assign licenses - now an API call per license type being assigned/un-assign, not per device</li>
+									</ul>
+                                	<h4>Version 1.5.3 (2021/11/17)</h4>
+                                	<ul>
+										<li> Improvements for Central 2.5.4</li>
+									</ul>
+                                	<h4>Version 1.5.2 (2021/10/27)</h4>
+                                	<ul>
+										<li> Added support for Unlicensing Devices in CSV Workflows</li>
+									</ul>
+									<h4>Version 1.5.1 (2021/10/25)</h4>
+                                	<ul>
+										<li> Exposed the ability not include Client Monitoring (i.e. not get Client information) in <a href="settings.html" target="_blank">Settings</a></li>
+										<ul>
+												<li> Not including Client Monitoring is recommended for networks with lots of clients</li>
+												<li> Not Including reduces API calls</li>
+												<li> Not Including doesn't cache Client Monitoring data in local browser storage (Can hit limitations of local storage in browsers)</li>
+										</ul>
+										<li> Deep links to Central from Client and Device tables now works with Central 2.5.4</li>
+									</ul>
+                                	<h4>Version 1.5.0 (2021/10/22) - <i>"Heavy Lifting"</i></h4>
+                                	<ul>
+										<li> <a href="#group-config-row">Group Configuration</a> editing support added</li>
+										<li> Under the hood improvements for upcoming features</li>
+										<li> Changes relating to Central 2.5.4 support</li>
+									</ul>
+                                	<h4>Version 1.4.5 (2021/10/01)</h4>
+                                	<ul>
+										<li> Client Statistics are now clickable - showing the selected clients that match the statistic</li>
+									</ul>
+									<h4>Version 1.4.4 (2021/08/26)</h4>
+                                	<ul>
+										<li> Reduction in API calls to obtain client and device lists</li>
+										<li> Improvements in AP Zone notifications/error logging</li>
+										<li> Groups with commas (,) in the group name are now skipped - due to API limitation. (unfortunately...)</li>
+										<li> Ground work for upcoming features</li>
+									</ul>
+                                	<h4>Version 1.4.3 (2021/08/23)</h4>
+                                	<ul>
+										<li> Select all groups in WLAN deployment now works as expected</li>
+									</ul>
+                                	<h4>Version 1.4.2 (2021/08/19)</h4>
+                                	<ul>
+										<li> Improvements in handling when the daily API limit is exceeded</li>
+										<li> Improvements in handling paginated API content (reduction in calls)</li>
+									</ul>
+                                	<h4>Version 1.4.1 (2021/08/18)</h4>
+                                	<ul>
+                                		<li> <a href="#experimental-row">AOS-Switch Template Configuration</a> improvements</li>
+											<ul>
+												<li> UI Improvements</li>
+												<li> DNS Server support added (under System tab) for two DNS Servers</li>
+											</ul>
+										<li> AP Zone support in CSV Workflows</li>
+									</ul>
+                                	<h4>Version 1.4.0 (2021/07/12) - <i>"Frankenstein"</i></h4>
+                                	<ul>
+                                		<li> Experimental Features (aka Beta Features!)</li>
+                                			<ul>
+												<li> <a href="#experimental-row">AOS-Switch Template Configuration</a> </li>
+											</ul>
+									</ul>
+									<h4>Version 1.3.6 (2021/07/09)</h4>
+                                	<ul>
+                                		<li> Dark Mode support added</li>
+                                		<li> Dashboard tweaks to improve readability</li>
+									</ul>
+									<h4>Version 1.3.5 (2021/07/02)</h4>
+                                	<ul>
+                                		<li> Improvements to saving the Settings - now redirects back to the Dashboard</li>
+									</ul>
+									<h4>Version 1.3.4 (2021/07/01)</h4>
                                 	<ul>
                                 		<li> Added support for US-WEST4, EU-2 and EU-3 Central Clusters</li>
                                 		<li> Fix for licensing devices when no license type was specified</li>
@@ -710,7 +1189,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 	<ul>
                                 		<li> <a href="#switch-row">Switches using Templates</a> - Variable Verification</li>
 									</ul>
-                                	<h4>Version 1.3 (2021/06/06)</h4>
+                                	<h4>Version 1.3 (2021/06/06) - <i>"Rollout"</i></h4>
                                 	<ul>
                                 		<li> <a href="#dashboard-row">Dashboard</a> layout improvements</li>
                                 		<li> <a href="#switch-row">Stacked Switches using Templates</a> - Variable Syncing</li>
@@ -758,7 +1237,7 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>
                                 	<h4>Version 1.1.2 (2021/05/13)</h4>
                                 	<ul>
-										<li> Improvements to AirMatch last optimization display</li>
+										<li> Improvements to AirMatch last Optimization display</li>
 									</ul>
                                 	<h4>Version 1.1.1 (2021/05/12)</h4>
                                 	<ul>
@@ -868,6 +1347,18 @@ The above copyright notice and this permission notice shall be included in all c
         demo.checkScrollForTransparentNavbar();
         $(window).on('scroll', demo.checkScrollForTransparentNavbar);
     }
+    
+    var account_details = localStorage.getItem('account_details');
+	if (account_details != null && account_details != "undefined") {
+		centralCredentials = JSON.parse(account_details);
+		if (document.getElementById('dashboardLink')) {
+			if  (centralCredentials.length > 1) {
+				document.getElementById('dashboardLink').setAttribute('href', "hydra-dashboard.html");
+			} else {
+				document.getElementById('dashboardLink').setAttribute('href', "dashboard.html");
+			}
+		}
+	}
 </script>
 
 

@@ -5143,7 +5143,7 @@ fieldset[disabled] .form-control {
     background-color: #E5E5E5;
     border-radius: 3px;
     box-shadow: none;
-    height: 4px;
+    height: 10px;
     margin-bottom: 20px;
 }
 
@@ -13584,4 +13584,179 @@ select.selectpicker {
 .slider-danger .noUi-connect,
 .slider-danger.noUi-connect {
     background-color: #FB404B;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #FFFFFF;
+    background: #0A0A0A;
+  }
+  
+  .navbar {
+    border: 0;
+    font-size: 1rem;
+    border-radius: 0;
+    min-height: 50px;
+    max-height: 61px;
+    background-color: #1D1D1D;
+    border-bottom: 1px solid #040404;
+  }
+  
+  .footer {
+    background-color: #1C1D20;
+    width: 100%;
+  }
+  
+  .main-panel .footer {
+    border-top: 1px solid #040404;
+  }
+  
+  .card {
+    border-radius: 4px;
+    border-color: #000;
+    background-color: #1D1D1D;
+    margin-bottom: 30px;
+  }
+  
+  .card-header {
+    background-color: #2D2D2D;
+    border-bottom: 1px solid #040404;
+  }
+  
+  .card-title {
+    font-weight: bold;
+  }
+  
+  .card-body {
+    background-color: #181818;
+  }
+  
+  .card-footer {
+    background-color: #2D2D2D;
+    border-top: 1px solid #040404;
+  }
+
+  .card .card-header {
+    padding: 15px 15px 0;
+    background-color: #1D1D1D;
+    border-bottom: none !important;
+  }
+  
+  .card .card-body {
+    background-color: #1D1D1D;
+  }
+  
+  .card .card-title {
+    margin: 0;
+    color: #FFF;
+    font-weight: 400;
+  }
+  
+  .card .card-category,
+  .card label {
+	  font-size: 0.875rem;
+	  font-weight: 400;
+	  color: #999;
+	  margin-bottom: 0px;
+  }
+  
+  .form-control {
+    background-color: #2D2D2D;
+    border: 1px solid #232323;
+    border-radius: 4px;
+    font-size: .875rem;
+    color: #767676;
+    padding: 8px 12px;
+    height: 40px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+  }
+  
+  .form-control:focus {
+    background-color: #3D3D3D;
+    border: 1px solid #131313;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    outline: 0 !important;
+    color: #DDDDDD;
+  }
+  
+  .form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control {
+    background-color: #2D2D2D;
+  }
+  
+  .navbar .navbar-nav .nav-item .dropdown-menu {
+    border-radius: 10px;
+    margin-top: -5px;
+    background-color: #1D1D1D;
+  }
+  
+  .dropdown-menu .dropdown-item {
+    padding: 8px 16px;
+    color: #999999;
+  }
+  
+  .dropdown-menu .dropdown-item:hover,
+  .dropdown-menu .dropdown-item:focus {
+    background-color: #1D1D1D;
+    color: #FFA534;
+    opacity: 1;
+    text-decoration: none;
+  }
+  
+  .dropdown-menu:after {
+    border: 1px solid #1D1D1D !important;
+    background-color: #1D1D1D;
+  }
+  
+  .dropdown-menu {
+  	background-color: #2D2D2D;
+  }
+  
+  .bootstrap-select .dropdown-menu.inner li a {
+  	color: #CCC;
+  }
+  
+  .card-plain {
+    background-color: transparent;
+    box-shadow: none;
+    border-radius: 4px;
+  }
+
+  .card.card-plain .card-body {
+    background-color: #1E1E1E !important;
+    border-radius: 4px;
+  }
+  
+  .table>thead>tr>th, .table>tbody>tr>th, .table>tfoot>tr>th, .table>thead>tr>td, .table>tbody>tr>td, .table>tfoot>tr>td {
+ 	border-color: #232323;  	
+  }
+  
+  .ct-label {
+  	color: #CCC;
+  }
+  
+  hr {
+  	border-top: 1px solid rgba(255,255,255,.1)
+  }
+   
+  .nav-tabs .nav-item .nav-link.active {
+    background-color: #3d3d3d;
+    color: #CCCCCC;
+    border-color: #666 #666;
+  }
+  
+  .nav-tabs {
+    border-bottom: 1px solid #666;
+  }
+  
+  .bootstrap-select.btn-group.show-tick .dropdown-menu li.selected a span.check-mark {
+    position: absolute;
+    display: inline-block;
+    right: 20px;
+    margin-top: 3px;
+    color: white;
+}
+
+
 }

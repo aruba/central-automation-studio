@@ -12,6 +12,12 @@ Coded by Creative Tim
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
+<!--
+Central Automation v1.3
+Updated: 1.6.0
+Aaron Scott (WiFi Downunder) 2022
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -154,7 +160,7 @@ The above copyright notice and this permission notice shall be included in all c
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Error Log</h4>
+										<h4 class="card-title">Log</h4>
 									</div>
 								<div class="card-body" id="errorBody">
 									
@@ -259,6 +265,18 @@ The above copyright notice and this permission notice shall be included in all c
 					<a data-toggle="modal" data-target="#StackModal" href="#pablo" id="StackModalLink"></a>
 					<a data-toggle="modal" data-target="#VerifyModal" href="#pablo" id="VerifyModalLink"></a>
 					<nav>
+						<ul class="footer-menu">
+							<li>
+								<a href="javascript:checkReachability();">
+									API Proxy Accessibility
+								</a>
+							</li>
+							<li>
+								<a href="https://api.wifidownunder.com" target="_blank" id="api-proxy-link">
+									<i id="aue-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy
+								</a>
+							</li>
+						</ul>
 						<p class="copyright text-center">
 							©
 							<script>
@@ -318,66 +336,70 @@ The above copyright notice and this permission notice shall be included in all c
 <script type="text/javascript">
     $(document).ready(function() {
     
-    	
+    	var reachabilityPromise = new $.Deferred();
+        $.when(checkReachability(reachabilityPromise)).then(function () {
+			console.log("Using "+getAPIURL());
         
-        $('#stacks-table tbody').on('click', 'tr', function(){
-			// grab index of the clicked role
+			$('#stacks-table tbody').on('click', 'tr', function(){
+				// grab index of the clicked role
 			
-			var row = $(this).children(); 
-			var data = $('#stacks-table').DataTable().row(row).data();
-			var commanderSerial = data[2];
-			var stackName = data[1];
-			var stack_id = data[0];
-			loadStackUI(stack_id, commanderSerial, stackName);
-		})
+				var row = $(this).children(); 
+				var data = $('#stacks-table').DataTable().row(row).data();
+				var commanderSerial = data[2];
+				var stackName = data[1];
+				var stack_id = data[0];
+				loadStackUI(stack_id, commanderSerial, stackName);
+			})
 		
 		
 
-		$('#stacks-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			"order": [[ 1, "asc" ]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Stacks",
-			},
-			"columnDefs": [{
-                "targets": [ 0 ],
-                "visible": false,
-                "searchable": false
-            }]
+			$('#stacks-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				"order": [[ 1, "asc" ]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Stacks",
+				},
+				"columnDefs": [{
+					"targets": [ 0 ],
+					"visible": false,
+					"searchable": false
+				}]
+			});
+		
+			$('#template-switch-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Switches",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 2 }]
+			});
+		
+			var refreshrate = localStorage.getItem('refresh_rate');
+			if (refreshrate === null || refreshrate === "") {
+				refreshrate = "30";
+			}
+
+			loadMonitoringData(refreshrate);
+			setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+	
+			getSwitchStacks();
+			setInterval(getSwitchStacks, parseInt(refreshrate)*60000);
 		});
-		
-		$('#template-switch-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Switches",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }]
-		});
-		
-		var refreshrate = localStorage.getItem('refresh_rate');
-		if (refreshrate === null || refreshrate === "") {
-			refreshrate = "30";
-		}
-    	loadMonitoringData(refreshrate);
-        setInterval(getMonitoringData, parseInt(refreshrate)*60000);
-    
-    	getSwitchStacks();
-        setInterval(getSwitchStacks, parseInt(refreshrate)*60000);
-		
 		
     	
     });
 </script>
 <!--   Main JS Files   -->
 <script src="assets/js/main.js"></script>
+<script src="assets/js/hydra.js"></script>
 <script src="assets/js/switching.js"></script>
 
 

@@ -12,6 +12,12 @@ Coded by Creative Tim
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
+<!--
+Central Automation v1.3
+Updated: 1.6.0
+Aaron Scott (WiFi Downunder) 2022
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -378,6 +384,11 @@ The above copyright notice and this permission notice shall be included in all c
 										</div>
 									</div>
 								</div>
+								<div class="card-footer ">
+									<div class="col-md-12">
+										<a class="btn btn-fill btn-info" href="monitoring-reboot.html">Reboot APs</a>
+									</div>
+								</div>
 							</div>
 						</div>
 						
@@ -444,6 +455,7 @@ The above copyright notice and this permission notice shall be included in all c
 													<th>Site</th>
 													<th>Group</th>
 													<th>MAC Address</th>
+													<th>Last Reboot Reason</th>
 												</thead>
 												<tbody>
 												</tbody>
@@ -495,7 +507,7 @@ The above copyright notice and this permission notice shall be included in all c
 			</div>
 			<!--  End Modal -->
 			<!-- Group Modal -->
-			<div class="modal fade modal-small modal-primary" id="GroupModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			<div class="modal fade modal-mini modal-primary" id="GroupModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
 					<div class="modal-content">
 						<div class="row">
@@ -509,6 +521,8 @@ The above copyright notice and this permission notice shall be included in all c
 											<table id="group-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 												<thead>
 													<th>Name</th>
+													<th>Wired Template</th>
+													<th>Wireless Template</th>
 												</thead>
 												<tbody>
 												</tbody>
@@ -529,7 +543,7 @@ The above copyright notice and this permission notice shall be included in all c
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Error Log</h4>
+										<h4 class="card-title">Log</h4>
 									</div>
 								<div class="card-body" id="errorBody">
 									
@@ -638,6 +652,18 @@ The above copyright notice and this permission notice shall be included in all c
 					<a data-toggle="modal" data-target="#UniversalModal" href="#pablo" id="UniversalModalLink"></a>
 					<a data-toggle="modal" data-target="#WLANModal" href="#pablo" id="WLANModalLink"></a>
 					<nav>
+						<ul class="footer-menu">
+							<li>
+								<a href="javascript:checkReachability();">
+									API Proxy Accessibility
+								</a>
+							</li>
+							<li>
+								<a href="https://api.wifidownunder.com" target="_blank" id="api-proxy-link">
+									<i id="aue-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy
+								</a>
+							</li>
+						</ul>
 						<p class="copyright text-center">
 							©
 							<script>
@@ -695,216 +721,156 @@ The above copyright notice and this permission notice shall be included in all c
 <script src="assets/js/plugins/ip-address.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-    
-		$(".clickable-row").click(function() {
-			var clickedRow = $(this).data("href");
-			generateCSVForSite(clickedRow);
-    	});
-    	
-    	$('#client-table tbody').on('click', 'tr', function(){
-			// grab MAC address of clicked client
-			var row = $(this).children(); 
-			var value=$(this).find('td:first').html();
-			var macaddr = row.eq(2).html();
-			// construct URL to open in new window/table
-			var apiURL = localStorage.getItem('base_url')
-			var clientURL = centralURLs[0][apiURL]+"/frontend/#/CLIENTDETAIL/"+macaddr;
-			window.open(clientURL, '_blank');
-		})
-    	
-    	$('#ap-table tbody').on('click', 'tr', function(){
-			// grab MAC address of clicked client
-			var row = $(this).children(); 
-			var value=$(this).find('td:first').html();
-			var serial = row.eq(4).html();
-			// construct URL to open in new window/table
-			var apiURL = localStorage.getItem('base_url')
-			var clientURL = centralURLs[0][apiURL]+"/frontend/#/APDETAILV2/"+serial;
-			window.open(clientURL, '_blank');
-		})
-		
-		$('#switch-table tbody').on('click', 'tr', function(){
-			// grab MAC address of clicked client
-			var row = $(this).children(); 
-			var value=$(this).find('td:first').html();
-			var serial = row.eq(4).html();
-			// construct URL to open in new window/table
-			var apiURL = localStorage.getItem('base_url')
-			var clientURL = centralURLs[0][apiURL]+"/frontend/#/SWITCHDETAILS/"+serial;
-			window.open(clientURL, '_blank');
-		})
-		
-		$('#gateway-table tbody').on('click', 'tr', function(){
-			// grab MAC address of clicked client
-			var row = $(this).children(); 
-			var value=$(this).find('td:first').html();
-			var serial = row.eq(4).html();
-			// construct URL to open in new window/table
-			var apiURL = localStorage.getItem('base_url')
-			var clientURL = centralURLs[0][apiURL]+"/frontend/#/GATEWAYDETAIL/OVERVIEW/"+serial;
-			window.open(clientURL, '_blank');
-		})
-		
-		$('#universal-table tbody').on('click', 'tr', function(){
-			// grab MAC address of clicked client
-			var row = $(this).children(); 
-			var value=$(this).find('td:first').html();
-			var macaddr = row.eq(4).html();
-			var serial = row.eq(10).html();
-			var type = row.eq(0).html();
+    	var reachabilityPromise = new $.Deferred();
+        $.when(checkReachability(reachabilityPromise)).then(function () {
+			console.log("Using "+getAPIURL());
 			
-			// construct URL to open in new window/table
-			var apiURL = localStorage.getItem('base_url')
-			var destinationURL = "";
-			if (type === "Client") {
-				destinationURL = centralURLs[0][apiURL]+"/frontend/#/CLIENTDETAIL/"+macaddr;
-			} else if (type == "AP") {
-				destinationURL = centralURLs[0][apiURL]+"/frontend/#/APDETAILV2/"+serial;
-			} else if (type == "Switch") {
-				destinationURL = centralURLs[0][apiURL]+"/frontend/#/SWITCHDETAILS/"+serial;
-			} else if (type == "Gateway") {
-				destinationURL = centralURLs[0][apiURL]+"/frontend/#/GATEWAYDETAIL/OVERVIEW/"+serial;
-			}
-			window.open(destinationURL, '_blank');
-		})
+			$(".clickable-row").click(function() {
+				var clickedRow = $(this).data("href");
+				generateCSVForSite(clickedRow);
+			});
 		
-		$('#client-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": true,
-			"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Clients",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 3 }]
-		});
-    	
-		
-		$('#ap-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search APs",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }]
-		});
-		
-		$('#switch-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Switches",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }]
-		});
-		
-		$('#gateway-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Gateways",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }]
-		});
-		
-		$('#site-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Sites",
-			}
-		});
-		
-		$('#group-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Groups",
-			}
-		});
-		
-		$('#universal-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Devices",
-			}
-		});
-		
-		document.getElementById('searchForm').addEventListener('submit', function(e) {
-			e.preventDefault();
-			$('#universal-table').DataTable().rows().draw();
-			$('#UniversalModalLink').trigger('click');
-			$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
-		}, false);
+			$('#client-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": true,
+				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Clients",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 3 }],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
 		
 		
-		$('#wlan-table tbody').on('click', 'tr', function(){
-			// grab index of the clicked role
+			$('#ap-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 2 }],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+		
+			$('#switch-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Switches",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 2 }],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+		
+			$('#gateway-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Gateways",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 2 }],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+		
+			$('#site-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Sites",
+				}
+			});
+		
+			$('#group-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Groups",
+				}
+			});
+		
+			$('#universal-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Devices",
+				},
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+		
+			document.getElementById('searchForm').addEventListener('submit', function(e) {
+				e.preventDefault();
+				$('#universal-table').DataTable().rows().draw();
+				$('#UniversalModalLink').trigger('click');
+				$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
+			}, false);
+		
+		
+			$('#wlan-table tbody').on('click', 'tr', function(){
+				// grab index of the clicked role
 			
-			var row = $(this).children(); 
-			var data = $('#wlan-table').DataTable().row(row).data();
-			var wlanIndex = data[0];
-			loadWLANUI(wlanIndex);
-		})
+				var row = $(this).children(); 
+				var data = $('#wlan-table').DataTable().row(row).data();
+				var wlanIndex = data[0];
+				loadWLANUI(wlanIndex);
+			})
 
-		$('#wlan-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": false,
-			"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-			"order": [[ 1, "asc" ]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search WLANs",
-			},
-			"columnDefs": [{
-                "targets": [ 0 ],
-                "visible": false,
-                "searchable": false
-            }]
-		});
+			$('#wlan-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				"order": [[ 1, "asc" ]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search WLANs",
+				},
+				"columnDefs": [{
+					"targets": [ 0 ],
+					"visible": false,
+					"searchable": false
+				}]
+			});
 		
-		$('#wlanName').keyup(function(){
-			$(this).css('color', function(){
-			   	return checkForDuplicateWLANName($(this).val()) ? '#fc727a' : 'inherit';
-			}); 
-		});
+			$('#wlanName').keyup(function(){
+				$(this).css('color', function(){
+					return checkForDuplicateWLANName($(this).val()) ? '#fc727a' : 'inherit';
+				}); 
+			});
 		
-		// Check if we need to get the latest data - or can we just load it from localStorage
-		var refreshrate = localStorage.getItem('refresh_rate');
-		if (refreshrate === null || refreshrate === "") {
-			refreshrate = "30";
-		}
-        loadMonitoringData(refreshrate);
-        setInterval(getMonitoringData, parseInt(refreshrate)*60000);
-        
-        getWLANs();
-        setInterval(getWLANs, parseInt(refreshrate)*60000);
-    	
+			// Check if we need to get the latest data - or can we just load it from localStorage
+			var refreshrate = localStorage.getItem('refresh_rate');
+			if (refreshrate === null || refreshrate === "") {
+				refreshrate = "30";
+			}
+		
+			loadMonitoringData(refreshrate);
+			setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+		});    	
     });
 </script>
 <!--   Main JS Files   -->
 <script src="assets/js/main.js"></script>
+<script src="assets/js/hydra.js"></script>
 <script src="assets/js/wlan.js"></script>
 
 

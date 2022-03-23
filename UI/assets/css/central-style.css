@@ -1,6 +1,7 @@
 /*
 Central Automation v1
-© Aaron Scott (WiFi Downunder) 2021
+Updated: 1.9.2
+Aaron Scott (WiFi Downunder) 2022
 */
 
 
@@ -65,6 +66,25 @@ Generated using nucleoapp.com
 .central-icon.circle {
     border-radius: 50%;
 }
+
+/*------------------------
+  section-header
+-------------------------*/
+.central-icon.section-label {
+  display: inline-block;
+  font: normal normal normal 1em/1 'central';
+  speak: none;
+  text-transform: none;
+  /* Better Font Rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 1.375rem;
+  line-height: 30px;
+  font-weight: 300;
+  margin: 30px 0 15px;
+  font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
+}
+
 
 /*------------------------
   list icons
@@ -489,10 +509,105 @@ Generated using nucleoapp.com
   content: "\ea4c";
 }
 
+.ca-chemistry::before {
+  content: "\ea4d";
+}
+
+.ca-maximize-area-1::before {
+  content: "\ea50";
+}
+
+.ca-widget::before {
+  content: "\ea51";
+}
+
+.ca-radar::before {
+  content: "\ea52";
+}
+
+.ca-sun::before {
+  content: "\ea53";
+}
+
+.ca-wifi-off::before {
+  content: "\ea54";
+}
+
+.ca-hierarchy-55::before {
+  content: "\ea55";
+}
+
+.ca-network-communication::before {
+  content: "\ea56";
+}
+
+.ca-cctv::before {
+  content: "\ea57";
+}
+
+.ca-l-remove::before {
+  content: "\ea58";
+}
+
+.ca-window-code::before {
+  content: "\ea59";
+}
+
+.ca-m-delete::before {
+  content: "\ea5b";
+}
+
+.ca-m-search::before {
+  content: "\ea5c";
+}
+
+.ca-scale::before {
+  content: "\ea5d";
+}
+
+.ca-crossroad::before {
+  content: "\ea5e";
+}
+
+.ca-m-check::before {
+  content: "\ea5f";
+}
+
+.ca-box::before {
+  content: "\ea60";
+}
+
+
+
 
 /*------------------------
 	Extra Styling
 -------------------------*/
+
+.card {
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+}
+
+.card .card-header {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.fa-fw {
+  width: 60px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.fa-fw-pointer {
+  width: 60px;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
 .dropdown-menu .dropdown-item i[class*="central-icon"] {
     font-size: 18px;
     text-align: center;
@@ -523,6 +638,26 @@ Generated using nucleoapp.com
     display: block;
     width: 100%;
     padding-top: 30px;
+}
+
+
+.big-cell { 
+	text-align: center;
+}
+
+.big-cell th.dt-center, td.dt-center { 
+	text-align: center; 
+	top: 50%;
+}
+
+.account-table tbody tr td.pointer {
+  cursor: pointer;
+}
+
+.dt-center .btn-sm.btn-round { 
+	margin: 20px;
+	padding: 10px;
+	cursor: pointer;
 }
 
 .clickable-row{
@@ -575,6 +710,11 @@ Generated using nucleoapp.com
     color: #FBE540 !important;
 }
 
+.card-title {
+	display: inline;
+	width: 90%;
+}
+
 
 .nav .navbar-search-form .input-group  {
 	float: right;
@@ -604,6 +744,23 @@ Generated using nucleoapp.com
 
 .navbar .navbar-nav .nav-item .nav-link:hover {
     color: #ff8500;
+}
+
+.refresh-link {
+	padding-top: 6px;
+	float: right;
+}
+
+.refresh-link:hover {
+	color: #ff8500 !important;
+}
+
+td.cellDivider {
+	border-left: 1px solid #e9ecef !important;
+}
+
+th.cellDivider {
+	border-left: 1px solid #e9ecef !important;
 }
 
 input[type=search]::-webkit-search-cancel-button {
@@ -660,6 +817,11 @@ input[type=search]::-webkit-search-cancel-button {
 	text-align: right;
 }
 
+.form-group label.system {
+	padding-top: 18px;
+	text-align: right;
+}
+
 .form-control.textarea {
   height: 300px;
 }
@@ -671,4 +833,61 @@ input[type=search]::-webkit-search-cancel-button {
 
 tr.row_selected td {
 	background-color:#F3A950 !important; 
+}
+
+.progress {
+    background-color: #E5E5E5;
+    border-radius: 3px;
+    box-shadow: none;
+    height: 16px;
+    margin-top: 6px;
+    margin-bottom: 0px;
+}
+
+.progress-percentage {
+	color: #000;
+	display: inherit;
+	padding-left: 0px;
+	margin-left: 6px;
+	text-align: left;
+  	width: 100px;
+}
+
+
+
+
+@media (prefers-color-scheme: dark) {
+  .section-header {
+    padding: 20px 20px 0;
+    border-bottom: none !important;
+    color: #FFF;
+    font-weight: 400;
+  }
+  
+  .card {
+      border-radius: 8px;
+      background-color: #1D1D1D;
+      margin-bottom: 30px;
+      box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+  }
+  
+  .clickable-row td{
+	border-top:none;
+  }
+  
+  td.cellDivider {
+	border-left: 1px solid #444 !important;
+  }
+
+  th.cellDivider {
+	  border-left: 1px solid #444 !important;
+  }
+  
+  .table>tbody>tr:hover {
+      background-color: #212121
+  }
+  
+  .modal-content {
+      background-color: #1D1D1D;
+  }
 }
