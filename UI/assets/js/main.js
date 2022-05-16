@@ -1,6 +1,6 @@
 /*
 Central Automation v1.x
-Last Updated 1.9.2
+Last Updated 1.10
 Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -55,7 +55,6 @@ var clusterNames = [
 	},
 ];
 
-var api_url = 'Replace with API URL';
 var cop_url = 'https://apigw-';
 var reachableProxies = [];
 
@@ -64,6 +63,7 @@ var $SCRIPT_ROOT = '{{ request.script_root|tojson|safe }}';
 var csvData;
 var apiErrorCount = 0;
 var moveCounter = 0;
+var devicesToMove = 0;
 var addCounter = 0;
 var archiveCounter = 0;
 var licenseCounter = 0;
@@ -116,12 +116,14 @@ var magicNames = {};
 var switchPortDetails = {};
 
 const apiLimit = 1000;
+const apiGLCPLimit = 100;
 const apiSiteLimit = 1000;
 const apiGroupLimit = 20;
 const apiMSPLimit = 10;
 var apiMessage = false;
 
 var currentWorkflow = '';
+var movePromise;
 var autoAddPromise;
 var autoArchivePromise;
 var autoLicensePromise;
@@ -138,65 +140,6 @@ var manualCustomer = '';
 
 var existingPassphrase = '';
 var wlanConfig = {};
-
-/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		API Proxy Functions
-	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
-
-// Added: 1.8.3
-function getAPIURL() {
-	return api_url;
-}
-
-// Added: 1.8.3
-// Updated: 1.8.4
-function checkReachability(reachablePromise) {
-	showNotification('ca-api', 'Checking API Proxy reachability...', 'bottom', 'center', 'primary');
-	var testingOrder = [api_url];
-	var reachabilityCounter = 0;
-
-	reachableProxies = [];
-
-	$('#api-proxy-link').html('<i id="api-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy');
-	document.getElementById('api-proxy-link').setAttribute('href', api_url);
-
-	$.each(testingOrder, function() {
-		var settings = {
-			url: this + '/reachable',
-			method: 'GET',
-			timeout: 0,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		};
-
-		$.ajax(settings).done(function(response, statusText, xhr) {
-			reachabilityCounter++;
-			if (xhr.status == 200) {
-				reachableProxies.push(api_url);
-				$(document.getElementById('api-proxy')).removeClass('text-neutral');
-				$(document.getElementById('api-proxy')).removeClass('text-danger');
-				$(document.getElementById('api-proxy')).addClass('text-success');
-			} else {
-				$(document.getElementById('api-proxy')).removeClass('text-neutral');
-				$(document.getElementById('api-proxy')).removeClass('text-success');
-				$(document.getElementById('api-proxy')).addClass('text-danger');
-			}
-
-			if (reachabilityCounter == testingOrder.length) {
-				if (reachableProxies.length == 0) {
-					Swal.fire({
-						title: 'Central API connection failed',
-						text: 'No API Proxy Servers were reachable',
-						icon: 'error',
-					});
-				}
-				if (reachablePromise) reachablePromise.resolve();
-			}
-		});
-	});
-	if (reachablePromise) return reachablePromise.promise();
-}
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Cluster Utility functions
@@ -793,6 +736,7 @@ function getMonitoringData() {
 
 	// Try and refresh the token
 	showNotification('ca-contactless-card', 'Updating Monitoring Data...', 'bottom', 'center', 'info');
+	showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/auth/refresh',
 		method: 'POST',
@@ -1994,7 +1938,7 @@ function getAPInventory(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=all_ap&limit=' + apiLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=all_ap&limit=' + apiGLCPLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 		complete: function() {
@@ -2021,8 +1965,8 @@ function getAPInventory(offset) {
 				apInventoryCount = response.total;
 			}
 			apInventory = apInventory.concat(response.devices);
-			if (offset + apiLimit < response.total) getAPInventory(offset + apiLimit); // if there are still objects to get
-			//console.log(apInventory)
+			if (offset + apiGLCPLimit < response.total) getAPInventory(offset + apiGLCPLimit); // if there are still objects to get
+			//console.log(apInventory);
 		}
 	});
 
@@ -2042,7 +1986,7 @@ function getSwitchInventory(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=switch&limit=' + apiLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=switch&limit=' + apiGLCPLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 		complete: function() {
@@ -2069,7 +2013,7 @@ function getSwitchInventory(offset) {
 				switchInventoryCount = response.total;
 			}
 			switchInventory = switchInventory.concat(response.devices);
-			if (offset + apiLimit < response.total) getSwitchInventory(offset + apiLimit); // if there are still objects to get
+			if (offset + apiGLCPLimit < response.total) getSwitchInventory(offset + apiGLCPLimit); // if there are still objects to get
 		}
 	});
 
@@ -2089,7 +2033,7 @@ function getGatewayInventory(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=gateway&limit=' + apiLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=gateway&limit=' + apiGLCPLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 		complete: function() {
@@ -2116,12 +2060,17 @@ function getGatewayInventory(offset) {
 				gatewayInventoryCount = response.total;
 			}
 			gatewayInventory = gatewayInventory.concat(response.devices);
-			if (offset + apiLimit < response.total) getGatewayInventory(offset + apiLimit); // if there are still objects to get
+			if (offset + apiGLCPLimit < response.total) getGatewayInventory(offset + apiGLCPLimit); // if there are still objects to get
 			//console.log(apInventory)
 		}
 	});
 
 	return gatewayPromise.promise();
+}
+
+// Added in 1.10
+function getFullInventory() {
+	return [...apInventory, ...switchInventory, ...gatewayInventory];
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2468,6 +2417,7 @@ function checkForLicensingCompletion() {
 	}
 }
 
+// Will be removed in next release...
 /* OLD Code - pre-v1.5.3
 function licenseDevicesFromCSV(msp) {
 	showNotification("ca-license-key", "Licensing devices...", "bottom", "center", 'info');
@@ -2691,7 +2641,7 @@ function licenseDevicesFromCSV(msp) {
 			}),
 		};
 		licenseCounter = licenseCounter + value.length;
-		console.log('Licensing with ' + key + ': ' + JSON.stringify(value));
+		logInformation('Licensing with ' + key + ': ' + JSON.stringify(value));
 
 		$.ajax(settings).done(function(response) {
 			//console.log(response);
@@ -2919,10 +2869,12 @@ function showCustomerGroup() {
 	}
 }
 
+// Old moveDevicesToGroup code will be removed in next release...
+/*
 function moveDevicesToGroup() {
-	/*  
-		Move each device to the correct group
-	*/
+	
+	// Move each device to the correct group
+	
 	showNotification('ca-folder-replace', 'Moving devices into groups...', 'bottom', 'center', 'info');
 	moveCounter = 0;
 	$.each(csvData, function() {
@@ -2970,7 +2922,7 @@ function moveDevicesToGroup() {
 						mgd.style.display = 'none';
 					}
 				} else {
-					console.log('Automation: Move to Group complete');
+					logInformation('Automation: Move to Group complete');
 					autoGroupPromise.resolve();
 				}
 			}
@@ -2979,6 +2931,110 @@ function moveDevicesToGroup() {
 	if (currentWorkflow !== '') {
 		return autoGroupPromise.promise();
 	}
+}
+*/
+
+// Updated in version 1.10
+function moveDevicesToGroup() {
+	/*  
+		Move each device to the correct group
+	*/
+	showNotification('ca-folder-replace', 'Moving devices into groups...', 'bottom', 'center', 'info');
+	moveCounter = 0;
+	var groupsToUse = {};
+
+	devicesToMove = 0;
+	// Build lists of devices for each Group
+	$.each(csvData, function() {
+		var selectedGroup = manualGroup;
+		if (this['GROUP'].trim()) selectedGroup = this['GROUP'].trim();
+
+		var groupDevices = [];
+		if (groupsToUse[selectedGroup]) {
+			// grab existing list for this group
+			groupDevices = groupsToUse[selectedGroup];
+		}
+		// add device to the list
+		groupDevices.push(this['SERIAL'].trim());
+		// save the list back into the dictionary
+		groupsToUse[selectedGroup] = groupDevices;
+		devicesToMove++;
+	});
+
+	// For each Group, move the devices in bulk (not a call per device)
+	for (const [groupName, serialsToMove] of Object.entries(groupsToUse)) {
+		var serialArray = serialsToMove;
+
+		// Need to split up into 50 device blocks (API limitation)
+		while (serialArray.length > 0) {
+			var serialBlock = [];
+			serialBlock = serialArray.splice(0, 50);
+			console.log('Adding Devices to ' + groupName + ': ' + JSON.stringify(serialBlock));
+
+			// Move the block of serials in separate function to avoid variable changing between API call and response (due to looping) - enables better error and completion tracking
+			$.when(performDeviceMove(groupName, serialBlock, new $.Deferred())).then(function() {
+				// check for completion after each bulk move
+				if (moveCounter == devicesToMove) {
+					if (currentWorkflow === '') {
+						if (apiErrorCount != 0) {
+							showLog();
+							Swal.fire({
+								title: 'Move Failure',
+								text: 'Some or all devices failed to move to the specified group(s)',
+								icon: 'error',
+							});
+						} else {
+							Swal.fire({
+								title: 'Move Success',
+								text: 'All devices were to moved to the specified group(s)',
+								icon: 'success',
+							});
+						}
+						//console.log(manualGroup)
+						if (manualGroup) {
+							manualGroup = '';
+							var mgd = document.getElementById('manualGroupDiv');
+							mgd.style.display = 'none';
+						}
+					} else {
+						logInformation('Automation: Move to Group complete');
+						autoGroupPromise.resolve();
+					}
+				}
+			});
+		}
+	}
+	if (currentWorkflow !== '') {
+		return autoGroupPromise.promise();
+	}
+}
+
+// Added in version 1.10
+function performDeviceMove(groupName, serialNumbers, movePromiseVar) {
+	// Perform actual device move and update the counters/log
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/devices/move',
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify({ group: groupName, serials: serialNumbers }),
+		}),
+	};
+
+	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('error_code') || response !== 'Success') {
+			logError(response.description);
+			moveErrorCounter++;
+		}
+		moveCounter = moveCounter + serialNumbers.length;
+		movePromiseVar.resolve();
+	});
+	return movePromiseVar.promise();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3035,7 +3091,7 @@ function createSiteFromCSV() {
 							logError(response.description + ': ' + currentSite);
 						}
 					} else if (response.hasOwnProperty('site_name')) {
-						console.log(currentSite + ' added successfully');
+						logInformation(currentSite + ' added successfully');
 					}
 					siteCreationCount++;
 					if (siteCreationCount >= csvData.length) {
@@ -3105,7 +3161,7 @@ function createSite() {
 					logError(response.description + ': ' + currentSite);
 				}
 			} else if (response.hasOwnProperty('site_name')) {
-				console.log(currentSite + ' added successfully');
+				logInformation(currentSite + ' added successfully');
 			}
 			if (apiErrorCount != 0) {
 				showLog();
@@ -3217,7 +3273,7 @@ function checkForSiteMoveCompletion() {
 				});
 			}
 		} else {
-			console.log('Automation: Site assignment complete');
+			logInformation('Automation: Site assignment complete');
 			autoSitePromise.resolve();
 		}
 	}
@@ -3256,7 +3312,7 @@ function moveDevicesToSite() {
 				checkForSiteMoveCompletion();
 			} else {
 				if (!foundDevice['site']) {
-					console.log('Not assigned to site');
+					//console.log('Not assigned to site');
 					// add device to site
 					siteId = getIDforSite(currentSite);
 					if (siteId != -1) {
@@ -3268,7 +3324,7 @@ function moveDevicesToSite() {
 					}
 				} else if (foundDevice['site'] !== currentSite) {
 					// remove from old site,  then add to new site
-					console.log('Unassign from site!');
+					//console.log('Unassign from site!');
 					$.when(unassignDeviceFromSite(foundDevice)).then(function() {
 						siteId = getIDforSite(currentSite);
 						if (siteId != -1) {
@@ -3313,13 +3369,13 @@ function checkForRenameCompletion() {
 				});
 			}
 		} else if (currentWorkflow === 'auto-site-rename') {
-			console.log('Automation: Renaming complete');
+			logInformation('Automation: Renaming complete');
 			autoRenamePromise.resolve();
 		} else if (currentWorkflow === 'auto-site-autorename') {
-			console.log('Automation: Magic Renaming complete');
+			logInformation('Automation: Magic Renaming complete');
 			autoMagicRenamePromise.resolve();
 		} else if (currentWorkflow === 'auto-site-autorenameap-portdescriptions') {
-			console.log('Automation: Magic Renaming complete');
+			logInformation('Automation: Magic Renaming complete');
 			autoMagicRenamePromise.resolve();
 		}
 	}
@@ -3338,103 +3394,108 @@ function renameDevices() {
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
-			var currentSerial = this['SERIAL'].trim();
-			var newHostname = this['DEVICE NAME'].trim();
-			if (!newHostname) {
-				logError('Device with Serial Number: ' + currentSerial + ' has no device name in the CSV file');
-				renameCounter = renameCounter + 1;
-				checkForRenameCompletion();
-			} else {
-				var device = findDeviceInInventory(currentSerial);
-				if (!device) {
-					logError('Unable to find device ' + currentSerial + ' in the device inventory');
-					apiErrorCount++;
+			if (this['SERIAL'] && this['DEVICE NAME']) {
+				var currentSerial = this['SERIAL'].trim();
+				var newHostname = this['DEVICE NAME'].trim();
+				if (!newHostname) {
+					logError('Device with Serial Number: ' + currentSerial + ' has no device name in the CSV file');
 					renameCounter = renameCounter + 1;
 					checkForRenameCompletion();
-				} else if (deviceType === 'IAP') {
-					// if AP then get AP settings
-					var settings = {
-						url: getAPIURL() + '/tools/getCommand',
-						method: 'POST',
-						timeout: 0,
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						data: JSON.stringify({
-							url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-							access_token: localStorage.getItem('access_token'),
-						}),
-					};
-
-					$.ajax(settings).done(function(response) {
-						//console.log(response);
-						if (response.hasOwnProperty('error_code')) {
-							logError(response.description);
-							apiErrorCount++;
-							renameCounter = renameCounter + 1;
-							checkForRenameCompletion();
-						} else if (response.hostname === newHostname) {
-							// no need to do anything as the name already matches
-							logInformation('Device ' + currentSerial + " hostname doesn't need to be updated");
-							renameCounter = renameCounter + 1;
-							checkForRenameCompletion();
-						} else {
-							// Update ap settings
-							var settings = {
-								url: getAPIURL() + '/tools/postCommand',
-								method: 'POST',
-								timeout: 0,
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								data: JSON.stringify({
-									url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-									access_token: localStorage.getItem('access_token'),
-									data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: newHostname }),
-								}),
-							};
-
-							$.ajax(settings).done(function(response) {
-								if (response !== currentSerial) {
-									logError(device + ' was not renamed');
-									//console.log(response.reason);
-									apiErrorCount++;
-								}
-								renameCounter = renameCounter + 1;
-								checkForRenameCompletion();
-							});
-						}
-					});
-				} else if (deviceType === 'SWITCH') {
-					// patch the switch template variables
-					var settings = {
-						url: getAPIURL() + '/tools/patchCommand',
-						method: 'POST',
-						timeout: 0,
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						data: JSON.stringify({
-							url: localStorage.getItem('base_url') + '/configuration/v1/devices/' + currentSerial + '/template_variables',
-							access_token: localStorage.getItem('access_token'),
-							data: JSON.stringify({ total: 1, variables: { _sys_hostname: newHostname } }),
-						}),
-					};
-
-					$.ajax(settings).done(function(response) {
-						if (response !== 'Success') {
-							logError('The switch ' + currentSerial + ' was not able to be renamed');
-							apiErrorCount++;
-						}
+				} else {
+					var device = findDeviceInInventory(currentSerial);
+					if (!device) {
+						logError('Unable to find device ' + currentSerial + ' in the device inventory');
+						apiErrorCount++;
 						renameCounter = renameCounter + 1;
 						checkForRenameCompletion();
-					});
-				} else if (deviceType === 'CONTROLLER') {
-					// unsupported
-					logError('The gateway ' + currentSerial + " was not able to be renamed,  as gateway renaming isn't supported yet");
-					renameCounter = renameCounter + 1;
-					checkForRenameCompletion();
+					} else if (deviceType === 'IAP') {
+						// if AP then get AP settings
+						var settings = {
+							url: getAPIURL() + '/tools/getCommand',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
+								access_token: localStorage.getItem('access_token'),
+							}),
+						};
+
+						$.ajax(settings).done(function(response) {
+							//console.log(response);
+							if (response.hasOwnProperty('error_code')) {
+								logError(response.description);
+								apiErrorCount++;
+								renameCounter = renameCounter + 1;
+								checkForRenameCompletion();
+							} else if (response.hostname === newHostname) {
+								// no need to do anything as the name already matches
+								logInformation('Device ' + currentSerial + " hostname doesn't need to be updated");
+								renameCounter = renameCounter + 1;
+								checkForRenameCompletion();
+							} else {
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: newHostname }),
+									}),
+								};
+
+								$.ajax(settings).done(function(response) {
+									if (response !== currentSerial) {
+										logError(device + ' was not renamed');
+										//console.log(response.reason);
+										apiErrorCount++;
+									}
+									renameCounter = renameCounter + 1;
+									checkForRenameCompletion();
+								});
+							}
+						});
+					} else if (deviceType === 'SWITCH') {
+						// patch the switch template variables
+						var settings = {
+							url: getAPIURL() + '/tools/patchCommand',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v1/devices/' + currentSerial + '/template_variables',
+								access_token: localStorage.getItem('access_token'),
+								data: JSON.stringify({ total: 1, variables: { _sys_hostname: newHostname } }),
+							}),
+						};
+
+						$.ajax(settings).done(function(response) {
+							if (response !== 'Success') {
+								logError('The switch ' + currentSerial + ' was not able to be renamed');
+								apiErrorCount++;
+							}
+							renameCounter = renameCounter + 1;
+							checkForRenameCompletion();
+						});
+					} else if (deviceType === 'CONTROLLER') {
+						// unsupported
+						logError('The gateway ' + currentSerial + " was not able to be renamed,  as gateway renaming isn't supported yet");
+						renameCounter = renameCounter + 1;
+						checkForRenameCompletion();
+					}
 				}
+			} else {
+				renameCounter = renameCounter + 1;
+				checkForRenameCompletion();
 			}
 		});
 	});

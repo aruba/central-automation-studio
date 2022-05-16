@@ -14,8 +14,8 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.6.0
-Updated: 1.6.0
-Aaron Scott (WiFi Downunder) 2022
+Updated: 1.10.0
+Copyright Aaron Scott (WiFi Downunder) 2022
 -->
 
 <!DOCTYPE html>
@@ -55,7 +55,7 @@ Aaron Scott (WiFi Downunder) 2022
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a href="hydra-dashboard.html" class="nav-link" id="dashboardLink">
-                                <i class="central-icon ca-dashboard"></i>Dashboard
+                                <i class="central-icon ca-dashboard"></i>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -224,7 +224,7 @@ Aaron Scott (WiFi Downunder) 2022
 						</div>
                     </div>
                     <div class="footer text-center">
-						<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="onFinishSetup()">Save & Go To Dashboard</button>
+						<button type="submit" class="btn btn-fill btn-success btn-wd btn-lg" onclick="onFinishSetup()">Save & Go To Dashboard</button>
 					</div>
 					</div>
 				</div>
@@ -338,18 +338,7 @@ Aaron Scott (WiFi Downunder) 2022
            		<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>	
             	<a data-toggle="modal" data-target="#AccountModal" href="#pablo" id="AccountModalLink"></a>
                 <nav>
-                	<ul class="footer-menu">
-							<li>
-								<a href="javascript:checkReachability();">
-									API Proxy Accessibility
-								</a>
-							</li>
-							<li>
-								<a href="https://api.wifidownunder.com" target="_blank" id="api-proxy-link">
-									<i id="aue-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy
-								</a>
-							</li>
-						</ul>
+                	<ul class="footer-menu" id="api-footer"></ul>
                     <p class="copyright text-center">
                         ©
                         <script>
@@ -455,13 +444,21 @@ Aaron Scott (WiFi Downunder) 2022
 		
 		var portNaming = localStorage.getItem('port_variable_format');
 		if (portNaming != null && portNaming != "undefined") {
-			document.getElementById("port_variable_format").value = portNaming	;
+			document.getElementById("port_variable_format").value = portNaming;
 		}
 		
 		var refreshRate = localStorage.getItem('refresh_rate');
 		if (refreshRate != null && refreshRate != "undefined") {
 			document.getElementById("refresh_rate").value = refreshRate;
 		}
+		
+		var loadClients = localStorage.getItem('load_clients');
+		if (loadClients === null || loadClients === "") {
+			loadClients = true;
+		} else {
+			loadClients = JSON.parse(loadClients)
+		}
+		document.getElementById("load_clients").value = loadClients ? "Include" : "Do Not Include";
         
         var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
@@ -471,6 +468,7 @@ Aaron Scott (WiFi Downunder) 2022
 </script>
 <!--   Main JS Files   -->
 <script src="assets/js/main.js"></script>
+<script src="assets/js/proxy.js"></script>
 <script src="assets/js/hydra-main.js"></script>
 <script src="assets/js/hydra.js"></script>
 

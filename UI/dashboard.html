@@ -463,6 +463,27 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 						</div>
 						<!-- End ClientMatch Page -->
+						<!-- Device Inventory Page -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="deployment-inventory.html">
+								<div class="card-header ">
+									<h4 class="card-title">Device Inventory</h4>
+									<p class="card-category">View and Download from the Device Inventory<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-stock-2 text-warning" id="deployment_inventory_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Device Inventory Page -->
 					</div>
 					<div class="row"><h4 class="section-header">Monitoring Features</h4></div>
 					<div class="row">
@@ -601,14 +622,6 @@ Aaron Scott (WiFi Downunder) 2022
 													</td>
 													<td>Add New Site</td>
 												</tr>
-												<tr class="clickable-row" data-href="mgmt-inventory">
-													<td>
-														<div class="icon-big text-center icon-warning">
-															<i class="central-icon ca-cloud-data-download"></i>
-														</div>
-													</td>
-													<td>Download Device Inventory</td>
-												</tr>
 											</tbody>
 										</table>
 									</div>
@@ -630,9 +643,9 @@ Aaron Scott (WiFi Downunder) 2022
 									<h4 class="card-title">Connected Clients</h4>
 								</div>
 								<div class="card-body">
-									<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
+									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
-											<table id="client-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+											<table id="client-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 												<thead>
 													<th>Name</th>
 													<th>Health</th>
@@ -688,7 +701,6 @@ Aaron Scott (WiFi Downunder) 2022
 												<tbody>
 												</tbody>
 											</table>
-
 										</div>
 									</div>
 								</div>
@@ -731,7 +743,6 @@ Aaron Scott (WiFi Downunder) 2022
 												<tbody>
 												</tbody>
 											</table>
-
 										</div>
 									</div>
 								</div>
@@ -1044,18 +1055,7 @@ Aaron Scott (WiFi Downunder) 2022
 					<a data-toggle="modal" data-target="#AddSiteModal" id="AddSiteModalLink"></a>
 					<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
 					<nav>
-						<ul class="footer-menu">
-							<li>
-								<a href="javascript:checkReachability();">
-									API Proxy Accessibility
-								</a>
-							</li>
-							<li>
-								<a href="https://api.wifidownunder.com" target="_blank" id="api-proxy-link">
-									<i id="aue-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy
-								</a>
-							</li>
-						</ul>
+						<ul class="footer-menu" id="api-footer"></ul>
 						<p class="copyright text-center">
 							©
 							<script>
@@ -1250,6 +1250,7 @@ Aaron Scott (WiFi Downunder) 2022
 </script>
 <!--   Main JS Files   -->
 <script src="assets/js/main.js"></script>
+<script src="assets/js/proxy.js"></script>
 <script src="assets/js/hydra.js"></script>
 
 

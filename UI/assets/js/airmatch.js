@@ -1,7 +1,7 @@
 /*
 Central Automation v1.1.4
 Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
 var rfEvents = [];
@@ -222,7 +222,18 @@ function getEIRPDistribution() {
 				],
 			];
 
-			Chartist.Bar('#eirpChart', data, options, responsiveOptions);
+			var eirpChart = Chartist.Bar('#eirpChart', data, options, responsiveOptions);
+			eirpChart.on('draw', function(data) {
+				if (data.type == 'bar') {
+					data.element.animate({
+						y2: {
+							dur: '0.2s',
+							from: data.y1,
+							to: data.y2,
+						},
+					});
+				}
+			});
 		}
 	});
 }
@@ -295,7 +306,18 @@ function getChannelDistribution() {
 				},
 			],
 		];
-		Chartist.Bar('#channelChart2GHz', data2, options2, responsiveOptions2);
+		var twoGChart = Chartist.Bar('#channelChart2GHz', data2, options2, responsiveOptions2);
+		twoGChart.on('draw', function(data) {
+			if (data.type == 'bar') {
+				data.element.animate({
+					y2: {
+						dur: '0.2s',
+						from: data.y1,
+						to: data.y2,
+					},
+				});
+			}
+		});
 
 		var data5 = {
 			labels: labels5,
@@ -327,7 +349,18 @@ function getChannelDistribution() {
 				},
 			],
 		];
-		Chartist.Bar('#channelChart5GHz', data5, options5, responsiveOptions5);
+		var fiveGChart = Chartist.Bar('#channelChart5GHz', data5, options5, responsiveOptions5);
+		fiveGChart.on('draw', function(data) {
+			if (data.type == 'bar') {
+				data.element.animate({
+					y2: {
+						dur: '0.2s',
+						from: data.y1,
+						to: data.y2,
+					},
+				});
+			}
+		});
 	});
 }
 

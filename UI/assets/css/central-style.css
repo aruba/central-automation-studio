@@ -1,7 +1,7 @@
 /*
 Central Automation v1
 Updated: 1.9.2
-Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
 
@@ -744,6 +744,10 @@ Generated using nucleoapp.com
 
 .navbar .navbar-nav .nav-item .nav-link:hover {
     color: #ff8500;
+}
+
+.reload-link {
+  float: right;
 }
 
 .refresh-link {

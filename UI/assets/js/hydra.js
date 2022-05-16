@@ -1,7 +1,7 @@
 /*
 Central Automation v1.6.0
 Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
 var centralCredentials = [];

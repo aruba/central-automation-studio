@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7.5
 Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
 const innerPoolType = 'INNER_IP_POOL_TYPE';

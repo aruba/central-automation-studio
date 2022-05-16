@@ -1,7 +1,7 @@
 /*
 Central Automation v1.6.0
 Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
 var hydraMonitoringData = {};
@@ -15,6 +15,7 @@ function onFinishSetup() {
 	localStorage.setItem('ap_naming_format', $('#ap_naming_format').val());
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
+	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
 	tokenRefreshForAll();
 }
 
