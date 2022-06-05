@@ -26,6 +26,7 @@ RUN echo "**** install Python ****" && \
 
 RUN echo "installing Flask and gunicorn" && \
     pip install Flask && \
+    pip install requests && \
     pip install -U flask-cors && \
     pip install gunicorn && \
     mkdir /central/API && \
