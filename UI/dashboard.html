@@ -19,7 +19,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.0
-Updated: 1.6.0
+Updated: 1.10.3
 Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -614,6 +614,14 @@ Aaron Scott (WiFi Downunder) 2022
 													</td>
 													<td>Add New Group</td>
 												</tr>
+												<tr class="clickable-row" data-href="mgmt-group-clone">
+													<td>
+														<div class="icon-big text-center icon-warning">
+															<i class="central-icon ca-folder-replace"></i>
+														</div>
+													</td>
+													<td>Clone Group</td>
+												</tr>
 												<tr class="clickable-row" data-href="mgmt-site">
 													<td>
 														<div class="icon-big text-center icon-warning">
@@ -928,6 +936,57 @@ Aaron Scott (WiFi Downunder) 2022
 				</div>
 			</div>
 			<!--  End Modal -->
+			<!-- Clone Group Modal -->
+			<div class="modal fade modal-small modal-primary" id="CloneGroupModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="card-header ">
+							<h4 class="card-title">Clone Group</h4>
+						</div>
+						<div class="card-body ">
+							<form class="form-horizontal">
+								<div class="form-group">
+									<div class="row">
+									<label class="col-md-4">Existing Group</label>
+									<div class="col-md-8">
+										<select id="groupselector" class="selectpicker" data-title="Select a group..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+										</select>
+									</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="row">
+										<label class="col-md-4">New Name</label>
+										<div class="col-md-8">
+											<input type="text" placeholder="Group Name" class="form-control" id="existingGroupName">
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="row">
+										<div class="col-md-11">
+											<div class="form-check">
+												<label class="col-md-4"></label>
+												<label class="form-check-label">
+													<input class="form-check-input" type="checkbox" value="" id="aos10upgrade">
+													<span class="form-check-sign"></span>
+													&nbsp;Upgrade to ArubaOS 10?
+												</label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</div>
+						<div class="card-footer ">
+							<div class="col-md-9">
+								<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="groupBtn" id="groupBtn" onclick="cloneGroup()">Clone Group</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!--  End Modal -->
 			<!-- Add Site Modal -->
 			<div class="modal fade modal-small modal-primary" id="AddSiteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -1052,6 +1111,7 @@ Aaron Scott (WiFi Downunder) 2022
 				<div class="container">
 					<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
 					<a data-toggle="modal" data-target="#AddGroupModal" id="AddGroupModalLink"></a>
+					<a data-toggle="modal" data-target="#CloneGroupModal" id="CloneGroupModalLink"></a>
 					<a data-toggle="modal" data-target="#AddSiteModal" id="AddSiteModalLink"></a>
 					<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
 					<nav>

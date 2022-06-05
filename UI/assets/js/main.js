@@ -61,6 +61,7 @@ var reachableProxies = [];
 var forcedTokenRefresh = true;
 var $SCRIPT_ROOT = '{{ request.script_root|tojson|safe }}';
 var csvData;
+var csvDataCount = 0;
 var apiErrorCount = 0;
 var moveCounter = 0;
 var devicesToMove = 0;
@@ -359,6 +360,7 @@ function showLog() {
 function processCSV(results) {
 	apiErrorCount = 0;
 	csvData = results.data;
+	csvDataCount = csvData.length;
 	forcedTokenRefresh = false;
 	tokenRefresh();
 }
@@ -379,6 +381,8 @@ function loadCSVFile(clickedRow) {
 		complete: function() {
 			if (clickedRow === 'mgmt-group') {
 				$('#AddGroupModalLink').trigger('click');
+			} else if (clickedRow === 'mgmt-group-clone') {
+				$('#CloneGroupModalLink').trigger('click');
 			} else if (clickedRow === 'mgmt-site') {
 				$('#AddSiteModalLink').trigger('click');
 			} else if (clickedRow === 'mgmt-customer') {
@@ -908,7 +912,8 @@ function getWirelessClientData(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/monitoring/v1/clients/wireless?calculate_total=true&limit=' + apiLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/monitoring/v2/clients?calculate_total=true&offset=' + offset + '&limit=' + apiLimit + '&timerange=3H&client_type=WIRELESS&client_status=CONNECTED&show_usage=true&show_manufacturer=true&show_signal_db=true',
+			//url: localStorage.getItem('base_url') + '/monitoring/v1/clients/wireless?calculate_total=true&limit=' + apiLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -956,7 +961,8 @@ function getWiredClientData(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/monitoring/v1/clients/wired?calculate_total=true&limit=' + apiLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/monitoring/v2/clients?calculate_total=true&offset=' + offset + '&limit=' + apiLimit + '&timerange=3H&client_type=WIRED&client_status=CONNECTED&show_usage=true&show_manufacturer=true',
+			//url: localStorage.getItem('base_url') + '/monitoring/v1/clients/wired?calculate_total=true&limit=' + apiLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -1619,7 +1625,7 @@ function loadGroupUI(group) {
 
 	var path = window.location.pathname;
 	var page = path.split('/').pop();
-	if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('deployment-wlan') || page.includes('deployment-group') || page.includes('workflow-msp') || page.includes('migration')) {
+	if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('deployment-wlan') || page.includes('deployment-group') || page.includes('workflow-msp') || page.includes('migration') || page.includes('dashboard')) {
 		// Add site to the dropdown selector
 		$('#groupselector').append($('<option>', { value: group['group'], text: group['group'] }));
 		if ($('.selectpicker').length != 0) {
@@ -1682,7 +1688,7 @@ function getGroupData(offset) {
 					.DataTable()
 					.rows()
 					.remove();
-				if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('workflow-msp') || page.includes('migration') || page.includes('deployment-group')) {
+				if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('workflow-msp') || page.includes('migration') || page.includes('deployment-group') || page.includes('dashboard')) {
 					// remove old groups from the selector
 					select = document.getElementById('groupselector');
 					select.options.length = 0;
@@ -2271,7 +2277,7 @@ function addDevices() {
 
 		//addCounter = addCounter + 1;
 		addCounter = addCounter + devices.length;
-		if (addCounter == csvData.length) {
+		if (addCounter == devices.length) {
 			if (currentWorkflow === '') {
 				if (apiErrorCount != 0) {
 					showLog();
@@ -2542,7 +2548,11 @@ function licenseDevicesFromCSV(msp) {
 		// only process if the Serial is filled in - e.g. not a blank row!
 		if (this['SERIAL']) {
 			var currentSerial = this['SERIAL'].trim();
-			if (currentSerial === '') return true;
+			if (currentSerial === '') {
+				// Blank row
+				licenseCounter++;
+				return true;
+			}
 			var requestedLicense = this['LICENSE'];
 			if (requestedLicense) requestedLicense = requestedLicense.trim();
 			if (!requestedLicense) requestedLicense = 'foundation';
@@ -2569,15 +2579,18 @@ function licenseDevicesFromCSV(msp) {
 				}
 				// check the license skus at https://internal-apigw.central.arubanetworks.com/platform/licensing/v1/services/config
 				// Grab switch model from
-				if (foundDevice['aruba_part_no'].includes('83') || foundDevice['aruba_part_no'].includes('84')) {
+				var arubaPart = foundDevice['aruba_part_no'];
+				if (arubaPart.startsWith('J')) arubaPart = foundDevice['model'];
+
+				if (arubaPart.includes('83') || arubaPart.includes('84')) {
 					license = license + '8300';
-				} else if (foundDevice['aruba_part_no'].includes('6400') || foundDevice['aruba_part_no'].includes('54')) {
+				} else if (arubaPart.includes('6400') || arubaPart.includes('54')) {
 					license = license + '6400';
-				} else if (foundDevice['aruba_part_no'].includes('6300') || foundDevice['aruba_part_no'].includes('38')) {
+				} else if (arubaPart.includes('6300') || arubaPart.includes('38')) {
 					license = license + '6300';
-				} else if (foundDevice['aruba_part_no'].includes('6100') || foundDevice['aruba_part_no'].includes('25')) {
+				} else if (arubaPart.includes('6100') || arubaPart.includes('25')) {
 					license = license + '6100';
-				} else if (foundDevice['aruba_part_no'].includes('6200') || foundDevice['aruba_part_no'].includes('29')) {
+				} else if (arubaPart.includes('6200') || arubaPart.includes('29')) {
 					license = license + '6200';
 				}
 			} else if (deviceType === 'CONTROLLER') {
@@ -2590,17 +2603,17 @@ function licenseDevicesFromCSV(msp) {
 					license = 'foundation_base_7005';
 				} else if (requestedLicense.toLowerCase().includes('advance-base')) {
 					license = 'advance_base_7005';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('foundation') && (foundDevice['aruba_part_no'].includes('70') || foundDevice['aruba_part_no'].includes('90'))) {
+				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('foundation') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
 					license = 'foundation_90xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && (foundDevice['aruba_part_no'].includes('70') || foundDevice['aruba_part_no'].includes('90'))) {
+				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
 					license = 'advance_90xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('foundation') && (foundDevice['aruba_part_no'].includes('70') || foundDevice['aruba_part_no'].includes('90'))) {
+				} else if (requestedLicense.toLowerCase().includes('foundation') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
 					license = 'foundation_70xx';
-				} else if (requestedLicense.toLowerCase().includes('advanced') && (foundDevice['aruba_part_no'].includes('70') || foundDevice['aruba_part_no'].includes('90'))) {
+				} else if (requestedLicense.toLowerCase().includes('advanced') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
 					license = 'advance_70xx';
-				} else if (requestedLicense.toLowerCase().includes('foundation') && foundDevice['aruba_part_no'].includes('72')) {
+				} else if (requestedLicense.toLowerCase().includes('foundation') && arubaPart.includes('72')) {
 					license = 'foundation_72xx';
-				} else if (requestedLicense.toLowerCase().includes('advanced') && foundDevice['aruba_part_no'].includes('72')) {
+				} else if (requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('72')) {
 					license = 'advance_72xx';
 				}
 			}
@@ -2620,6 +2633,10 @@ function licenseDevicesFromCSV(msp) {
 				serials.push(currentSerial);
 				serviceList[license] = serials;
 			}
+		} else {
+			// Empty Row
+			licenseCounter++;
+			checkForLicensingCompletion();
 		}
 	});
 
@@ -2644,10 +2661,15 @@ function licenseDevicesFromCSV(msp) {
 		logInformation('Licensing with ' + key + ': ' + JSON.stringify(value));
 
 		$.ajax(settings).done(function(response) {
-			//console.log(response);
 			if (Array.isArray(response.status)) {
 				if (response.status[0].message.msg) {
 					logError(response.status[0].message.msg);
+				} else {
+					logError('There was an error un-assigning licenses.');
+				}
+			} else if (response.error_code) {
+				if (response.error_code == 400) {
+					logError(response.message);
 				} else {
 					logError('There was an error un-assigning licenses.');
 				}
@@ -2682,7 +2704,7 @@ function licenseDevices() {
 
 // Added in 1.5.2
 function checkForUnlicensingCompletion() {
-	if (licenseCounter == csvData.length) {
+	if (licenseCounter == csvDataCount) {
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -2801,7 +2823,7 @@ function csvContainsGroup() {
 	var containsGroup = true;
 	$.each(csvData, function() {
 		//console.log(this["GROUP"])
-		if (!this['GROUP']) {
+		if (!this['GROUP'] && this['SERIAL']) {
 			containsGroup = false;
 			return false;
 		}
@@ -2854,6 +2876,48 @@ function createGroup() {
 			Swal.fire({
 				title: 'Add Failure',
 				text: 'Group was not able to be created',
+				icon: 'error',
+			});
+		}
+	});
+}
+
+function cloneGroup() {
+	var selectedGroup = document.getElementById('groupselector').value;
+	var groupName = document.getElementById('existingGroupName').value;
+	var upgrade10 = document.getElementById('aos10upgrade').checked;
+
+	if (upgrade10) showNotification('ca-folder-add', 'Upgrading new Group...', 'bottom', 'center', 'info');
+	else showNotification('ca-folder-add', 'Cloning Group...', 'bottom', 'center', 'info');
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v2/groups/clone',
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify({ group: groupName, clone_group: selectedGroup, upgrade_architecture: upgrade10 }),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response === 'Created') {
+			Swal.fire({
+				title: 'Clone Success',
+				text: 'Group was successfully cloned',
+				icon: 'success',
+			});
+			// refresh group data to include new group
+			getGroupData(0);
+		} else {
+			Swal.fire({
+				title: 'Clone Failure',
+				text: 'Group was not able to be cloned',
 				icon: 'error',
 			});
 		}
@@ -2946,21 +3010,21 @@ function moveDevicesToGroup() {
 	devicesToMove = 0;
 	// Build lists of devices for each Group
 	$.each(csvData, function() {
-		var selectedGroup = manualGroup;
-		if (this['GROUP'].trim()) selectedGroup = this['GROUP'].trim();
-
-		var groupDevices = [];
-		if (groupsToUse[selectedGroup]) {
-			// grab existing list for this group
-			groupDevices = groupsToUse[selectedGroup];
+		if (this['SERIAL']) {
+			var selectedGroup = manualGroup;
+			if (this['GROUP'].trim()) selectedGroup = this['GROUP'].trim();
+			var groupDevices = [];
+			if (groupsToUse[selectedGroup]) {
+				// grab existing list for this group
+				groupDevices = groupsToUse[selectedGroup];
+			}
+			// add device to the list
+			groupDevices.push(this['SERIAL'].trim());
+			// save the list back into the dictionary
+			groupsToUse[selectedGroup] = groupDevices;
+			devicesToMove++;
 		}
-		// add device to the list
-		groupDevices.push(this['SERIAL'].trim());
-		// save the list back into the dictionary
-		groupsToUse[selectedGroup] = groupDevices;
-		devicesToMove++;
 	});
-
 	// For each Group, move the devices in bulk (not a call per device)
 	for (const [groupName, serialsToMove] of Object.entries(groupsToUse)) {
 		var serialArray = serialsToMove;
@@ -3027,9 +3091,11 @@ function performDeviceMove(groupName, serialNumbers, movePromiseVar) {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
-		if (response.hasOwnProperty('error_code') || response !== 'Success') {
+		if (response.includes('Controller/Gateway group move has been initiated, please check audit trail for details')) {
+			logInformation('Controller/Gateway group move has been initiated, please check audit trail in Central for details');
+		} else if (response.hasOwnProperty('error_code') || response !== 'Success') {
 			logError(response.description);
-			moveErrorCounter++;
+			apiErrorCount++;
 		}
 		moveCounter = moveCounter + serialNumbers.length;
 		movePromiseVar.resolve();
@@ -3231,6 +3297,7 @@ function assignDeviceToSite(device, site) {
 	};
 
 	return $.ajax(settings).done(function(response) {
+		console.log(response);
 		if (response.status !== '200') {
 			logError(device['serial'] + ' was not assigned to site ' + site);
 		}
@@ -3294,38 +3361,27 @@ function moveDevicesToSite() {
 	// Get the device monitoring data (IAP, Switch, Gateway) to determine device type
 	$.each(csvData, function() {
 		// find device in inventory to get device type
-		var currentSerial = this['SERIAL'].trim();
-		var currentSite = this['SITE'].trim();
-		if (!currentSite) {
-			logError('Device with Serial Number: ' + currentSerial + ' has no site name in the CSV file');
-			moveCounter = moveCounter + 1;
-			checkForSiteMoveCompletion();
-		} else {
-			var found = false;
-			// Check APs
-			// Find the device and type
-			var foundDevice = findDeviceInMonitoring(currentSerial);
-
-			if (!foundDevice) {
-				logError('Device with Serial Number: ' + currentSerial + ' was not found in the device monitoring');
+		if (this['SERIAL'] && this['SITE']) {
+			var currentSerial = this['SERIAL'].trim();
+			var currentSite = this['SITE'].trim();
+			if (!currentSite) {
+				logError('Device with Serial Number: ' + currentSerial + ' has no site name in the CSV file');
 				moveCounter = moveCounter + 1;
 				checkForSiteMoveCompletion();
 			} else {
-				if (!foundDevice['site']) {
-					//console.log('Not assigned to site');
-					// add device to site
-					siteId = getIDforSite(currentSite);
-					if (siteId != -1) {
-						assignDeviceToSite(foundDevice, siteId);
-					} else {
-						logError('Device with Serial Number: ' + currentSerial + ' could not be assigned to an unknown site');
-						moveCounter = moveCounter + 1;
-						checkForSiteMoveCompletion();
-					}
-				} else if (foundDevice['site'] !== currentSite) {
-					// remove from old site,  then add to new site
-					//console.log('Unassign from site!');
-					$.when(unassignDeviceFromSite(foundDevice)).then(function() {
+				var found = false;
+				// Check APs
+				// Find the device and type
+				var foundDevice = findDeviceInMonitoring(currentSerial);
+
+				if (!foundDevice) {
+					logError('Device with Serial Number: ' + currentSerial + ' was not found in the device monitoring');
+					moveCounter = moveCounter + 1;
+					checkForSiteMoveCompletion();
+				} else {
+					if (!foundDevice['site']) {
+						console.log('Not assigned to site');
+						// add device to site
 						siteId = getIDforSite(currentSite);
 						if (siteId != -1) {
 							assignDeviceToSite(foundDevice, siteId);
@@ -3334,13 +3390,30 @@ function moveDevicesToSite() {
 							moveCounter = moveCounter + 1;
 							checkForSiteMoveCompletion();
 						}
-					});
-				} else {
-					// no need to move the device. It's already in the correct site
-					moveCounter = moveCounter + 1;
-					checkForSiteMoveCompletion();
+					} else if (foundDevice['site'] !== currentSite) {
+						// remove from old site,  then add to new site
+						console.log('Unassign from site!');
+						$.when(unassignDeviceFromSite(foundDevice)).then(function() {
+							siteId = getIDforSite(currentSite);
+							if (siteId != -1) {
+								assignDeviceToSite(foundDevice, siteId);
+							} else {
+								logError('Device with Serial Number: ' + currentSerial + ' could not be assigned to an unknown site');
+								moveCounter = moveCounter + 1;
+								checkForSiteMoveCompletion();
+							}
+						});
+					} else {
+						// no need to move the device. It's already in the correct site
+						moveCounter = moveCounter + 1;
+						checkForSiteMoveCompletion();
+					}
 				}
 			}
+		} else {
+			// blank line in CSV
+			moveCounter = moveCounter + 1;
+			checkForSiteMoveCompletion();
 		}
 	});
 	if (currentWorkflow !== '') {
@@ -3556,6 +3629,7 @@ function magicRenameDevices() {
 					} else if (deviceType === 'IAP') {
 						// Grab model number
 						var model = device.aruba_part_no;
+						if (model.startsWith('J')) model = device.model;
 
 						// grab AP number - sequential for each site, and update for next AP.
 						var apNumber = renamingCounters[siteInitials];
