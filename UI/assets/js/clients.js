@@ -756,6 +756,7 @@ function updateClientGraphs() {
 			showGrid: false,
 		},
 		height: '250px',
+		plugins: [Chartist.plugins.tooltip()],
 	};
 
 	Chartist.Bar(
@@ -766,57 +767,57 @@ function updateClientGraphs() {
 			series: [
 				[
 					{
-						meta: 'noAuth6',
+						meta: '6GHz: No Auth',
 						value: countNoAuth6,
 					},
 					{
-						meta: 'mACAuth6',
+						meta: '6GHz: MAC Auth',
 						value: countMACAuth6,
 					},
 					{
-						meta: 'dot1XAuth6',
+						meta: '6GHz: 802.1X',
 						value: countDot1X6,
 					},
 				],
 				[
 					{
-						meta: 'noAuth5',
+						meta: '5GHz: No Auth',
 						value: countNoAuth,
 					},
 					{
-						meta: 'mACAuth5',
+						meta: '5GHz: MAC Auth',
 						value: countMACAuth,
 					},
 					{
-						meta: 'dot1XAuth5',
+						meta: '5GHz: 802.1X',
 						value: countDot1X,
 					},
 				],
 				[
 					{
-						meta: 'noAuth2',
+						meta: '2.4GHz: No Auth',
 						value: countNoAuth2,
 					},
 					{
-						meta: 'mACAuth2',
+						meta: '2.4GHz: MAC Auth',
 						value: countMACAuth2,
 					},
 					{
-						meta: 'dot1XAuth2',
+						meta: '2.4GHz: 802.1X',
 						value: countDot1X2,
 					},
 				],
 				[
 					{
-						meta: 'noAuthW',
+						meta: 'Wired: No Auth',
 						value: countNoAuthW,
 					},
 					{
-						meta: 'mACAuthW',
+						meta: 'Wired: MAC Auth',
 						value: countMACAuthW,
 					},
 					{
-						meta: 'dot1XAuthW',
+						meta: 'Wired: 802.1X',
 						value: countDot1XW,
 					},
 				],
@@ -833,40 +834,40 @@ function updateClientGraphs() {
 		var table = $('#selected-client-table').DataTable();
 		var selectedClients = [];
 		var val = $(this).attr('ct:meta');
-		if (val === 'noAuth5') {
+		if (val === '5GHz: No Auth') {
 			selectedClients = noAuthClients;
 			document.getElementById('selected-title').innerHTML = '5GHz clients using no Authentication';
-		} else if (val === 'mACAuth5') {
+		} else if (val === '5GHz: MAC Auth') {
 			selectedClients = macClients;
 			document.getElementById('selected-title').innerHTML = '5GHz clients using MAC Authentication';
-		} else if (val === 'dot1XAuth5') {
+		} else if (val === '5GHz: 802.1X') {
 			selectedClients = dot1XClients;
 			document.getElementById('selected-title').innerHTML = '5GHz clients using 802.1X Authentication';
-		} else if (val === 'noAuth2') {
+		} else if (val === '2.4GHz: No Auth') {
 			selectedClients = noAuthClients2;
 			document.getElementById('selected-title').innerHTML = '2.4GHz clients using no Authentication';
-		} else if (val === 'mACAuth2') {
+		} else if (val === '2.4GHz: MAC Auth') {
 			selectedClients = macClients2;
 			document.getElementById('selected-title').innerHTML = '2.4GHz clients using MAC Authentication';
-		} else if (val === 'dot1XAuth2') {
+		} else if (val === '2.4GHz: 802.1X') {
 			selectedClients = dot1XClients2;
 			document.getElementById('selected-title').innerHTML = '2.4GHz clients using 802.1X Authentication';
-		} else if (val === 'noAuth6') {
+		} else if (val === '6GHz: No Auth') {
 			selectedClients = noAuthClients6;
 			document.getElementById('selected-title').innerHTML = '6GHz clients using no Authentication';
-		} else if (val === 'mACAuth6') {
+		} else if (val === '6GHz: MAC Auth') {
 			selectedClients = macClients6;
 			document.getElementById('selected-title').innerHTML = '6GHz clients using MAC Authentication';
-		} else if (val === 'dot1XAuth6') {
+		} else if (val === '6GHz: 802.1X') {
 			selectedClients = dot1XClients6;
 			document.getElementById('selected-title').innerHTML = '6GHz clients using 802.1X Authentication';
-		} else if (val === 'noAuthW') {
+		} else if (val === 'Wired: No Auth') {
 			selectedClients = noAuthClientsW;
 			document.getElementById('selected-title').innerHTML = 'Wired clients using no Authentication';
-		} else if (val === 'mACAuthW') {
+		} else if (val === 'Wired: MAC Auth') {
 			selectedClients = macClientsW;
 			document.getElementById('selected-title').innerHTML = 'Wired clients using MAC Authentication';
-		} else if (val === 'dot1XAuthW') {
+		} else if (val === 'Wired: 802.1X') {
 			selectedClients = dot1XClientsW;
 			document.getElementById('selected-title').innerHTML = 'Wired clients using 802.1X Authentication';
 		}

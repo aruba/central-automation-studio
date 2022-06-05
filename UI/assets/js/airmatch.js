@@ -146,7 +146,7 @@ function getEIRPDistribution() {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log("EIRP Distribution: "+ JSON.stringify(response))
+		//console.log('EIRP Distribution: ' + JSON.stringify(response));
 		// Build labels and sort them
 
 		for (let k in response['6ghz']) {
@@ -203,9 +203,10 @@ function getEIRPDistribution() {
 				},
 				axisY: {
 					onlyInteger: true,
-					offset: 0,
+					offset: 30,
 				},
 				height: '200px',
+				plugins: [Chartist.plugins.tooltip()],
 			};
 
 			var responsiveOptions = [
@@ -258,7 +259,7 @@ function getChannelDistribution() {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
-		console.log(response);
+		//console.log(response);
 		//console.log("Channel Distribution: "+ JSON.stringify(response))
 		$.each(response, function() {
 			if (this['band'] === '2.4GHz') {
@@ -288,9 +289,10 @@ function getChannelDistribution() {
 			},
 			axisY: {
 				onlyInteger: true,
-				offset: 20,
+				offset: 30,
 			},
 			height: '200px',
+			plugins: [Chartist.plugins.tooltip()],
 		};
 
 		var responsiveOptions2 = [
@@ -331,9 +333,10 @@ function getChannelDistribution() {
 			},
 			axisY: {
 				onlyInteger: true,
-				offset: 20,
+				offset: 30,
 			},
 			height: '200px',
+			plugins: [Chartist.plugins.tooltip()],
 		};
 
 		var responsiveOptions5 = [
