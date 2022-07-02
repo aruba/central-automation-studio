@@ -1,0 +1,514 @@
+/*
+Central Automation v1.7
+Updated: 1.8.2
+© Aaron Scott (WiFi Downunder) 2022
+*/
+
+var selectedClusters = {};
+var selectedDevices = {};
+var clusterInfo = {};
+var deviceInfo = {};
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		Global functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function loadCurrentPageAP() {
+	getDevices();
+}
+
+function getDevices() {
+	selectedClusters = {};
+
+	var fullAPList = getAPs();
+	clusterInfo = {};
+	$.each(fullAPList, function() {
+		// Add the device for the APs list
+		deviceInfo[this['serial']] = this;
+	});
+
+	loadDevicesTable(false);
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		Device functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function updateSelectedDevices(serial) {
+	var rowSelected = document.getElementById(serial).checked;
+	if (!rowSelected) document.getElementById('device-select-all').checked = false;
+
+	if (selectedDevices[serial] && !rowSelected) delete selectedDevices[serial];
+	else selectedDevices[serial] = serial;
+}
+
+function selectAllDevices() {
+	var checkBoxChecked = false;
+	if (Object.keys(selectedDevices).length < Object.keys(deviceInfo).length) {
+		checkBoxChecked = true;
+		for (const [key, value] of Object.entries(deviceInfo)) {
+			if (!selectedDevices[key]) selectedDevices[key] = key;
+		}
+	} else {
+		selectedDevices = {};
+	}
+
+	loadDevicesTable(checkBoxChecked);
+}
+
+function loadDevicesTable(checked) {
+	$('#device-table')
+		.DataTable()
+		.rows()
+		.remove();
+	for (const [key, value] of Object.entries(deviceInfo)) {
+		var device = value;
+
+		// Build Status dot
+		var status = '<i class="fa fa-circle text-danger"></i>';
+		if (device['status'] == 'Up') {
+			status = '<i class="fa fa-circle text-success"></i>';
+		}
+
+		// Build troubleshooting links
+		var tshootBtns = '';
+		if (device['status'] == 'Up') {
+			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugSystemStatus(\'' + device.serial + '\')">System</button> ';
+
+			$.each(device.radios, function() {
+				// no support for radio 3 (6GHz) in troubleshooting APIs
+				if (this.band < 2 && this.status == 'Up') tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugRadioStats(\'' + device.serial + "','" + this.index + '\')">' + this.radio_name.replace('Radio ', '') + '</button> ';
+			});
+		}
+
+		// Add AP to table
+		var table = $('#device-table').DataTable();
+		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], tshootBtns]);
+	}
+	$('#device-table')
+		.DataTable()
+		.rows()
+		.draw();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Radio-stats Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function debugRadioStats(deviceSerial, radioBand) {
+	var data = '';
+	if (radioBand == 0) data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 105 }] });
+	else if (radioBand == 1) data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 107 }] });
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkDebugRadioResult, 5000, response.session_id, response.serial, radioBand);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkDebugRadioResult, 10000, session_id, response.serial, radioBand);
+			} else if (response.status === 'COMPLETED') {
+				var results = decodeURI(response.output);
+
+				// convert to JSON structure
+				var startString = '-------------------              General';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var block = results.substring(startLocation);
+				var lines = block.split('\n');
+				var output = {};
+				$.each(lines, function() {
+					var name = this.substring(0, 32).trim();
+					var result = parseInt(this.substring(32).trim());
+					if (!name.includes('---------') && !name.includes('===') && name !== '' && !name.includes('Parameter') && !name.includes('ANUL RADIO Stats')) output[name] = result;
+				});
+				//console.log(output);
+				var deviceDetails = findDeviceInMonitoring(response.serial);
+				var bandString = '';
+				if (radioBand == 0) bandString = '5GHz';
+				else if (radioBand == 1) bandString = '2.4GHz';
+				else radioString = '6GHz';
+				// Populate the RadioStats Modal
+				document.getElementById('radioStatsTitle').innerHTML = '<strong>' + bandString + '</strong> Radio Stats for <strong>' + deviceDetails.name + '</strong>';
+
+				// General Column
+				$('#generalRFIssues').empty();
+				$('#generalRFIssues').append('<li>Total Radio Resets: <strong>' + output['Total Radio Resets'] + '</strong></li>');
+				$('#generalRFIssues').append('<li>Power Changes: <strong>' + output['TX Power Changes'] + '</strong></li>');
+				$('#generalRFIssues').append('<li>Channel Changes: <strong>' + output['Channel Changes'] + '</strong></li>');
+				$('#generalRFIssues').append('<li>&nbsp;</li>');
+				$('#generalRFIssues').append('<li>EIRP: <strong>' + output['EIRP'] + 'dBm</strong></li>');
+				$('#generalRFIssues').append('<li>Noise Floor: <strong>-' + output['Current Noise Floor'] + 'dBm</strong></li>');
+
+				// Tx Column
+				$('#txIssues').empty();
+				$('#txIssues').append('<li>Channel Busy 1s: <strong>' + output['Channel Busy 1s'] + '</strong></li>');
+				$('#txIssues').append('<li>Channel Busy 4s: <strong>' + output['Channel Busy 4s'] + '</strong></li>');
+				$('#txIssues').append('<li>Channel Busy 64s: <strong>' + output['Channel Busy 64s'] + '</strong></li>');
+				$('#txIssues').append('<li>&nbsp;</li>');
+
+				var txRetryDrop = 0;
+				if (output['Tx Dropped After Retry']) txRetryDrop = output['Tx Dropped After Retry'];
+				if (txRetryDrop > 0) $('#txIssues').append('<li>Dropped After Retry: <strong>' + txRetryDrop + '</strong></li>');
+
+				var txNoBufferDrop = 0;
+				if (output['Tx Dropped No Buffer']) txNoBufferDrop = output['Tx Dropped No Buffer'];
+				if (txNoBufferDrop > 0) $('#txIssues').append('<li>Dropped No Buffer: <strong>' + txNoBufferDrop + '</strong></li>');
+
+				var failedBeacons = 0;
+				if (output['Tx Failed Beacons']) failedBeacons = output['Tx Failed Beacons'];
+				if (failedBeacons > 0) $('#txIssues').append('<li>Failed Beacons: <strong>' + failedBeacons + '</strong></li>');
+
+				var txTimeouts = 0;
+				if (output['TX Timeouts']) txTimeouts = output['TX Timeouts'];
+				if (txTimeouts > 0) $('#txIssues').append('<li>Dropped No Buffer: <strong>' + txTimeouts + '</strong></li>');
+
+				var txCarrier = 0;
+				if (output['Lost Carrier Events']) txCarrier = output['Lost Carrier Events'];
+				if (txCarrier > 0) $('#txIssues').append('<li>Lost Carrier Events: <strong>' + txCarrier + '</strong></li>');
+
+				// Rx Column
+				$('#rxIssues').empty();
+				var lprt = 0;
+				if (output['Probe Request Rejects']) lprt = output['Probe Request Rejects'];
+				if (lprt > 0) $('#rxIssues').append('<li>Low Probe Threshold Rejects: <strong>' + lprt + '</strong></li>');
+
+				var art = 0;
+				if (output['Auth Request Rejects']) art = output['Auth Request Rejects'];
+				if (art > 0) $('#rxIssues').append('<li>Auth Request Rejects: <strong>' + art + '</strong></li>');
+
+				$('#rxIssues').append('<li>Radar Events: <strong>' + output['Rx RADAR Events'] + '</strong></li>');
+
+				var assocRejects = 0;
+				if (output['ANUL Assoc Rejects']) assocRejects = output['ANUL Assoc Rejects'];
+				if (assocRejects > 0) $('#rxIssues').append('<li>Association Rejects: <strong>' + assocRejects + '</strong></li>');
+
+				var authRejects = 0;
+				if (output['ANUL Auth Rejects']) authRejects = output['ANUL Auth Rejects'];
+				if (authRejects > 0) $('#rxIssues').append('<li>Authentication Rejects: <strong>' + authRejects + '</strong></li>');
+
+				var maxStaLimit = output['ANUL Max STA Rejects'];
+				if (maxStaLimit > 0) $('#rxIssues').append('<li>Max Station Threshold Rejects: <strong>' + maxStaLimit + '</strong></li>');
+
+				document.getElementById('radioStatsText').innerHTML = results;
+				$('#RadioStatsModalLink').trigger('click');
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
+		}
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	System Status Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function debugSystemStatus(deviceSerial) {
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 113 }] });
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkDebugSystemStatus, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkDebugSystemStatus(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkDebugSystemStatus, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				console.log(response.output);
+				//var results = decodeURI(response.output);
+				var results = response.output;
+
+				// Command Run Time
+				var startString = 'Output Time: ';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var runTime = results.substring(startLocation, endLocation).trim();
+
+				// Populate the SystemStatus Modal
+				var deviceDetails = findDeviceInMonitoring(response.serial);
+				document.getElementById('systemStatusTitle').innerHTML = 'System Status for ' + deviceDetails.name; // + ' (' + runTime + ')';
+
+				$('#generalSystemIssues').empty();
+				$('#powerIssues').empty();
+				$('#hardwareIssues').empty();
+				$('#interfaceIssues').empty();
+
+				// Find AP Uptime
+				var startString = 'AP Uptime\n---------\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var uptime = results.substring(startLocation, endLocation).trim();
+				$('#generalSystemIssues').append('<li>Uptime: <strong>' + uptime + '</strong></li>');
+
+				// Find Reboot Reason "AP Reboot reason:  "
+				var startString = 'Reboot Information\n------------------\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var rebootReason = results.substring(startLocation, endLocation).trim();
+				$('#generalSystemIssues').append('<li>Reboot Reason: <strong>' + rebootReason + '</strong></li>');
+
+				// Check if crash log exists
+				var startString = 'Crash Information\n-----------------';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('------------', startLocation);
+				var crashReason = results.substring(startLocation, endLocation).trim();
+				if (crashReason !== '(none found)') {
+					if (crashReason == "Crash information is available; use 'show ap debug crash-info' to retrieve") {
+						$('#generalSystemIssues').append('<li id="crashInfo">Crash Information: <button class="btn btn-round btn-sm btn-outline btn-warning" onclick="obtainCrashLog(\'' + response.serial + '\')">Download Crash Information</button></li>');
+					} else {
+						$('#generalSystemIssues').append('<li id="crashInfo">Crash Information: <strong>' + crashReason + '</strong></li>');
+					}
+				}
+
+				// Power Information
+				var startString = 'Power Status\n------------\nItem                        Value\n----                        -----\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n\n', startLocation);
+				var powerInformationBlock = results.substring(startLocation, endLocation).trim();
+				addPowerInfoForLabel(powerInformationBlock, 'Power Supply');
+				addPowerInfoForLabel(powerInformationBlock, 'LLDP Power');
+				addPowerInfoForLabel(powerInformationBlock, 'Current Operational State');
+
+				if (results.indexOf('Power Monitoring Information') != -1) {
+					var startString = 'Power Monitoring Information\n----------------------------\nCurrent(mW)  Average(mW)  Minimum(mW)  Maximum(mW)\n-----------  -----------  -----------  -----------\n';
+					var startLocation = results.indexOf(startString) + startString.length;
+					var endLocation = results.indexOf(' ', startLocation);
+					console.log(results.substring(startLocation, endLocation).trim());
+					var currentDraw = parseInt(results.substring(startLocation, endLocation).trim()) / 1000;
+					$('#powerIssues').append('<li>Current Power Draw: <strong>' + currentDraw.toFixed(2) + 'W</strong></li>');
+				}
+
+				// Hardware status
+				var startString = 'Peak CPU Util in the last one hour\n----------------------------------\nTimestamp            CPU Util(%)  Memory Util(%)\n---------            -----------  --------------\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var memoryLine = results.substring(startLocation, endLocation).trim();
+
+				// CPU
+				startString = '  ';
+				var startLocation = memoryLine.indexOf(startString) + startString.length;
+				var endLocation = memoryLine.indexOf('   ', startLocation);
+				var lastCPUValue = memoryLine.substring(startLocation, endLocation).trim();
+				$('#hardwareIssues').append('<li>CPU Usage: <strong>' + lastCPUValue + '%</strong></li>');
+				// Memory
+				startString = '   ';
+				var startLocation = memoryLine.indexOf(startString) + startString.length;
+				var lastMemoryValue = parseInt(memoryLine.substring(startLocation).trim());
+				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
+				else $('#hardwareIssues').append('<li>Memory Usage: <strong>' + lastMemoryValue + '%</strong></li>');
+
+				// Ethernet status
+				var startString = 'Ethernet Duplex/Speed Settings\n------------------------------\nAutoneg  Speed (Mbps)  Duplex  Iface\n-------  ------------  ------  -----\n';
+				if (results.indexOf(startString) == -1) startString = 'Ethernet Duplex/Speed Settings\n------------------------------\nAutoneg  Speed (Mbps)  Duplex   Iface\n-------  ------------  ------   -----\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n\n', startLocation);
+				var ethernetInterfaces = results.substring(startLocation, endLocation).trim();
+				console.log(ethernetInterfaces);
+				var interfaces = ethernetInterfaces.split('\n');
+				$.each(interfaces, function() {
+					var intString = this.replace(/  +/g, ' ');
+					var intParts = intString.split(' ');
+					var intSpeed = intParts[1];
+					var intDuplex = intParts[2];
+					var intName = intParts[3];
+					// check if int is actually up
+					var startString = 'ifconfig output for ' + intName + '\n';
+					var endString = '\n\n';
+					if (results.indexOf(startString) == -1) {
+						startString = '====== ifconfig ' + intName + ' ======';
+						endString = 'B)   ';
+					}
+					if (results.indexOf(startString) != -1) {
+						startLocation = results.indexOf(startString) + startString.length;
+						var endLocation = results.indexOf(endString, startLocation);
+						var intDetails = results.substring(startLocation, endLocation).trim();
+
+						startString = 'HWaddr';
+						var startLocation = intDetails.indexOf(startString) + startString.length;
+						var endLocation = intDetails.indexOf('\n', startLocation);
+						var macaddr = intDetails.substring(startLocation, endLocation).trim();
+					} else {
+						var intDetails = '';
+						var macaddr = '?';
+					}
+					if (intDetails.includes('RUNNING')) {
+						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>' + intSpeed + 'Mbps (' + intDuplex + ' Duplex)<strong></li>');
+					} else {
+						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>Down<strong></li>');
+					}
+				});
+
+				document.getElementById('systemStatusText').innerHTML = results;
+				$('#SystemStatusModalLink').trigger('click');
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
+		}
+	});
+}
+
+function addPowerInfoForLabel(powerInformationBlock, powerLabel) {
+	var startLocation = powerInformationBlock.indexOf(powerLabel);
+	var labelSpace = ': ';
+	var labelFinishLocation = powerInformationBlock.indexOf(labelSpace, startLocation) + labelSpace.length;
+	var endLocation = powerInformationBlock.indexOf('\n', startLocation);
+	var powerData = powerInformationBlock.substring(labelFinishLocation, endLocation).trim();
+	if (powerLabel === 'Current Operational State') {
+		if (!powerData.includes('No restrictions')) $('#powerIssues').append('<li>' + powerLabel + ': <i class="fa fa-circle text-warning"></i><strong> ' + powerData + '</strong></li>');
+		else $('#powerIssues').append('<li>' + powerLabel + ': <i class="fa fa-circle text-success"></i><strong> ' + powerData + '</strong></li>');
+	} else {
+		$('#powerIssues').append('<li>' + powerLabel + ': <strong>' + powerData + '</strong></li>');
+	}
+}
+
+function obtainCrashLog(deviceSerial) {
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 34 }] });
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkCrashLog, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkCrashLog(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkDebugSystemStatus, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				console.log(response.output);
+				var crashBlob = new Blob([response.output], { type: 'text/csv;charset=utf-8;' });
+				var crashURL = window.URL.createObjectURL(crashBlob);
+				var crashLink = document.createElement('a');
+				crashLink.href = crashURL;
+				crashLink.setAttribute('download', 'CrashInformation-' + response.serial + '.txt');
+				crashLink.click();
+				window.URL.revokeObjectURL(crashLink);
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
+		}
+	});
+}

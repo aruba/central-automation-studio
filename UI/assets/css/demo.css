@@ -214,7 +214,7 @@
 
 .fixed-section {
     top: 90px;
-    max-height: 80vh;
+    min-height: 80vh;
     overflow: scroll;
     position: sticky;
 }

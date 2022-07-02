@@ -120,7 +120,7 @@ const apiLimit = 1000;
 const apiGLCPLimit = 100;
 const apiSiteLimit = 1000;
 const apiGroupLimit = 20;
-const apiMSPLimit = 10;
+const apiMSPLimit = 50;
 var apiMessage = false;
 
 var currentWorkflow = '';
@@ -175,7 +175,7 @@ function isCOPSelected() {
 		Load and Save from Local Storage functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
-// Updated 1.9.2
+// Updated 1.12.4
 function onFinishSetup() {
 	// Save all supplied addresses and details
 	var base_url = document.getElementById('clusterselector').value;
@@ -192,6 +192,8 @@ function onFinishSetup() {
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
+	localStorage.setItem('qr_color', $('#color_picker').val());
+	localStorage.setItem('qr_logo', $('#qr_logo').val());
 	localStorage.removeItem('monitoring_update');
 
 	var cluster = getAccountforClientID($('#client_id').val());
@@ -727,6 +729,10 @@ function getMonitoringData() {
 	}
 	console.log('Client Monitoring: ' + loadClients);
 
+	updateMonitoringWithClients(loadClients);
+}
+
+function updateMonitoringWithClients(needClients) {
 	apiMessage = false;
 
 	if (!localStorage.getItem('base_url') && !localStorage.getItem('account_details')) {
@@ -799,9 +805,9 @@ function getMonitoringData() {
 
 				// Refresh card data
 				showNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
-				getAPData(0, loadClients);
+				getAPData(0, needClients);
 				showNotification('ca-server-rack', 'Obtaining Switches...', 'bottom', 'center', 'info');
-				getSwitchData(0, loadClients);
+				getSwitchData(0, needClients);
 				showNotification('ca-content-delivery', 'Obtaining Gateways...', 'bottom', 'center', 'info');
 				getGatewayData(0);
 				showNotification('ca-world-pin', 'Obtaining Sites...', 'bottom', 'center', 'info');
@@ -1502,7 +1508,7 @@ function loadSiteUI(site) {
 
 	var path = window.location.pathname;
 	var page = path.split('/').pop();
-	if (page.includes('workflow-site')) {
+	if ($('.selectpicker')) {
 		// Add site to the dropdown selector
 		$('#siteselector').append($('<option>', { value: site['name'], text: site['name'] }));
 		if ($('.selectpicker').length != 0) {
@@ -1585,7 +1591,7 @@ function getSiteData(offset) {
 				$('#site-table')
 					.DataTable()
 					.clear();
-				if (page.includes('workflow-site')) {
+				if (document.getElementById('siteselector')) {
 					// remove old groups from the selector
 					select = document.getElementById('siteselector');
 					select.options.length = 0;
@@ -1625,11 +1631,12 @@ function loadGroupUI(group) {
 
 	var path = window.location.pathname;
 	var page = path.split('/').pop();
-	if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('deployment-wlan') || page.includes('deployment-group') || page.includes('workflow-msp') || page.includes('migration') || page.includes('dashboard')) {
+	if ($('#groupselector')) {
+		//if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('deployment-wlan') || page.includes('deployment-group') || page.includes('workflow-msp') || page.includes('migration') || page.includes('dashboard') || page.includes('deployment-inventory')) {
 		// Add site to the dropdown selector
 		$('#groupselector').append($('<option>', { value: group['group'], text: group['group'] }));
-		if ($('.selectpicker').length != 0) {
-			$('.selectpicker').selectpicker('refresh');
+		if ($('#groupselector').length != 0) {
+			$('#groupselector').selectpicker('refresh');
 		}
 	}
 }
@@ -1688,7 +1695,7 @@ function getGroupData(offset) {
 					.DataTable()
 					.rows()
 					.remove();
-				if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('workflow-msp') || page.includes('migration') || page.includes('deployment-group') || page.includes('dashboard')) {
+				if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('workflow-msp') || page.includes('migration') || page.includes('deployment-group') || page.includes('dashboard') || page.includes('deployment-inventory')) {
 					// remove old groups from the selector
 					select = document.getElementById('groupselector');
 					select.options.length = 0;
@@ -1767,21 +1774,22 @@ function getGroupTemplateInfo(currentGroups, last) {
 			response.data.sort(compareGroups);
 
 			// Uncomment for 2.5.4
-			getGroupProperties(groupList, last);
+			//getGroupProperties(groupList, last);
 
-			/*$.each(response.data, function() {
+			$.each(response.data, function() {
 				loadGroupUI(this);
 			});
-			
+
 			if (last) {
 				updateGroupUI();
 				localStorage.setItem('monitoring_groups', JSON.stringify(groups));
 				groupPromise.resolve();
-			}*/
+			}
 		}
 	});
 }
 
+// removed until Migration support is needed
 // Introduced: 1.5.0
 // Get the group properties... Central 2.5.4 and later
 function getGroupProperties(groupList, last) {
@@ -3058,7 +3066,7 @@ function moveDevicesToGroup() {
 						if (manualGroup) {
 							manualGroup = '';
 							var mgd = document.getElementById('manualGroupDiv');
-							mgd.style.display = 'none';
+							if (mgd) mgd.style.display = 'none';
 						}
 					} else {
 						logInformation('Automation: Move to Group complete');
@@ -3112,6 +3120,7 @@ function createSiteFromCSV() {
 			delimiter: ',',
 			header: true,
 			complete: processCSV,
+			skipEmptyLines: true,
 		},
 		before: function(file, inputElem) {
 			showNotification('ca-cpu', 'Processing CSV File...', 'bottom', 'center', 'info');
@@ -3251,7 +3260,7 @@ function unassignDeviceFromSite(device) {
 	/*  
 		remove the device from its current site
 	*/
-	console.log('removing site from device: ' + device['serial'] + ' from ' + getIDforSite(device['site']));
+	console.log('Removing device: ' + device['serial'] + ' from site: ' + getIDforSite(device['site']));
 	var settings = {
 		url: getAPIURL() + '/tools/deleteCommand',
 		method: 'POST',
@@ -3270,7 +3279,7 @@ function unassignDeviceFromSite(device) {
 		if (response.hasOwnProperty('error_code')) {
 			logError(response.description);
 		} else if (response.hasOwnProperty('success')) {
-			console.log('Device removed from existing site');
+			logInformation(device['serial'] + ' removed from existing site (' + device['site'] + ')');
 		} else {
 			logError('Unable to remove ' + device['serial'] + " from it's current site");
 		}
@@ -3281,7 +3290,7 @@ function assignDeviceToSite(device, site) {
 	/*  
 		assigning the device to a site
 	*/
-	console.log('assigning site ' + site + ' from device: ' + device['serial']);
+	console.log('assigning site ' + site + ' for device: ' + device['serial']);
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
 		method: 'POST',
@@ -3339,6 +3348,7 @@ function checkForSiteMoveCompletion() {
 					icon: 'success',
 				});
 			}
+			updateMonitoringWithClients(false);
 		} else {
 			logInformation('Automation: Site assignment complete');
 			autoSitePromise.resolve();
@@ -4104,82 +4114,90 @@ function setAPZone() {
 	zoneCounter = 0;
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-card-update', 'Renaming devices...', 'bottom', 'center', 'info');
+		showNotification('ca-setup-tools', 'Setting AP Zones...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
-			var currentSerial = this['SERIAL'].trim();
-			var newZonename = this['AP ZONE'].trim();
-			if (!newZonename) {
-				//logError("Device with Serial Number: " + currentSerial + " has no zonename in the CSV file");
-				zoneCounter = zoneCounter + 1;
-				checkForZoneCompletion();
-			} else {
-				var device = findDeviceInInventory(currentSerial);
-				if (!device) {
-					logError('Unable to find device ' + currentSerial + ' in the device inventory');
-					apiErrorCount++;
+			if (this['SERIAL']) {
+				var currentSerial = this['SERIAL'].trim();
+				var newZonename = this['ZONE'].trim();
+				if (!newZonename || newZonename === '-') {
+					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+					logInformation('Device with Serial Number: ' + currentSerial + ' has no AP Zone in the CSV file');
 					zoneCounter = zoneCounter + 1;
 					checkForZoneCompletion();
-				} else if (deviceType === 'IAP') {
-					// if AP then get AP settings
-					var settings = {
-						url: getAPIURL() + '/tools/getCommand',
-						method: 'POST',
-						timeout: 0,
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						data: JSON.stringify({
-							url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-							access_token: localStorage.getItem('access_token'),
-						}),
-					};
+				} else {
+					var device = findDeviceInInventory(currentSerial);
+					if (!device) {
+						logError('Unable to find device ' + currentSerial + ' in the device inventory');
+						apiErrorCount++;
+						zoneCounter = zoneCounter + 1;
+						checkForZoneCompletion();
+					} else if (deviceType === 'IAP') {
+						// if AP then get AP settings
+						var settings = {
+							url: getAPIURL() + '/tools/getCommand',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
+								access_token: localStorage.getItem('access_token'),
+							}),
+						};
 
-					$.ajax(settings).done(function(response) {
-						//console.log(response);
-						if (response.hasOwnProperty('error_code')) {
-							logError(response.description);
-							apiErrorCount++;
-							zoneCounter = zoneCounter + 1;
-							checkForZoneCompletion();
-						} else if (response.zonename === newZonename) {
-							// no need to do anything as the name already matches
-							logInformation('Device ' + currentSerial + " AP Zone doesn't need to be updated");
-							zoneCounter = zoneCounter + 1;
-							checkForZoneCompletion();
-						} else {
-							// Update ap settings
-							var settings = {
-								url: getAPIURL() + '/tools/postCommand',
-								method: 'POST',
-								timeout: 0,
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								data: JSON.stringify({
-									url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-									access_token: localStorage.getItem('access_token'),
-									data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: newZonename, hostname: response.hostname }),
-								}),
-							};
-
-							$.ajax(settings).done(function(response) {
-								if (response !== currentSerial) {
-									logError(currentSerial + ' was not assigned to AP Zone "' + newZonename + '". Reason: ' + response.reason);
-									//console.log(response.reason);
-									apiErrorCount++;
-								}
+						$.ajax(settings).done(function(response) {
+							//console.log(response);
+							if (response.hasOwnProperty('error_code')) {
+								logError(response.description);
+								apiErrorCount++;
 								zoneCounter = zoneCounter + 1;
 								checkForZoneCompletion();
-							});
-						}
-					});
-				} else {
-					// Either switch or controller/gateway
-					zoneCounter = zoneCounter + 1;
-					checkForZoneCompletion();
+							} else if (response.zonename === newZonename) {
+								// no need to do anything as the name already matches
+								logInformation('Device ' + currentSerial + " AP Zone doesn't need to be updated");
+								zoneCounter = zoneCounter + 1;
+								checkForZoneCompletion();
+							} else {
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: newZonename, hostname: response.hostname }),
+									}),
+								};
+
+								$.ajax(settings).done(function(response) {
+									if (response !== currentSerial) {
+										logError(currentSerial + ' was not assigned to AP Zone "' + newZonename + '". Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation(currentSerial + ' was assigned to AP Zone "' + newZonename + '"');
+									}
+									zoneCounter = zoneCounter + 1;
+									checkForZoneCompletion();
+								});
+							}
+						});
+					} else {
+						// Either switch or controller/gateway
+						zoneCounter = zoneCounter + 1;
+						checkForZoneCompletion();
+					}
 				}
+			} else {
+				zoneCounter = zoneCounter + 1;
+				checkForZoneCompletion();
 			}
 		});
 	});
@@ -4489,6 +4507,7 @@ function updateMSPData() {
 	*/
 	showNotification('ca-contactless-card', 'Updating MSP Data...', 'bottom', 'center', 'info');
 	// Get the device inventories (IAP, Switch, Gateway) to determine device type
+	getMSPResources();
 	apPromise = new $.Deferred();
 	switchPromise = new $.Deferred();
 	gatewayPromise = new $.Deferred();
@@ -4500,6 +4519,31 @@ function updateMSPData() {
 	});
 	getGroupData(0);
 	return inventoryPromise.promise();
+}
+
+function getMSPResources() {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/msp_api/v1/resource',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.branding.logo_image_url) {
+			document.getElementById('msp_logo').src = response.branding.logo_image_url;
+			document.getElementById('msp_logo_card').style.display = 'block';
+		} else {
+			document.getElementById('msp_logo_card').style.display = 'none';
+		}
+	});
 }
 
 function getMSPAPData(offset) {
@@ -4522,8 +4566,8 @@ function getMSPAPData(offset) {
 	};
 
 	$.ajax(settings).done(function(response) {
-		//console.log(response)
-		if (response.hasOwnProperty('error')) {
+		//console.log(response);
+		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 			$(document.getElementById('ap_icon')).removeClass('text-success');
 			$(document.getElementById('ap_icon')).addClass('text-warning');
 			if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
@@ -4585,7 +4629,7 @@ function getMSPSwitchData(offset) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
-		if (response.hasOwnProperty('error')) {
+		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 			$(document.getElementById('switch_icon')).removeClass('text-success');
 			$(document.getElementById('switch_icon')).addClass('text-warning');
 			if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '-';
@@ -4647,7 +4691,7 @@ function getMSPGatewayData(offset) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
-		if (response.hasOwnProperty('error')) {
+		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '-';
@@ -5245,6 +5289,10 @@ function showLayerOne() {
 	$('#layerone-table')
 		.DataTable()
 		.clear();
+	$('#layerone-table')
+		.DataTable()
+		.rows()
+		.draw();
 	$('#LayerOneModalLink').trigger('click');
 
 	var select = document.getElementById('siteselector');
@@ -5264,6 +5312,13 @@ function showLayerOne() {
 					$.when(getSwitchPortDetails(neighborSwitches[currentSerial].neighborSerial)).then(function() {
 						$.each(switchPortDetails[neighborSwitches[currentSerial].neighborSerial], function() {
 							if (this['port_number'] === neighborSwitches[currentSerial].remotePort) {
+								// Buttons for each row
+								var btnString = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="PoE Bounce" onclick="poeBounce(\'' + neighborSwitches[currentSerial].neighborSerial + "', '" + this['port_number'] + '\')"><i class="fa-solid fa-plug-circle-bolt"></i></a>';
+								btnString += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Interface Bounce" onclick="interfaceBounce(\'' + neighborSwitches[currentSerial].neighborSerial + "', '" + this['port_number'] + '\')"><i class="fa-solid fa-ethernet"></i></a>';
+								if (getSwitchType(neighborSwitches[currentSerial].neighborSerial) === 'AOS-S') {
+									btnString += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Cable Test" onclick="cableTest(\'' + neighborSwitches[currentSerial].neighborSerial + "', '" + this['port_number'] + '\')"><i class="fa-solid fa-microscope"></i></a>';
+								}
+
 								// add data to table!
 								var poe = this['power_consumption'];
 								if (!poe) poe = 'Unknown';
@@ -5278,16 +5333,195 @@ function showLayerOne() {
 								}
 
 								var table = $('#layerone-table').DataTable();
-								table.row.add(['<strong>' + currentAP + '</strong>', status, neighborSwitches[currentSerial].neighborHostName, this['port_number'], poe, this['speed'], this['duplex_mode'], inErrors, outErrors]);
+								table.row.add(['<strong>' + currentAP + '</strong>', status, neighborSwitches[currentSerial].neighborHostName, this['port_number'], poe, this['speed'], this['duplex_mode'], inErrors, outErrors, btnString]);
 								$('#layerone-table')
 									.DataTable()
 									.rows()
 									.draw();
+
+								$('[data-toggle="tooltip"]').tooltip();
 							}
 						});
 					});
 				}
 			});
+		}
+	});
+}
+
+function poeBounce(switchSerial, switchPort) {
+	var data;
+	if (getSwitchType(switchSerial) === 'AOS-S') {
+		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 1050, arguments: [{ name: 'Port', value: switchPort }] }] });
+	} else {
+		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 6003, arguments: [{ name: 'Port', value: switchPort }] }] });
+	}
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + switchSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkTroubleshootingResult, 10000, response.session_id, response.serial, switchPort);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function interfaceBounce(switchSerial, switchPort) {
+	var data;
+	if (getSwitchType(switchSerial) === 'AOS-S') {
+		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 1051, arguments: [{ name: 'Port', value: switchPort }] }] });
+	} else {
+		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 6004, arguments: [{ name: 'Port', value: switchPort }] }] });
+	}
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + switchSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkTroubleshootingResult, 10000, response.session_id, response.serial, switchPort);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function cableTest(switchSerial, switchPort) {
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'Running a Cable Test will cause a disruption on the selected port.',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, run it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			confirmCableTest(switchSerial, switchPort);
+		}
+	});
+}
+
+function confirmCableTest(switchSerial, switchPort) {
+	var data;
+	if (getSwitchType(switchSerial) === 'AOS-S') {
+		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 1205, arguments: [{ name: 'Port', value: switchPort }] }] });
+	} else {
+		// No CX Support for TDR command
+		return false;
+		//data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 6004, arguments: [{ name: 'Port', value: switchPort }] }] });
+	}
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + switchSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkTroubleshootingResult, 10000, response.session_id, response.serial, switchPort);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkTroubleshootingResult(session_id, deviceSerial, switchPort) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkTroubleshootingResult, 30000, session_id, response.serial, switchPort);
+			} else if (response.status === 'COMPLETED') {
+				if (response.output.includes('cable_status')) {
+					var results = JSON.parse(response.output);
+					cableResult = results['result'][switchPort];
+					console.log(cableResult);
+
+					// Display cable test results for each pair of wires.
+
+					var cableFault = false;
+					var cableDetail = '';
+					$.each(cableResult, function() {
+						var cables = this['mdi_pair'].replace('(R1)', '');
+						var cableStatus = this['cable_status'];
+						if (cableStatus !== 'OK') cableFault = true;
+						var cableLength = this['cable_length_in_meters'];
+						cableDetail += 'Pair' + cables + ': ' + cableStatus + ' (' + cableLength + 'm), ';
+					});
+
+					Swal.fire({
+						title: findDeviceInMonitoring(response.serial).name + ' Cable Test - Port: ' + switchPort,
+						text: cableDetail.substring(0, cableDetail.length - 2),
+						icon: cableFault ? 'error' : 'success',
+					});
+				}
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
 		}
 	});
 }

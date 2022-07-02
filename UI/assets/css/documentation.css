@@ -152,6 +152,10 @@
     color: #00bbff;
 }
 
+.fixed-section ul li a:hover, ul li a:focus {
+    color:#FFA534;
+}
+
 .fixed-section.float {
     position: fixed;
     top: 100px;

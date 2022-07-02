@@ -25,18 +25,18 @@ function buildGroupDeviceList() {
 	var gatewayList = getGateways();
 	$.each(groupList, function() {
 		if (this.group !== 'unprovisioned') {
-			if (this.group_properties.AllowedDevTypes.includes('Gateways')) {
-				var groupName = this.group;
-				// Add group name to list
-				groupDeviceList[groupName] = encodeURI(groupName);
+			//if (this.group_properties.AllowedDevTypes.includes("Gateways")) {
+			var groupName = this.group;
+			// Add group name to list
+			groupDeviceList[groupName] = encodeURI(groupName);
 
-				$.each(gatewayList, function() {
-					if (this.group_name === groupName) {
-						var visibleName = groupName + ' > ' + this.name;
-						groupDeviceList[visibleName] = encodeURI(groupName) + '/' + this.macaddr;
-					}
-				});
-			}
+			$.each(gatewayList, function() {
+				if (this.group_name === groupName) {
+					var visibleName = groupName + ' > ' + this.name;
+					groupDeviceList[visibleName] = encodeURI(groupName) + '/' + this.macaddr;
+				}
+			});
+			//}
 		}
 	});
 

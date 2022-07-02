@@ -102,9 +102,9 @@ function updateAirMatchData() {
 		$.when(getAPData(0, false)).then(function() {
 			fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
 			twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
-			sixPower = Array.apply(null, new Array(30)).map(Number.prototype.valueOf, 0);
-			fivePower = Array.apply(null, new Array(30)).map(Number.prototype.valueOf, 0);
-			twoPower = Array.apply(null, new Array(30)).map(Number.prototype.valueOf, 0);
+			sixPower = [];
+			fivePower = [];
+			twoPower = [];
 
 			$('#lastrun-table')
 				.DataTable()
@@ -171,22 +171,24 @@ function getEIRPDistribution() {
 			return a - b;
 		});
 
+		// Build the series
 		for (let k in response['6ghz']) {
 			var index = powerLabels.indexOf(k);
 			if (index != -1) {
-				sixPower[index] = response['6ghz'][k];
+				sixPower[index] = { meta: '6GHz', value: response['6ghz'][k] };
 			}
 		}
 		for (let k in response['5ghz']) {
 			var index = powerLabels.indexOf(k);
 			if (index != -1) {
-				fivePower[index] = response['5ghz'][k];
+				//fivePower[index] = response['5ghz'][k];
+				fivePower[index] = { meta: '5GHz', value: response['5ghz'][k] };
 			}
 		}
 		for (let k in response['2.4ghz']) {
 			var index = powerLabels.indexOf(k);
 			if (index != -1) {
-				twoPower[index] = response['2.4ghz'][k];
+				twoPower[index] = { meta: '2.4GHz', value: response['2.4ghz'][k] };
 			}
 		}
 

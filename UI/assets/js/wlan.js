@@ -111,11 +111,14 @@ function getConfigforWLAN() {
 		} else {
 			if (response.wlan.wpa_passphrase === '') {
 				showNotification('ca-wifi-protected', 'The selected WLAN is not a PSK-based network', 'bottom', 'center', 'danger');
+				document.getElementById('qrBtn').disabled = true;
 			} else {
+				//console.log(response.wlan);
 				document.getElementById('pskPassphrase').value = response.wlan.wpa_passphrase;
 				existingPassphrase = response.wlan.wpa_passphrase;
 				document.getElementById('savePSKBtn').disabled = true;
 				wlanConfig = response;
+				document.getElementById('qrBtn').disabled = false;
 			}
 		}
 	});
@@ -193,11 +196,65 @@ function showPassphrase() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		WLAN functions (1.3)
-	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+	QR Code functions (1.12)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function generateQRCode() {
+	// Get needed values
+	var wlanselect = document.getElementById('wlanselector');
+	var wlan = wlanselect.value;
+	var psk = document.getElementById('pskPassphrase').value;
+	var hidden = wlanConfig.wlan.hide_ssid;
+
+	var enc = 'WPA';
+	// Label the modal
+	document.getElementById('wlanQRTitle').innerHTML = 'WLAN QR Code for ' + wlan;
+
+	// Are we using a custom colour?
+	var qrColor = localStorage.getItem('qr_color');
+	if (qrColor == null || qrColor == 'undefined') {
+		// use the default colour - Aruba Orange
+		qrColor = '#FF8300';
+	}
+
+	// Custom Logo?
+	var qrLogo = localStorage.getItem('qr_logo');
+	if (qrLogo == null || qrLogo == 'undefined' || qrLogo === '') {
+		qrLogo = 'assets/img/api.svg';
+	}
+
+	// Generate the QR Code and display
+	$('#qrcanvas').empty();
+	const qrCode = new QRCodeStyling({
+		width: 400,
+		height: 400,
+		type: 'svg',
+		data: 'WIFI:S:' + wlan + ';T:' + enc + ';P:' + psk + ';H:' + hidden + ';;',
+		image: qrLogo,
+		dotsOptions: {
+			color: qrColor,
+			type: 'rounded',
+		},
+		cornersDotOptions: {
+			color: qrColor,
+			type: 'dot',
+		},
+		backgroundOptions: {
+			color: '#ffffff',
+		},
+		imageOptions: {
+			crossOrigin: 'anonymous',
+			margin: 10,
+		},
+	});
+
+	qrCode.append(document.getElementById('qrcanvas'));
+	qrCode.download({ name: wlan + '-qr', extension: 'png' });
+	$('#QRModalLink').trigger('click');
+}
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		Repeating function
+		WLAN functions (1.3)
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getWLANs() {
@@ -286,19 +343,21 @@ function getPSKForWLAN(wlanGroup, wlan) {
 		};
 
 		$.ajax(settings).done(function(response) {
-			var passphrase = response.wlan.wpa_passphrase;
-			$.each(wlans, function() {
-				// find the WLAN and update the line with the actual PSK
-				if (this.name === wlan && this.groups.includes(wlanGroup)) {
-					// found the matching wlan
-					var config = this.config;
-					for (i = 0; i < config.length; i++) {
-						if (config[i].includes('wpa-passphrase')) {
-							this.config[i] = 'wpa-passphrase ' + passphrase;
+			if (response.wlan.wpa_passphrase) {
+				var passphrase = response.wlan.wpa_passphrase;
+				$.each(wlans, function() {
+					// find the WLAN and update the line with the actual PSK
+					if (this.name === wlan && this.groups.includes(wlanGroup)) {
+						// found the matching wlan
+						var config = this.config;
+						for (i = 0; i < config.length; i++) {
+							if (config[i].includes('wpa-passphrase')) {
+								this.config[i] = 'wpa-passphrase ' + passphrase;
+							}
 						}
 					}
-				}
-			});
+				});
+			}
 		});
 	}
 }

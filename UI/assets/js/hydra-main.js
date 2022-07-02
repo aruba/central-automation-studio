@@ -1,6 +1,6 @@
 /*
 Central Automation v1.6.0
-Updated: 1.8.2
+Updated: 1.11.1
 Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -16,6 +16,9 @@ function onFinishSetup() {
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
+	localStorage.setItem('qr_color', $('#color_picker').val());
+	localStorage.setItem('qr_logo', $('#qr_logo').val());
+	logInformation('Central Automation Studio settings saved');
 	tokenRefreshForAll();
 }
 
@@ -155,26 +158,7 @@ function tokenRefreshForAccount(clientID) {
 function getDashboardData() {
 	// Try and refresh the token
 	showNotification('ca-contactless-card', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'info');
-	/*
-	var path = window.location.pathname;
-	var page = path.split("/").pop();
-	
-	downAPCount = 0;
-	aps = [];
-	$('#ap-table').DataTable().rows().remove();
-	
-	downSwitchCount = 0;
-	switches = [];
-	$('#switch-table').DataTable().rows().remove();
-		
-	downGatewayCount = 0;
-	gateways = [];
-	$('#gateway-table').DataTable().rows().remove();
-	
-	siteIssues = 4;
-	sites = [];
-	$('#site-table').DataTable().clear();
-	*/
+
 	// Refresh card data
 	var account_details = localStorage.getItem('account_details');
 	if (account_details != null && account_details != 'undefined') {
@@ -205,11 +189,7 @@ function getDashboardData() {
 
 			$.ajax(settings).done(function(response) {
 				if (response.hasOwnProperty('error')) {
-					Swal.fire({
-						title: 'Central API connection failed',
-						text: response.error_description + ' for "' + getNameforClientID(clientID) + '"',
-						icon: 'error',
-					});
+					showNotification('ca-padlock', response.error_description + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
 				} else {
 					account['refresh_token'] = response.refresh_token;
 					account['access_token'] = response.access_token;
@@ -224,11 +204,11 @@ function getDashboardData() {
 					hydraMonitoringData[clientID] = dataFramework;
 					showNotification('ca-cloud-data-download', 'Updating data for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'info');
 
-					getWirelessClientDataForAccount(clientID, 0);
-					getWiredClientDataForAccount(clientID, 0);
-					getAPDataForAccount(clientID, 0, false);
-					getSwitchDataForAccount(clientID, 0, false);
-					getGatewayDataForAccount(clientID, 0);
+					getWirelessClientOverviewForAccount(clientID);
+					getWiredClientOverviewForAccount(clientID);
+					getAPOverviewForAccount(clientID);
+					getSwitchOverviewForAccount(clientID);
+					getGatewayOverviewForAccount(clientID);
 					getSiteDataForAccount(clientID, 0);
 
 					localStorage.setItem('monitoring_update', +new Date());
@@ -248,13 +228,23 @@ function loadHydraTable() {
 
 		// Process Clients
 		var clientString = '';
-		if (hydraMonitoringData[k]['wirelessClients']) {
-			clientString += '<i class="central-icon ca-laptop-1 fa-fw"><strong> ' + hydraMonitoringData[k]['wirelessClients'] + ' </strong></i>';
+		if (hydraMonitoringData[k]['wirelessClientsUp']) {
+			clientString += '<i class="central-icon ca-laptop-1 fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wirelessClientsUp'] + ' </strong></i>';
 		} else {
 			clientString += '<i class="central-icon ca-laptop-1 fa-fw"><strong> 0 </strong></i>';
 		}
-		if (hydraMonitoringData[k]['wiredClients']) {
-			clientString += '<i class="central-icon ca-computer-monitor fa-fw"><strong> ' + hydraMonitoringData[k]['wiredClients'] + ' </strong></i>';
+		if (hydraMonitoringData[k]['wirelessClientsDown']) {
+			clientString += '<i class="central-icon ca-laptop-1 fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wirelessClientsDown'] + ' </strong></i>';
+		} else {
+			clientString += '<i class="central-icon ca-laptop-1 fa-fw"><strong> 0 </strong></i>';
+		}
+		if (hydraMonitoringData[k]['wiredClientsUp']) {
+			clientString += '<i class="central-icon ca-computer-monitor fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wiredClientsUp'] + ' </strong></i>';
+		} else {
+			clientString += '<i class="central-icon ca-computer-monitor fa-fw"><strong> 0 </strong></i>';
+		}
+		if (hydraMonitoringData[k]['wiredClientsDown']) {
+			clientString += '<i class="central-icon ca-computer-monitor fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wiredClientsDown'] + ' </strong></i>';
 		} else {
 			clientString += '<i class="central-icon ca-computer-monitor fa-fw"><strong> 0 </strong></i>';
 		}
@@ -262,40 +252,37 @@ function loadHydraTable() {
 		// Process APs
 		var apsUp = 0;
 		var apsDown = 0;
-		$.each(hydraMonitoringData[k]['aps'], function() {
-			if (this['status'] === 'Up') apsUp++;
-			else apsDown++;
-		});
+		if (hydraMonitoringData[k]['apsUp']) apsUp = hydraMonitoringData[k]['apsUp'];
+		if (hydraMonitoringData[k]['apsDown']) apsDown = hydraMonitoringData[k]['apsDown'];
+
 		var apString = '';
-		if (apsUp > 0) apString += '<i class="fa fa-arrow-up fa-fw-pointer text-success"><strong> ' + apsUp + ' </strong></i>';
+		if (apsUp > 0) apString += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + apsUp + ' </strong></i>';
 		else apString += '<i class="fa fa-arrow-up fa-fw"> ' + apsUp + ' </i>';
-		if (apsDown > 0) apString += '<i class="fa fa-arrow-down fa-fw-pointer text-danger"><strong> ' + apsDown + ' </strong></i>';
+		if (apsDown > 0) apString += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + apsDown + ' </strong></i>';
 		else apString += '<i class="fa fa-arrow-down fa-fw"> ' + apsDown + ' </i>';
 
 		// Process Switches
 		var switchesUp = 0;
 		var switchesDown = 0;
-		$.each(hydraMonitoringData[k]['switches'], function() {
-			if (this['status'] === 'Up') switchesUp++;
-			else switchesDown++;
-		});
+		if (hydraMonitoringData[k]['switchesUp']) switchesUp = hydraMonitoringData[k]['switchesUp'];
+		if (hydraMonitoringData[k]['switchesDown']) switchesDown = hydraMonitoringData[k]['switchesDown'];
+
 		var switchesString = '';
-		if (switchesUp > 0) switchesString += '<i class="fa fa-arrow-up fa-fw-pointer text-success"><strong> ' + switchesUp + ' </strong></i>';
+		if (switchesUp > 0) switchesString += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + switchesUp + ' </strong></i>';
 		else switchesString += '<i class="fa fa-arrow-up fa-fw"> ' + switchesUp + ' </i>';
-		if (switchesDown > 0) switchesString += '<i class="fa fa-arrow-down fa-fw-pointer text-danger"><strong> ' + switchesDown + ' </strong></i>';
+		if (switchesDown > 0) switchesString += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + switchesDown + ' </strong></i>';
 		else switchesString += '<i class="fa fa-arrow-down fa-fw"> ' + switchesDown + ' </i>';
 
 		// Process Gateways
 		var gatewaysUp = 0;
 		var gatewaysDown = 0;
-		$.each(hydraMonitoringData[k]['gateways'], function() {
-			if (this['status'] === 'Up') gatewaysUp++;
-			else gatewaysDown++;
-		});
+		if (hydraMonitoringData[k]['gatewaysUp']) gatewaysUp = hydraMonitoringData[k]['gatewaysUp'];
+		if (hydraMonitoringData[k]['gatewaysDown']) gatewaysDown = hydraMonitoringData[k]['gatewaysDown'];
+
 		var gatewayString = '';
-		if (gatewaysUp > 0) gatewayString += '<i class="fa fa-arrow-up fa-fw-pointer text-success"><strong> ' + gatewaysUp + ' </strong></i>';
+		if (gatewaysUp > 0) gatewayString += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + gatewaysUp + ' </strong></i>';
 		else gatewayString += '<i class="fa fa-arrow-up fa-fw"> ' + gatewaysUp + ' </i>';
-		if (gatewaysDown > 0) gatewayString += '<i class="fa fa-arrow-down fa-fw-pointer text-danger"><strong> ' + gatewaysDown + ' </strong></i>';
+		if (gatewaysDown > 0) gatewayString += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + gatewaysDown + ' </strong></i>';
 		else gatewayString += '<i class="fa fa-arrow-down fa-fw"> ' + gatewaysDown + ' </i>';
 
 		// Process sites
@@ -464,9 +451,9 @@ function loadIndividualAccount(client_id, hydra) {
 	window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'dashboard.html';
 }
 
-function getWirelessClientDataForAccount(clientID, offset) {
+function getWirelessClientOverviewForAccount(clientID) {
 	//showNotification("ca-laptop-1", 'Getting wireless clients for "'+getNameforClientID(clientID)+'"', "bottom", "center", 'info');
-	var settings = {
+	var settingsConnected = {
 		url: getAPIURL() + '/tools/getCommand',
 		method: 'POST',
 		timeout: 0,
@@ -474,26 +461,98 @@ function getWirelessClientDataForAccount(clientID, offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true&limit=1&offset=' + offset,
+			//url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true',
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&timerange=3H&client_type=WIRELESS&client_status=CONNECTED',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settingsConnected).done(function(response) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			$(document.getElementById('ap_icon')).addClass('text-warning');
-			$(document.getElementById('ap_icon')).removeClass('text-success');
-			$(document.getElementById('ap_icon')).removeClass('text-danger');
 		} else {
-			hydraMonitoringData[clientID]['wirelessClients'] = response.total;
+			hydraMonitoringData[clientID]['wirelessClientsUp'] = response.total;
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
+		}
+	});
+
+	var settingsNotConnected = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			//url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true',
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&timerange=3H&client_type=WIRELESS&client_status=FAILED_TO_CONNECT',
+			access_token: getAccessTokenforClientID(clientID),
+		}),
+	};
+
+	$.ajax(settingsNotConnected).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+		} else {
+			hydraMonitoringData[clientID]['wirelessClientsDown'] = response.total;
 			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
 }
 
-function getWiredClientDataForAccount(clientID, offset) {
+function getWiredClientOverviewForAccount(clientID) {
+	var settingsConnected = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			//url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true',
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&timerange=3H&client_type=WIRED&client_status=CONNECTED',
+			access_token: getAccessTokenforClientID(clientID),
+		}),
+	};
+
+	$.ajax(settingsConnected).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+		} else {
+			hydraMonitoringData[clientID]['wiredClientsUp'] = response.total;
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
+		}
+	});
+
+	var settingsNotConnected = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			//url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true',
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&timerange=3H&client_type=WIRED&client_status=FAILED_TO_CONNECT',
+			access_token: getAccessTokenforClientID(clientID),
+		}),
+	};
+
+	$.ajax(settingsNotConnected).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+		} else {
+			hydraMonitoringData[clientID]['wiredClientsDown'] = response.total;
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
+		}
+	});
+}
+
+function getWiredClientDataForAccount(clientID) {
 	//showNotification("ca-computer-monitor", 'Getting wired clients for "'+getNameforClientID(clientID)+'"', "bottom", "center", 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommand',
@@ -503,7 +562,7 @@ function getWiredClientDataForAccount(clientID, offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wired?calculate_total=true&limit=1&offset=' + offset,
+			url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wired?calculate_total=true',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
@@ -523,36 +582,10 @@ function getWiredClientDataForAccount(clientID, offset) {
 	});
 }
 
-function showAPsForAccount(accountName) {
-	var account = getAccountforName(accountName);
-	var accountData = hydraMonitoringData[account.client_id];
-	$('#ap-table')
-		.DataTable()
-		.rows()
-		.remove();
-	$.each(accountData['aps'], function() {
-		var memoryUsage = (((this['mem_total'] - this['mem_free']) / this['mem_total']) * 100).toFixed(0).toString();
 
-		var status = '<i class="fa fa-circle text-danger"></i>';
-		if (this['status'] == 'Up') {
-			status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + this['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
-		}
-
-		// Add row to table
-		var table = $('#ap-table').DataTable();
-		table.row.add(['<strong>' + this['name'] + '</strong>', status, this['ip_address'], this['model'], this['serial'], this['firmware_version'], this['site'], this['group_name'], this['macaddr']]);
-	});
-	$('#ap-table')
-		.DataTable()
-		.rows()
-		.draw();
-	document.getElementById('ap-title').innerHTML = accountName + ' - Access Points';
-	$('#APModalLink').trigger('click');
-	$('[data-toggle="tooltip"]').tooltip();
-}
-
-function getAPDataForAccount(clientID, offset, needClients) {
-	var settings = {
+function getAPOverviewForAccount(clientID) {
+	// Get Up AP Count for account
+	var settingsUp = {
 		url: getAPIURL() + '/tools/getCommand',
 		method: 'POST',
 		timeout: 0,
@@ -560,12 +593,12 @@ function getAPDataForAccount(clientID, offset, needClients) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v2/aps?calculate_total=true&show_resource_details=true&limit=' + apiLimit + '&offset=' + offset,
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/aps?status=Up&calculate_total=true',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	$.ajax(settingsUp).done(function(response) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('ap_icon')).addClass('text-warning');
@@ -573,54 +606,16 @@ function getAPDataForAccount(clientID, offset, needClients) {
 			$(document.getElementById('ap_icon')).removeClass('text-danger');
 			if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
 		} else {
-			$.each(response.aps, function() {
-				// add client ID to record and store
-				this['client_id'] = clientID;
-				hydraMonitoringData[clientID]['aps'].push(this);
-				//aps.push(this);
-				//loadAPUI(this);
-			});
+			this['client_id'] = clientID;
+			hydraMonitoringData[clientID]['apsUp'] = response.total;
 
-			if (offset + apiLimit <= response.total) getAPDataForAccount(clientID, offset + apiLimit, needClients);
-			else {
-				//console.log(hydraMonitoringData[clientID]["aps"])
-				localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
-				loadHydraTable();
-			}
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
 		}
 	});
-}
 
-function showSwitchesForAccount(accountName) {
-	var account = getAccountforName(accountName);
-	var accountData = hydraMonitoringData[account.client_id];
-	$('#switch-table')
-		.DataTable()
-		.rows()
-		.remove();
-	$.each(accountData['switches'], function() {
-		var memoryUsage = (((this['mem_total'] - this['mem_free']) / this['mem_total']) * 100).toFixed(0).toString();
-
-		var status = '<i class="fa fa-circle text-danger"></i>';
-		if (this['status'] == 'Up') {
-			status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + this['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
-		}
-
-		// Add row to table
-		var table = $('#switch-table').DataTable();
-		table.row.add(['<strong>' + this['name'] + '</strong>', status, this['ip_address'], this['model'], this['serial'], this['firmware_version'], this['site'], this['group_name'], this['macaddr']]);
-	});
-	$('#switch-table')
-		.DataTable()
-		.rows()
-		.draw();
-	document.getElementById('switch-title').innerHTML = accountName + ' - Switches';
-	$('#SwitchModalLink').trigger('click');
-	$('[data-toggle="tooltip"]').tooltip();
-}
-
-function getSwitchDataForAccount(clientID, offset, needClients) {
-	var settings = {
+	// Get Down AP Count for account
+	var settingsDown = {
 		url: getAPIURL() + '/tools/getCommand',
 		method: 'POST',
 		timeout: 0,
@@ -628,70 +623,62 @@ function getSwitchDataForAccount(clientID, offset, needClients) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v1/switches?calculate_total=true&show_resource_details=true&limit=' + apiLimit + '&offset=' + offset,
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/aps?status=Down&calculate_total=true',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settingsDown).done(function(response) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+			$(document.getElementById('ap_icon')).addClass('text-warning');
+			$(document.getElementById('ap_icon')).removeClass('text-success');
+			$(document.getElementById('ap_icon')).removeClass('text-danger');
+			if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
+		} else {
+			this['client_id'] = clientID;
+			hydraMonitoringData[clientID]['apsDown'] = response.total;
+
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
+		}
+	});
+}
+
+
+function getSwitchOverviewForAccount(clientID) {
+	// Get Up AP Count for account
+	var settingsUp = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: getbaseURLforClientID(clientID) + '/monitoring/v1/switches?status=Up&calculate_total=true',
+			access_token: getAccessTokenforClientID(clientID),
+		}),
+	};
+
+	$.ajax(settingsUp).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('switch_icon')).addClass('text-warning');
 			$(document.getElementById('switch_icon')).removeClass('text-success');
 			$(document.getElementById('switch_icon')).removeClass('text-danger');
-			if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '-';
+			if (document.getElementById('switch_icon')) document.getElementById('switch_icon').innerHTML = '-';
 		} else {
-			$.each(response.switches, function() {
-				// add client ID to record and store
-				this['client_id'] = clientID;
-				hydraMonitoringData[clientID]['switches'].push(this);
-				//switches.push(this);
-				//loadSwitchUI(this);
-			});
+			this['client_id'] = clientID;
+			hydraMonitoringData[clientID]['switchesUp'] = response.total;
 
-			if (offset + apiLimit <= response.total) getSwitchDataForAccount(clientID, offset + apiLimit, needClients);
-			else {
-				//console.log(hydraMonitoringData[clientID]["switches"])
-				localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
-				loadHydraTable();
-				/*updateSwitchUI();
-			localStorage.setItem('monitoring_switches', JSON.stringify(switches));*/
-			}
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
 		}
 	});
-}
 
-function showGatewaysForAccount(accountName) {
-	var account = getAccountforName(accountName);
-	var accountData = hydraMonitoringData[account.client_id];
-	$('#gateway-table')
-		.DataTable()
-		.rows()
-		.remove();
-	$.each(accountData['gateways'], function() {
-		var memoryUsage = (((this['mem_total'] - this['mem_free']) / this['mem_total']) * 100).toFixed(0).toString();
-
-		var status = '<i class="fa fa-circle text-danger"></i>';
-		if (this['status'] == 'Up') {
-			status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + this['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
-		}
-
-		// Add row to table
-		var table = $('#gateway-table').DataTable();
-		table.row.add(['<strong>' + this['name'] + '</strong>', status, this['ip_address'], this['model'], this['serial'], this['firmware_version'], this['site'], this['group_name'], this['macaddr']]);
-	});
-	$('#gateway-table')
-		.DataTable()
-		.rows()
-		.draw();
-	document.getElementById('gateway-title').innerHTML = accountName + ' - Gateways';
-	$('#GatewayModalLink').trigger('click');
-	$('[data-toggle="tooltip"]').tooltip();
-}
-
-function getGatewayDataForAccount(clientID, offset) {
-	var settings = {
+	// Get Down AP Count for account
+	var settingsDown = {
 		url: getAPIURL() + '/tools/getCommand',
 		method: 'POST',
 		timeout: 0,
@@ -699,34 +686,87 @@ function getGatewayDataForAccount(clientID, offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v1/gateways?calculate_total=true&show_resource_details=true&limit=' + apiLimit + '&offset=' + offset,
+			url: getbaseURLforClientID(clientID) + '/monitoring/v1/switches?status=Down&calculate_total=true',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settingsDown).done(function(response) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+			$(document.getElementById('switch_icon')).addClass('text-warning');
+			$(document.getElementById('switch_icon')).removeClass('text-success');
+			$(document.getElementById('switch_icon')).removeClass('text-danger');
+			if (document.getElementById('switch_icon')) document.getElementById('switch_icon').innerHTML = '-';
+		} else {
+			this['client_id'] = clientID;
+			hydraMonitoringData[clientID]['switchesDown'] = response.total;
+
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
+		}
+	});
+}
+
+
+function getGatewayOverviewForAccount(clientID) {
+	// Get Up AP Count for account
+	var settingsUp = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: getbaseURLforClientID(clientID) + '/monitoring/v1/gateways?status=Up&calculate_total=true',
+			access_token: getAccessTokenforClientID(clientID),
+		}),
+	};
+
+	$.ajax(settingsUp).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
 			$(document.getElementById('gateway_icon')).removeClass('text-danger');
-			if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '-';
+			if (document.getElementById('gateway_icon')) document.getElementById('gateway_icon').innerHTML = '-';
 		} else {
-			$.each(response.gateways, function() {
-				// add client ID to record and store
-				this['client_id'] = clientID;
-				hydraMonitoringData[clientID]['gateways'].push(this);
-				//gateways.push(this);
-				//loadGatewayUI(this);
-			});
+			this['client_id'] = clientID;
+			hydraMonitoringData[clientID]['gatewaysUp'] = response.total;
 
-			if (offset + apiLimit <= response.total) getGatewayDataForAccount(clientID, offset + apiLimit);
-			else {
-				//console.log(hydraMonitoringData[clientID]["gateways"])
-				localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
-				loadHydraTable();
-			}
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
+		}
+	});
+
+	// Get Down AP Count for account
+	var settingsDown = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: getbaseURLforClientID(clientID) + '/monitoring/v1/gateways?status=Down&calculate_total=true',
+			access_token: getAccessTokenforClientID(clientID),
+		}),
+	};
+
+	$.ajax(settingsDown).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			$(document.getElementById('gateway_icon')).addClass('text-warning');
+			$(document.getElementById('gateway_icon')).removeClass('text-success');
+			$(document.getElementById('gateway_icon')).removeClass('text-danger');
+			if (document.getElementById('gateway_icon')) document.getElementById('gateway_icon').innerHTML = '-';
+		} else {
+			this['client_id'] = clientID;
+			hydraMonitoringData[clientID]['gatewaysDown'] = response.total;
+
+			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			loadHydraTable();
 		}
 	});
 }

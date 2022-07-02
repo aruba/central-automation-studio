@@ -21,7 +21,7 @@ The above copyright notice and this permission notice shall be included in all c
     <link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16">
 	<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Central Automation: Documentation</title>
+    <title>Central Automation Studio: Documentation</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!-- Canonical SEO -->
     <link rel="canonical" href="https://www.creative-tim.com/product/light-bootstrap-dashboard-pro" />
@@ -106,7 +106,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation v1.10.3</h1>
+                    <h1>Central Automation Studio v1.12.4</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -115,7 +115,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="section">
                 <div class="container">
                     <div class="row">
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="fixed-section" data-spy="affix" data-offset-top="390">
                                 <ul>
                                     <li>
@@ -127,12 +127,14 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#navigation-row">Navigation</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#hydra-row">Hydra</a>
                                     </li>
                                     <li>
                                         <a href="#dashboard-row">Dashboard</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#csv-row">CSV Workflows</a>
                                     </li>
@@ -142,6 +144,7 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#msp-row">MSP Workflows</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#group-config-row">Group Configuration</a>
                                     </li>
@@ -151,6 +154,9 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#user-role-row">User Role Deployment</a>
                                     </li>
+									<li>
+										<a href="#mpsk-local-row">MSPK-Local Deployment</a>
+									</li>
                                     <li>
                                         <a href="#auth-server-row">Authentication Server Deployment</a>
                                     </li>
@@ -160,6 +166,7 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#gateway-row">Gateway Deployment</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#airmatch-row">AirMatch</a>
                                     </li>
@@ -172,12 +179,15 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li hidden>
                                         <a href="#migration-row">Migration</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#monitoring-row">Monitoring Features</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#experimental-row">Experimental Features</a>
                                     </li>
+									<li>&nbsp;</li>
                                     <li>
                                         <a href="#changes-row">Change Log</a>
                                     </li>
@@ -194,7 +204,7 @@ The above copyright notice and this permission notice shall be included in all c
 								<h2 class="text-center">Overview</h2>
 								<legend></legend>
 								<p>
-									Central Automation is a frontend to the Aruba Central APIs.
+									Central Automation Studio is a frontend to the Aruba Central APIs.
 									<br />
 									<br /> The site is made up of modules that encompass various tasks to show various use cases utilizing the REST APIs built into Aruba Central. Some tasks have some prerequisites to be able to function correctly. These are noted in the documentation below.
 								</p>
@@ -209,7 +219,7 @@ The above copyright notice and this permission notice shall be included in all c
 									Obtain the <i>Customer ID</i> from the Account menu in the top right of the Central UI. The Customer ID is required by some APIs (e.g. ClientMatch).
 								</p>
 								<p>
-									Obtain the <i>Client ID</i> and <i>Client Secret</i> from the Apps and Token table in Central. The <i>Refresh Token</i> and <i>Access Token</i> can be retrieved when you download the token that corresponds to your App in the Apps and Tokens table. Enter the information into <a href="settings.html" target="_blank">Central Automation Settings</a> page. Save and test the connection to Central. If successful, jump over to the <a href="dashboard.html" target="_blank">Dashboard</a>.
+									Obtain the <i>Client ID</i> and <i>Client Secret</i> from the Apps and Token table in Central. The <i>Refresh Token</i> and <i>Access Token</i> can be retrieved when you download the token that corresponds to your App in the Apps and Tokens table. Enter the information into <a href="settings.html" target="_blank">Central Automation Studio Settings</a> page. Save and test the connection to Central. If successful, jump over to the <a href="dashboard.html" target="_blank">Dashboard</a>.
 								</p>
 							</div>
 							<div class="tim-row" id="architecture-row">
@@ -254,7 +264,7 @@ The above copyright notice and this permission notice shall be included in all c
 									<i class="central-icon ca-api text-warning" id="hydra_icon"></i>
 								</div>
 								<p>
-									The <a href="settings.html">Settings</a> page supports adding more than one Central account. These accounts can be reside in multiple different Central Clusters.
+									The <a href="settings.html">Settings</a> page supports adding more than one Central account. These accounts can reside in multiple different Central Clusters.
 									<div class="img-container">
 										<img src="assets/img/settings.png" alt="Settings">
 										<p>Account Settings</p>
@@ -271,13 +281,13 @@ The above copyright notice and this permission notice shall be included in all c
 										<img src="assets/img/hydra-dashboard.png" alt="Hydra">
 										<p>Hydra Dashboard</p>
 									</div>
-									APs, Switches, Gateways and Sites can all be clicked on to display additional details about that accounts devices.
+									Sites can all be clicked on to display additional details about that accounts site health.
 								</p>
 								<p>	
-									Clicking "Go To Account" for an account allows for the rest of the <i>Central Automation</i> functionality to be used against the selected account.
+									Clicking "Go To Account" for an account allows for the rest of the <i>Central Automation Studio</i> functionality to be used against the selected account.
 								</p>
 								<p>	
-									The Breadcrumb in the top left (Central Automation > Account Name) allows the ability to return to the Hydra Dashboard from the individual account dashboard.
+									The Breadcrumb in the top left (Central Automation Studio > Account Name) allows the ability to return to the Hydra Dashboard from the individual account dashboard.
 								</p>
 								<p>	
 									The Hydra Dashboard is only shown once more than one account is added in <a href="settings.html">Settings</a>.
@@ -309,31 +319,32 @@ The above copyright notice and this permission notice shall be included in all c
 									</div>
 									
 									<h2>Automated Workflows</h2>
-									Below the overview information tiles, there are tiles to launch the different workflow modules supported by Central Automation:
+									Below the overview information tiles, there are tiles to launch the different workflow modules supported by Central Automation Studio:
 									<ul>
 										<li> CSV Upload Workflows</li>
 										<li> Site Workflows</li>
 										<li> MSP Workflows (only visible if the Central account is MSP enabled)</li>
 									</ul>
 									<h2>Configuration Deployment</h2>
-									There are tiles to launch the different deployment modules supported by Central Automation:
+									There are tiles to launch the different deployment modules supported by Central Automation Studio:
 									<ul>
 										<li> Group Configuration</li>
 										<li> WLAN Deployment</li>
 										<li> User Role Deployment</li>
+										<li> MPSK-Local Deployment</li>
 										<li> Authentication Server Deployment</li>
 										<li> Switch Deployment</li>
 										<li> Gateways</li>
 									</ul>
 									<h2>Central Services</h2>
-									Tiles to launch the different Central Services modules supported by Central Automation:
+									Tiles to launch the different Central Services modules supported by Central Automation Studio:
 									<ul>
 										<li> AirMatch</li>
 										<li> ClientMatch</li>
 										<li> Device Inventory</li>
 									</ul>
 									<h2>Monitoring Features</h2>
-									Tiles to launch the different Central Services modules supported by Central Automation:
+									Tiles to launch the different Central Services modules supported by Central Automation Studio:
 									<ul>
 										<li> Client Statistics</li>
 										<li> AP Rebooting</li>
@@ -343,6 +354,7 @@ The above copyright notice and this permission notice shall be included in all c
 									These are the tiles for features that are "in the works" and not fully fleshed out:
 									<ul>
 										<li> AOS-Switch Template Config</li>
+										<li> AP Troubleshooting</li>
 									</ul>
 									<h2>Central Deployment</h2>
 									<ul>
@@ -371,13 +383,13 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> LICENSE</li>
 										<li> GROUP</li>
 										<li> SITE</li>
-										<li> AP ZONE</li>
+										<li> ZONE</li>
 									</ul>
 									If the DEVICE NAME not be included, the device renaming workflows will skip that device during the processing.</br>
 									If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway).</br>
 									If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV.</br>
 									If the SITE is missing, the device will be skipped when assigning devices to a Site. </br>
-									If the AP ZONE is missing, the device will be skipped when assigning an AP Zone to an Access Point. </br>
+									If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone to an Access Point. </br>
 									Skipped devices will be listed in the Log for the task/automation.</br></br>
 									Let's look at the tasks and automations one by one:
                                 </p>
@@ -453,8 +465,8 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
                                 <h4>Set AP Zones</h4>
                                 <p>
-                                	Uses the SERIAL and AP ZONE columns in the CSV file to set the AP Zone on the corresponding Access Point in Aruba Central.
-									If the AP ZONE is missing for an AP (or all APs) in the CSV, the device will not have the AP Zone set.
+                                	Uses the SERIAL and ZONE columns in the CSV file to set the AP Zone on the corresponding Access Point in Aruba Central.
+									If the ZONE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the AP Zone set.
                                 </p>
                                 <h4>Update Device Variables</h4>
                                 <p>
@@ -537,6 +549,10 @@ The above copyright notice and this permission notice shall be included in all c
                                 <h2>Tests</h2>
                                 <h4>Physical Layer Information</h4>
                                 <p>
+									<div class="img-container">
+										<img src="assets/img/physicalLayer.png" alt="Physical Layer Information">
+										<p>Physical Layer Information</p>
+									</div>
                                 	This test uses the APs on the selected site to obtain the connected switchport. The table displays the switch view of the wired connection to each AP. Table includes:
                                 	<ul>
 										<li> AP</li>
@@ -548,6 +564,13 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Duplex Mode</li>
 										<li> In Errors</li>
 										<li> Out Errors</li>
+										<li> Actions</li>
+									</ul>
+									The Actions supported are:
+									<ul>
+										<li> PoE Bounce</li>
+										<li> Interface Bounce</li>
+										<li> Cable Test (only supported on AOS-S switches)</li>
 									</ul>
                                 </p>
                             </div>
@@ -642,7 +665,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
                                 <h4>Passphrase Configuration</h4>
                                 <p>
-                                	Provides the ability modify the PSK used by a selected WLAN/SSID.
+                                	Provides the ability modify the PSK used by a selected WLAN/SSID. Additionally, the generation of a QR Code is available - to allow for easy client configuration for WP2-PSK SSIDs. 
                                 	<div class="img-container">
 										<img src="assets/img/psk.png" alt="PSK">
 										<p>Updating a Passphrase</p>
@@ -672,14 +695,14 @@ The above copyright notice and this permission notice shall be included in all c
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-user-roles.html">User Role Deployment</a> workflows support the creation and modification of User Roles for Access Point UI Groups in Aruba Central. AOS10 is supported in underlay deployments only. 
+                                	The <a href="deployment-user-roles.html">User Role Deployment</a> workflows support the creation and modification of User Roles for Access Point UI Groups in Aruba Central. AOS10 is currently supported in <u>underlay</u> deployments only.
                                 </p>
                                 <div class="img-container">
 										<img src="assets/img/user-role.png" alt="User Role">
 										<p>Deploying a User Role</p>
 								</div>
                                 <p>	
-                                	Phase 1 of this feature includes:
+                                	This feature includes:
                                 	<ul>
 										<li>Adding/Modifying User Roles</li>
 											<ul>
@@ -702,6 +725,35 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>									
                                 </p>
                             </div>
+							<div class="tim-row" id="mpsk-local-row">
+								<h2 class="text-center">MPSK-Local Deployment</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-password-1 text-warning" id="mpsk_icon"></i>
+								</div>
+								<legend></legend>
+								<p>
+									The <a href="deployment-mpsk.html">MPSK-Local Deployment</a> workflows support the creation and modification of MPSK-Local passphrases. QR Code generation is available when passphrases are created or modified 
+								</p>
+								<div class="img-container">
+										<img src="assets/img/mpsk-local.png" alt="MPSK-Local">
+										<p>Managing MPSK-Local Passphrases</p>
+								</div>
+								<p>	
+									This feature includes:
+									<ul>
+										<li> New MPSK creation</li>
+										<li> Modifying of existing MPSK passphrases</li>
+										<li> Removing of existing MPSK passphrases</li>
+										<li> Generating QR Code for simple connection using the MPSK (only available for "Known MPSKs")</li>
+										<li> Bulk upload of MPSKs using CSV</li>
+									</ul>
+									Notes:
+									<ul>
+										<li> Modifying an MPSK in an MPSK Pool will update that passphrase for all WLAN/SSIDs that use that MPSK Pool in the selected Group.</li> 
+										<li> Removing an MPSK from a pool will remove it for all WLANs/SSIDs using that MPSK Pool in the selected Group.</li>
+										<li> "Known MPSK" is an MPSK that is either created or edited in Central Automation Studio. The configuration from Central does not provide the MPSK - these unknown MPSKs are shown as "********".</li>
+								</p>
+							</div>
                             <div class="tim-row" id="auth-server-row">
                                 <h2 class="text-center">Authentication Server Deployment</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -786,7 +838,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 	The <a href="deployment-airmatch.html">AirMatch</a> page provides the ability to force AirMatch to "run now" in different modes, as well as display various information from AirMatch:
                                 	<div class="img-container">
 										<img src="assets/img/airmatch2.png" alt="AirMatch Run Now">
-										<p>AirMatch Lastest Optimization</p>
+										<p>AirMatch Latest Optimization</p>
 									</div>
 									<ul>
 										<li> Latest AirMatch optimization information</li>
@@ -847,11 +899,25 @@ The above copyright notice and this permission notice shall be included in all c
 									<i class="central-icon ca-cloud-data-download text-warning" id="deployment_inventory_icon"></i>
 								</div>
                                 <p>
-									The <a href="deployment-inventory.html">Device Inventory</a> page supports viewing, filtering and downloading of the Device Inventory in Aruba Central. All table columns are sortable and filterable. 
+									The <a href="deployment-inventory.html">Device Inventory</a> page supports viewing, filtering and downloading of the Device Inventory in Aruba Central. All table columns are sortable and filterable. The search function supports multiple search terms across any column.
 								</p>
 								<p>
-									Downloading the Device Inventory will download a CSV containing the filtered results in the table.
-                                </p>
+									Device Inventory Actions currently support: 
+									<ul>
+										<li> Download Inventory </li>
+										<ul>
+											<li>Downloading the "Device Inventory" will download a CSV containing the filtered results in the table. The CSV can then be used in the CSV Workflows section</li>
+										</ul>
+										<li> Move to Group</li>
+										<ul>
+											<li>The "Move to Group" action will move all devices in the filtered results in the table to the selected Group</li>
+										</ul>
+										<li> Move to Site</li>
+										<ul>
+											<li>The "Move to Site" action will move all devices in the filtered results in the table to the selected Site</li>
+										</ul>
+									</ul>
+								</p>
                             </div>
                            <div class="tim-row" id="monitoring-row">
                                 <h2 class="text-center">Monitoring Features</h2>
@@ -865,6 +931,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 <h2>Client Statistics</h2>
 								The <a href="clients.html">Client Statistics</a> page is also accessible from the bottom of the Clients table. The following statistics for clients are supported:
 								<ul>
+									<li> Client Operating System</li>
 									<li> 802.11 version support (Mix) </li>
 									<li> Band Split (2.4Ghz vs 5GHz vs 6GHz)</li>
 									<li> Authentication Type</li>
@@ -904,6 +971,7 @@ The above copyright notice and this permission notice shall be included in all c
 									<i class="central-icon ca-chemistry text-warning" id="workflow_experimental_icon"></i>
 								</div>
                                 <legend></legend>
+								<h2>AOS-Switch Template Configuration</h2>
                                 <p>
                                 	<div class="img-container">
 										<img src="assets/img/template-vlan.png" alt="AOSS-VLANs">
@@ -961,12 +1029,93 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 									
                                 </p>
+								<p>&nbsp;</p>
+								<h2>AP Troubleshooting</h2>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-list.png" alt="AP Troubleshooting">
+									<p>AP Troubleshooting List</p>
+								</div>
+								<p>
+									The <a href="troubleshooting-ap.html">AP Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific APs. Important information is presented at the top of the troubleshooting panel, while the full command output is available in the "Raw Output" section. If there is a crash log for the AP, an easy "download" button is provided.
+								</p>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-system.png" alt="AP Troubleshooting System">
+									<p>AP Troubleshooting System Details</p>
+								</div>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-radio.png" alt="AP Troubleshooting Radio">
+									<p>AP Troubleshooting Radio Details</p>
+								</div>
+								<p>
+									From a searchable list of Access Points, the following troubleshooting actions/commands are currently supported:
+									<ul>
+										<li><strong>System</strong> - "show ap debug system-status"</li>
+										<li><strong>5GHz</strong> - "show ap debug radio-stats 1"</li>
+										<li><strong>2.4GHz</strong> - "show ap debug radio-stats 0"</li>
+									</ul> 
+									Only radios that are up are listed in the actions. The 3rd radio in tri-radio APs is currently not supported due to lack of CLI commands being available.
+								</p>
                             </div>
                             <div class="tim-row" id="changes-row">
                                 <h2 class="text-center">Change Log</h2>
                                 <legend></legend>
                                 <p>
-                                	Changes/Additions to Central Automation will be documented below:</br>
+                                	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.12.4 (2022/06/30)</h4>
+									<ul>
+										<li> QR Code customization added - Colour and Logo can be changed in <a href="settings.html" target="_blank">Settings</a></li>
+									</ul>
+									<h4>Version 1.12.3 (2022/06/29)</h4>
+									<ul>
+										<li> Client Operating System graph added to <a href="#monitoring-row">Client Statistics</a> page</li>
+										<li> Fixed AirMatch EIRP graph display</li>
+									</ul>
+									<h4>Version 1.12.2 (2022/06/24)</h4>
+									<ul>
+										<li> Fix for Group table error on MSP Workflow page</li>
+										<li> Added MSP logo (if one is configured)</li>
+										<li> Reduced API calls used to obtain MSP data</li>
+									</ul>
+									<h4>Version 1.12.1 (2022/06/23)</h4>
+									<ul>
+										<li> AP Zone workflows now use "ZONE" for the column name. Change was made to match the CSV export from Central device list. Sample CSV has been updated as well</li>
+										<li> Global protection for empty rows in CSVs</li>
+									</ul>
+									<h4>Version 1.12 (2022/06/22) - <i>"Happy Snap"</i></h4>
+									<ul>
+										<li> <a href="#mpsk-local-row">MSPK-Local</a> management support added</li>
+										<li> Ability to generate (and download) <strong>QR Codes for Wi-Fi configuration</strong> for clients - available in WLAN config and MPSK-Local config</li>
+										<li> <a href="#experimental-row">AP Troubleshooting (Phase 1)</a> is available in the Experimental Section</a></li>
+									</ul>
+									<h4>Version 1.11.2 (2022/06/16)</h4>
+									<ul>
+										<li> Fix for Gateway config not showing list of Groups and Gateways</li>
+									</ul>
+									<h4>Version 1.11.1 (2022/06/11)</h4>
+									<ul>
+										<li> <a href="#hydra-row">Hydra Dashboard</a> trade-off!</li>
+										<ul>
+											<li> <strong>(+) </strong>Clients column now shows Wireless/Wired split with Connected and Failed To Connect Status</li>
+											<li> <strong>(+) </strong>Speed increase. Overview data for APs, Switches and Gateways with large accounts now loads just as fast as small accounts</li>
+											<li> <strong>(+) </strong>Reduced API Call usage</li>
+											<li> <strong>(-) </strong>APs, Switches, Gateways no longer display device lists when clicked on - That detail is now only available in the Account view</li>
+										</ul>
+									</ul>
+									<h4>Version 1.11 (2022/06/10) - <i>"Action Jackson"</i></h4>
+									<ul>
+										<li> Updated branding to <strong>Central Automation Studio</strong> (matching GitHub/Docker version)</li>
+										<li> Added Troubleshooting tools to the Physical Layer Information in the <a href="#site-row">Site Workflows</a></li>
+										<li> Added Actions to the <a href="#inventory-row">Device Inventory</a></li>
+										<li> Notifications are now always on top of all popovers - improving readability</li>
+										<li> Fix for log messages not appearing on some pages</li>
+									</ul>
+									<h4>Version 1.10.4 (2022/06/08)</h4>
+									<ul>
+										<li> Improved loading of WLAN Group config when using accounts with <strong>large</strong> numbers of groups (no longer pre-fetching WLAN config)</li>
+										<li> Improved loading of Group information when using accounts with <strong>large</strong> numbers of groups (33% Faster)</li>
+										<li> Added the ability to obfuscate the Client Secret and Tokens in the Settings page</li>
+										<li> Moved the Save button in Settings to a more visible location</li>
+									</ul>
 									<h4>Version 1.10.3 (2022/05/31)</h4>
 									<ul>
 										<li> Added support on the <a href="#dashboard-row">Dashboard</a> for cloning Groups - including upgrading to the ArubaOS 10 architecture</li>
@@ -1285,8 +1434,16 @@ ip dns server-address priority 2 %dns2.ip%
                                 <h2 class="text-center">Further Information</h2>
                                 <legend></legend>
                                 <p>
-                                	For any further information on how this Aruba Central Automation works, or to request additional functionality, please send me an <a href="mailto:aaron@wifidownunder.com?subject=Central Automation">email</a>.
+                                	For any further information on how Aruba Central Automation Studio works, or to request additional functionality, please send me an <a href="mailto:aaron@wifidownunder.com?subject=Central Automation Studio">email</a>.
                                 </p>
+								<p>
+									A Docker container version of Central Automation Studio is available. The Docker container includes this WebUI and a API Proxy inside the same container, allowing for private use.
+									It can be obtained from either of the two locations:
+									<ul>
+										<li><a href="https://github.com/aruba/central-automation-studio" target="_blank">GitHub</a></li>
+										<li><a href="https://hub.docker.com/repository/docker/arubahpe/central-automation-studio" target="_blank">DockerHub</a></li>
+									</ul>
+								</p>
                             </div>
                         </div>
 					</div>   

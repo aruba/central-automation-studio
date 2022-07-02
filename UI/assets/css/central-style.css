@@ -205,6 +205,15 @@ Generated using nucleoapp.com
   -o-transform: scale(1, -1);
   transform: scale(1, -1);
 }
+
+
+/*------------------------
+  alert
+-------------------------*/
+.alert {
+  z-index: 1100 !important; 
+}
+
 /*------------------------
 	icons
 -------------------------*/
@@ -577,12 +586,26 @@ Generated using nucleoapp.com
   content: "\ea60";
 }
 
+.ca-barcode-qr::before {
+  content: "\ea61";
+}
 
+.ca-password-1::before {
+  content: "\ea62";
+}
+
+.ca-settings::before {
+  content: "\ea63";
+}
 
 
 /*------------------------
 	Extra Styling
 -------------------------*/
+
+.textarea {
+  height: 400px !important;
+}
 
 .card {
     border-radius: 8px;
@@ -593,6 +616,10 @@ Generated using nucleoapp.com
 .card .card-header {
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
+}
+
+.nobull {
+  list-style-type: none;
 }
 
 .fa-fw {
@@ -630,6 +657,17 @@ Generated using nucleoapp.com
 .card-body .icon-big {
     font-size: 3em;
     max-height: 48	px;
+}
+
+.card-body-full-size {
+    padding: 0px !important;
+}
+
+.card-body-full-size img {
+    width: 87px;
+    height: 87px;
+    padding: 4px;
+    border-radius: 4px;
 }
 
 .card .table tbody td:last-child,
@@ -678,6 +716,11 @@ Generated using nucleoapp.com
     margin: 0 auto;
 }
 
+.modal.modal-450 .modal-dialog {
+    max-width: 450px;
+    margin: 0 auto;
+}
+
 
 .navbar .navbar-nav .central-icon {
 	font-weight: 700;
@@ -685,6 +728,17 @@ Generated using nucleoapp.com
 }
 
 .form-check .form-check-label-psk {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    padding-left: 35px;
+    padding-top: 14px;
+    line-height: 26px;
+    margin-bottom: 0;
+    text-transform: capitalize;
+}
+
+.form-check .form-check-label-secrets {
     display: inline-block;
     position: relative;
     cursor: pointer;
@@ -857,6 +911,26 @@ tr.row_selected td {
   	width: 100px;
 }
 
+.card .ct-chart-tooltip{
+    margin: 0px 0 30px;
+}
+
+input[type="color"] {
+  opacity: 0;
+  display: block;
+  height: 32px;
+  width: 100%;
+  border: none;
+}
+#color-picker-wrapper {
+  float: left;
+  width: 100%;
+  background-color: #E5E5E5;
+  border-color: #E5E5E5;
+  border-style: solid;
+  border-radius: 3px;
+  padding: 2px;
+}
 
 
 

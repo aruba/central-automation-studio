@@ -205,17 +205,28 @@ function loadAccountDetails() {
 		.DataTable()
 		.clear();
 
+	var showSecrets = JSON.parse(localStorage.getItem('reveal_secrets'));
+
 	loadCentralVCredentials();
 	$.each(centralCredentials, function() {
 		var btnString = '<a href="#" class="btn btn-link btn-warning edit"><i class="fa fa-edit"></i></a><a href="#" class="btn btn-link btn-danger remove"><i class="fa fa-times"></i></a>';
 
 		var table = $('#hydra-table').DataTable();
-		table.row.add(['<strong>' + this['account_name'] + '</strong>', getClusterName(this['base_url']), this['client_id'], this['client_secret'], this['access_token'], this['refresh_token'], btnString]);
+		if (showSecrets) {
+			table.row.add(['<strong>' + this['account_name'] + '</strong>', getClusterName(this['base_url']), this['client_id'], this['client_secret'], this['access_token'], this['refresh_token'], btnString]);
+		} else {
+			table.row.add(['<strong>' + this['account_name'] + '</strong>', getClusterName(this['base_url']), this['client_id'], '********', '********', '********', btnString]);
+		}
 	});
 	$('#hydra-table')
 		.DataTable()
 		.rows()
 		.draw();
+}
+
+function showSecrets() {
+	localStorage.setItem('reveal_secrets', document.getElementById('revealSecrets').checked);
+	loadAccountDetails();
 }
 
 function upgradeAccountSettings() {

@@ -1,3 +1,11 @@
+# API Proxy v1.2
+# Updated: 2022/03/20
+# Aaron Scott (WiFi Downunder) 2022
+# ------------------------------------------------------------------------------------------
+# Convert JS based API calls into Python calls (to work around CORS) and return the results
+# ------------------------------------------------------------------------------------------
+
+
 from flask import Flask, jsonify, request, json, render_template, g
 from flask_cors import CORS, cross_origin
 from datetime import datetime

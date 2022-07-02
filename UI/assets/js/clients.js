@@ -1,6 +1,6 @@
 /*
 Central Automation v1.4.5
-Updated: 1.6.0
+Updated: 1.12.3
 Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -58,6 +58,8 @@ function updateClientGraphs() {
 	var macClientsW = [];
 	var dot1XClientsW = [];
 	var noAuthClientsW = [];
+	var osType = {};
+	var maxOSLimit = 10;
 	var wirelessClients = getWirelessClients();
 	var wiredClients = getWiredClients();
 
@@ -176,6 +178,19 @@ function updateClientGraphs() {
 					noAuthClients2.push(this);
 				}
 			}
+
+			// OS Type
+			if (this.os_type !== '--') {
+				if (osType[this.os_type]) {
+					var osArray = osType[this.os_type];
+					osArray.push(this);
+					osType[this.os_type] = osArray;
+				} else {
+					var osArray = [];
+					osArray.push(this);
+					osType[this.os_type] = osArray;
+				}
+			}
 		}
 	});
 
@@ -197,6 +212,19 @@ function updateClientGraphs() {
 		} else {
 			countNoAuthW++;
 			noAuthClientsW.push(this);
+		}
+
+		// OS Type
+		if (this.os_type !== '--') {
+			if (osType[this.os_type]) {
+				var osArray = osType[this.os_type];
+				osArray.push(this);
+				osType[this.os_type] = osArray;
+			} else {
+				var osArray = [];
+				osArray.push(this);
+				osType[this.os_type] = osArray;
+			}
 		}
 	});
 
@@ -871,6 +899,107 @@ function updateClientGraphs() {
 			selectedClients = dot1XClientsW;
 			document.getElementById('selected-title').innerHTML = 'Wired clients using 802.1X Authentication';
 		}
+
+		$.each(selectedClients, function() {
+			var status = '';
+			if (!this['health']) {
+				status = '<i class="fa fa-circle text-neutral"></i>';
+			} else if (this['health'] < 50) {
+				status = '<i class="fa fa-circle text-danger"></i>';
+			} else if (this['health'] < 70) {
+				status = '<i class="fa fa-circle text-warning"></i>';
+			} else {
+				status = '<i class="fa fa-circle text-success"></i>';
+			}
+			// Generate clean data for table
+			var site = '';
+			if (this['site']) site = this['site'];
+			var health = '';
+			if (this['health']) health = this['health'];
+			var associatedDevice_name = '';
+			var associatedDevice = findDeviceInMonitoring(this['associated_device']);
+			if (associatedDevice) associatedDevice_name = associatedDevice.name;
+			var ip_address = '';
+			if (this['ip_address']) ip_address = this['ip_address'];
+			var vlan = '';
+			if (this['vlan']) vlan = this['vlan'];
+			var os_type = '';
+			if (this['os_type']) os_type = this['os_type'];
+			var client_name = '';
+			if (this['name']) client_name = this['name'];
+
+			// Make link to Central
+			name = encodeURI(client_name);
+			var apiURL = localStorage.getItem('base_url');
+			var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+
+			// Add row to table
+			table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
+		});
+		$('#selected-client-table')
+			.DataTable()
+			.rows()
+			.draw();
+		$('#SelectedClientModalLink').trigger('click');
+	});
+
+	/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		OS Type Bar Chart
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+	var barOptions = {
+		seriesBarDistance: 10,
+		axisX: {
+			showGrid: false,
+		},
+		axisY: {
+			onlyInteger: true,
+			offset: 30,
+		},
+		height: 250,
+		plugins: [Chartist.plugins.tooltip()],
+	};
+
+	// Create osType array
+	var items = Object.keys(osType).map(function(key) {
+		return [key, osType[key]];
+	});
+
+	// Sort the array based on the second element
+	items.sort(function(first, second) {
+		return second[1].length - first[1].length;
+	});
+
+	// Create a new array with only the first "x" items
+	var top5os = items.slice(0, maxOSLimit);
+
+	// Build labels and series
+	var osLabels = [];
+	var osSeries = [];
+	$.each(top5os, function() {
+		osLabels.push(this[0]);
+		osSeries.push({ meta: this[0], value: this[1].length });
+	});
+
+	Chartist.Bar(
+		'#chartOS',
+		{
+			labels: osLabels,
+			series: [osSeries],
+		},
+		barOptions
+	);
+
+	$('#chartOS').on('click', '.ct-bar', function() {
+		$('#selected-client-table')
+			.DataTable()
+			.rows()
+			.remove();
+		var table = $('#selected-client-table').DataTable();
+		var selectedClients = [];
+		var val = $(this).attr('ct:meta');
+		selectedClients = osType[val];
+		document.getElementById('selected-title').innerHTML = 'Clients running operating system: ' + val;
 
 		$.each(selectedClients, function() {
 			var status = '';

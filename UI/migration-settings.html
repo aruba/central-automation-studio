@@ -14,322 +14,306 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
+		<link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16" />
+		<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<title>Central Migration</title>
+		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
+		<!--     Fonts and icons     -->
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+		<!-- CSS Files -->
+		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
+		<link href="assets/css/central-style.css" rel="stylesheet" />
+	</head>
 
-<head>
-    <meta charset="utf-8" />
-    <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
-    <link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16">
-	<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Central Migration</title>
-    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
-    <!--     Fonts and icons     -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
-    <!-- CSS Files -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/central-style.css" rel="stylesheet" />
-</head>
-
-<body>
-    <div class="wrapper wrapper-full-page">
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute">
-            <div class="container">
-                <div class="navbar-wrapper">
-                    <a class="navbar-brand" href="#pablo">Central Automation</a>
-                    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
-                    </button>
-                </div>
-                <div class="collapse navbar-collapse justify-content-end" id="navbar">
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a href="migration.html" class="nav-link">
-                                <i class="central-icon ca-migration"></i> Migration
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-							<a class="nav-link dropdown-toggle" href="https://central.wifidownunder.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								<i class="nc-icon nc-bullet-list-67"></i>
-							</a>
-							<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-								<a href="documentation.html" class="dropdown-item">
-									<i class="central-icon ca-book-open"></i> Help
+	<body>
+		<div class="wrapper wrapper-full-page">
+			<!-- Navbar -->
+			<nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute">
+				<div class="container">
+					<div class="navbar-wrapper">
+						<a class="navbar-brand" href="#pablo">Central Automation</a>
+						<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation"></button>
+					</div>
+					<div class="collapse navbar-collapse justify-content-end" id="navbar">
+						<ul class="navbar-nav">
+							<li class="nav-item">
+								<a href="migration.html" class="nav-link"> <i class="central-icon ca-migration"></i> Migration </a>
+							</li>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle" href="https://central.wifidownunder.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<i class="nc-icon nc-bullet-list-67"></i>
 								</a>
-								<a href="settings.html" class="dropdown-item">
-									<i class="nc-icon nc-settings-gear-64"></i> Settings
-								</a>
-							</div>
-						</li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-        <!-- End Navbar -->
-        <!--   you can change the color of the filter page using: data-color="blue | azure | green | orange | red | purple" -->
-        <div class="full-page register-page section-image" data-color="blue" data-image="assets/img/bg4.jpg">
-            <div class="content">
-                <div class="container">
-                <div class="row">
-                	<div class="col-md-6 mx-auto">
-                    	<div class="card card-register card-plain text-center">
-							<div class="card-header ">
-								<div class="row  justify-content-center">
-									<div class="col-md-12">
-										<div class="header-text">
-											<h2 class="card-title">Source Central API Settings</h2>
-											<h4 class="card-subtitle">	Enter the access details for the Source Central API</h4>
-											<hr />
+								<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+									<a href="documentation.html" class="dropdown-item"> <i class="central-icon ca-book-open"></i> Help </a>
+									<a href="settings.html" class="dropdown-item"> <i class="nc-icon nc-settings-gear-64"></i> Settings </a>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</nav>
+			<!-- End Navbar -->
+			<!--   you can change the color of the filter page using: data-color="blue | azure | green | orange | red | purple" -->
+			<div class="full-page register-page section-image" data-color="blue" data-image="assets/img/bg4.jpg">
+				<div class="content">
+					<div class="container">
+						<div class="row">
+							<div class="col-md-6 mx-auto">
+								<div class="card card-register card-plain text-center">
+									<div class="card-header ">
+										<div class="row  justify-content-center">
+											<div class="col-md-12">
+												<div class="header-text">
+													<h2 class="card-title">Source Central API Settings</h2>
+													<h4 class="card-subtitle">Enter the access details for the Source Central API</h4>
+													<hr />
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-md-10 mx-auto">
+												<form method="#" action="#">
+													<div class="card card-plain">
+														<div class="content">
+															<form class="form-horizontal">
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Central Cluster</label>
+																		<div class="col-md-8">
+																			<select id="clusterselector" class="custom-select" data-title="Select a Cluster..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange"> </select>
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Client ID</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Client ID" class="form-control" id="client_id" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Client Secret</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Client Secret" class="form-control" id="client_secret" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Access Token</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Access Token" class="form-control" id="access_token" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Refresh Token</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Refresh Token" class="form-control" id="refresh_token" />
+																		</div>
+																	</div>
+																</div>
+															</form>
+														</div>
+													</div>
+												</form>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<div class="card-body ">
-								<div class="row">
-									<div class="col-md-10 mx-auto">
-										<form method="#" action="#">
-											<div class="card card-plain">
-												<div class="content">
-													<form class="form-horizontal">
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Central Cluster</label>
-																<div class="col-md-8">
-																	<select id="clusterselector" class="custom-select" data-title="Select a Cluster..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
-                                    								</select>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Client ID</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Client ID" class="form-control" id="client_id">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Client Secret</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Client Secret" class="form-control" id="client_secret">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Access Token</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Access Token" class="form-control" id="access_token">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Refresh Token</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Refresh Token" class="form-control" id="refresh_token">
-																</div>
-															</div>
-														</div>
-													</form>
+							<div class="col-md-6 mx-auto">
+								<div class="card card-register card-plain text-center">
+									<div class="card-header ">
+										<div class="row  justify-content-center">
+											<div class="col-md-12">
+												<div class="header-text">
+													<h2 class="card-title">Destination Central API Settings</h2>
+													<h4 class="card-subtitle">Enter the access details for the Destination Central API</h4>
+													<hr />
 												</div>
 											</div>
-										</form>
+										</div>
 									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-6 mx-auto">
-                    	<div class="card card-register card-plain text-center">
-							<div class="card-header ">
-								<div class="row  justify-content-center">
-									<div class="col-md-12">
-										<div class="header-text">
-											<h2 class="card-title">Destination Central API Settings</h2>
-											<h4 class="card-subtitle">	Enter the access details for the Destination Central API</h4>
-											<hr />
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-md-10 mx-auto">
+												<form method="#" action="#">
+													<div class="card card-plain">
+														<div class="content">
+															<form class="form-horizontal">
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Central Cluster</label>
+																		<div class="col-md-8">
+																			<select id="destination_clusterselector" class="custom-select" data-title="Select a Cluster..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange"> </select>
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Client ID</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Client ID" class="form-control" id="destination_client_id" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Client Secret</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Client Secret" class="form-control" id="destination_client_secret" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Access Token</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Access Token" class="form-control" id="destination_access_token" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Refresh Token</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Refresh Token" class="form-control" id="destination_refresh_token" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Migrated Group Password</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Central123!" class="form-control" id="destination_password" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">Authentication Shared Secret</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Central123!" class="form-control" id="destination_secret" />
+																		</div>
+																	</div>
+																</div>
+																<div class="form-group">
+																	<div class="row">
+																		<label class="col-md-4 control-label">CPPM User Password</label>
+																		<div class="col-md-8">
+																			<input type="text" placeholder="Central123!" class="form-control" id="destination_cppm" />
+																		</div>
+																	</div>
+																</div>
+															</form>
+														</div>
+													</div>
+												</form>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<div class="card-body ">
-								<div class="row">
-									<div class="col-md-10 mx-auto">
-										<form method="#" action="#">
-											<div class="card card-plain">
-												<div class="content">
-													<form class="form-horizontal">
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Central Cluster</label>
-																<div class="col-md-8">
-																	<select id="destination_clusterselector" class="custom-select" data-title="Select a Cluster..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
-                                    								</select>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Client ID</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Client ID" class="form-control" id="destination_client_id">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Client Secret</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Client Secret" class="form-control" id="destination_client_secret">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Access Token</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Access Token" class="form-control" id="destination_access_token">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Refresh Token</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Refresh Token" class="form-control" id="destination_refresh_token">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Migrated Group Password</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Central123!" class="form-control" id="destination_password">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">Authentication Shared Secret</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Central123!" class="form-control" id="destination_secret">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-4 control-label">CPPM User Password</label>
-																<div class="col-md-8">
-																	<input type="text" placeholder="Central123!" class="form-control" id="destination_cppm">
-																</div>
-															</div>
-														</div>
-													</form>
-												</div>
-											</div>
-										</form>
-									</div>
-								</div>
-							</div>
+						</div>
+						<div class="footer text-center">
+							<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="onFinishSetup()">Save & Test</button>
 						</div>
 					</div>
-                    </div>
-                    <div class="footer text-center">
-						<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="onFinishSetup()">Save & Test</button>
-					</div>
-                </div>
-            </div>
-        </div>
-        <footer class="footer">
-            <div class="container">
-                <nav>
-					<ul class="footer-menu">
-						<li>
-							<a href="javascript:checkReachability();">
-								API Proxy Accessibility
-							</a>
-						</li>
-						<li>
-							<a href="https://api.wifidownunder.com" target="_blank" id="aue-proxy-link">
-								<i id="aue-proxy" class="fa fa-circle text-neutral"></i> Australia
-							</a>
-						</li>
-						<li>
-							<a href="https://api-usw.wifidownunder.com" target="_blank" id="usw-proxy-link">
-								<i id="usw-proxy" class="fa fa-circle text-neutral"></i> US-West
-							</a>
-						</li>
-						<li>
-							<a href="https://api-euw.wifidownunder.com" target="_blank" id="euw-proxy-link">
-								<i id="euw-proxy" class="fa fa-circle text-neutral"></i> EU-West
-							</a>
-						</li>
-					</ul>
-                    <p class="copyright text-center">
-                        ©
-                        <script>
-                            document.write(new Date().getFullYear())
-                        </script>
-                        <a href="http://www.wifidownunder.com">WiFi Downunder</a>
-                    </p>
-                </nav>
-            </div>
-        </footer>
-    </div>	
-</body>
-<!--   Core JS Files   -->
-<script src="assets/js/core/jquery.3.2.1.min.js" type="text/javascript"></script>
-<script src="assets/js/core/popper.min.js" type="text/javascript"></script>
-<script src="assets/js/core/bootstrap.min.js" type="text/javascript"></script>
-<!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
-<script src="assets/js/plugins/bootstrap-switch.js"></script>
-<!--  Chartist Plugin  -->
-<script src="assets/js/plugins/chartist.min.js"></script>
-<!--  Notifications Plugin    -->
-<script src="assets/js/plugins/bootstrap-notify.js"></script>
-<!--  jVector Map  -->
-<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
-<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
-<script src="assets/js/plugins/moment.min.js"></script>
-<!--  DatetimePicker   -->
-<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
-<!--  Sweet Alert  -->
-<script src="assets/js/plugins/sweetalert2.all.min.js" type="text/javascript"></script>
-<!--  Tags Input  -->
-<script src="assets/js/plugins/bootstrap-tagsinput.js" type="text/javascript"></script>
-<!--  Sliders  -->
-<script src="assets/js/plugins/nouislider.js" type="text/javascript"></script>
-<!--  Bootstrap Select  -->
-<script src="assets/js/plugins/bootstrap-selectpicker.js" type="text/javascript"></script>
-<!--  jQueryValidate  -->
-<script src="assets/js/plugins/jquery.validate.min.js" type="text/javascript"></script>
-<!--  Plugin for the Wizard, full documentation here: https://github.com/VinceG/twitter-bootstrap-wizard -->
-<script src="assets/js/plugins/jquery.bootstrap-wizard.js"></script>
-<!--  Bootstrap Table Plugin -->
-<script src="assets/js/plugins/bootstrap-table.js"></script>
-<!--  DataTable Plugin -->
-<script src="assets/js/plugins/jquery.dataTables.min.js"></script>
-<!--  Full Calendar   -->
-<script src="assets/js/plugins/fullcalendar.min.js"></script>
-<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="assets/js/light-bootstrap-dashboard.js?v=2.0.1" type="text/javascript"></script>
-<!-- Light Dashboard DEMO methods, don't include it in your project! -->
-<script src="assets/js/demo.js"></script>
-<script>
-    $(document).ready(function() {
-        demo.checkFullPageBackgroundImage();
-        
-        populateCentralClusters();
+				</div>
+			</div>
+			<footer class="footer">
+				<div class="container">
+					<nav>
+						<ul class="footer-menu" id="api-footer">
+							<li>
+								<a href="javascript:checkReachability();">
+									API Proxy Accessibility
+								</a>
+							</li>
+							<li>
+								<a href="https://api.wifidownunder.com" target="_blank" id="aue-proxy-link"> <i id="aue-proxy" class="fa fa-circle text-neutral"></i> Australia </a>
+							</li>
+							<li>
+								<a href="https://api-usw.wifidownunder.com" target="_blank" id="usw-proxy-link"> <i id="usw-proxy" class="fa fa-circle text-neutral"></i> US-West </a>
+							</li>
+							<li>
+								<a href="https://api-euw.wifidownunder.com" target="_blank" id="euw-proxy-link"> <i id="euw-proxy" class="fa fa-circle text-neutral"></i> EU-West </a>
+							</li>
+						</ul>
+						<p class="copyright text-center">
+							©
+							<script>
+								document.write(new Date().getFullYear())
+							</script>
+							<a href="http://www.wifidownunder.com">WiFi Downunder</a>
+						</p>
+					</nav>
+				</div>
+			</footer>
+		</div>
+	</body>
+	<!--   Core JS Files   -->
+	<script src="assets/js/core/jquery.3.2.1.min.js" type="text/javascript"></script>
+	<script src="assets/js/core/popper.min.js" type="text/javascript"></script>
+	<script src="assets/js/core/bootstrap.min.js" type="text/javascript"></script>
+	<!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
+	<script src="assets/js/plugins/bootstrap-switch.js"></script>
+	<!--  Chartist Plugin  -->
+	<script src="assets/js/plugins/chartist.min.js"></script>
+	<!--  Notifications Plugin    -->
+	<script src="assets/js/plugins/bootstrap-notify.js"></script>
+	<!--  jVector Map  -->
+	<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
+	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
+	<script src="assets/js/plugins/moment.min.js"></script>
+	<!--  DatetimePicker   -->
+	<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
+	<!--  Sweet Alert  -->
+	<script src="assets/js/plugins/sweetalert2.all.min.js" type="text/javascript"></script>
+	<!--  Tags Input  -->
+	<script src="assets/js/plugins/bootstrap-tagsinput.js" type="text/javascript"></script>
+	<!--  Sliders  -->
+	<script src="assets/js/plugins/nouislider.js" type="text/javascript"></script>
+	<!--  Bootstrap Select  -->
+	<script src="assets/js/plugins/bootstrap-selectpicker.js" type="text/javascript"></script>
+	<!--  jQueryValidate  -->
+	<script src="assets/js/plugins/jquery.validate.min.js" type="text/javascript"></script>
+	<!--  Plugin for the Wizard, full documentation here: https://github.com/VinceG/twitter-bootstrap-wizard -->
+	<script src="assets/js/plugins/jquery.bootstrap-wizard.js"></script>
+	<!--  Bootstrap Table Plugin -->
+	<script src="assets/js/plugins/bootstrap-table.js"></script>
+	<!--  DataTable Plugin -->
+	<script src="assets/js/plugins/jquery.dataTables.min.js"></script>
+	<!--  Full Calendar   -->
+	<script src="assets/js/plugins/fullcalendar.min.js"></script>
+	<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
+	<script src="assets/js/light-bootstrap-dashboard.js?v=2.0.1" type="text/javascript"></script>
+	<!-- Light Dashboard DEMO methods, don't include it in your project! -->
+	<script src="assets/js/demo.js"></script>
+	<script>
+		  $(document).ready(function() {
+		      demo.checkFullPageBackgroundImage();
 
-        setTimeout(function() {
-            // after 1000 ms we add the class animated to the login/register card
-            $('.card').removeClass('card-hidden');
-        }, 700)
-        
-        // Load up saved details
+		      populateCentralClusters();
+
+		      setTimeout(function() {
+		          // after 1000 ms we add the class animated to the login/register card
+		          $('.card').removeClass('card-hidden');
+		      }, 700)
+
+		      // Load up saved details
 		var clientID = localStorage.getItem('client_id');
 		if (clientID != null && clientID != "undefined") {
 			document.getElementById("client_id").value = clientID;
@@ -338,66 +322,66 @@ The above copyright notice and this permission notice shall be included in all c
 		if (dclientID != null && dclientID != "undefined") {
 			document.getElementById("destination_client_id").value = dclientID;
 		}
-		
+
 		var clientSecret = localStorage.getItem('client_secret');
 		if (clientSecret != null && clientSecret != "undefined") {
 			document.getElementById("client_secret").value = clientSecret;
 		}
-		
+
 		var dclientSecret = localStorage.getItem('destination_client_secret');
 		if (dclientSecret != null && dclientSecret != "undefined") {
 			document.getElementById("destination_client_secret").value = dclientSecret;
 		}
-		
+
 		var baseURL = localStorage.getItem('base_url');
 		if (baseURL != null && baseURL != "undefined") {
 			document.getElementById("clusterselector").value = baseURL;
 		}
-		
+
 		var dbaseURL = localStorage.getItem('destination_base_url');
 		if (dbaseURL != null && dbaseURL != "undefined") {
 			document.getElementById("destination_clusterselector").value = dbaseURL;
 		}
-		
+
 		var accessToken = localStorage.getItem('access_token');
 		if (accessToken != null && accessToken != "undefined") {
 			document.getElementById("access_token").value = accessToken;
 		}
-		
+
 		var daccessToken = localStorage.getItem('destination_access_token');
 		if (daccessToken != null && daccessToken != "undefined") {
 			document.getElementById("destination_access_token").value = daccessToken;
 		}
-		
+
 		var refreshToken = localStorage.getItem('refresh_token');
 		if (refreshToken != null && refreshToken != "undefined") {
 			document.getElementById("refresh_token").value = refreshToken;
 		}
-		
+
 		var drefreshToken = localStorage.getItem('destination_refresh_token');
 		if (drefreshToken != null && drefreshToken != "undefined") {
 			document.getElementById("destination_refresh_token").value = drefreshToken;
 		}
-		
+
 		var dPassword = localStorage.getItem('destination_password');
 		if (dPassword != null && dPassword != "undefined") {
 			document.getElementById("destination_password").value = dPassword;
 		}
-		
+
 		var dSecret = localStorage.getItem('destination_secret');
 		if (dSecret != null && dSecret != "undefined") {
 			document.getElementById("destination_secret").value = dSecret;
 		}
-		
+
 		var cppmSecret = localStorage.getItem('destination_cppm');
 		if (cppmSecret != null && cppmSecret != "undefined") {
 			document.getElementById("destination_cppm").value = cppmSecret;
 		}
-    });
-</script>
-<!--   Main JS Files   -->
-<script src="assets/js/main.js"></script>
-<script src="assets/js/hydra.js"></script>
-<script src="assets/js/migration.js"></script>
-
+		  });
+	</script>
+	<!--   Main JS Files   -->
+	<script src="assets/js/main.js"></script>
+	<script src="assets/js/proxy.js"></script>
+	<script src="assets/js/hydra.js"></script>
+	<script src="assets/js/migration.js"></script>
 </html>

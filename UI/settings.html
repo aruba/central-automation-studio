@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.6.0
-Updated: 1.10.0
+Updated: 1.12.4
 Copyright Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -27,7 +27,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
     <link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16">
 	<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Central Automation</title>
+    <title>Central Automation Studio</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
@@ -97,6 +97,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											</div>
 										</div>
 									</div>
+									<button type="submit" class="btn btn-fill btn-info btn-wd btn-lg" onclick="onFinishSetup()">Save & Go To Dashboard</button>
 								</div>
 								<div class="card card-body">
 									<div class="row">
@@ -123,6 +124,17 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														</tbody>
 													</table>
 												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-9 mx-auto"></div>
+										<div class="col-md-3 mx-auto">
+											<div class="form-check">
+												<label class="form-check-label-secrets">
+													<input class="form-check-input" type="checkbox" value="" id="revealSecrets" checked="true" onclick="showSecrets()">
+													<span class="form-check-sign"></span>Reveal Tokens and Secrets
+												</label>
 											</div>
 										</div>
 									</div>
@@ -183,7 +195,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 										<div class="col-md-12">
 											<div class="header-text">
 												<h2 class="card-title">Global Settings</h2>
-												<h4 class="card-subtitle">General settings for the site</h4>
+												<h4 class="card-subtitle">General settings for Central Automation Studio</h4>
 												<hr />
 											</div>
 										</div>
@@ -214,6 +226,24 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 																</div>
 															</div>
 														</div>
+														<div class="form-group">
+															<div class="row">
+																<label class="col-md-6 control-label">QR Code Colour</label>
+																<div class="col-md-6">
+																	<div id="color-picker-wrapper">
+																		<input type="color" value="#FF8300" id="color_picker">
+																	</div>
+																</div>
+															</div>
+														</div>
+														<div class="form-group">
+															<div class="row">
+																<label class="col-md-6 control-label">QR Code Logo</label>
+																<div class="col-md-6">
+																	<input  type="text" placeholder="Custom Image URL" class="form-control" id="qr_logo">
+																</div>
+															</div>
+														</div>
 													</form>
 												</div>
 											</div>
@@ -223,9 +253,6 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 						</div>
                     </div>
-                    <div class="footer text-center">
-						<button type="submit" class="btn btn-fill btn-success btn-wd btn-lg" onclick="onFinishSetup()">Save & Go To Dashboard</button>
-					</div>
 					</div>
 				</div>
 			</div>
@@ -322,9 +349,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 										<div class="card-header">
 												<h4 class="card-title">Log</h4>
 											</div>
-										<div class="card-body" id="errorBody">
-									
-										</div>
+										<div class="card-body" id="errorBody"></div>
 									</div>
 								</div>
 							</div>
@@ -393,6 +418,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 <script>
     $(document).ready(function() {
         demo.checkFullPageBackgroundImage();
+		
+		var color_picker = document.getElementById("color_picker");
+		var color_picker_wrapper = document.getElementById("color-picker-wrapper");
+		color_picker.onchange = function() {
+			color_picker_wrapper.style.backgroundColor = color_picker.value;    
+		}
         
         $('#hydra-table').DataTable({
 			"paging": false,
@@ -433,6 +464,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 			// Old account settings - need to migrate to v1.6
 			upgradeAccountSettings();
 		}
+		
+		var showingSecrets = localStorage.getItem('reveal_secrets');
+		if (showingSecrets != null && showingSecrets != "undefined") {
+			document.getElementById("revealSecrets").checked = JSON.parse(showingSecrets);
+		} else {
+			document.getElementById("revealSecrets").checked = true;
+			localStorage.setItem('reveal_secrets',true);
+		}
         
         populateCentralClusters();
 		loadAccountDetails();
@@ -450,6 +489,21 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		var refreshRate = localStorage.getItem('refresh_rate');
 		if (refreshRate != null && refreshRate != "undefined") {
 			document.getElementById("refresh_rate").value = refreshRate;
+		}
+		
+		var qrColor = localStorage.getItem('qr_color');
+		if (qrColor != null && qrColor != "undefined") {
+			document.getElementById("color_picker").value = qrColor;
+		} else {
+			document.getElementById("color_picker").value = "#FF8300";
+		}
+		color_picker_wrapper.style.backgroundColor = color_picker.value;
+		
+		var qrLogo = localStorage.getItem('qr_logo');
+		if (qrLogo != null && qrLogo != "undefined") {
+			document.getElementById("qr_logo").value = qrLogo;
+		} else {
+			document.getElementById("qr_logo").value = "";
 		}
 		
 		var loadClients = localStorage.getItem('load_clients');

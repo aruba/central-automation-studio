@@ -1,6 +1,6 @@
 /*
 Central Automation v1.10
-Updated: 
+Updated: v1.11
 Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -9,45 +9,144 @@ var deviceList = [];
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Build Inventory Table
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
 function loadCurrentPageAP() {
-	// override on visible page - used as a notification
 	loadFullInventory();
 }
 
 function loadFullInventory() {
 	inventoryPromise = new $.Deferred();
-	$.when(tokenRefresh()).then(function() {
-		$.when(updateInventory()).then(function() {
-			// Empty the table
-			$('#inventory-table')
-				.DataTable()
-				.rows()
-				.remove();
+	$.when(updateInventory()).then(function() {
+		// Empty the table
+		$('#inventory-table')
+			.DataTable()
+			.rows()
+			.remove();
 
-			// build table data
-			deviceList = getFullInventory();
+		// build table data
+		deviceList = getFullInventory();
 
-			$.each(deviceList, function() {
-				var monitoringInfo = findDeviceInMonitoring(this.serial);
+		$.each(deviceList, function() {
+			var monitoringInfo = findDeviceInMonitoring(this.serial);
 
-				// Add row to table
-				var table = $('#inventory-table').DataTable();
-				if (monitoringInfo) {
-					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
-				} else {
-					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
-				}
-			});
-
-			$('#inventory-table')
-				.DataTable()
-				.rows()
-				.draw();
+			// Add row to table
+			var table = $('#inventory-table').DataTable();
+			if (monitoringInfo) {
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
+			} else {
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
+			}
 		});
+
+		$('#inventory-table')
+			.DataTable()
+			.rows()
+			.draw();
 	});
 }
 
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Download Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
 function downloadDeviceInventory() {
+	csvData = buildCSVData();
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	var table = $('#inventory-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', 'inventory-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', 'inventory.csv');
+	//csvLink.setAttribute('Inventory', 'inventory.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Group Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function askToSelectGroup() {
+	$('#GroupModalLink').trigger('click');
+}
+
+function selectGroup() {
+	var select = document.getElementById('groupselector');
+	manualGroup = select.value;
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'This will move all devices shown in the table to the ' + manualGroup + ' group',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, do it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			moveToGroup(manualGroup);
+		}
+	});
+}
+
+function moveToGroup(selectedGroup) {
+	// Build CSV with selected group name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(selectedGroup, undefined);
+	processCSV(csvDataBlob);
+	// Move devices to the selected Group
+	moveDevicesToGroup();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Site Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function askToSelectSite() {
+	$('#SiteModalLink').trigger('click');
+}
+
+function selectSite() {
+	var select = document.getElementById('siteselector');
+	manualSite = select.value;
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'This will move all devices shown in the table to the ' + manualSite + ' site',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, do it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			moveToSite(manualSite);
+		}
+	});
+}
+
+function moveToSite(selectedSite) {
+	// Build CSV with selected site name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(undefined, selectedSite);
+	processCSV(csvDataBlob);
+	// Move devices to the selected Site
+	moveDevicesToSite();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Build CSV with any required changes (group or site action)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function buildCSVData(selectedGroup, selectedSite) {
 	//CSV header
 	var serialKey = 'SERIAL';
 	var macKey = 'MAC';
@@ -60,7 +159,7 @@ function downloadDeviceInventory() {
 	var siteKey = 'SITE';
 	var licenseKey = 'LICENSE';
 
-	csvData = [];
+	var csvDataBuild = [];
 
 	var table = $('#inventory-table').DataTable();
 	var filteredRows = table.rows({ filter: 'applied' });
@@ -71,25 +170,23 @@ function downloadDeviceInventory() {
 		// Find monitoring data if there is any
 		var monitoringInfo = findDeviceInMonitoring(device.serial);
 		if (monitoringInfo) {
-			csvData.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '', [siteKey]: monitoringInfo['site'] ? monitoringInfo['site'] : '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+			var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
+			if (selectedGroup) groupToUse = selectedGroup;
+
+			var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
+			if (selectedSite) siteToUse = selectedSite;
+
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
 		} else {
-			csvData.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+			var groupToUse = '';
+			if (selectedGroup) groupToUse = selectedGroup;
+
+			var siteToUse = '';
+			if (selectedSite) siteToUse = selectedSite;
+
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
 		}
 	});
 
-	var csv = Papa.unparse(csvData);
-
-	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-
-	var csvURL = window.URL.createObjectURL(csvBlob);
-
-	var csvLink = document.createElement('a');
-	csvLink.href = csvURL;
-
-	var filter = table.search();
-	if (filter !== '') csvLink.setAttribute('download', 'inventory-' + filter.replace(/ /g, '_') + '.csv');
-	else csvLink.setAttribute('download', 'inventory.csv');
-	//csvLink.setAttribute('Inventory', 'inventory.csv');
-	csvLink.click();
-	window.URL.revokeObjectURL(csvLink);
+	return csvDataBuild;
 }

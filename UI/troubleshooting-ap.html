@@ -13,13 +13,18 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.8
-Updated:
-Aaron Scott (WiFi Downunder) 2022
+Central Automation v1.12
+Updated: 
+Copyright Aaron Scott (WiFi Downunder) 2022
 -->
 
 <!DOCTYPE html>
 <html lang="en">
+	<?php
+	require_once('../phpcount.php');
+	$curPageName = substr($_SERVER["SCRIPT_NAME"],strrpos($_SERVER["SCRIPT_NAME"],"/")+1);  
+	PHPCount::AddHit($curPageName);
+	?>
 	<head>
 		<meta charset="utf-8" />
 		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
@@ -31,8 +36,7 @@ Aaron Scott (WiFi Downunder) 2022
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+		<script src="https://kit.fontawesome.com/2741cb5579.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
@@ -45,18 +49,18 @@ Aaron Scott (WiFi Downunder) 2022
 		<div class="wrapper">
 			<div class="main-panel">
 				<!-- Navbar -->
-				<nav class="navbar navbar-expand-lg ">
+				<nav class="navbar navbar-expand-md ">
 					<div class="container-fluid">
 						<div class="navbar-wrapper">
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: ClientMatch </a>
+							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: AP Troubleshooting </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
 								<li class="nav-item active ">
-									<a class="nav-link" onclick="getMonitoringData()">
+									<a class="nav-link" onclick="getMonitoringData()" href="#">
 										<i class="central-icon ca-reload"></i>
 									</a>
 								</li>
@@ -66,7 +70,7 @@ Aaron Scott (WiFi Downunder) 2022
 									</a>
 								</li>
 								<li class="nav-item">
-									<a class="nav-link" onclick="showLog()">
+									<a class="nav-link" onclick="showLog()" href="#">
 										<i class="central-icon ca-research"></i>
 									</a>
 								</li>
@@ -87,94 +91,87 @@ Aaron Scott (WiFi Downunder) 2022
 				<div class="content">
 					<div class="container-fluid">
 						<div class="row">
-							<!-- CM State Card -->
-							<div class="col-md-4">
-								<div class="card  card-tasks">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch State</h4>
-										<p class="card-category">Show the state of ClientMatch for this tenant</p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
-										<button class="btn btn-fill btn-default" name="cmStateBtn" id="cmStateBtn" onclick="toggleCMState()">Unknown</button>
-									</div>
-								</div>
-							</div>
-							<!-- End CM State Card -->
-							<!-- CM State Card -->
-							<div class="col-md-4">
-								<div class="card  card-tasks">
-									<div class="card-header ">
-										<h4 class="card-title">Load Balancing State</h4>
-										<p class="card-category">Show the state of ClientMatch Load Balancing for this tenant</p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
-										<button class="btn btn-fill btn-default" name="loadbalBtn" id="loadbalBtn" onclick="toggleLoadBal()">Unknown</button>
-									</div>
-								</div>
-							</div>
-							<!-- End CM State Card -->
-						</div>
-						<!-- Unsteerable Clients Card -->
-						<div class="row">
 							<div class="col-md-12">
+								<!-- APs Card -->
 								<div class="card">
 									<div class="card-header">
-										<h4 class="card-title">Unsteerable Clients</h4>
-										<a class="refresh-link" onclick="getUnsteerableClients()"><i class="central-icon ca-reload"></i></a>
+										<h4 class="card-title">Access Points</h4>
 									</div>
 									<div class="card-body">
-										<div class="card data-tables">
-											<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
-												<div class="fresh-datatables">
-													<table id="unsteerable-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
-														<thead>
-															<th>Name</th>
-															<th>Health</th>
-															<th>MAC Address</th>
-															<th>IP Address</th>
-															<th>Client OS</th>
-															<th>Connected To</th>
-															<th>Site</th>
-															<th>VLAN</th>
-															<th>Actions</th>
-														</thead>
-														<tbody></tbody>
-													</table>
-												</div>
+										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="device-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>Name</th>
+														<th>Status</th>
+														<th>Serial Number</th>
+														<th>MAC Address</th>
+														<th>Group</th>
+														<th>Site</th>
+														<th>Firmware</th>
+														<th>Troubleshooting</th>
+													</thead>
+													<tbody></tbody>
+												</table>
 											</div>
 										</div>
 									</div>
 								</div>
+								<!-- End APs Card -->
 							</div>
 						</div>
-						<div class="row">
-							<div class="col-md-12">
-								<div class="card">
+					</div>
+				</div>
+				<!-- AP System Status Modal -->
+				<div class="modal fade modal-mini modal-primary" id="SystemStatusModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
 									<div class="card-header">
-										<h4 class="card-title">Recent Steering History</h4>
-										<a class="refresh-link" onclick="getSteerHistory()"><i class="central-icon ca-reload"></i></a>
+										<h4 class="card-title" id="systemStatusTitle">System Status</h4>
 									</div>
 									<div class="card-body">
-										<div class="card data-tables">
-											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
-												<div class="fresh-datatables">
-													<table id="history-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
-														<thead>
-															<th>Event Time</th>
-															<th>Client</th>
-															<th>Type</th>
-															<th>Mode</th>
-															<th>Status</th>
-															<th>From AP</th>
-															<th>To AP</th>
-															<th>Roam Time (seconds)</th>
-														</thead>
-														<tbody></tbody>
-													</table>
+										<div class="row">
+											<div class="col-md-6">
+												<h5>General</h5>
+												<hr />
+												<ul class="list-inline" id="generalSystemIssues"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Power Information</h5>
+												<hr />
+												<ul class="list-inline" id="powerIssues"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="row">
+											<div class="col-md-6">
+												<h5>Hardware</h5>
+												<hr />
+												<ul class="list-inline" id="hardwareIssues"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Interfaces</h5>
+												<hr />
+												<ul class="list-inline" id="interfaceIssues"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="accordions" id="accordion">
+											<div class="card">
+												<div class="card-header">
+													<h4 class="card-title">
+														<a data-target="#collapseSystem" href="#" data-toggle="collapse">
+															Raw Results
+															<b class="caret"></b>
+														</a>
+													</h4>
+												</div>
+												<div id="collapseSystem" class="card-collapse collapse">
+													<div class="card-body">
+														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="systemStatusText" rows="50"></textarea>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -184,6 +181,60 @@ Aaron Scott (WiFi Downunder) 2022
 						</div>
 					</div>
 				</div>
+				<!--  End Modal -->
+				<!-- Radio Stats Modal -->
+				<div class="modal fade modal-mini modal-primary" id="RadioStatsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title" id="radioStatsTitle"></h4>
+									</div>
+									<div class="card-body">
+										<div class="row">
+											<div class="col-md-4">
+												<h5>General</h5>
+												<hr />
+												<ul class="list-inline" id="generalRFIssues"></ul>
+											</div>
+
+											<div class="col-md-4">
+												<h5>Transmit</h5>
+												<hr />
+												<ul class="list-inline" id="txIssues"></ul>
+											</div>
+
+											<div class="col-md-4">
+												<h5>Receive</h5>
+												<hr />
+												<ul class="list-inline" id="rxIssues"></ul>
+											</div>
+										</div>
+										<div class="accordions" id="accordion">
+											<div class="card">
+												<div class="card-header">
+													<h4 class="card-title">
+														<a data-target="#collapseRF" href="#" data-toggle="collapse">
+															Raw Results
+															<b class="caret"></b>
+														</a>
+													</h4>
+												</div>
+												<div id="collapseRF" class="card-collapse collapse">
+													<div class="card-body">
+														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="radioStatsText" rows="50"></textarea>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -202,7 +253,9 @@ Aaron Scott (WiFi Downunder) 2022
 				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#RadioStatsModal" href="#pablo" id="RadioStatsModalLink"></a>
+						<a data-toggle="modal" data-target="#SystemStatusModal" href="#pablo" id="SystemStatusModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -261,48 +314,47 @@ Aaron Scott (WiFi Downunder) 2022
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
-		 $(document).ready(function() {
-		 	var reachabilityPromise = new $.Deferred();
-		     $.when(checkReachability(reachabilityPromise)).then(function () {
-		console.log("Using "+getAPIURL());
-		$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
+		  $(document).ready(function() {
+		  	var reachabilityPromise = new $.Deferred();
+		      $.when(checkReachability(reachabilityPromise)).then(function () {
+			console.log("Using "+getAPIURL());
 
-		loadMonitoringData();
-		var refreshrate = localStorage.getItem('refresh_rate');
-		if (refreshrate === null || refreshrate === "") {
-			refreshrate = "30";
-		}
-		setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+			$('#device-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				"columnDefs": [{
+				   'targets': 1,
+				   'searchable':false,
+				   'orderable':false,
+				   'className': 'dt-body-center'
+				}],
+				'order': [[0, 'asc']],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
 
-		$('#unsteerable-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": true,
-			"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Clients",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 3 }]
+
+			$('[data-toggle="tooltip"]').tooltip();
+
+			var refreshrate = localStorage.getItem('refresh_rate');
+			if (refreshrate === null || refreshrate === "") {
+				refreshrate = "30";
+			}
+			loadMonitoringData(refreshrate);
+
+			getDevices();
 		});
 
-		$('#history-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": true,
-			"lengthMenu": [[-1, 25, 50], ["All", 25, 50]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search History",
-			},
-			'order': [[0, 'desc']]
-		});
-		 	});
-		 });
+		  });
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/main.js"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
-	<script src="assets/js/clientmatch.js"></script>
+	<script src="assets/js/troubleshooting-ap.js"></script>
 </html>

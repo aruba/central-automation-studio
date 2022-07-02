@@ -28,7 +28,7 @@ Aaron Scott (WiFi Downunder) 2022
 	<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32">
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Central Automation</title>
+    <title>Central Automation Studio</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
@@ -51,7 +51,7 @@ Aaron Scott (WiFi Downunder) 2022
                     	<div class="icon-big text-center icon-warning">
 							<i class="central-icon ca-api text-warning"></i>
 						</div>
-                        <a class="navbar-brand" href="dashboard.html"> Central Automation: WLAN Workflows </a>
+                        <a class="navbar-brand" href="dashboard.html"> Central Automation Studio: WLAN Workflows </a>
                     </div>
                     <div class="collapse navbar-collapse justify-content-end">
                     	<ul class="nav navbar-nav">
@@ -253,7 +253,6 @@ Aaron Scott (WiFi Downunder) 2022
 										<select id="wlanselector" class="selectpicker" data-title="Select a wlan..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange"  onchange="getConfigforWLAN()">
 										</select>
 									</div>
-							
 								</div> 
 								<div class="col-md-4">
 									<div class="card-header ">
@@ -278,8 +277,9 @@ Aaron Scott (WiFi Downunder) 2022
 											</div>
 										</form>
 										<button class="btn btn-fill btn-info" name="savePSKBtn" id="savePSKBtn" onclick="updatePSK()">Save Changes</button>
+										<button class="btn btn-outline btn-info" name="qrBtn" id="qrBtn" onclick="generateQRCode()" disabled><i class="central-icon ca-barcode-qr"> Generate QR Code</i></button>
 									</div>	
-								</div> 
+								</div>
 							</div>
                     	</div>  
                     </div> 
@@ -545,9 +545,7 @@ Aaron Scott (WiFi Downunder) 2022
 								<div class="card-header">
 										<h4 class="card-title">Log</h4>
 									</div>
-								<div class="card-body" id="errorBody">
-									
-								</div>
+								<div class="card-body" id="errorBody"></div>
 							</div>
 						</div>
 					</div>
@@ -646,11 +644,32 @@ Aaron Scott (WiFi Downunder) 2022
 				</div>
 			</div>
 			<!--  End Modal -->
+			<!-- QR Code Modal -->
+			<div class="modal fade modal-450 modal-primary" id="QRModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="row">
+							<div class="col-md-12">
+								<div class="card-header">
+									<h4 class="card-title" id="wlanQRTitle">WLAN QR Code</h4>
+								</div>
+								<div class="card-body" id="qrcanvas"></div>
+								<div class="card-footer">
+									<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+								 </div>
+							</div>
+						</div>
+					</div>
+					
+				</div>
+			</div>
+			<!--  End QR Code Modal -->
 			<footer class="footer">
 				<div class="container">
 					<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
 					<a data-toggle="modal" data-target="#UniversalModal" href="#pablo" id="UniversalModalLink"></a>
 					<a data-toggle="modal" data-target="#WLANModal" href="#pablo" id="WLANModalLink"></a>
+					<a data-toggle="modal" data-target="#QRModal" href="#pablo" id="QRModalLink"></a>
 					<nav>
 						<ul class="footer-menu" id="api-footer"></ul>
 						<p class="copyright text-center">
@@ -708,6 +727,9 @@ Aaron Scott (WiFi Downunder) 2022
 <script src="assets/js/plugins/papaparse.min.js"></script>
 <!-- Sorting by IP Address plugin for DataTables -->
 <script src="assets/js/plugins/ip-address.js"></script>
+<!-- QR Code Plugin -->
+<script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+
 <script type="text/javascript">
     $(document).ready(function() {
     	var reachabilityPromise = new $.Deferred();
