@@ -1,0 +1,33 @@
+.chartist-tooltip {
+  position: relative;
+  display: inline-block;
+  opacity: 0;
+  min-width: 5em;
+  padding: .5em;
+  background: #ffffff;
+  border-radius: 4px;
+  border-color: rgba(0, 0, 0, 0.125);
+  border-width: 1px;
+  border-style: solid;
+  box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+  color: #453D3F;
+  font-family: Oxygen,Helvetica,Arial,sans-serif;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+  z-index: 1;
+  -webkit-transition: opacity .2s linear;
+  -moz-transition: opacity .2s linear;
+  -o-transition: opacity .2s linear;
+  transition: opacity .2s linear; 
+}
+
+.chartist-tooltip.tooltip-show {
+    opacity: 1; 
+}
+
+.ct-area, .ct-line {
+  pointer-events: none; 
+}
+
+/*# sourceMappingURL=chartist-plugin-tooltip.css.map */
