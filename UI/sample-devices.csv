@@ -1,2 +1,2 @@
-DEVICE NAME,SERIAL,MAC,GROUP,SITE,LICENSE,ZONE
-AP-Name,XXXXXXXX,aa:bb:cc:dd:ee:ff,Branch,SiteA,Foundation,ZoneA
+DEVICE NAME,SERIAL,MAC,GROUP,SITE,LICENSE,ZONE,RF PROFILE
+AP-Name,XXXXXXXX,aa:bb:cc:dd:ee:ff,Branch,SiteA,Foundation,ZoneA,default

@@ -10,15 +10,23 @@ var hydraMonitoringData = {};
 		Utility functions
 	---------------------------------------------------------------------------------- */
 
-function onFinishSetup() {
-	// Save all supplied addresses and details
+function saveGlobalSettings() {
+	// Save all the global settings (except for the accounts)
 	localStorage.setItem('ap_naming_format', $('#ap_naming_format').val());
+	localStorage.setItem('hostname_variable', $('#hostname_variable').val());
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
+	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').value === 'Include' ? true : false);
 	localStorage.setItem('qr_color', $('#color_picker').val());
 	localStorage.setItem('qr_logo', $('#qr_logo').val());
 	logInformation('Central Automation Studio settings saved');
+}
+
+function onFinishSetup() {
+	clearErrorLog();
+	// Save all supplied addresses and details
+	saveGlobalSettings();
 	tokenRefreshForAll();
 }
 
@@ -114,6 +122,12 @@ function tokenRefreshForAccount(clientID) {
 	return $.ajax(settings)
 		.done(function(response) {
 			//console.log(response);
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
+					return;
+				}
+			}
 			if (response.hasOwnProperty('error')) {
 				logError(response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"');
 				showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
@@ -188,6 +202,12 @@ function getDashboardData() {
 			};
 
 			$.ajax(settings).done(function(response) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
+						return;
+					}
+				}
 				if (response.hasOwnProperty('error')) {
 					showNotification('ca-padlock', response.error_description + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
 				} else {
@@ -469,6 +489,12 @@ function getWirelessClientOverviewForAccount(clientID) {
 
 	$.ajax(settingsConnected).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/clients)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wirelessClientsUp'] = response.total;
@@ -493,6 +519,12 @@ function getWirelessClientOverviewForAccount(clientID) {
 
 	$.ajax(settingsNotConnected).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/clients)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wirelessClientsDown'] = response.total;
@@ -543,6 +575,12 @@ function getWiredClientOverviewForAccount(clientID) {
 
 	$.ajax(settingsNotConnected).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/clients)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wiredClientsDown'] = response.total;
@@ -569,6 +607,12 @@ function getWiredClientDataForAccount(clientID) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/clients)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('ap_icon')).addClass('text-warning');
 			$(document.getElementById('ap_icon')).removeClass('text-success');
@@ -581,7 +625,6 @@ function getWiredClientDataForAccount(clientID) {
 		}
 	});
 }
-
 
 function getAPOverviewForAccount(clientID) {
 	// Get Up AP Count for account
@@ -600,6 +643,12 @@ function getAPOverviewForAccount(clientID) {
 
 	$.ajax(settingsUp).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/aps)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('ap_icon')).addClass('text-warning');
 			$(document.getElementById('ap_icon')).removeClass('text-success');
@@ -630,6 +679,12 @@ function getAPOverviewForAccount(clientID) {
 
 	$.ajax(settingsDown).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/aps)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('ap_icon')).addClass('text-warning');
 			$(document.getElementById('ap_icon')).removeClass('text-success');
@@ -644,7 +699,6 @@ function getAPOverviewForAccount(clientID) {
 		}
 	});
 }
-
 
 function getSwitchOverviewForAccount(clientID) {
 	// Get Up AP Count for account
@@ -663,6 +717,12 @@ function getSwitchOverviewForAccount(clientID) {
 
 	$.ajax(settingsUp).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/switches)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('switch_icon')).addClass('text-warning');
 			$(document.getElementById('switch_icon')).removeClass('text-success');
@@ -693,6 +753,12 @@ function getSwitchOverviewForAccount(clientID) {
 
 	$.ajax(settingsDown).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/switches)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('switch_icon')).addClass('text-warning');
 			$(document.getElementById('switch_icon')).removeClass('text-success');
@@ -707,7 +773,6 @@ function getSwitchOverviewForAccount(clientID) {
 		}
 	});
 }
-
 
 function getGatewayOverviewForAccount(clientID) {
 	// Get Up AP Count for account
@@ -726,6 +791,12 @@ function getGatewayOverviewForAccount(clientID) {
 
 	$.ajax(settingsUp).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/gateways)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
@@ -756,6 +827,12 @@ function getGatewayOverviewForAccount(clientID) {
 
 	$.ajax(settingsDown).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/gateways)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
@@ -895,6 +972,12 @@ function getSiteDataForAccount(clientID, offset) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/branchhealth/v1/site)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			if (document.getElementById('site_count')) document.getElementById('site_count').innerHTML = '-';

@@ -71,6 +71,12 @@ function getConfigforGroup() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+				return;
+			}
+		}
 		// save the group config for modifications
 		groupConfigs[wlanGroup] = response;
 
@@ -112,6 +118,12 @@ function updateFullWLAN() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+				return;
+			}
+		}
 		if (response.reason && response.reason == 'Bad Gateway') {
 			Swal.fire({
 				title: 'API Issue',

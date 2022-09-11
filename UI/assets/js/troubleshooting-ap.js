@@ -61,11 +61,18 @@ function loadDevicesTable(checked) {
 		.remove();
 	for (const [key, value] of Object.entries(deviceInfo)) {
 		var device = value;
-
+		//console.log(device);
 		// Build Status dot
 		var status = '<i class="fa fa-circle text-danger"></i>';
 		if (device['status'] == 'Up') {
 			status = '<i class="fa fa-circle text-success"></i>';
+		}
+
+		// Build Uptime String
+		var uptimeString = '-';
+		if (device['uptime'] > 0) {
+			var uptime = moment.duration(device['uptime'] * 1000);
+			uptimeString = uptime.humanize();
 		}
 
 		// Build troubleshooting links
@@ -81,7 +88,7 @@ function loadDevicesTable(checked) {
 
 		// Add AP to table
 		var table = $('#device-table').DataTable();
-		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], tshootBtns]);
+		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], uptimeString, tshootBtns]);
 	}
 	$('#device-table')
 		.DataTable()
@@ -113,6 +120,12 @@ function debugRadioStats(deviceSerial, radioBand) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -141,6 +154,12 @@ function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
@@ -262,6 +281,12 @@ function debugSystemStatus(deviceSerial) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else if (response.status === 'QUEUED') {
@@ -289,6 +314,12 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
@@ -296,7 +327,7 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
 				setTimeout(checkDebugSystemStatus, 10000, session_id, response.serial);
 			} else if (response.status === 'COMPLETED') {
-				console.log(response.output);
+				//console.log(response.output);
 				//var results = decodeURI(response.output);
 				var results = response.output;
 
@@ -355,7 +386,7 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 					var startString = 'Power Monitoring Information\n----------------------------\nCurrent(mW)  Average(mW)  Minimum(mW)  Maximum(mW)\n-----------  -----------  -----------  -----------\n';
 					var startLocation = results.indexOf(startString) + startString.length;
 					var endLocation = results.indexOf(' ', startLocation);
-					console.log(results.substring(startLocation, endLocation).trim());
+					//console.log(results.substring(startLocation, endLocation).trim());
 					var currentDraw = parseInt(results.substring(startLocation, endLocation).trim()) / 1000;
 					$('#powerIssues').append('<li>Current Power Draw: <strong>' + currentDraw.toFixed(2) + 'W</strong></li>');
 				}
@@ -385,7 +416,7 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 				var startLocation = results.indexOf(startString) + startString.length;
 				var endLocation = results.indexOf('\n\n', startLocation);
 				var ethernetInterfaces = results.substring(startLocation, endLocation).trim();
-				console.log(ethernetInterfaces);
+				//console.log(ethernetInterfaces);
 				var interfaces = ethernetInterfaces.split('\n');
 				$.each(interfaces, function() {
 					var intString = this.replace(/  +/g, ' ');
@@ -463,6 +494,12 @@ function obtainCrashLog(deviceSerial) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else if (response.status === 'QUEUED') {
@@ -490,6 +527,12 @@ function checkCrashLog(session_id, deviceSerial) {
 
 	$.ajax(settings).done(function(response) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {

@@ -1,6 +1,6 @@
 /*
 Central Automation v1.5
-Updated: 1.8.2
+Updated: 1.13
 Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -68,6 +68,12 @@ function getWLANsforGroup() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error_code')) {
 			showNotification('ca-folder-settings', response.description, 'bottom', 'center', 'danger');
 		} else {
@@ -106,6 +112,12 @@ function getConfigforWLAN() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error_code')) {
 			showNotification('ca-wifi', response.description, 'bottom', 'center', 'danger');
 		} else {
@@ -151,6 +163,12 @@ function updatePSK() {
 
 	$.ajax(settings)
 		.done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/wlan/<GROUP>)');
+					return;
+				}
+			}
 			if (response === wlan) {
 				Swal.fire({
 					title: 'Passphrase Updated',
@@ -254,7 +272,7 @@ function generateQRCode() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		WLAN functions (1.3)
+		WLAN functions (1.13)
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getWLANs() {
@@ -287,9 +305,14 @@ function getWLANs() {
 			};
 
 			$.ajax(settings).done(function(response) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+						return;
+					}
+				}
 				// save the group config for modifications
 				groupConfigs[currentGroup] = response;
-
 				// pull the roles out of each group config
 				getWLANsFromConfig(response, currentGroup);
 				groupCounter++;
@@ -297,8 +320,43 @@ function getWLANs() {
 					// Build table of user roles
 					var table = $('#wlan-table').DataTable();
 					for (i = 0; i < wlans.length; i++) {
+						//console.log(wlans[i]['config']);
+						// Pull additional info out
+						var keyMgmt = '';
+						var fastRoaming = [];
+						var mbr;
+						var mbr2 = '1';
+						var mbr5 = '6';
+						var apZone = '';
+						var rfBand = 'All';
+						var rfBand6 = false;
+						$.each(wlans[i]['config'], function() {
+							if (this.includes('opmode ')) keyMgmt = this.replace('opmode ', '');
+							if (this.includes('g-min-tx-rate ')) mbr2 = this.replace('g-min-tx-rate ', '');
+							if (this.includes('a-min-tx-rate ')) mbr5 = this.replace('a-min-tx-rate ', '');
+							if (this.includes('dot11k')) fastRoaming.push('11k');
+							if (this.includes('dot11v')) fastRoaming.push('11v');
+							if (this.includes('dot11r')) fastRoaming.push('11r');
+							if (this.includes('zone')) apZone = this.replace('zone ', '');
+							if (this.includes('rf-band ')) rfBand = this.replace('rf-band ', '');
+							if (this.includes('rf-band-6ghz')) rfBand6 = true;
+						});
+						fastRoaming.sort();
+						mbr = '2.4GHz: ' + mbr2 + 'Mbps / 5GHz: ' + mbr5 + 'Mbps';
+						if (rfBand === '5.0') rfBand = '5';
+						if (rfBand !== 'All' && rfBand6) rfBand += 'GHz/6GHz';
+						if (rfBand !== 'All' && !rfBand6) rfBand += 'GHz';
+
+						// Action Buttons
+						var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-regular fa-pencil"></i></a> ';
+						if (wlans[i]['config'].indexOf('disable') != -1) {
+							actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-regular fa-wifi"></i></a>';
+						} else {
+							actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-regular fa-wifi"></i></a>';
+						}
+
 						// Add row to table
-						table.row.add([i, wlans[i]['name'], wlans[i]['groups'].join(', ')]);
+						table.row.add([i, '<strong>' + wlans[i]['name'] + '</strong>', wlans[i]['groups'].join(', '), rfBand, keyMgmt, mbr, fastRoaming.join('/'), apZone, actionBtns]);
 					}
 					$('#wlan-table')
 						.DataTable()
@@ -306,6 +364,7 @@ function getWLANs() {
 						.draw();
 
 					showNotification('ca-folder-settings', 'Retrieved Group WLAN Configs...', 'bottom', 'center', 'success');
+					$('[data-toggle="tooltip"]').tooltip();
 				}
 			});
 		});
@@ -343,7 +402,13 @@ function getPSKForWLAN(wlanGroup, wlan) {
 		};
 
 		$.ajax(settings).done(function(response) {
-			if (response.wlan.wpa_passphrase) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/wlan/<GROUP>)');
+					return;
+				}
+			}
+			if (response.wlan && response.wlan.wpa_passphrase) {
 				var passphrase = response.wlan.wpa_passphrase;
 				$.each(wlans, function() {
 					// find the WLAN and update the line with the actual PSK
@@ -594,6 +659,12 @@ function updateWLAN(addingWLAN) {
 		};
 
 		$.ajax(settings).done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+					return;
+				}
+			}
 			updateCounter++;
 			if (response.reason && response.reason == 'Bad Gateway') {
 				Swal.fire({
@@ -637,6 +708,139 @@ function updateWLAN(addingWLAN) {
 	});
 }
 
+function enableWLAN(wlanIndex, wlanEnable) {
+	updateCounter = 0;
+	errorCounter = 0;
+	clearErrorLog();
+
+	// Get selected WLAN and update the enable/disable
+	var wlan = wlans[wlanIndex];
+	var wlanName = wlan.name;
+	var wlanGroups = wlan.groups;
+	var wlanConfig = wlan.config;
+	if (wlanEnable) {
+		var enableRow = wlanConfig.indexOf('disable');
+		wlanConfig[enableRow] = 'enable';
+	} else {
+		var disableRow = wlanConfig.indexOf('enable');
+		wlanConfig[disableRow] = 'disable';
+	}
+
+	// prep the config with the required formatting
+	var newConfigArray = [];
+	for (i = 0; i < wlanConfig.length; i++) {
+		newConfigArray.push('  ' + wlanConfig[i]);
+	}
+
+	// Loop through the groups and grab the stored config
+	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	$.each(wlanGroups, function() {
+		var currentConfig = groupConfigs[this];
+		var currentGroup = this;
+
+		// Find if there is an existing WLAN
+		var startIndex = -1;
+		var endIndex = -1;
+		var firstWLANLocation = -1;
+
+		var lineToFind = wlanPrefix + wlanName;
+		for (i = 0; i < currentConfig.length; i++) {
+			if (currentConfig[i].includes(wlanPrefix) && firstWLANLocation == -1) {
+				// grab the location of the first user role - in case the role we are looking for isnt in the config
+				firstWLANLocation = i;
+			}
+			if (currentConfig[i] === lineToFind) {
+				startIndex = i;
+			} else if (endIndex == -1 && startIndex != -1 && !currentConfig[i].includes('  ')) {
+				endIndex = i;
+			}
+		}
+
+		if (startIndex == -1) {
+			// no existing user role. Find the first user role and place this role before it.
+			startIndex = firstWLANLocation;
+		} else {
+			// remove the existing role from the config
+			currentConfig.splice(startIndex, endIndex - startIndex);
+		}
+
+		// If the desired result is to add the new/updated wlan into the config for this group
+		var newWLAN = [];
+		newWLAN.push(wlanPrefix + wlanName);
+		newWLAN.push(...newConfigArray);
+
+		// Splice the new role into the config
+		if (currentConfig.length) {
+			currentConfig.splice(startIndex, 0, ...newWLAN);
+		} else {
+			currentConfig = newWLAN;
+		}
+
+		// need to push config back to Central.
+		var settings = {
+			url: getAPIURL() + '/tools/postCommand',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
+				access_token: localStorage.getItem('access_token'),
+				data: JSON.stringify({ clis: currentConfig }),
+			}),
+		};
+
+		$.ajax(settings).done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+					return;
+				}
+			}
+			updateCounter++;
+			if (response.reason && response.reason == 'Bad Gateway') {
+				Swal.fire({
+					title: 'API Issue',
+					text: 'There is an issue communicating with the API Gateway',
+					icon: 'warning',
+				});
+			} else if (response.code && response.code == 429) {
+				console.log('errorCode');
+				logError('User role was not applied to group ' + currentGroup);
+				Swal.fire({
+					title: 'API Limit Reached',
+					text: 'You have reached your daily API limit. No more API calls will succeed today.',
+					icon: 'warning',
+				});
+			} else if (response.description) {
+				logError(response.description);
+				errorCounter++;
+			} else if (response !== '' + currentGroup) {
+				logError('WLAN change was not applied to group ' + currentGroup);
+				errorCounter++;
+			}
+			if (updateCounter == wlanGroups.length) {
+				if (errorCounter != 0) {
+					showLog();
+					Swal.fire({
+						title: 'WLAN Deployment',
+						text: wlanEnable ? 'The WLAN failed to be enabled to some or all of the selected Groups' : 'The WLAN failed to be disabled to some or all of the selected Groups',
+						icon: 'error',
+					});
+				} else {
+					Swal.fire({
+						title: 'WLAN Deployment',
+						text: wlanEnable ? 'The WLAN was enabled on all of the selected Groups' : 'The WLAN was disabled on all of the selected Groups',
+						icon: 'success',
+					});
+					getWLANs();
+				}
+			}
+		});
+	});
+}
+
 function updateFullWLAN() {
 	errorCounter = 0;
 	clearErrorLog();
@@ -665,6 +869,12 @@ function updateFullWLAN() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+				return;
+			}
+		}
 		if (response.reason && response.reason == 'Bad Gateway') {
 			Swal.fire({
 				title: 'API Issue',

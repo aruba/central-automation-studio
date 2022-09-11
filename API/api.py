@@ -61,11 +61,20 @@ def tokenRefresh():
 def getCommand():
 	data = request.get_json();
 	url = data['url'];
-	headers = { 
-	  'cache-control': "no-cache",
-	  'Authorization': 'Bearer ' + data['access_token'],
-	  'Content-Type': 'application/json'
-	};
+	if 'tenantID' in data:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json',
+		  'TenantID': data['tenantID']
+		};
+	else:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json'
+		};
+	
 	response = requests.request("GET", url, headers=headers);
 	#print(response.text)
 	#print(response);
@@ -84,11 +93,19 @@ def postCommand():
 	data = request.get_json();
 	url = data['url'];
 	
-	headers = {
-    	'cache-control': "no-cache",
-	  	'Authorization': 'Bearer ' + data['access_token'],
-	  	'Content-Type': 'application/json'
-    };
+	if 'tenantID' in data:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json',
+		  'TenantID': data['tenantID']
+		};
+	else:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json'
+		};
 
 	if 'data' in data:
 		payload = data['data'];
@@ -113,11 +130,19 @@ def postFormDataCommand():
 	data = request.get_json();
 	url = data['url'];
 	
-	headers = {
-    	'cache-control': "no-cache",
-	  	'Authorization': 'Bearer ' + data['access_token'],
-	  	"Accept": "*/*"
-    };
+	if 'tenantID' in data:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  "Accept": "*/*",
+		  'TenantID': data['tenantID']
+		};
+	else:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  "Accept": "*/*"
+		};
     
 	if 'template' in data:
 		payload = data['template'];
@@ -148,11 +173,19 @@ def putCommand():
 	url = data['url'];
 	payload = data['data'];
 	
-	headers = {
-    	'cache-control': "no-cache",
-	  	'Authorization': 'Bearer ' + data['access_token'],
-	  	'Content-Type': 'application/json'
-    };
+	if 'tenantID' in data:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json',
+		  'TenantID': data['tenantID']
+		};
+	else:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json'
+		};
     
 	response = requests.request("PUT", url, data=payload, headers=headers);
 	
@@ -171,11 +204,19 @@ def patchFormDataCommand():
 	data = request.get_json();
 	url = data['url'];
 	
-	headers = {
-    	'cache-control': "no-cache",
-	  	'Authorization': 'Bearer ' + data['access_token'],
-	  	"Accept": "*/*"
-    };
+	if 'tenantID' in data:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  "Accept": "*/*",
+		  'TenantID': data['tenantID']
+		};
+	else:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  "Accept": "*/*"
+		};
     
 	if 'template' in data:
 		payload = data['template'];
@@ -206,11 +247,19 @@ def patchCommand():
 	url = data['url'];
 	payload = data['data'];
 	
-	headers = {
-    	'cache-control': "no-cache",
-	  	'Authorization': 'Bearer ' + data['access_token'],
-	  	'Content-Type': 'application/json'
-    };
+	if 'tenantID' in data:
+		headers = {
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json',
+			'TenantID': data['tenantID']
+		};
+	else:
+		headers = {
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json'
+		};
     
 	response = requests.request("PATCH", url, data=payload, headers=headers);
 	
@@ -226,28 +275,36 @@ def patchCommand():
 	
 @app.route('/tools/deleteCommand', methods = ["POST"])
 def deleteCommand():
-    data = request.get_json();
-    url = data['url'];
+	data = request.get_json();
+	url = data['url'];
 	
-    headers = {
-        'cache-control': "no-cache",
-        'Authorization': 'Bearer ' + data['access_token'],
-        'Content-Type': 'application/json'
-    };
-    
-    if "data" in data:
-        payload = data['data'];
-        response = requests.request("DELETE", url, data=payload, headers=headers);
-    else:
-        response = requests.request("DELETE", url, headers=headers);
-    
-    app.logger.debug(response.status_code)
-    try:
-    	result = jsonify(json.loads(response.text)), response.status_code;
-    except ValueError:
-    	# no JSON returned
-    	result = jsonify(status=str(response.status_code), reason=response.reason), response.status_code;
-    return result;
+	if 'tenantID' in data:
+		headers = {
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json',
+			'TenantID': data['tenantID']
+		};
+	else:
+		headers = {
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json'
+		};
+	
+	if "data" in data:
+		payload = data['data'];
+		response = requests.request("DELETE", url, data=payload, headers=headers);
+	else:
+		response = requests.request("DELETE", url, headers=headers);
+	
+	app.logger.debug(response.status_code)
+	try:
+		result = jsonify(json.loads(response.text)), response.status_code;
+	except ValueError:
+		# no JSON returned
+		result = jsonify(status=str(response.status_code), reason=response.reason), response.status_code;
+	return result;
 
 
 

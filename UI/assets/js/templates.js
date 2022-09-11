@@ -1,7 +1,7 @@
 /*
 Central Automation v1.4b2
 Updated: 1.9
-Aaron Scott (WiFi Downunder) 2022
+© Aaron Scott (WiFi Downunder) 2022
 */
 
 var stacks = [];
@@ -16,6 +16,7 @@ var variableCounter = 0;
 
 var switchVLANs = [];
 var currentSwitch = '';
+var selectedSwitch = {};
 var currentVLANRow = 0;
 
 var currentGroup = '';
@@ -93,6 +94,12 @@ function getStacks(offset) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switch_stacks)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -126,6 +133,12 @@ function getStackSwitches(stack_id, stackName) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switch_stacks)');
+				return;
+			}
+		}
 		stackSwitches[stack_id] = response.switches;
 		var switchCounter = 0;
 		var stackCommander = '';
@@ -146,6 +159,12 @@ function getStackSwitches(stack_id, stackName) {
 			};
 
 			$.ajax(settings).done(function(response) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switches)');
+						return;
+					}
+				}
 				switchCounter++;
 
 				for (i = 0; i < stackSwitches[stack_id].length; i++) {
@@ -199,6 +218,12 @@ function getVariablesForAllDevices(offset) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template_variables)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -242,6 +267,12 @@ function getVariablesForSingleDevice(serialNumber) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/<SERIAL>/template_variables)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -303,6 +334,12 @@ function getTemplateForSwitch(currentSerial) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -334,6 +371,12 @@ function getTemplateForSwitch(currentSerial) {
 			};
 
 			$.ajax(settings).done(function(response) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/groups/<GROUP>/templates)');
+						return;
+					}
+				}
 				if (response.error_code) {
 					if (response.description.includes('not found as a Template group')) {
 						Swal.fire({
@@ -742,6 +785,12 @@ function uploadCurrentTemplate() {
 	};
 
 	$.ajax(settingsPost).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/groups/<GROUP>/templates)');
+				return;
+			}
+		}
 		$('#VLANModal').modal('hide');
 		if (response.includes('Success')) {
 			showNotification('ca-document-copy', 'Switch Template Updated', 'bottom', 'center', 'success');
@@ -754,6 +803,11 @@ function uploadCurrentTemplate() {
 
 function uploadVariablesForCurrentSwitch(variables) {
 	showNotification('ca-card-update', 'Updating Variables...', 'bottom', 'center', 'warning');
+
+	// Add mandatory variables
+	var switchVars = switchVariables[currentSwitch];
+	variables['_sys_serial'] = switchVars['_sys_serial'];
+	variables['_sys_lan_mac'] = switchVars['_sys_lan_mac'];
 
 	// need to pull variables for switch
 	var settings = {
@@ -771,6 +825,12 @@ function uploadVariablesForCurrentSwitch(variables) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/<SERIAL>/template_variables)');
+				return;
+			}
+		}
 		$('#VLANModal').modal('hide');
 		if (response.includes('Success')) {
 			showNotification('ca-card-update', 'VLAN Variables Updated', 'bottom', 'center', 'success');
@@ -1042,6 +1102,7 @@ function saveSystemChanges() {
 		var variables = {};
 		variables[dns1Var] = dnsServer1;
 		variables[dns2Var] = dnsServer2;
+
 		//console.log(variables)
 
 		// need to patch variables for switch
@@ -1136,7 +1197,7 @@ function loadVLANUI(vlanID, row) {
 
 function loadNewVLANUI() {
 	var defaultTaggedUplinks = '';
-	var selectedSwitch = findDeviceInMonitoring(currentSwitch);
+	selectedSwitch = findDeviceInMonitoring(currentSwitch);
 
 	if (selectedSwitch.uplink_ports.length > 1) {
 		defaultTaggedUplinks = getTrunkForPort(selectedSwitch.uplink_ports[0].port);
@@ -1301,6 +1362,12 @@ function checkTemplateVariable(currentSerial) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -1330,6 +1397,12 @@ function checkTemplateVariable(currentSerial) {
 			};
 
 			$.ajax(settings).done(function(response) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/groups/<GROUP>/templates)');
+						return;
+					}
+				}
 				if (response.error_code) {
 					if (response.description.includes('not found as a Template group')) {
 						Swal.fire({

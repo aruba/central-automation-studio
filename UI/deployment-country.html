@@ -13,7 +13,7 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.7
+Central Automation v1.13
 Updated: 
 Copyright Aaron Scott (WiFi Downunder) 2022
 -->
@@ -50,7 +50,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: Reboot </a>
+							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: Country Code </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -90,23 +90,103 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								<div class="nav-container">
 									<ul class="nav nav-icons justify-content-center" role="tablist">
 										<li class="nav-item show active">
+											<a class="nav-link" id="group-tab" href="#group-logo" role="tab" data-toggle="tab">
+												<i class="central-icon ca-folder-settings"></i>
+												<br />
+												Groups
+											</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="site-tab" href="#site-logo" role="tab" data-toggle="tab">
+												<i class="central-icon ca-world-pin"></i>
+												<br />
+												Sites
+											</a>
+										</li>
+										<li class="nav-item">
 											<a class="nav-link" id="cluster-tab" href="#cluster-logo" role="tab" data-toggle="tab">
 												<i class="central-icon ca-networking"></i>
 												<br />
 												Virtual Controllers
 											</a>
 										</li>
-										<li class="nav-item">
+										<!--<li class="nav-item">
 											<a class="nav-link" id="device-tab" href="#device-logo" role="tab" data-toggle="tab">
 												<i class="central-icon ca-router"></i>
 												<br />
 												APs
 											</a>
-										</li>
+										</li>-->
 									</ul>
 								</div>
 								<div class="tab-content">
-									<div class="tab-pane fade show active" id="cluster-logo" aria-labelledby="cluster-tab">
+									<div class="tab-pane fade show active" id="group-logo" aria-labelledby="group-tab">
+										<!-- Cluster Card -->
+										<div class="card">
+											<div class="card-header">
+												<h4 class="card-title">Groups</h4>
+											</div>
+											<div class="card-body">
+												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+													<div class="fresh-datatables">
+														<table id="country-group-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+															<thead>
+																<th>group_name</th>
+																<th><input type="checkbox" name="select_all" value="1" id="group-select-all" /></th>
+																<th>Name</th>
+																<th>APs</th>
+															</thead>
+															<tbody></tbody>
+														</table>
+													</div>
+												</div>
+											</div>
+											<div class="card-footer ">
+												<div class="row">
+													<div class="col-md-2">
+														<select id="group-countryselector" class="selectpicker" data-title="Select a Country Code..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange"> </select>
+													</div>
+													<div class="col-md-3">
+														<button type="submit" class="btn btn-fill btn-info top-padding" data-dismiss="modal" name="rebootBtn" id="rebootBtn" onclick="configureSelectedGroups()">Update Selected Groups</button>
+													</div>
+												</div>
+											</div>
+										</div>
+										<!-- End Group Card -->
+									</div>
+									<div class="tab-pane" id="site-logo" aria-labelledby="site-tab">
+										<!-- Site Card -->
+										<div class="card">
+											<div class="card-header">
+												<h4 class="card-title">Sites</h4>
+											</div>
+											<div class="card-body">
+												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+													<div class="fresh-datatables">
+														<table id="country-site-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+															<thead>
+																<th>site_name</th>
+																<th><input type="checkbox" name="select_all" value="1" id="site-select-all" /></th>
+																<th>Name</th>
+																<th>Virtual Controllers</th>
+																<th>APs</th>
+															</thead>
+															<tbody></tbody>
+														</table>
+													</div>
+												</div>
+											</div>
+											<div class="card-footer ">
+												<div class="row">
+													<div class="col-md-3">
+														<button type="submit" class="btn btn-fill btn-info top-padding" data-dismiss="modal" name="siteBtn" id="siteBtn" onclick="configureSelectedSites()">Update Selected Virtual Controllers using Site address</button>
+													</div>
+												</div>
+											</div>
+										</div>
+										<!-- End Site Card -->
+									</div>
+									<div class="tab-pane" id="cluster-logo" aria-labelledby="cluster-tab">
 										<!-- Cluster Card -->
 										<div class="card">
 											<div class="card-header">
@@ -115,7 +195,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											<div class="card-body">
 												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 													<div class="fresh-datatables">
-														<table id="cluster-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+														<table id="country-cluster-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 															<thead>
 																<th>swarm_id</th>
 																<th><input type="checkbox" name="select_all" value="1" id="cluster-select-all" /></th>
@@ -131,8 +211,13 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 												</div>
 											</div>
 											<div class="card-footer ">
-												<div class="col-md-12">
-													<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="rebootBtn" id="rebootBtn" onclick="rebootSelectedClusters()">Reboot Selected Clusters</button>
+												<div class="row">
+													<div class="col-md-2">
+														<select id="cluster-countryselector" class="selectpicker" data-title="Select a Country Code..." data-style="btn-default btn-outline" data-menu-style="dropdown-blue"> </select>
+													</div>
+													<div class="col-md-3">
+														<button type="submit" class="btn btn-fill btn-info top-padding" data-dismiss="modal" name="rebootBtn" id="rebootBtn" onclick="configureSelectedClusters()">Update Selected Clusters</button>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -147,7 +232,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											<div class="card-body">
 												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 													<div class="fresh-datatables">
-														<table id="device-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+														<table id="country-device-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 															<thead>
 																<th><input type="checkbox" name="select_all" value="1" id="device-select-all" /></th>
 																<th>Name</th>
@@ -164,8 +249,13 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 												</div>
 											</div>
 											<div class="card-footer ">
-												<div class="col-md-12">
-													<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="rebootBtn" id="rebootBtn" onclick="rebootSelectedDevices()">Reboot Selected Devices</button>
+												<div class="row">
+													<div class="col-md-2">
+														<select id="device-countryselector" class="selectpicker" data-title="Select a Country Code..." data-style="btn-default btn-outline" data-menu-style="dropdown-blue"> </select>
+													</div>
+													<div class="col-md-3">
+														<button type="submit" class="btn btn-fill btn-info top-padding" data-dismiss="modal" name="rebootBtn" id="rebootBtn" onclick="rebootSelectedDevices()">Update Selected Devices</button>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -257,10 +347,33 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		  	var reachabilityPromise = new $.Deferred();
 		      $.when(checkReachability(reachabilityPromise)).then(function () {
 
+			$('#group-select-all').on('click', function(){
+				// Get all rows with search applied
+				var table = $('#country-group-table').DataTable();
+				var rows = table.rows({ 'search': 'applied' }).nodes();
+				$('input[type="checkbox"]', rows).prop('checked', this.checked);
+				var selectAllCheckbox = this.checked;
+				$.each(rows, function() {
+					var data = table.row(this).data();
+					updateSelectedGroups(data[0]);
+				})
+			});
+
+			$('#site-select-all').on('click', function(){
+				// Get all rows with search applied
+				var table = $('#country-site-table').DataTable();
+				var rows = table.rows({ 'search': 'applied' }).nodes();
+				$('input[type="checkbox"]', rows).prop('checked', this.checked);
+				var selectAllCheckbox = this.checked;
+				$.each(rows, function() {
+					var data = table.row(this).data();
+					updateSelectedSites(data[0]);
+				})
+			});
 
 			$('#cluster-select-all').on('click', function(){
 				// Get all rows with search applied
-				var table = $('#cluster-table').DataTable();
+				var table = $('#country-cluster-table').DataTable();
 				var rows = table.rows({ 'search': 'applied' }).nodes();
 				$('input[type="checkbox"]', rows).prop('checked', this.checked);
 				var selectAllCheckbox = this.checked;
@@ -272,7 +385,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 
 			$('#device-select-all').on('click', function(){
 				// Get all rows with search applied
-				var table = $('#device-table').DataTable();
+				var table = $('#country-device-table').DataTable();
 				var rows = table.rows({ 'search': 'applied' }).nodes();
 				$('input[type="checkbox"]', rows).prop('checked', this.checked);
 				var selectAllCheckbox = this.checked;
@@ -282,8 +395,56 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				})
 			});
 
+			$('#country-group-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[-1, 10, 25, 50, 100, 500], ["All", 10, 25, 50, 100, 500]],
+				"order": [[ 1, "asc" ]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Groups",
+				},
+				"columnDefs": [{
+					"targets": [ 0 ],
+					"visible": false,
+					"searchable": false
+				},{
+				   'targets': 1,
+				   'searchable':false,
+				   'orderable':false,
+				   'className': 'dt-body-center'
+				}],
+				'order': [[2, 'asc']],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
 
-			$('#cluster-table').DataTable({
+
+			$('#country-site-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[-1, 10, 25, 50, 100, 500], ["All", 10, 25, 50, 100, 500]],
+				"order": [[ 1, "asc" ]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Sites",
+				},
+				"columnDefs": [{
+					"targets": [ 0 ],
+					"visible": false,
+					"searchable": false
+				},{
+				   'targets': 1,
+				   'searchable':false,
+				   'orderable':false,
+				   'className': 'dt-body-center'
+				}],
+				'order': [[2, 'asc']],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+
+			$('#country-cluster-table').DataTable({
 				"pagingType": "simple_numbers",
 				"autoWidth": false,
 				"lengthMenu": [[-1, 10, 25, 50, 100, 500], ["All", 10, 25, 50, 100, 500]],
@@ -307,7 +468,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
-			$('#device-table').DataTable({
+			$('#country-device-table').DataTable({
 				"pagingType": "simple_numbers",
 				"autoWidth": false,
 				"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
@@ -333,6 +494,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 			loadMonitoringData(refreshrate);
 
 			getDevices();
+			loadCountryCodes();
 		});
 
 		  });
@@ -341,5 +503,5 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/main.js"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
-	<script src="assets/js/reboot.js"></script>
+	<script src="assets/js/countrycode.js"></script>
 </html>

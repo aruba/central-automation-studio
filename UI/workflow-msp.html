@@ -367,6 +367,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														</td>
 														<td>Add Customer</td>
 													</tr>
+													<tr class="clickable-row" data-href="mgmt-inventory">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-cloud-data-download"></i>
+															</div>
+														</td>
+														<td>Download Inventory</td>
+													</tr>
 												</tbody>
 											</table>
 										</div>
@@ -392,20 +400,23 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											<div class="fresh-datatables">
 												<table id="ap-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
-														<th>Customer Name</th>
-														<th>Model</th>
+														<th>Customer</th>
 														<th>Serial Number</th>
 														<th>MAC Address</th>
-														<th>License Type</th>
+														<th>Type</th>
+														<th>Part Number</th>
+														<th>Model</th>
+														<th>Status</th>
+														<th>Status Text</th>
+														<th>IP Address</th>
+														<th>Name</th>
+														<th>Group</th>
+														<th>Site</th>
+														<th>Assigned License</th>
 													</thead>
 													<tbody></tbody>
 												</table>
 											</div>
-										</div>
-									</div>
-									<div class="card-footer ">
-										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="monitoring-reboot.html">Reboot APs</a>
 										</div>
 									</div>
 								</div>
@@ -428,11 +439,19 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											<div class="fresh-datatables">
 												<table id="switch-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
-														<th>Customer Name</th>
-														<th>Model</th>
+														<th>Customer</th>
 														<th>Serial Number</th>
 														<th>MAC Address</th>
-														<th>License Type</th>
+														<th>Type</th>
+														<th>Part Number</th>
+														<th>Model</th>
+														<th>Status</th>
+														<th>Status Text</th>
+														<th>IP Address</th>
+														<th>Name</th>
+														<th>Group</th>
+														<th>Site</th>
+														<th>Assigned License</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -459,11 +478,19 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											<div class="fresh-datatables">
 												<table id="gateway-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
-														<th>Customer Name</th>
-														<th>Model</th>
+														<th>Customer</th>
 														<th>Serial Number</th>
 														<th>MAC Address</th>
-														<th>License Type</th>
+														<th>Type</th>
+														<th>Part Number</th>
+														<th>Model</th>
+														<th>Status</th>
+														<th>Status Text</th>
+														<th>IP Address</th>
+														<th>Name</th>
+														<th>Group</th>
+														<th>Site</th>
+														<th>Assigned License</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -491,8 +518,9 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 												<table id="group-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Name</th>
-														<th>Wired Template</th>
-														<th>Wireless Template</th>
+														<th>Wired Mode</th>
+														<th>Wireless Mode</th>
+														<th>Properties</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -733,7 +761,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		 $(document).ready(function() {
 		 	var reachabilityPromise = new $.Deferred();
 		     $.when(checkReachability(reachabilityPromise)).then(function () {
-		console.log("Using "+getAPIURL());
+
 
 		var mcd = document.getElementById("manualCustomerDiv");
 		mcd.style.display = "none";
@@ -743,7 +771,20 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		if (refreshrate === null || refreshrate === "") {
 			refreshrate = "30";
 		}
-		setInterval(updateMSPData, parseInt(refreshrate)*60000);
+
+		var loadIntervalID;
+		loadIntervalID = setInterval(updateMSPData, parseInt(refreshrate)*60000);
+
+		document.addEventListener("visibilitychange", function handleVisibilityChange() {
+		  if (!document.hidden) {
+			var reachabilityPromise = new $.Deferred();
+			$.when(checkReachability(reachabilityPromise)).then(function () {
+				loadIntervalID = setInterval(updateMSPData, parseInt(refreshrate)*60000);
+			});
+		  } else {
+			clearInterval(loadIntervalID);
+		  }
+		}, false);
 
 		$(".clickable-row").click(function() {
 			var clickedRow = $(this).data("href");
@@ -759,7 +800,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				search: "_INPUT_",
 				searchPlaceholder: "Search APs",
 			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }],
+			"order": [[ 1, "asc" ]],
+			columnDefs: [{ type: 'ip-address', targets: 8 }, { "targets": 7, "visible": false }],
 			"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 		});
 
@@ -772,7 +814,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				search: "_INPUT_",
 				searchPlaceholder: "Search Switches",
 			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }],
+			"order": [[ 1, "asc" ]],
+			columnDefs: [{ type: 'ip-address', targets: 8 }, { "targets": 7, "visible": false }],
 			"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 		});
 
@@ -785,7 +828,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				search: "_INPUT_",
 				searchPlaceholder: "Search Gateways",
 			},
-			columnDefs: [{ type: 'ip-address', targets: 2 }],
+			"order": [[ 1, "asc" ]],
+			columnDefs: [{ type: 'ip-address', targets: 8 }, { "targets": 7, "visible": false }],
 			"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 		});
 

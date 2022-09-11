@@ -82,6 +82,12 @@ function getClientMatchStatus() {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/cm-enabled/v1/)');
+				return;
+			}
+		}
 		//console.log("CM Status: "+ JSON.stringify(response));
 		if (response.status === 'Success') {
 			if (response.result.includes('Client Match enabled')) {
@@ -126,6 +132,12 @@ function toggleCMState() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response)
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/cm-enabled/v1/)');
+				return;
+			}
+		}
 		if (response.status === 'Success') {
 			if (response.result.includes('ClientMatch disabled')) {
 				showNotification('ca-crossroad', 'ClientMatch was disabled', 'bottom', 'center', 'success');
@@ -162,6 +174,12 @@ function getLoadBalanceStatus() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("Load Balance Status: "+ JSON.stringify(response));
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/loadbal-enable/v1)');
+				return;
+			}
+		}
 		if (response.status === 'Success') {
 			if (response.result.includes('Client Match Load Balance enabled')) {
 				$(document.getElementById('loadbalBtn')).addClass('btn-success');
@@ -205,6 +223,12 @@ function toggleLoadBal() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response)
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/loadbal-enable/v1)');
+				return;
+			}
+		}
 		if (response.status === 'Success') {
 			if (response.result.includes('ClientMatch Load Balance disabled')) {
 				showNotification('ca-scale', 'ClientMatch Load Balancing was disabled', 'bottom', 'center', 'success');
@@ -249,6 +273,12 @@ function getUnsteerableClients() {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/unsteerable/v1)');
+				return;
+			}
+		}
 		//console.log("Unsteerable Clients: "+ JSON.stringify(response.result.UnsteerableEntries))
 		if (response.result.UnsteerableEntries !== 'Not found') {
 			$.each(response.result.UnsteerableEntries, function() {
@@ -352,6 +382,12 @@ function steerClient(macaddr) {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/unsteerable/v1)');
+				return;
+			}
+		}
 		if (response.status === 'Success') {
 			showNotification('ca-m-check', response.result, 'bottom', 'center', 'success');
 			getUnsteerableClients();
@@ -388,6 +424,12 @@ function getSteerHistory() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("History: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/history/v1)');
+				return;
+			}
+		}
 		if (response.result.SteerHistory !== 'Not found') {
 			$.each(response.result.SteerHistory, function() {
 				if (!this.hasOwnProperty('TimeNow')) {

@@ -74,6 +74,12 @@ function airmatchRunNow() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("Run Now: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/scheduler/v1/runnow)');
+				return;
+			}
+		}
 		if (xhr.status == 200) {
 			Swal.fire({
 				title: 'Success',
@@ -147,8 +153,13 @@ function getEIRPDistribution() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log('EIRP Distribution: ' + JSON.stringify(response));
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/adv_eirp_distrubution)');
+				return;
+			}
+		}
 		// Build labels and sort them
-
 		for (let k in response['6ghz']) {
 			var index = powerLabels.indexOf(k);
 			if (index == -1) {
@@ -263,6 +274,12 @@ function getChannelDistribution() {
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response);
 		//console.log("Channel Distribution: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/solver/v1/radio_plan)');
+				return;
+			}
+		}
 		$.each(response, function() {
 			if (this['band'] === '2.4GHz') {
 				var index = labels2.indexOf(this['channel'].toString());
@@ -393,6 +410,12 @@ function getAirmatchOptimization() {
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response)
 		//console.log("AirMatch Optimization: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/solver/v1/optimization)');
+				return;
+			}
+		}
 
 		var optimizationIndex = 0;
 
@@ -640,6 +663,12 @@ function getStaticRadios() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("Static Radios: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/static_radio_all)');
+				return;
+			}
+		}
 
 		staticRadios = staticRadios.concat(response);
 		$.each(response, function() {
@@ -717,6 +746,14 @@ function unfreezeAP(serial, band) {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+				return;
+			}
+		}
+
 		if (response.hasOwnProperty('error_code')) {
 			logError(response.description);
 			apiErrorCount++;
@@ -737,6 +774,13 @@ function unfreezeAP(serial, band) {
 			};
 
 			$.ajax(settings).done(function(response, statusText, xhr) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						apiErrorCount++;
+						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+						return;
+					}
+				}
 				if (response !== serial) {
 					logError(serial + ' was not unfrozen');
 					//console.log(response.reason);
@@ -864,6 +908,13 @@ function freezeAP(serial) {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error_code')) {
 			logError(response.description);
 			apiErrorCount++;
@@ -982,6 +1033,12 @@ function getRFEvents() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("RF Events: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/rf_events_all)');
+				return;
+			}
+		}
 		rfEvents = rfEvents.concat(response);
 
 		$.each(response, function() {
@@ -1046,6 +1103,12 @@ function getNoiseEvents() {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/priority_rf_events_all)');
+				return;
+			}
+		}
 		//console.log("RF Events: "+ JSON.stringify(response))
 		noiseEvents = noiseEvents.concat(response);
 
@@ -1110,6 +1173,12 @@ function getAirMatchHistory() {
 				};
 
 				$.ajax(settings).done(function(response, statusText, xhr) {
+					if (response.hasOwnProperty('status')) {
+						if (response.status === '503') {
+							logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/history/)');
+							return;
+						}
+					}
 					//console.log("AirMatch History: "+ JSON.stringify(response))
 
 					rfhistory = rfhistory.concat(response);

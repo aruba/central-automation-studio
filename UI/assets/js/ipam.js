@@ -47,6 +47,12 @@ function getPoolConfig() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log('getPoolConfig: ' + JSON.stringify(response));
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/ipms-config/v1/node_list/GLOBAL/GLOBAL/config)');
+				return;
+			}
+		}
 		$.each(response['address_pool'], function() {
 			var poolname = this['pool_id'].toString();
 			config[poolname] = this;
@@ -79,6 +85,12 @@ function getIPPools() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log('getIPPools: ' + JSON.stringify(response));
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/ipmsapi/v1/pool)');
+				return;
+			}
+		}
 		$.each(response['pools'], function() {
 			var poolname = this['name'].toString();
 			pools[poolname] = this;
@@ -115,7 +127,14 @@ function getIPAllocations() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("getIPAllocations: "+ JSON.stringify(response["device_allocations"]))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/ipmsapi/v1/allocation)');
+				return;
+			}
+		}
 		var allocations = response['device_allocations'];
+		console.log(allocations);
 		$.each(allocations, function() {
 			if (this['pool_type'] === innerPoolType) {
 				systemInfo.push(this);

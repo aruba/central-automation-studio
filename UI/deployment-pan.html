@@ -13,7 +13,7 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.12
+Central Automation v1.15
 Updated: 
 Aaron Scott (WiFi Downunder) 2022
 -->
@@ -50,7 +50,7 @@ Aaron Scott (WiFi Downunder) 2022
                     	<div class="icon-big text-center icon-warning">
 							<i class="central-icon ca-api text-warning"></i>
 						</div>
-                        <a class="navbar-brand" href="dashboard.html"> Central Automation Studio: MPSK-Local </a>
+                        <a class="navbar-brand" href="dashboard.html"> Central Automation Studio: Personal Area Network </a>
                     </div>
                     <div class="collapse navbar-collapse justify-content-end">
                     	<ul class="nav navbar-nav">
@@ -97,136 +97,6 @@ Aaron Scott (WiFi Downunder) 2022
             <!-- End Navbar -->
             <div class="content">
                 <div class="container-fluid">
-                	<!-- Overview Cards -->                               
-                    <div class="row">
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                            	<a data-toggle="modal" data-target="#ClientModal" href="#pablo">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-laptop-1 text-warning" id="client_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Connected Clients</p>
-                                                <h4 class="card-title" id="client_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats">
-                            	<a data-toggle="modal" data-target="#APModal" href="#pablo">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Access Points</p>
-                                                <h4 class="card-title" id="ap_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                            	<a data-toggle="modal" data-target="#SwitchModal" href="#pablo">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-server-rack text-warning" id="switch_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Switches</p>
-                                                <h4 class="card-title" id="switch_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                                <a data-toggle="modal" data-target="#GatewayModal" href="#pablo">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-content-delivery text-warning" id="gateway_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Gateways</p>
-                                                <h4 class="card-title" id="gateway_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                            	<a data-toggle="modal" data-target="#SiteModal" href="#pablo">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-world-pin text-warning" id="site_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Sites</p>
-                                                <h4 class="card-title" id="site_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats">
-                            	<a data-toggle="modal" data-target="#GroupModal" href="#pablo">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-folder-settings text-warning" id="group_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Groups</p>
-                                                <h4 class="card-title" id="group_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- End Overview Cards -->
                     <!-- Change PSK Card -->
 					<div class='row'>
 						<div class="col-md-8">
@@ -262,7 +132,7 @@ Aaron Scott (WiFi Downunder) 2022
                     		</div> 
 						</div>
 						<!-- CSV Card -->
-							<div class="col-md-4">
+							<div class="col-md-4" hidden>
 								<div class="card  card-tasks">
 									<div class="card-header ">
 										<h4 class="card-title">Bulk MPSK Upload</h4>
@@ -300,8 +170,7 @@ Aaron Scott (WiFi Downunder) 2022
 													<thead>
 														<th>Index</th>
 														<th>Name</th>
-														<th>MPSK</th>														
-														<th>User Role</th>
+														<th>MPSK</th>
 														<th>Action</th>
 													</thead>
 													<tbody>
@@ -532,8 +401,8 @@ Aaron Scott (WiFi Downunder) 2022
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Groups</h4>
-									</div>
+									<h4 class="card-title">Groups</h4>
+								</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -637,14 +506,6 @@ Aaron Scott (WiFi Downunder) 2022
 										<label class="col-md-5">Passphrase</label>
 										<div class="col-md-6">
 											<input type="password" placeholder="MPSK" class="form-control" id="mpskPassphrase" onchange="mpskChange();" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
-										</div>
-									</div>
-									</br>
-									<div class="row">
-										<label class="col-md-5">Assigned User Role</label>
-										<div class="col-md-6">
-											<select data-title="Select User Role..." name="mpskRoleSelector" id="mpskRoleSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
-											</select>
 										</div>
 									</div>
 								</div>
@@ -752,6 +613,17 @@ Aaron Scott (WiFi Downunder) 2022
     	var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
 			
+			$( 'body' ).on( 'keypress', ':input[pattern]', function( ev ) {
+				var regex  = new RegExp( $(this).attr( 'pattern' ) );
+				var newVal = $(this).val() + String.fromCharCode(!ev.charCode ? ev.which : ev.charCode);
+			
+				if ( regex.test( newVal ) ) {
+					return true;
+				} else {
+					ev.preventDefault();
+					return false;
+				}
+			} );
 			
 			$(".clickable-row").click(function() {
 				var clickedRow = $(this).data("href");
@@ -781,7 +653,7 @@ Aaron Scott (WiFi Downunder) 2022
 					search: "_INPUT_",
 					searchPlaceholder: "Search APs",
 				},
-				ccolumnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 		
@@ -869,7 +741,7 @@ Aaron Scott (WiFi Downunder) 2022
 					"searchable": false
 				},
 				{
-					"targets": [ 4 ],
+					"targets": [ 3 ],
 					"visible": true,
 					"searchable": false,
 					"orderable": false
@@ -905,7 +777,7 @@ Aaron Scott (WiFi Downunder) 2022
 <script src="assets/js/main.js"></script>
 <script src="assets/js/proxy.js"></script>
 <script src="assets/js/hydra.js"></script>
-<script src="assets/js/mpsk.js"></script>
+<script src="assets/js/pan.js"></script>
 
 
 </html>

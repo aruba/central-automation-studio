@@ -127,6 +127,12 @@ function confirmedClusterReboot() {
 
 		$.ajax(settings).done(function(response) {
 			//console.log("Cluster Reboot response: "+JSON.stringify(response));
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/device_management/v1/swarm/<CLUSTER_ID>/action/reboot_swarm)');
+					return;
+				}
+			}
 			if (response['status'] && response['status'] === 'success') {
 				rebootedClusters++;
 			} else {
@@ -240,7 +246,13 @@ function confirmedDeviceReboot() {
 		};
 
 		$.ajax(settings).done(function(response) {
-			console.log('Device Reboot response: ' + JSON.stringify(response));
+			//console.log('Device Reboot response: ' + JSON.stringify(response));
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/device_management/v1/device/<SERIAL>/action/reboot)');
+					return;
+				}
+			}
 			if (response['state'] && response['state'].toLowerCase() === 'success') {
 				rebootedDevices++;
 			} else {

@@ -61,6 +61,12 @@ function getStacks(offset) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switch_stacks)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -94,6 +100,12 @@ function getStackSwitches(stack_id, stackName) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switches)');
+				return;
+			}
+		}
 		stackSwitches[stack_id] = response.switches;
 		var switchCounter = 0;
 		var stackCommander = '';
@@ -157,6 +169,12 @@ function getVariablesForAllDevices(offset) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template_variables)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({
@@ -271,6 +289,12 @@ function syncVariables() {
 			};
 
 			$.ajax(settingsPost).done(function(response) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/<SERIAL>/template_variables)');
+						return;
+					}
+				}
 				variableCounter++;
 				if (response !== 'Success') {
 					logError(response.description);
@@ -322,6 +346,12 @@ function checkTemplateVariable(currentSerial) {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('message')) {
 			if (response.message === 'API rate limit exceeded')
 				Swal.fire({

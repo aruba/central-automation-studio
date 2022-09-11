@@ -13,9 +13,9 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.0
-Updated: 1.6.0
-Copyright Aaron Scott (WiFi Downunder) 2022
+Central Automation v1.1
+Updated: 1.12.3
+Aaron Scott (WiFi Downunder) 2022
 -->
 
 <!DOCTYPE html>
@@ -25,18 +25,18 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32" />
+
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
 		<link href="assets/css/central-style.css" rel="stylesheet" />
-		<!-- CSS Just for demo purpose, don't include it in your project -->
-		<link href="assets/css/demo.css" rel="stylesheet" />
+		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -49,7 +49,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: CSV Workflows </a>
+							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: Access Points </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="nav navbar-nav">
@@ -95,7 +95,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 						<!-- Overview Cards -->
 						<div class="row">
 							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
+								<div class="card card-stats no-focus">
 									<a data-toggle="modal" data-target="#ClientModal" href="#pablo">
 										<div class="card-body ">
 											<div class="row">
@@ -137,7 +137,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
+								<div class="card card-stats no-focus">
 									<a data-toggle="modal" data-target="#SwitchModal" href="#pablo">
 										<div class="card-body ">
 											<div class="row">
@@ -158,7 +158,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
+								<div class="card card-stats no-focus">
 									<a data-toggle="modal" data-target="#GatewayModal" href="#pablo">
 										<div class="card-body ">
 											<div class="row">
@@ -179,7 +179,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
+								<div class="card card-stats no-focus">
 									<a data-toggle="modal" data-target="#SiteModal" href="#pablo">
 										<div class="card-body ">
 											<div class="row">
@@ -200,7 +200,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
+								<div class="card card-stats no-focus">
 									<a data-toggle="modal" data-target="#GroupModal" href="#pablo">
 										<div class="card-body ">
 											<div class="row">
@@ -222,256 +222,280 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 						</div>
 						<!-- End Overview Cards -->
-						<!-- CSV Card -->
-						<div class="row">
-							<div class="col-md-4">
-								<div class="card  card-tasks">
+						<!-- AP Model Card -->
+						<div class="row" id="clientOSrow">
+							<div class="col-md-12">
+								<div class="card">
 									<div class="card-header ">
-										<h4 class="card-title">CSV Upload</h4>
-										<p class="card-category">Upload CSV data here before selecting a task below...</p>
+										<h4 class="card-title">AP Models</h4>
+										<p class="card-category">Top 10 AP Models (by count)</p>
 										<p></p>
 									</div>
-
-									<div class="card-body">
-										<form class="form-inline">
-											<div class="form-group">
-												<input type="file" id="files" class="form-control btn btn-fill btn-info" accept=".csv" required />
+									<div class="card-body ">
+										<div id="chartModel" class="ct-chart-tooltip"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- End AP Model Card -->
+						<!-- AP Status Cards -->
+						<div class="row">
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-wifi text-warning" id="ap_processed_icon"></i>
+												</div>
 											</div>
-										</form>
-										<div id="manualGroupDiv">
-											<p class="card-category text-warning" id="manualGroupParagraph"></p>
-											<p></p>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">APs Processed</p>
+													<h4 class="card-title" id="ap_processed_count">-</h4>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<div class="col-md-4">
-								<div class="card  card-tasks">
-									<div class="card-header ">
-										<h4 class="card-title">CSV Sample File</h4>
-										<p class="card-category">Download a sample CSV file below...</p>
-										<p></p>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-ram-2 text-warning" id="mem_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Memory Util >75%</p>
+													<h4 class="card-title" id="mem_count">-</h4>
+												</div>
+											</div>
+										</div>
 									</div>
-
-									<div class="card-body">
-										<a class="btn btn-fill btn-info" href="/sample-devices.csv" download>Download Sample CSV</a>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-cpu  text-warning" id="cpu_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">CPU Util >50%</p>
+													<h4 class="card-title" id="cpu_count">-</h4>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-two  text-warning" id="2_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Radios Down</p>
+													<h4 class="card-title" id="2_count">-</h4>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-five  text-warning" id="5_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Radios Down</p>
+													<h4 class="card-title" id="5_count">-</h4>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-six  text-warning" id="6_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Radios Down</p>
+													<h4 class="card-title" id="6_count">-</h4>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-						<!-- End CSV Card -->
-						<!-- Automation Cards -->
-						<div class="row">
-							<!-- Single Tasks -->
-							<div class="col-md-4">
+						<!-- End Status Cards -->
+						<div class="row" id="mainBoxes">
+							<div class="col-md-3">
 								<div class="card  card-tasks">
 									<div class="card-header ">
-										<h4 class="card-title">Individual Tasks</h4>
-										<p class="card-category">Deployment steps using CSV upload</p>
+										<h4 class="card-title">Client Counts</h4>
+										<p class="card-category">Top 10 APs</p>
 										<p></p>
 									</div>
 
 									<div class="card-body ">
-										<div class="table-full-width">
-											<table class="table table-hover">
-												<tbody>
-													<tr class="clickable-row" data-href="adddevices">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-c-add"></i>
-															</div>
-														</td>
-														<td>Add Devices</td>
-													</tr>
-													<tr class="clickable-row" data-href="archivedevices">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-box"></i>
-															</div>
-														</td>
-														<td>Archive Devices</td>
-													</tr>
-													<tr class="clickable-row" data-href="licensedevices">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-license-key"></i>
-															</div>
-														</td>
-														<td>License Devices</td>
-													</tr>
-													<tr class="clickable-row" data-href="unlicensedevices">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-widget"></i>
-															</div>
-														</td>
-														<td>Unlicense Devices</td>
-													</tr>
-													<tr class="clickable-row" data-href="movetogroup">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-folder-replace"></i>
-															</div>
-														</td>
-														<td>Move Devices To Group</td>
-													</tr>
-													<tr class="clickable-row" data-href="movetosite">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-world-pin"></i>
-															</div>
-														</td>
-														<td>Move Devices To Site</td>
-													</tr>
-													<tr class="clickable-row" data-href="renametemplate">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-card-update"></i>
-															</div>
-														</td>
-														<td>Rename Devices</td>
-													</tr>
-													<tr class="clickable-row" data-href="autorenametemplate">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-pattern-recognition"></i>
-															</div>
-														</td>
-														<td>Auto Rename Devices</td>
-													</tr>
-													<tr class="clickable-row" data-href="setZone">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-maximize-area-1"></i>
-															</div>
-														</td>
-														<td>Set AP Zones</td>
-													</tr>
-													<tr class="clickable-row" data-href="setRFProfile">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-antenna"></i>
-															</div>
-														</td>
-														<td>Set RF Profiles (AOS10 Only)</td>
-													</tr>
-													<tr class="clickable-row" data-href="enable24">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-wifi"></i>
-															</div>
-														</td>
-														<td>Enable 2.4GHz radios</td>
-													</tr>
-													<tr class="clickable-row" data-href="disable24">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-wifi-off"></i>
-															</div>
-														</td>
-														<td>Disable 2.4GHz radios</td>
-													</tr>
-													<tr class="clickable-row" data-href="devicevariables">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-setup-tools"></i>
-															</div>
-														</td>
-														<td>Update Device Variables</td>
-													</tr>
-													<tr class="clickable-row" data-href="portdescriptions">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-cable"></i>
-															</div>
-														</td>
-														<td>Update Switch Port Descriptions</td>
-													</tr>
-												</tbody>
-											</table>
+										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="busy-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>AP</th>
+														<th>Clients</th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<!-- End Single Tasks -->
-							<!-- Automation Tasks -->
-							<div class="col-md-4">
+							<div class="col-md-3">
 								<div class="card  card-tasks">
 									<div class="card-header ">
-										<h4 class="card-title">Automated Tasks</h4>
-										<p class="card-category">Automated deployment using CSV upload</p>
+										<h4 class="card-title">Uptime</h4>
+										<p class="card-category">10 APs with the lowest Uptime</p>
 										<p></p>
 									</div>
 
 									<div class="card-body ">
-										<div class="table-full-width">
-											<table class="table table-hover">
-												<tbody>
-													<tr class="clickable-row" data-href="auto-add-license">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-digital-key"></i>
-															</div>
-														</td>
-														<td>Add Devices + License</td>
-													</tr>
-													<tr class="clickable-row" data-href="auto-add-group">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-folder-add"></i>
-															</div>
-														</td>
-														<td>Add Devices + Add to Group</td>
-													</tr>
-													<tr class="clickable-row" data-href="auto-add-license-group">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-decentralize"></i>
-															</div>
-														</td>
-														<td>Add Devices + License + Add to Group</td>
-													</tr>
-													<tr class="clickable-row" data-href="auto-site-rename">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-pin-sync"></i>
-															</div>
-														</td>
-														<td>Move Devices To Site + Rename APs</td>
-													</tr>
-													<tr class="clickable-row" data-href="auto-site-autorename">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-artificial-intelligence"></i>
-															</div>
-														</td>
-														<td>Move Devices To Site + Auto Rename APs</td>
-													</tr>
-													<tr class="clickable-row" data-href="auto-renameap-portdescriptions">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-algorithm"></i>
-															</div>
-														</td>
-														<td>Rename APs + Update Port Descriptions</td>
-													</tr>
-													<tr class="clickable-row" data-href="auto-site-autorenameap-portdescriptions">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-artificial-brain"></i>
-															</div>
-														</td>
-														<td>Move To Site + Auto Rename APs + Update Port Descriptions</td>
-													</tr>
-												</tbody>
-											</table>
+										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="uptime-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>AP</th>
+														<th>Uptime</th>
+														<th></th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<!-- End Automation Tasks -->
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">Memory Utilization</h4>
+										<p class="card-category">Top 10 APs</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="memory-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>AP</th>
+														<th>Utilization</th>
+														<th></th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">Firmware Versions</h4>
+										<p class="card-category">Top 5 by AP Count</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chartFirmware" class="ct-chart ct-minor-third ct-chart-tooltip"></div>
+									</div>
+									<div class="card-footer">
+										<div class="legend"><ul id="firmware-footer" class="nobull"></ul></div>
+									</div>
+								</div>
+							</div>
 						</div>
-						<!-- End Automation Cards -->
+						<!--<div class="row" id="amendmentSupportBoxes">
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">802.11k Support</h4>
+										<p class="card-category">Percentage of Clients</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chart11k" class="ct-chart ct-minor-third"></div>
+									</div>
+									<div class="card-footer ">
+										<div class="legend"><i class="fa fa-circle text-info"></i> Supported <i class="fa fa-circle text-danger"></i> Not Supported</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">802.11v Support</h4>
+										<p class="card-category">Percentage of Clients</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chart11v" class="ct-chart ct-minor-third"></div>
+									</div>
+									<div class="card-footer ">
+										<div class="legend"><i class="fa fa-circle text-info"></i> Supported <i class="fa fa-circle text-danger"></i> Not Supported</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">802.11r Support</h4>
+										<p class="card-category">Percentage of Clients</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chart11r" class="ct-chart ct-minor-third"></div>
+									</div>
+									<div class="card-footer ">
+										<div class="legend"><i class="fa fa-circle text-info"></i> Supported <i class="fa fa-circle text-danger"></i> Not Supported</div>
+									</div>
+								</div>
+							</div>
+						</div>-->
+						<!-- End Client Stats Cards -->
 					</div>
 				</div>
 				<!-- Client Modal -->
@@ -503,7 +527,9 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 										</div>
 									</div>
 									<div class="card-footer ">
-										<a class="btn btn-fill btn-info" href="monitoring-clients.html">Client Statistics</a>
+										<div class="col-md-12">
+											<a class="btn btn-fill btn-info" href="monitoring-clients.html">Client Statistics</a>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -615,7 +641,6 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
-														<th>Last Reboot Reason</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -654,6 +679,11 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 													<tbody></tbody>
 												</table>
 											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
 										</div>
 									</div>
 								</div>
@@ -713,26 +743,6 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Group Selection Modal -->
-				<div class="modal fade modal-mini modal-primary" id="GroupSelectionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="card-header">
-										<h4 class="card-title">Missing Group Information</h4>
-									</div>
-									<div class="card-body" id="groupBody">
-										<p>The CSV file is missing group selections for 1 or more devices. Select a group below to be used on those devices missing a group selection.</p>
-										<select id="groupselector" class="custom-select" data-title="Select a Group..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange"> </select>
-										<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="groupBtn" id="groupBtn" onclick="selectGroup()">Use This Group</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!--  End Modal -->
 				<!-- Universal Search Modal -->
 				<div class="modal fade modal-mini modal-primary" id="UniversalModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -771,11 +781,110 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Selected Clients Modal -->
+				<div class="modal fade modal-mini modal-primary" id="SelectedDeviceModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title" id="selected-title">Selected APs</h4>
+									</div>
+									<div class="card-body">
+										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="selected-device-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>Name</th>
+														<th>Status</th>
+														<th>Status Text</th>
+														<th>IP Address</th>
+														<th>Model</th>
+														<th>Serial Number</th>
+														<th>Firmware Version</th>
+														<th>Site</th>
+														<th>Group</th>
+														<th>MAC Address</th>
+														<th>Uptime</th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
+				<!-- AP System Status Modal -->
+				<div class="modal fade modal-mini modal-primary" id="SystemStatusModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title" id="systemStatusTitle">System Status</h4>
+									</div>
+									<div class="card-body">
+										<div class="row">
+											<div class="col-md-6">
+												<h5>General</h5>
+												<hr />
+												<ul class="list-inline" id="generalSystemIssues"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Power Information</h5>
+												<hr />
+												<ul class="list-inline" id="powerIssues"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="row">
+											<div class="col-md-6">
+												<h5>Hardware</h5>
+												<hr />
+												<ul class="list-inline" id="hardwareIssues"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Interfaces</h5>
+												<hr />
+												<ul class="list-inline" id="interfaceIssues"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="accordions" id="accordion">
+											<div class="card">
+												<div class="card-header">
+													<h4 class="card-title">
+														<a data-target="#collapseSystem" href="#" data-toggle="collapse">
+															Raw Results
+															<b class="caret"></b>
+														</a>
+													</h4>
+												</div>
+												<div id="collapseSystem" class="card-collapse collapse">
+													<div class="card-body">
+														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="systemStatusText" rows="50"></textarea>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#GroupSelectionModal" href="#pablo" id="GroupModalLink"></a>
 						<a data-toggle="modal" data-target="#UniversalModal" href="#pablo" id="UniversalModalLink"></a>
+						<a data-toggle="modal" data-target="#SelectedDeviceModal" href="#pablo" id="SelectedDeviceModalLink"></a>
+						<a data-toggle="modal" data-target="#SystemStatusModal" href="#pablo" id="SystemStatusModalLink"></a>
+
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -798,7 +907,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 	<!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
 	<script src="assets/js/plugins/bootstrap-switch.js"></script>
 	<!--  Chartist Plugin  -->
-	<script src="assets/js/plugins/chartist.min.js"></script>
+	<script src="assets/js/plugins/chartist.js"></script>
+	<script src="assets/js/plugins/chartist-plugin-tooltip.js"></script>
 	<!--  Notifications Plugin    -->
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
@@ -837,14 +947,32 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		  	var reachabilityPromise = new $.Deferred();
 		      $.when(checkReachability(reachabilityPromise)).then(function () {
 
+			var data11 = {
+				series: [[25, 30]]
+			};
 
-			var mgd = document.getElementById("manualGroupDiv");
-			mgd.style.display = "none";
+			var options11 = {
+				donut: true,
+				donutWidth: 100,
+				startAngle: 0,
+				total: 100,
+				showLabel: false,
+				axisX: {
+					showGrid: false
+				},
+				height: '200px',
+				plugins: [Chartist.plugins.tooltip()],
+			};
+			//Chartist.Pie('#chart11k', data11, options11);
+			//Chartist.Pie('#chart11v', data11, options11);
+			//Chartist.Pie('#chart11r', data11, options11);
+			Chartist.Pie('#chartFirmware', data11, options11)
 
 			$(".clickable-row").click(function() {
 				var clickedRow = $(this).data("href");
-				loadCSVFile(clickedRow);
+				generateCSVForSite(clickedRow);
 			});
+
 
 			$('#client-table').DataTable({
 				"pagingType": "simple_numbers",
@@ -858,6 +986,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				columnDefs: [{ type: 'ip-address', targets: 3 }],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
+
 
 			$('#ap-table').DataTable({
 				"pagingType": "simple_numbers",
@@ -932,6 +1061,49 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
+			$('#selected-device-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+
+			$('#busy-table').DataTable({
+				"bFilter": false,
+				"bInfo": false,
+				"autoWidth": false,
+				"bLengthChange": false,
+				"bSort": false,
+				"bPaginate": false,
+				responsive: true,
+			});
+
+			$('#uptime-table').DataTable({
+				"bFilter": false,
+				"bInfo": false,
+				"autoWidth": false,
+				"bLengthChange": false,
+				"bSort": false,
+				"bPaginate": false,
+				responsive: true,
+			});
+
+			$('#memory-table').DataTable({
+				"bFilter": false,
+				"bInfo": false,
+				"autoWidth": false,
+				"bLengthChange": false,
+				"bSort": false,
+				"bPaginate": false,
+				responsive: true,
+			});
+
 			document.getElementById('searchForm').addEventListener('submit', function(e) {
 				e.preventDefault();
 				$('#universal-table').DataTable().rows().draw();
@@ -939,12 +1111,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
 			}, false);
 
+
 			// Check if we need to get the latest data - or can we just load it from localStorage
 			var refreshrate = localStorage.getItem('refresh_rate');
 			if (refreshrate === null || refreshrate === "") {
 				refreshrate = "30";
 			}
-
 			loadMonitoringData(refreshrate);
 
 			var loadIntervalID;
@@ -967,4 +1139,6 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/main.js"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
+	<script src="assets/js/troubleshooting-ap.js"></script>
+	<script src="assets/js/accesspoints.js"></script>
 </html>

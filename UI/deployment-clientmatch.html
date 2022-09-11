@@ -264,7 +264,7 @@ Aaron Scott (WiFi Downunder) 2022
 		 $(document).ready(function() {
 		 	var reachabilityPromise = new $.Deferred();
 		     $.when(checkReachability(reachabilityPromise)).then(function () {
-		console.log("Using "+getAPIURL());
+
 		$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
 
 		loadMonitoringData();
@@ -272,7 +272,19 @@ Aaron Scott (WiFi Downunder) 2022
 		if (refreshrate === null || refreshrate === "") {
 			refreshrate = "30";
 		}
-		setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+		var loadIntervalID;
+		loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+
+		document.addEventListener("visibilitychange", function handleVisibilityChange() {
+		  if (!document.hidden) {
+			var reachabilityPromise = new $.Deferred();
+			$.when(checkReachability(reachabilityPromise)).then(function () {
+				loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+			});
+		  } else {
+			clearInterval(loadIntervalID);
+		  }
+		}, false);
 
 		$('#unsteerable-table').DataTable({
 			"pagingType": "simple_numbers",

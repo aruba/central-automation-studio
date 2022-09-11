@@ -1,5 +1,5 @@
 /*
-Central Automation v1.12
+Central Automation v1.15
 Updated: 
 Aaron Scott (WiFi Downunder) 2022
 */
@@ -19,6 +19,11 @@ var essidPrefix = 'essid ';
 var mpskConfigPrefix = 'mpsk-local ';
 var userRolePrefix = 'wlan access-rule ';
 var mpskPoolPrefix = 'wlan mpsk-local ';
+var gwProfilePrefix = 'gw-profile ';
+
+var gatewayErrorCount = 0;
+var gatewayPromise;
+var rolePromise;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -189,8 +194,9 @@ function getGroupConfig() {
 	}
 }
 
+//
 function getWLANsFromConfig(config, group) {
-	// Find the existing user role
+	// Find the existing WLANs
 	var startWLANIndex = -1;
 	var endWLANIndex = -1;
 	var wlanName = '';
@@ -204,13 +210,13 @@ function getWLANsFromConfig(config, group) {
 		for (i = 0; i < config.length; i++) {
 			var currentLine = config[i];
 
-			// Find first row of the wlan role
+			// Find first row of the SSID profile
 			if (currentLine.includes(wlanPrefix) && startWLANIndex == -1) {
 				// pull out the wlan name.
 				wlanName = currentLine.replace(wlanPrefix, '');
 				startWLANIndex = i;
 			} else if (endWLANIndex == -1 && startWLANIndex != -1 && !currentLine.includes('  ')) {
-				// next line after the end of the current role
+				// next line after the end of the current SSID profile
 				endWLANIndex = i;
 			}
 
@@ -225,6 +231,10 @@ function getWLANsFromConfig(config, group) {
 				var endEssidLocation = combinedWLAN.indexOf('\n', essidLocation);
 				var essidName = combinedWLAN.substring(essidLocation, endEssidLocation);
 
+				var gwProfileLocation = combinedWLAN.indexOf(gwProfilePrefix) + gwProfilePrefix.length;
+				var endGwProfileLocation = combinedWLAN.indexOf('\n', gwProfileLocation);
+				var gwProfile = combinedWLAN.substring(gwProfileLocation, endGwProfileLocation);
+
 				var finalWLAN = [];
 				// Remove the "index #" line and "utf8"
 				$.each(fullWLAN, function() {
@@ -233,9 +243,9 @@ function getWLANsFromConfig(config, group) {
 
 				// Currently do not support WLANs with spaces in the name
 				if (!wlanName.includes(' ')) {
-					if (combinedWLAN.includes('opmode mpsk-local')) {
+					if (combinedWLAN.includes('opmode mpsk-local') && combinedWLAN.includes('forward-mode l2')) {
 						// save the WLANs
-						wlans[wlanName] = { name: wlanName, essid: essidName, config: finalWLAN };
+						wlans[wlanName] = { name: wlanName, essid: essidName, gateway: gwProfile, config: finalWLAN };
 						// Generate the WLAN List
 						$('#wlanselector').append($('<option>', { value: wlanName, text: wlanName }));
 					}
@@ -264,10 +274,6 @@ function getRolesFromConfig(config, group) {
 	var startRoleIndex = -1;
 	var endRoleIndex = -1;
 	var roleName = '';
-
-	// Clear out the WLAN List
-	var userRoleList = document.getElementById('mpskRoleSelector');
-	userRoleList.options.length = 0;
 
 	// check if is a UI group (this doesn't work for template groups... yet)
 	if (config.length) {
@@ -298,8 +304,6 @@ function getRolesFromConfig(config, group) {
 
 				// Save Role
 				userRoles.push({ name: roleName, acls: finalACLs });
-				// Generate the User Role List
-				$('#mpskRoleSelector').append($('<option>', { value: roleName, text: roleName }));
 
 				// Is the current line another User Role?
 				if (currentLine.includes(userRolePrefix)) {
@@ -313,10 +317,6 @@ function getRolesFromConfig(config, group) {
 			}
 		}
 	}
-	if ($('#mpskRoleSelector').length != 0) {
-		$('#mpskRoleSelector').selectpicker('refresh');
-	}
-	//console.log(userRoles);
 }
 
 function getMPSKPoolsFromConfig(config, group) {
@@ -330,7 +330,7 @@ function getMPSKPoolsFromConfig(config, group) {
 		for (i = 0; i < config.length; i++) {
 			var currentLine = config[i];
 
-			// Find first row of the user role
+			// Find first row of the MPSK Pool
 			if (currentLine.includes(mpskPoolPrefix) && startMPSKIndex == -1) {
 				// pull out the pool name.
 				mpskPoolName = currentLine.replace(mpskPoolPrefix, '');
@@ -342,12 +342,11 @@ function getMPSKPoolsFromConfig(config, group) {
 
 			if (endMPSKIndex != -1 && startMPSKIndex != -1) {
 				// Found the start and end of a pool
-				// Build the ACLs from the config.
 				// No need to keep the first line - since we already have the roleName, the first line can be rebuilt.
 				var mpskPool = config.slice(startMPSKIndex + 1, endMPSKIndex);
 
 				var finalMPSKPool = [];
-				// Remove the "index #" line and "utf8" if they exist
+				// Remove the "index #" line and "utf8" if they exist (We dont need them)
 				$.each(mpskPool, function() {
 					if (!this.includes('utf8') && !this.includes('index ')) finalMPSKPool.push(this.toString());
 				});
@@ -405,7 +404,7 @@ function loadMPSKTable() {
 		if (mpskRow[2] !== '********') {
 			actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Generate QR Code" onclick="prepForQR(\'' + mpskRow[1] + "','" + mpskRow[2] + '\')"><i class="fa-regular fa-qrcode"></i></a>';
 		}
-		table.row.add([i, mpskRow[1], mpskRow[2], mpskRow[3], actionBtns]);
+		table.row.add([i, mpskRow[1], mpskRow[2], actionBtns]);
 	}
 
 	// check count to make sure we don't allow more than 24 MPSKs per pool
@@ -470,17 +469,47 @@ function removeConfirmed(mpskIndex) {
 			}
 		}
 	}
+
+	// Grab the selected MPSK Name
+	var mpskParts = mpskPool[rowToRemove].trim().split(' ');
+	var mpskName = mpskParts[1];
+
 	// remove the MPSK from the array
 	mpskPool.splice(rowToRemove, 1);
 	mpskPools[mpskPoolName] = mpskPool;
 	loadMPSKTable();
 
-	// update the config for the group
-	var currentConfig = updateMSPKConfig();
+	// Need to pull info required to cleanup gateway config
+	// Fetch the SSID name and the gwProfile
+	var wlanSelect = document.getElementById('wlanselector');
+	var currentWLAN = wlanSelect.value;
+	var gwProfile = wlans[currentWLAN].gateway;
 
-	// Push back to Central
-	var currentGroup = document.getElementById('groupselector').value;
-	saveConfigToCentral(currentGroup, currentConfig);
+	// Get An APs from the group, find the site for each AP, get a gateways for each site, find the group for each gateway.
+	var gatewayGroups = [];
+	var groupAPs = getAPsForGroup(document.getElementById('groupselector').value);
+	$.each(groupAPs, function() {
+		var siteGateways = getGatewaysForSite(this.site);
+		$.each(siteGateways, function() {
+			if (!gatewayGroups.includes(this.group_name)) gatewayGroups.push(this.group_name);
+		});
+	});
+
+	// Remove config from Gateway
+	$.when(updateGatewayConfig(gatewayGroups, mpskName, gwProfile, true)).then(function() {
+		if (gatewayErrorCount != 0) {
+			return;
+		} else {
+			// update the config for the group
+			var currentConfig = updateMSPKConfig();
+
+			// Push back to Central
+			var currentGroup = document.getElementById('groupselector').value;
+			// add notification for removal
+			showNotification('ca-password-1', 'Removing MPSK...', 'bottom', 'center', 'info');
+			saveConfigToCentral(currentGroup, currentConfig);
+		}
+	});
 }
 
 function editMPSK(mpskIndex) {
@@ -492,8 +521,6 @@ function editMPSK(mpskIndex) {
 	document.getElementById('mpskName').readOnly = true;
 	document.getElementById('mpskName').value = selectedMPSK[1];
 	document.getElementById('mpskPassphrase').value = selectedMPSK[2];
-	$('select[name=mpskRoleSelector]').val(selectedMPSK[3]);
-	$('.selectpicker').selectpicker('refresh');
 	document.getElementById('removeMPSKBtn').hidden = false;
 	$('#MPSKModalLink').trigger('click');
 }
@@ -517,6 +544,7 @@ function mpskChange() {
 	document.getElementById('saveMPSKBtn').disabled = false;
 }
 
+// Updated 1.15
 function saveMPSK() {
 	if (document.getElementById('mpskPassphrase').value === '********') {
 		// through warning about needing to update the MPSK
@@ -524,34 +552,228 @@ function saveMPSK() {
 		document.getElementById('saveMPSKBtn').disabled = true;
 		return false;
 	} else {
-		// dismiss modal and add/update MPSK in mpskPools[mpskPoolName]
+		var mpskName = document.getElementById('mpskName').value;
+
+		// Fetch the SSID name and the gwProfile
+		var wlanSelect = document.getElementById('wlanselector');
+		var currentWLAN = wlanSelect.value;
+		var gwProfile = wlans[currentWLAN].gateway;
+
 		var mpskPool = mpskPools[mpskPoolName];
+
+		// if Editing an existing MPSK
 		if (document.getElementById('mpskName').readOnly) {
-			// Editing an existing MPSK
-			// Find row in array that has the same MPSK name
-			for (let k in mpskPool) {
-				var mpskParts = mpskPool[k].trim().split(' ');
-				if (mpskParts[1] === document.getElementById('mpskName').value) {
-					mpskPool[k] = '  mpsk-local-passphrase ' + document.getElementById('mpskName').value + ' ' + document.getElementById('mpskPassphrase').value + ' ' + document.getElementById('mpskRoleSelector').value;
+			showNotification('ca-password-1', 'Updating MPSK...', 'bottom', 'center', 'info');
+		}
+
+		// Find Gateway Group for the SSID
+		// Get An APs from the group, find the site for each AP, get a gateways for each site, find the group for each gateway.
+		// Build the gatewayGroups list
+		var gatewayGroups = [];
+		var groupAPs = getAPsForGroup(document.getElementById('groupselector').value);
+		$.each(groupAPs, function() {
+			var siteGateways = getGatewaysForSite(this.site);
+			$.each(siteGateways, function() {
+				if (!gatewayGroups.includes(this.group_name)) gatewayGroups.push(this.group_name);
+			});
+		});
+
+		$.when(updateGatewayConfig(gatewayGroups, mpskName, gwProfile, false)).then(function() {
+			// Add role to AP config
+			if (gatewayErrorCount != 0) {
+				return;
+			} else {
+				// Not adding User Roles to the AP - just assigning the Default User role for the WLAN.
+				//if (!userRoles.includes(mpskName)) {
+				//$.when(addRoleToAP(mpskName)).then(function() {
+				showNotification('ca-password-1', 'Adding MPSK...', 'bottom', 'center', 'info');
+				// Adding new MPSK to pool
+				mpskPool.push('  mpsk-local-passphrase ' + mpskName + ' ' + document.getElementById('mpskPassphrase').value + ' ' + currentWLAN);
+				mpskPools[mpskPoolName] = mpskPool;
+
+				// Update the UI
+				loadMPSKTable();
+
+				// Update the config
+				var currentConfig = updateMSPKConfig();
+
+				// Push back to Central
+				var currentGroup = document.getElementById('groupselector').value;
+				saveConfigToCentral(currentGroup, currentConfig);
+				//});
+				//}
+			}
+		});
+	}
+}
+
+function updateGatewayConfig(gatewayGroups, roleName, gwProfile, removal) {
+	showNotification('ca-window-code', 'Updating Gateway Group Config...', 'bottom', 'center', 'info');
+
+	gatewayErrorCount = 0;
+	gatewayPromise = new $.Deferred();
+	var gatewayCounter = 0;
+
+	// If we are adding an MPSK
+	// Add user role + access list > link the two. Add in the derivation-rule for the correct gateway profile
+	var baseGatewayString = 'user-role <mpsk-name>\n!\nip access-list session <mpsk-name>\nuser any svc-dhcp permit\nuser any svc-dns permit\nuserrole <mpsk-name> userrole <mpsk-name> any permit\nuser alias private-networks any deny\nany any any permit\n!\nuser-role <mpsk-name>\naccess-list session <mpsk-name>\n!\naaa derivation-rules user <gw-profile>\n	set role condition mpsk-key-name equals "<mpsk-name>" set-value <mpsk-name>\n!';
+
+	// If we are cleaning up the gateway config in a delete use case
+	if (removal) baseGatewayString = 'aaa derivation-rules user <gw-profile>\nno set role condition mpsk-key-name equals "<mpsk-name>"\n!\nip access-list session <mpsk-name>\nno userrole <mpsk-name> userrole <mpsk-name> any permit\n!\nno user-role <mpsk-name>\n!\nno ip access-list session <mpsk-name>\n!';
+
+	$.each(gatewayGroups, function() {
+		// Swap in the MPSK name and the Gateway profile (obatined from the SSID profile on the AP)
+		var gatewayString = baseGatewayString.replace(/<mpsk-name>/gi, roleName);
+		gatewayString = gatewayString.replace(/<gw-profile>/gi, gwProfile.toLowerCase());
+
+		// push config back to group
+		var currentConfig = gatewayString.split('\n');
+
+		// need to push config back to Central.
+		var settings = {
+			url: getAPIURL() + '/tools/postCommand',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/caasapi/v1/exec/cmd?group_name=' + this,
+				access_token: localStorage.getItem('access_token'),
+				data: JSON.stringify({ cli_cmds: currentConfig }),
+			}),
+		};
+
+		$.ajax(settings).done(function(response, statusText, xhr) {
+			//console.log(response);
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					gatewayErrorCount++;
+					logError('Central Server Error (503): ' + response.reason + ' (/caasapi/v1/exec/cmd)');
+					return;
 				}
 			}
-			mpskPools[mpskPoolName] = mpskPool;
-		} else {
-			// Adding new MPSK to pool
-			mpskPool.push('  mpsk-local-passphrase ' + document.getElementById('mpskName').value + ' ' + document.getElementById('mpskPassphrase').value + ' ' + document.getElementById('mpskRoleSelector').value);
-			mpskPools[mpskPoolName] = mpskPool;
-		}
-		// Update the UI
-		loadMPSKTable();
+			var result = response['_global_result'];
+			if (result['status_str'] === 'Success') {
+			} else {
+				gatewayErrorCount++;
+				logError('Gateway Group config failed to be applied: ' + result['status_str']);
+				showLog();
+			}
 
-		// Update the config
-		var currentConfig = updateMSPKConfig();
+			gatewayCounter++;
+			if (gatewayCounter == gatewayGroups.length) {
+				if (gatewayErrorCount > 0) showNotification('ca-window-code', 'Gateway config failed', 'bottom', 'center', 'warning');
+				else showNotification('ca-window-code', 'Gateway config was successfully updated', 'bottom', 'center', 'success');
+				gatewayPromise.resolve();
+			}
+		});
+	});
+	return gatewayPromise.promise();
+}
 
-		// Push back to Central
-		// need to push config back to Central.
-		var currentGroup = document.getElementById('groupselector').value;
-		saveConfigToCentral(currentGroup, currentConfig);
+function addRoleToAP(newRoleName) {
+	showNotification('ca-folder-settings', 'Updating User Roles...', 'bottom', 'center', 'info');
+	rolePromise = new $.Deferred();
+	var newACLs = 'rule any any match any any any permit';
+	var newACLArray = [];
+	var tempACLArray = newACLs.split('\n');
+	// Add indent to the acls
+	for (i = 0; i < tempACLArray.length; i++) {
+		newACLArray.push('  ' + tempACLArray[i]);
 	}
+
+	// get selected Group
+	var currentGroup = document.getElementById('groupselector').value;
+
+	var currentConfig = groupConfigs[currentGroup];
+
+	// Find if there is an existing user role
+	var startIndex = -1;
+	var endIndex = -1;
+	var firstUserRoleLocation = -1;
+
+	var lineToFind = userRolePrefix + newRoleName;
+	for (i = 0; i < currentConfig.length; i++) {
+		if (currentConfig[i].includes(userRolePrefix) && firstUserRoleLocation == -1) {
+			// grab the location of the first user role - in case the role we are looking for isnt in the config
+			firstUserRoleLocation = i;
+		}
+		if (currentConfig[i] === lineToFind) {
+			startIndex = i;
+		} else if (endIndex == -1 && startIndex != -1 && !currentConfig[i].includes('  ')) {
+			endIndex = i;
+		}
+	}
+
+	if (startIndex == -1) {
+		// no existing user role. Find the first user role and place this role before it.
+		startIndex = firstUserRoleLocation;
+	} else {
+		// remove the existing role from the config
+		currentConfig.splice(startIndex, endIndex - startIndex);
+	}
+
+	// build new role
+	var newRole = [];
+	newRole.push(userRolePrefix + newRoleName);
+	newRole.push(...newACLArray);
+
+	// Splice the new role into the config
+	if (currentConfig.length) {
+		currentConfig.splice(startIndex, 0, ...newRole);
+	} else {
+		currentConfig = newRole;
+	}
+
+	// Push config back to Central for the group
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify({ clis: currentConfig }),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+				return;
+			}
+		}
+		if (response.reason && response.reason == 'Bad Gateway') {
+			Swal.fire({
+				title: 'API Issue',
+				text: 'There is an issue communicating with the API Gateway',
+				icon: 'warning',
+			});
+		} else if (response.code && response.code == 429) {
+			console.log('errorCode');
+			logError('User role was not applied to group ' + currentGroup);
+			Swal.fire({
+				title: 'API Limit Reached',
+				text: 'You have reached your daily API limit. No more API calls will succeed today.',
+				icon: 'warning',
+			});
+		} else if (response.description) {
+			logError(response.description);
+			errorCounter++;
+		} else if (response !== '' + currentGroup) {
+			logError('User role was not applied to group ' + currentGroup);
+			errorCounter++;
+		} else {
+			showNotification('ca-folder-settings', 'Updated User Roles for APs...', 'bottom', 'center', 'success');
+		}
+		rolePromise.resolve();
+	});
+	return rolePromise.promise();
 }
 
 function updateMSPKConfig() {
@@ -636,6 +858,7 @@ function saveConfigToCentral(currentGroup, currentConfig) {
 				icon: 'error',
 			});
 		} else {
+			showNotification('ca-password-1', 'MPSKs Updated', 'bottom', 'center', 'success');
 			Swal.fire({
 				title: 'MPSK-Local Deployment',
 				text: 'The MPSK changes were deployed to to the selected Group',

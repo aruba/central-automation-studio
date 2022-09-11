@@ -20,11 +20,6 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 
 <!DOCTYPE html>
 <html lang="en">
-	<?php
-	require_once('../phpcount.php');
-	$curPageName = substr($_SERVER["SCRIPT_NAME"],strrpos($_SERVER["SCRIPT_NAME"],"/")+1);  
-	PHPCount::AddHit($curPageName);
-	?>
 	<head>
 		<meta charset="utf-8" />
 		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
@@ -109,6 +104,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														<th>Group</th>
 														<th>Site</th>
 														<th>Firmware</th>
+														<th>Uptime</th>
 														<th>Troubleshooting</th>
 													</thead>
 													<tbody></tbody>
@@ -314,43 +310,43 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
-		  $(document).ready(function() {
-		  	var reachabilityPromise = new $.Deferred();
-		      $.when(checkReachability(reachabilityPromise)).then(function () {
-			console.log("Using "+getAPIURL());
+		$(document).ready(function() {
+			var reachabilityPromise = new $.Deferred();
+		    $.when(checkReachability(reachabilityPromise)).then(function () {
+				getAPIURL(); // force the Proxy status to update
 
-			$('#device-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search APs",
-				},
-				"columnDefs": [{
-				   'targets': 1,
-				   'searchable':false,
-				   'orderable':false,
-				   'className': 'dt-body-center'
-				}],
-				'order': [[0, 'asc']],
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				$('#device-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search APs",
+					},
+					"columnDefs": [{
+			    	'targets': 1,
+			    	'searchable':false,
+			    	'orderable':false,
+			    	'className': 'dt-body-center'
+					}],
+					'order': [[0, 'asc']],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+
+				$('[data-toggle="tooltip"]').tooltip();
+
+				var refreshrate = localStorage.getItem('refresh_rate');
+				if (refreshrate === null || refreshrate === "") {
+					refreshrate = "30";
+				}
+				loadMonitoringData(refreshrate);
+
+				getDevices();
 			});
 
-
-			$('[data-toggle="tooltip"]').tooltip();
-
-			var refreshrate = localStorage.getItem('refresh_rate');
-			if (refreshrate === null || refreshrate === "") {
-				refreshrate = "30";
-			}
-			loadMonitoringData(refreshrate);
-
-			getDevices();
 		});
-
-		  });
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/main.js"></script>

@@ -1,6 +1,6 @@
 /*
 Central Automation v1.7.5
-Updated: 1.8.2
+Updated: 1.14.
 Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -53,36 +53,72 @@ function buildGroupDeviceList() {
 	});
 }
 
+function viewConfig() {
+	$('#ConfigModalLink').trigger('click');
+}
+
+function viewEffectiveConfig() {
+	$('#EffectiveConfigModalLink').trigger('click');
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Config functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getConfigforSelected() {
-	// Do nothing today as this API is allowlisted :(
-	/*
-	var groupselect = document.getElementById("groupselector");
+	document.getElementById('viewGatewayBtn').disabled = true;
+
+	var groupselect = document.getElementById('groupselector');
 	var selectedEntity = groupselect.value;
-	
-	console.log(selectedEntity)
-	
+	//if (selectedEntity.includes('/')) {
+	document.getElementById('viewEffectiveGatewayBtn').hidden = false;
+	getEffectiveConfigForSelected();
+	//} else {
+	//	document.getElementById('viewEffectiveGatewayBtn').hidden = true;
+	//}
+
 	var settings = {
-	  "url": getAPIURL() + "/tools/getCommand",
-	  "method": "POST",
-	  "timeout": 0,
-	  "headers": {
-		"Content-Type": "application/json"
-	  },
-	  "data": JSON.stringify({
-		"url": localStorage.getItem('base_url') + "/caasapi/v1/configuration/templatebase?group-name=" + selectedEntity,
-		"access_token": localStorage.getItem('access_token')
-	  })
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/caasapi/v1/showcommand/object/committed?group_name=' + selectedEntity,
+			access_token: localStorage.getItem('access_token'),
+		}),
 	};
 
-	$.ajax(settings).done(function (response, statusText, xhr) {
-		console.log(response)
-		
+	$.ajax(settings).done(function(response, statusText, xhr) {
+		document.getElementById('gatewayConfigView').value = response.config.join('\n');
+		document.getElementById('viewGatewayBtn').disabled = false;
 	});
-	*/
+}
+
+function getEffectiveConfigForSelected() {
+	document.getElementById('viewEffectiveGatewayBtn').disabled = true;
+
+	var groupselect = document.getElementById('groupselector');
+	var selectedEntity = groupselect.value;
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/caasapi/v1/showcommand/object/effective?group_name=' + selectedEntity,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response, statusText, xhr) {
+		document.getElementById('gatewayEffectiveConfigView').value = response.config.join('\n');
+		document.getElementById('viewEffectiveGatewayBtn').disabled = false;
+	});
 }
 
 function confirmCommands() {
@@ -139,6 +175,12 @@ function applyCLICommands() {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/caasapi/v1/exec/cmd)');
+				return;
+			}
+		}
 		var result = response['_global_result'];
 		if (result['status_str'] === 'Success') {
 			showNotification('ca-window-code', 'Gateway config for ' + selectedText + ' was successfully updated', 'bottom', 'center', 'success');

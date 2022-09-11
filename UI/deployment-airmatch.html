@@ -544,7 +544,7 @@ Aaron Scott (WiFi Downunder) 2022
     $(document).ready(function() {
     	var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
-			console.log("Using "+getAPIURL());
+			
 			$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
 		
 			$('#lastrun-table tbody').on('click', 'tr', function(){

@@ -263,6 +263,12 @@ function testToken() {
 	return $.ajax(settings)
 		.done(function(response) {
 			//console.log(response);
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
+					return;
+				}
+			}
 			if (response.hasOwnProperty('error')) {
 				Swal.fire({
 					title: 'Central API connection failed',

@@ -30,6 +30,12 @@ function getWLANsforGroup() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/wlan)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error_code')) {
 			showNotification('ca-folder-settings', response.description, 'bottom', 'center', 'danger');
 		} else {
@@ -68,6 +74,12 @@ function getConfigforWLAN() {
 	};
 
 	$.ajax(settings).done(function(response) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/wlan/)');
+				return;
+			}
+		}
 		if (response.hasOwnProperty('error_code')) {
 			showNotification('ca-wifi', response.description, 'bottom', 'center', 'danger');
 		} else {
@@ -110,6 +122,12 @@ function updatePSK() {
 
 	$.ajax(settings)
 		.done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/wlan)');
+					return;
+				}
+			}
 			if (response === wlan) {
 				Swal.fire({
 					title: 'Passphrase Updated',

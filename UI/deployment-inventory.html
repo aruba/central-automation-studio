@@ -105,6 +105,7 @@ Aaron Scott (WiFi Downunder) 2022
 															<th>Type</th>
 															<th>Part Number</th>
 															<th>Model</th>
+															<th>Status</th>
 															<th>IP Address</th>
 															<th>Name</th>
 															<th>Group</th>
@@ -251,7 +252,7 @@ Aaron Scott (WiFi Downunder) 2022
 		$(document).ready(function() {
 			var reachabilityPromise = new $.Deferred();
 		     $.when(checkReachability(reachabilityPromise)).then(function () {
-				console.log("Using "+getAPIURL());
+
 				$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
 
 
@@ -261,7 +262,20 @@ Aaron Scott (WiFi Downunder) 2022
 				}
 
 				loadMonitoringData(refreshrate);
-				setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+
+				var loadIntervalID;
+				loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+
+				document.addEventListener("visibilitychange", function handleVisibilityChange() {
+				  if (!document.hidden) {
+					var reachabilityPromise = new $.Deferred();
+					$.when(checkReachability(reachabilityPromise)).then(function () {
+						loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+					});
+				  } else {
+					clearInterval(loadIntervalID);
+				  }
+				}, false);
 
 				$('#inventory-table').DataTable({
 					"pagingType": "simple_numbers",

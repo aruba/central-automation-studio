@@ -76,6 +76,12 @@ function getUserRoles() {
 				};
 
 				$.ajax(settings).done(function(response) {
+					if (response.hasOwnProperty('status')) {
+						if (response.status === '503') {
+							logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+							return;
+						}
+					}
 					// save the group config for modifications
 					groupConfigs[currentGroup] = response;
 
@@ -341,6 +347,12 @@ function saveRole() {
 		};
 
 		$.ajax(settings).done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+					return;
+				}
+			}
 			updateCounter++;
 			if (response.reason && response.reason == 'Bad Gateway') {
 				Swal.fire({
@@ -469,6 +481,12 @@ function updateRole(addingRole) {
 		};
 
 		$.ajax(settings).done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+					return;
+				}
+			}
 			updateCounter++;
 			if (response.reason && response.reason == 'Bad Gateway') {
 				Swal.fire({

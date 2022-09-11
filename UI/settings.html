@@ -20,7 +20,6 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
@@ -165,9 +164,17 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														<form class="form-horizontal">
 															<div class="form-group">
 																<div class="row">
-																	<label class="col-md-6 control-label">Auto AP Naming</label>
+																	<label class="col-md-6 control-label">Auto Device Naming Format</label>
 																	<div class="col-md-6">
-																		<input type="text" placeholder="{{initials}}-{{model}}-{{number}}" class="form-control" id="ap_naming_format">
+																		<input type="text" placeholder="{{initials}}-{{model}}-{{number}}" class="form-control" id="ap_naming_format"  onchange="saveGlobalSettings()" oninput="this.onchange();">
+																	</div>
+																</div>
+															</div>
+															<div class="form-group">
+																<div class="row">
+																	<label class="col-md-6 control-label">Template Hostname Variable</label>
+																	<div class="col-md-6">
+																		<input type="text" placeholder="_sys_hostname" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="hostname_variable"  onchange="saveGlobalSettings()" oninput="this.onchange();">
 																	</div>
 																</div>
 															</div>
@@ -175,7 +182,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 																<div class="row">
 																	<label class="col-md-6 control-label">Switch Port Variable</label>
 																	<div class="col-md-6">
-																		<input type="text" placeholder="int{{number}}_name" class="form-control" id="port_variable_format">
+																		<input type="text" placeholder="int{{number}}_name" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="port_variable_format"  onchange="saveGlobalSettings()" oninput="this.onchange();">
 																	</div>
 																</div>
 															</div>
@@ -211,7 +218,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 															<div class="row">
 																<label class="col-md-6 control-label">Refresh Interval (minutes)</label>
 																<div class="col-md-6">
-																	<input type="number" placeholder="30" class="form-control" id="refresh_rate" min="5">
+																	<input type="number" placeholder="30" class="form-control" id="refresh_rate" min="5"  onchange="saveGlobalSettings()" oninput="this.onchange();">
 																</div>
 															</div>
 														</div>
@@ -219,7 +226,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 															<div class="row">
 																<label class="col-md-6 control-label">Client Monitoring</label>
 																<div class="col-md-6">
-																	<select id="load_clients" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+																	<select id="load_clients" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
 																		<option value="Include">Include</option>
 																		<option value="Do Not Include">Do Not Include</option>
                                     								</select>
@@ -228,10 +235,21 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														</div>
 														<div class="form-group">
 															<div class="row">
+																<label class="col-md-6 control-label">Group Properties</label>
+																<div class="col-md-6">
+																	<select id="load_group_properties" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
+																		<option value="Include">Include</option>
+																		<option value="Do Not Include">Do Not Include</option>
+																	</select>
+																</div>
+															</div>
+														</div>
+														<div class="form-group">
+															<div class="row">
 																<label class="col-md-6 control-label">QR Code Colour</label>
 																<div class="col-md-6">
 																	<div id="color-picker-wrapper">
-																		<input type="color" value="#FF8300" id="color_picker">
+																		<input type="color" value="#FF8300" id="color_picker" onchange="saveGlobalSettings()" oninput="this.onchange();">
 																	</div>
 																</div>
 															</div>
@@ -240,7 +258,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 															<div class="row">
 																<label class="col-md-6 control-label">QR Code Logo</label>
 																<div class="col-md-6">
-																	<input  type="text" placeholder="Custom Image URL" class="form-control" id="qr_logo">
+																	<input  type="text" placeholder="Custom Image URL" class="form-control" id="qr_logo"  onchange="saveGlobalSettings()" oninput="this.onchange();">
 																</div>
 															</div>
 														</div>
@@ -424,6 +442,53 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		color_picker.onchange = function() {
 			color_picker_wrapper.style.backgroundColor = color_picker.value;    
 		}
+		color_picker.addEventListener("input", saveGlobalSettings, false);
+		
+		const input = document.getElementById('hostname_variable');
+		let currentValue = input.value || '';
+		input.addEventListener('input', function inputInputEventHandler(e) {
+			const target = e.target;
+			
+			if (/^[a-zA-Z0-9_.]*$/.test(target.value)) {
+				currentValue = target.value;
+			} else {
+				// Users enter the not supported characters
+				// Restore the value and selection
+				target.value = currentValue;
+				target.setSelectionRange(selection.selectionStart, selection.selectionEnd);
+			}
+		});
+		let selection = {};
+		input.addEventListener('keydown', function (e) {
+			const target = e.target;
+			selection = {
+				selectionStart: target.selectionStart,
+				selectionEnd: target.selectionEnd,
+			};
+		});
+		
+		const portVariable = document.getElementById('port_variable_format');
+		let currentPortValue = portVariable.value || '';
+		portVariable.addEventListener('input', function inputInputEventHandler(e) {
+			const target = e.target;
+			
+			if (/^[a-zA-Z0-9_.]*$/.test(target.value)) {
+				currentPortValue = target.value;
+			} else {
+				// Users enter the not supported characters
+				// Restore the value and selection
+				target.value = currentPortValue;
+				target.setSelectionRange(selection.selectionStart, selection.selectionEnd);
+			}
+		});
+		let portSelection = {};
+		portVariable.addEventListener('keydown', function (e) {
+			const target = e.target;
+			portSelection = {
+				selectionStart: target.selectionStart,
+				selectionEnd: target.selectionEnd,
+			};
+		});
         
         $('#hydra-table').DataTable({
 			"paging": false,
@@ -481,6 +546,11 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 			document.getElementById("ap_naming_format").value = apNaming;
 		}
 		
+		var hostnameVariable = localStorage.getItem('hostname_variable');
+		if (hostnameVariable != null && hostnameVariable != "undefined") {
+			document.getElementById("hostname_variable").value = hostnameVariable;
+		}
+		
 		var portNaming = localStorage.getItem('port_variable_format');
 		if (portNaming != null && portNaming != "undefined") {
 			document.getElementById("port_variable_format").value = portNaming;
@@ -513,10 +583,18 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 			loadClients = JSON.parse(loadClients)
 		}
 		document.getElementById("load_clients").value = loadClients ? "Include" : "Do Not Include";
+		
+		var loadGroupProperties = localStorage.getItem('load_group_properties');
+		if (loadGroupProperties === null || loadGroupProperties === "") {
+			loadGroupProperties = true;
+		} else {
+			loadGroupProperties = JSON.parse(loadGroupProperties)
+		}
+		document.getElementById("load_group_properties").value = loadGroupProperties ? "Include" : "Do Not Include";
         
         var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
-			console.log("Using "+getAPIURL());
+			
 		});
     });
 </script>

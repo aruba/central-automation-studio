@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.7.5
-Updated: 
+Updated: 1.14.x
 Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -86,7 +86,7 @@ Aaron Scott (WiFi Downunder) 2022
 				<div class="content">
 					<div class="container-fluid">
 						<!-- Change CLI Card -->
-						<div class="card col-md-8">
+						<div class="card col-md-12">
 							<div class="card-body">
 								<div class="row">
 									<div class="col-12">
@@ -105,6 +105,8 @@ Aaron Scott (WiFi Downunder) 2022
 									<div class="col-12">
 										<div class="card-header ">
 											<h4 class="card-title">Configuration</h4>
+											<button type="submit" class="btn btn-sm btn-outline btn-round btn-info reload-link" data-dismiss="modal" name="viewGatewayBtn" id="viewGatewayBtn" id="viewGatewayBtn" onclick="viewConfig()" disabled>View Current Committed Configuration</button>
+											<button type="submit" class="btn btn-sm btn-outline btn-round btn-info reload-btn" data-dismiss="modal" name="viewEffectiveGatewayBtn" id="viewEffectiveGatewayBtn" id="viewEffectiveGatewayBtn" onclick="viewEffectiveConfig()" disabled>View Effective Configuration</button>
 										</div>
 									</div>
 								</div>
@@ -139,9 +141,47 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Config Modal -->
+				<div class="modal fade modal-mini modal-primary" id="ConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Current Committed Configuration</h4>
+									</div>
+									<div class="card-body" id="configBody">
+										<textarea type="text" placeholder="Select a Group/Device..." class="form-control textarea" id="gatewayConfigView" rows="20" readonly></textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- End Config Modal -->
+				<!-- Effective Config Modal -->
+				<div class="modal fade modal-mini modal-primary" id="EffectiveConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Current Effective Configuration</h4>
+									</div>
+									<div class="card-body" id="configBody">
+										<textarea type="text" placeholder="Select a Group/Device..." class="form-control textarea" id="gatewayEffectiveConfigView" rows="20" readonly></textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- End effective Config Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#ConfigModal" id="ConfigModalLink"></a>
+						<a data-toggle="modal" data-target="#EffectiveConfigModal" id="EffectiveConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -202,15 +242,28 @@ Aaron Scott (WiFi Downunder) 2022
 		  $(document).ready(function() {
 		var reachabilityPromise = new $.Deferred();
 		      $.when(checkReachability(reachabilityPromise)).then(function () {
-			console.log("Using "+getAPIURL());
-			// Check if we need to get the latest data - or can we just load it from localStorage
-			var refreshrate = localStorage.getItem('refresh_rate');
-			if (refreshrate === null || refreshrate === "") {
-				refreshrate = "30";
-			}
 
-			loadMonitoringData(refreshrate);
-			setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+				// Check if we need to get the latest data - or can we just load it from localStorage
+				var refreshrate = localStorage.getItem('refresh_rate');
+				if (refreshrate === null || refreshrate === "") {
+					refreshrate = "30";
+				}
+
+				loadMonitoringData(refreshrate);
+
+				var loadIntervalID;
+				loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+
+				document.addEventListener("visibilitychange", function handleVisibilityChange() {
+			  	if (!document.hidden) {
+					var reachabilityPromise = new $.Deferred();
+					$.when(checkReachability(reachabilityPromise)).then(function () {
+						loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+					});
+			  	} else {
+					clearInterval(loadIntervalID);
+			  	}
+				}, false);
 		  	});
 		  });
 	</script>

@@ -32,9 +32,14 @@ function loadFullInventory() {
 			// Add row to table
 			var table = $('#inventory-table').DataTable();
 			if (monitoringInfo) {
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
+				var status = '<i class="fa fa-circle text-danger"></i>';
+				if (monitoringInfo.status == 'Up') {
+					status = '<i class="fa fa-circle text-success"></i>';
+				}
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
 			} else {
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
+				var status = '<i class="fa fa-circle text-muted"></i>';
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
 			}
 		});
 
@@ -153,6 +158,8 @@ function buildCSVData(selectedGroup, selectedSite) {
 	var typeKey = 'DEVICE TYPE';
 	var skuKey = 'PART NUMBER';
 	var modelKey = 'MODEL';
+	var statusKey = 'STATUS';
+	var uptimeKey = 'UPTIME';
 	var ipKey = 'IP ADDRESS';
 	var nameKey = 'DEVICE NAME';
 	var groupKey = 'GROUP';
@@ -176,7 +183,10 @@ function buildCSVData(selectedGroup, selectedSite) {
 			var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
 			if (selectedSite) siteToUse = selectedSite;
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
+			var duration = moment.duration(uptime * 1000);
+
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: duration.humanize(), [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
 		} else {
 			var groupToUse = '';
 			if (selectedGroup) groupToUse = selectedGroup;
@@ -184,7 +194,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 			var siteToUse = '';
 			if (selectedSite) siteToUse = selectedSite;
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
 		}
 	});
 

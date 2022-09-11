@@ -78,6 +78,12 @@ function getDenyList() {
 
 		$.ajax(settings).done(function(response, statusText, xhr) {
 			//console.log("getDenyList: "+ JSON.stringify(response))
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/swarm/<SERIAL>/blacklisting)');
+					return;
+				}
+			}
 			if (xhr.status == 200) {
 				// add devices to the denylist somehow.....
 				if (response['blacklist'].length > 0) {
@@ -160,6 +166,12 @@ function removeClient(macaddress, deviceID) {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("removeClient: "+ JSON.stringify(response))
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/swarm/<SERIAL>/blacklisting)');
+				return;
+			}
+		}
 		if (xhr.status == 200) {
 			showNotification('ca-l-remove', macaddress + ' removed from Deny List.', 'bottom', 'center', 'success');
 		} else {
