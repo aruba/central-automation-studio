@@ -14,7 +14,6 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
@@ -106,7 +105,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.12.4</h1>
+                    <h1>Central Automation Studio v1.16</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -166,6 +165,9 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#gateway-row">Gateway Deployment</a>
                                     </li>
+									<li>
+										<a href="#country-row">Country Code Deployment</a>
+									</li>
 									<li>&nbsp;</li>
                                     <li>
                                         <a href="#airmatch-row">AirMatch</a>
@@ -175,6 +177,9 @@ The above copyright notice and this permission notice shall be included in all c
 									</li>
 									<li>
 										<a href="#inventory-row">Device Inventory</a>
+									</li>
+									<li>
+										<a href="#license-row">License Monitoring</a>
 									</li>
                                     <li hidden>
                                         <a href="#migration-row">Migration</a>
@@ -187,6 +192,10 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#experimental-row">Experimental Features</a>
                                     </li>
+									<li>&nbsp;</li>
+									<li>
+										<a href="#management-row">Management Features</a>
+									</li>
 									<li>&nbsp;</li>
                                     <li>
                                         <a href="#changes-row">Change Log</a>
@@ -356,9 +365,10 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> AOS-Switch Template Config</li>
 										<li> AP Troubleshooting</li>
 									</ul>
-									<h2>Central Deployment</h2>
+									<h2>Management Tasks</h2>
 									<ul>
-										<li> Management Tasks </li>
+										<li> Group Management </li>
+										<li> Add Sites </li>
 									</ul>
 								</p>
 							</div>
@@ -384,12 +394,14 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> GROUP</li>
 										<li> SITE</li>
 										<li> ZONE</li>
+										<li> RF PROFILE (AOS10 only)</li>
 									</ul>
 									If the DEVICE NAME not be included, the device renaming workflows will skip that device during the processing.</br>
 									If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway).</br>
 									If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV.</br>
 									If the SITE is missing, the device will be skipped when assigning devices to a Site. </br>
 									If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone to an Access Point. </br>
+									If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point. </br>
 									Skipped devices will be listed in the Log for the task/automation.</br></br>
 									Let's look at the tasks and automations one by one:
                                 </p>
@@ -444,13 +456,13 @@ The above copyright notice and this permission notice shall be included in all c
 									Supported renaming scenarios:
 									<ul>
 										<li> AP in a UI Group</li>
-										<li> Switch in a Template Group - using "_sys_hostname" variable</li>
+										<li> Switch in a Template Group - using "_sys_hostname" variable. A different variable name can be designated in the <a href="settings.html" target="_blank">Settings</a> page - "TEMPLATE HOSTNAME VARIABLE"</li>
 									</ul>
 									Currently, Gateways and Switches in UI Groups are not supported.
                                 </p>
-                                <h4>Auto Rename Access Points</h4>
+                                <h4>Auto Rename Devices</h4>
                                 <p>
-                                	Uses the "Auto AP Renaming" naming convention in the <a href="settings.html" target="_blank">Settings</a> page to rename APs automatically.
+                                	Uses the "Auto Device Renaming" naming convention in the <a href="settings.html" target="_blank">Settings</a> page to rename devices automatically.
 									Supported renaming variables:
 									<ul>
 										<li> site</li>
@@ -460,14 +472,31 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> switch</li>
 										<li> port</li>
 									</ul>
-									Site = Full site name, Initials = Site name initials, Model = AP Model, Number = Sequential AP Number per Site, Switch = hostname of the switch, Port = connected port number on the switch.</br>
-									Naming variables need to be enclosed in double curly braces e.g. {{site}} or {{model}} 
+									Site = Full site name, Initials = Site name initials, Model = AP Model, Number = Sequential AP Number per Site, Switch = hostname of the uplink switch, Port = connected port number on the switch.</br>
+									Naming variables need to be enclosed in double curly braces e.g. {{site}} or {{model}}<br />
+								</p>
+								<p>
+									Devices in template groups are also supported. The default variable name used for the hostname is "_sys_hostname". A custom variable name can be designated in the <a href="settings.html" target="_blank">Settings</a> page - "TEMPLATE HOSTNAME VARIABLE"
                                 </p>
                                 <h4>Set AP Zones</h4>
-                                <p>
-                                	Uses the SERIAL and ZONE columns in the CSV file to set the AP Zone on the corresponding Access Point in Aruba Central.
+								<p>
+									Uses the SERIAL and ZONE columns in the CSV file to set the AP Zone on the corresponding Access Points in Aruba Central.
 									If the ZONE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the AP Zone set.
-                                </p>
+								</p>
+								<h4>Set RF Profile</h4>
+								<p>
+									Uses the SERIAL and RF PROFILE columns in the CSV file to set the RF Profile on the corresponding <strong>AOS 10</strong> Access Points in Aruba Central.
+									If the RF PROFILE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the RF Profile set.
+									If the RF Profile name supplied in the CSV is not configured in the Group for which the AP is configured, the "default" RF Profile is assigned.
+								</p>
+								<h4>Enable 2.4GHz radios</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to enable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
+								</p>
+								<h4>Disable 2.4GHz radios</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to disable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
+								</p>
                                 <h4>Update Device Variables</h4>
                                 <p>
                                 	Updates/Sets variable values for a device in a template group.
@@ -512,7 +541,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 <p>
                                 	The <a href="workflow-site.html">Site</a> Workflows are based are selecting an existing site. Currently available Site based workflows are detailed below.
                                 </p>
-                                <h4>Auto Rename Access Points</h4>
+                                <h4>Auto Rename Devices</h4>
                                 <p>
                                 	Uses the "Auto AP Renaming" naming convention in the <a href="settings.html" target="_blank">Settings</a> page to rename APs automatically.
 									Supported renaming variables:
@@ -525,8 +554,12 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> port</li>
 									</ul>
 									Site = Full site name, Initials = Site name initials, Model = AP Model, Number = Sequential AP Number per Site, Switch = hostname of the switch, Port = connected port number on the switch.</br>
-									Naming variables need to be enclosed in double curly braces e.g. {{site}} or {{model}}
-                                </p>
+									Naming variables need to be enclosed in double curly braces e.g. {{site}} or {{model}}<br />
+								</p>
+								<p>
+									Devices in template groups are also supported. The default variable name used for the hostname is "_sys_hostname". A custom variable name can be designated in the <a href="settings.html" target="_blank">Settings</a> page - "TEMPLATE HOSTNAME VARIABLE"
+								</p>
+                        
                                 <h4>Update Switch Port Descriptions</h4>
                                 <p>
                                 	For APs in the site, this task updates the switchport name for its connected switch with the AP name.
@@ -640,6 +673,24 @@ The above copyright notice and this permission notice shall be included in all c
                                 <p>
                                 	Creates a new Customer.
 							  	</p>
+								<h4>Download Inventory</h4>
+								<p>
+									Downloads the device inventory to a CSV. Fields included in the download are:
+									<ul>
+										<li> Customer</li>
+										<li> Serial Number</li>
+										<li> MAC Address</li>
+										<li> Device Type</li>
+										<li> Model</li>
+										<li> Status</li>
+										<li> Uptime</li>
+										<li> IP Address</li>
+										<li> Device Name</li>
+										<li> Group</li>
+										<li> Site</li>
+										<li> License Assigned</li>
+									</ul>
+								</p>
 							</div>
 							<div class="tim-row" id="group-config-row">
                                 <h2 class="text-center">Group Configuration</h2>
@@ -648,7 +699,7 @@ The above copyright notice and this permission notice shall be included in all c
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-group.html">Group Configuration</a> allows for the modification of the wireless configuration for a selected group.
+                                	The <a href="deployment-group.html">Group Configuration</a> allows for the modification of the wireless configuration for a selected group. This allows for entry/modification of configutration that doesn't yet have a UI knob in Central.
                                 </p>
                                 <p>
                                 	<i><strong>Note:</strong> Background updating of the monitoring data is disabled on this page to ensure group lists are not modified whilst editing the group configuration. Use the refresh button in the top right to refresh the data in the page.</i>
@@ -677,7 +728,12 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
                                 <h4>WLAN Configuration</h4>
                                 <p>
-                                	Provides the ability modify the WLAN configuration used by a selected WLAN/SSID, and select which Groups to make the WLAN available in. This makes copying WLAN configuration from one UI Group to another, simple.
+									
+                                	Provides the ability modify the WLAN configuration used by a selected WLAN/SSID, and select which Groups to make the WLAN available in. This makes copying WLAN configuration from one UI Group to another simple.
+									<div class="img-container">
+										<img src="assets/img/wlan-table.png" alt="WLAN-Table">
+										<p>WLAN Details with simple Edit and Enable/Disable</p>
+									</div>
                                 	<div class="img-container">
 										<img src="assets/img/wlan.png" alt="WLAN">
 										<p>Deploying a WLAN across multiple Groups</p>
@@ -811,13 +867,13 @@ The above copyright notice and this permission notice shall be included in all c
 								</p>
                             </div>
                             <div class="tim-row" id="gateway-row">
-                                <h2 class="text-center">Gateway Deployment</h2>
-                                <div class="icon-massive text-center icon-warning">
+								<h2 class="text-center">Gateway Deployment</h2>
+								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-window-code text-warning" id="gateway_icon"></i>
 								</div>
-                                <legend></legend>
-                                <p>
-                                	The <a href="deployment-gateway.html">Gateway Deployment</a> workflows support of configuration for Gateways using Config Snippets. 
+								<legend></legend>
+								<p>
+									The <a href="deployment-gateway.html">Gateway Deployment</a> workflows support of configuration for Gateways using Config Snippets. 
 								</p>
 								<p>
 									Select the Group or Device and enter the structured CLI commands. The following should be noted:
@@ -827,7 +883,28 @@ The above copyright notice and this permission notice shall be included in all c
 										<li>In order to go back one step you have to enter an exclamation mark - ! (just as if we were pasting the whole confing via ssh).</li>
 									</ul>
 								</p>
-                            </div>
+							</div>
+							<div class="tim-row" id="country-row">
+								<h2 class="text-center">Country Code Deployment</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-world text-warning" id="country_icon"></i>
+								</div>
+								<legend></legend>
+								<p>
+									The <a href="deployment-country.html">Country Code Deployment</a> workflows support configuration of AP Country Codes. 
+								</p>
+								<p>
+									<ul>
+										<li><strong>Group based config</strong> – select any number of Groups from the table (filtering works as well), select the Country Code and go</li>
+										<li><strong>Site based config</strong> – works for IAP clusters at the site (supports multiple clusters per site). Select any number of sites, and go. The tool pulls the country from the Site in Central and uses that to set the country code – no need to manually select the country code! Config is made at the Virtual Controller level</li>
+										<li><strong>Virtual Controller based</strong> - select any number of VCs from the table (filtering works as well), select the country code and go</li>
+									</ul>
+									Accessing the Country Code Deployment page is available from the Dashboard and from the AP, Site and Group overview tables (at the top of most pages)
+								</p>
+								<p>
+									<i><strong>Note: </strong>AOS10 APs can currently only be set using the Group based config.</i>
+								</p>
+							</div>
                             <div class="tim-row" id="airmatch-row">
                                 <h2 class="text-center">AirMatch</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -896,7 +973,7 @@ The above copyright notice and this permission notice shall be included in all c
                             <div class="tim-row" id="inventory-row">
                                 <h2 class="text-center">Device Inventory</h2>
                                 <div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-cloud-data-download text-warning" id="deployment_inventory_icon"></i>
+									<i class="central-icon ca-stock-2 text-warning" id="deployment_inventory_icon"></i>
 								</div>
                                 <p>
 									The <a href="deployment-inventory.html">Device Inventory</a> page supports viewing, filtering and downloading of the Device Inventory in Aruba Central. All table columns are sortable and filterable. The search function supports multiple search terms across any column.
@@ -919,7 +996,25 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>
 								</p>
                             </div>
-                           <div class="tim-row" id="monitoring-row">
+							<div class="tim-row" id="license-row">
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-license-key text-warning" id="license_monitoring_icon"></i>
+								</div>
+								<h2>Licensing Monitoring</h2>
+								<p>
+									The <a href="monitoring-licensing.html">License Monitoring</a> provides the ability to see the current state of all the subscription keys, as well as export the subscription key information to a CSV containing the filtered results in the Subscription Keys table. 
+									Status Key:
+									<ul>
+										<li class="nobull"> <i class="fa fa-circle text-success"></i> - Valid Subscription Key</li>
+										<li class="nobull"> <i class="fa fa-circle text-warning"></i> - Expiring within the next 30 days </li>
+										<li class="nobull"> <i class="fa fa-circle text-danger"></i> - Expired Subscription Key</li>
+									</ul>
+								</p>
+								<p>
+									Central Licenses are now also checked during normal background monitoring for any upcoming license expiry (within the next 30 days). A notification will be posted if any are found.
+								</p>
+							</div>
+						    <div class="tim-row" id="monitoring-row">
                                 <h2 class="text-center">Monitoring Features</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-cctv text-warning" id="workflow_monitoring_icon"></i>
@@ -928,8 +1023,9 @@ The above copyright notice and this permission notice shall be included in all c
                                 <p>
                                 	This section contains a handful of additional Monitoring features, including Client Statistics, AP Reboot and IP Address Management Monitoring.
                                 </p>
-                                <h2>Client Statistics</h2>
-								The <a href="clients.html">Client Statistics</a> page is also accessible from the bottom of the Clients table. The following statistics for clients are supported:
+								
+								<h2>Client Statistics</h2>
+								The <a href="monitoring-clients.html">Client Statistics</a> page is also accessible from the bottom of the Clients table. The following statistics for clients are supported:
 								<ul>
 									<li> Client Operating System</li>
 									<li> 802.11 version support (Mix) </li>
@@ -944,6 +1040,22 @@ The above copyright notice and this permission notice shall be included in all c
 								<div class="img-container">
 									<img src="assets/img/clientStats1.png" alt="Client Stats">
 									<p>Client Statistics</p>
+								</div>
+								
+								<h2>Access Point Statistics</h2>
+								The <a href="monitoring-aps.html">Access Point Statistics</a> page is also accessible from the bottom of the Access Points table. The following statistics for APs are supported:
+								<ul>
+									<li> AP Models</li>
+									<li> Overview stats for Memory Utilization, CPU Usage, 2.4/5/6Ghz radios that are down </li>
+									<li> 10 APs with the most Clients</li>
+									<li> 10 APs with the lowest Uptime (with a Troubleshooting action button - processing the "show ap debug system-status" and providing easy access to crash logs)</li>
+									<li> 10 APs with the highest Memory Utilization (with a Reboot action button)</li>
+									<li> Firmware</li>
+								</ul>
+								Each section of the graphs is clickable and will display the matching clients in a table.
+								<div class="img-container">
+									<img src="assets/img/APStats1.png" alt="AP Stats">
+									<p>AP Statistics</p>
 								</div>
 								
 								<h2>AP Reboot</h2>
@@ -962,7 +1074,8 @@ The above copyright notice and this permission notice shall be included in all c
 								</div>
 								
 								<h2>IPAM Monitoring</h2>
-								The <a href="monitoring-ipam.html">IP Address Management Monitoring</a> provides the ability to see which IP addresses (Inner IP Pools and Shared DHCP Pools) are assigned to Microbranch APs
+								The <a href="monitoring-ipam.html">IP Address Management Monitoring</a> provides the ability to see which IP addresses (Inner IP Pools and Shared DHCP Pools) are assigned to Microbranch APs.
+								
 						
                             </div>
                             <div class="tim-row" id="experimental-row">
@@ -1056,11 +1169,99 @@ ip dns server-address priority 2 %dns2.ip%
 									Only radios that are up are listed in the actions. The 3rd radio in tri-radio APs is currently not supported due to lack of CLI commands being available.
 								</p>
                             </div>
+							<div class="tim-row" id="management-row">
+								<h2 class="text-center">Management Features</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-filter-organization text-warning" id="workflow_management_icon"></i>
+								</div>
+								<legend></legend>
+								<h2>Group Management</h2>
+								<p>
+									The <a href="deployment-group-mgmt.html">Group Management</a> page provides the following abilities:
+									<ul>
+										<li> Visualize the Group Properties</li>
+										<li> Clone a Group</li>
+										<li> Bulk configure Firmware Compliance per Group</li>
+											<ul>
+												<li> Currently, APs, AOS-Switch and Gateways are supported. AOS-CX support will come when APIs are available</li>
+												<li> Firmware compliance is intelligently configured for the selected groups that have the correct allowed devices on the Group. E.g. AP firmware compliance will not be set on a group that does not include APs</li>
+											</ul>
+										<li> Provides quick link to configure Country Codes for Groups</li>
+									</ul>
+								</p>
+								<p>&nbsp;</p>
+								<h2>Add Sites</h2>
+								<p>
+									The <strong>Add Sites</strong> provides the quickly add Sites, either manually or using a CSV upload. Sites can be added either using street addresses or Geo-coordinates
+								</p>
+							</div>
                             <div class="tim-row" id="changes-row">
                                 <h2 class="text-center">Change Log</h2>
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.16 (2022/09/09) - <i>"Statistically Speaking"</i></h4>
+									<ul>
+										<li> <a href="#monitoring-row">Access Point Statistics</a> have been added</li>
+										<li> UI tweaks to highlight which areas of Central are being displayed on a page</li>
+										<li> Device lists from overview tiles now support searching/filtering on device status (Up and Down)</li>
+										<li> Added support for setting RF Profiles for AOS10 APs in the <a href="#csv-row">CSV Workflows</a></li>
+									</ul>
+									<h4>Version 1.15.1 (2022/09/08)</h4>
+									<ul>
+										<li> Added support for custom hostname variable when renaming template group devices</li>
+										<li> Added restrictions to variables names to match allowed characters in Central</li>
+										<li> Fix for uploading variables (updating Hostnames, Experimental Switch config, etc)</li>
+									</ul>
+									<h4>Version 1.15 (2022/09/02) - <i>"Compliance"</i></h4>
+									<ul>
+										<li> <a href="#management-row">Group Management</a> support has been improved</li>
+										<ul>
+											<li> Consolidated Group Management features into new tile</li>
+											<li> Added Firmware Compliance Bulk configurations - Support for CX switches is coming soon...</li>
+										</ul>
+										<li> <a href="settings.html" target="_blank">Settings</a> are now saved on change. No need to remember to hit the "Save and Go to Dashboard button" after changing a setting</li>
+									</ul>
+									<h4>Version 1.14.3 (2022/08/22)</h4>
+									<ul>
+										<li> Site creation now supports using Latitude and Longitude instead of street addresses. Supported in both bulk site creation and single site creation</li>
+										<li> <a href="#csv-row">CSV Upload Workflows</a> now support enabling/disabling of 2.4GHz radios</li>
+									</ul>
+									<h4>Version 1.14.2 (2022/08/18)</h4>
+									<ul>
+										<li> Group listing in the overview tiles now displays the different Group Properties. An option has been added to the Settings page to exclude the Group Properties for speed and API call savings on accounts with lots of Groups</li>
+									</ul>
+									<h4>Version 1.14.1 (2022/08/04)</h4>
+									<ul>
+										<li> <a href="#gateway-row">Gateway Config</a> now includes buttons to view the current committed and effective configurations for the selected Group/Device</li>
+										<li> AP Troubleshooting - Added Uptime to AP Table</li>
+										<li> MPSK Local - Added fix to prevent duplicate MPSK key names</li>
+										<li> Auth Servers now refresh after adding new Auth Server</li>
+									</ul>
+									<h4>Version 1.14 (2022/07/21) - <i>"Like and Subscribe"</i></h4>
+									<ul>
+										<li> <a href="#license-row">Licensing Monitoring</a> support added for viewing and exporting subscription keys</li>
+									</ul>
+									<h4>Version 1.13 (2022/07/18) - <i>"Round the World"</i></h4>
+									<ul>
+										<li> <a href="#country-row">Country Code</a> config for APs</li>
+										<li> Easily enable or disable SSIDs in the <a href="#wlan-row">WLAN Deployment page</a></li>
+										<li> More WLAN config details in the <a href="#wlan-row">WLAN Deployment</a> table</li>
+										<li> MSP Inventory download now available in the <a href="#msp-row">MSP</a> page</li>
+										<li> MSP Inventory now obtains monitoring information from each tenant to provide more detailed information in the device tables</li>
+										<li> MSP Device API calls updated</li>
+										<li> Background updates no longer occur when the page isn't visible - saving API calls</li>
+									</ul>
+									<h4>Version 1.12.6 (2022/07/09)</h4>
+									<ul>
+										<li> Improved feedback when adding Devices using CSV Workflows</li>
+										<li> Any MAC Address format now supported in CSV workflows (No need to have the colon separated format)</li>
+									</ul>
+									<h4>Version 1.12.5 (2022/07/05)</h4>
+									<ul>
+										<li> Additional feedback in the event of a failing Central API has been added</li>
+										<li> Improved API Proxy reachability testing</li>
+									</ul>
 									<h4>Version 1.12.4 (2022/06/30)</h4>
 									<ul>
 										<li> QR Code customization added - Colour and Logo can be changed in <a href="settings.html" target="_blank">Settings</a></li>
