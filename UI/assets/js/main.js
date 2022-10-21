@@ -13,6 +13,7 @@ var centralURLs = [
 		'https://apigw-prod2.central.arubanetworks.com': 'https://app-prod2-ui.central.arubanetworks.com',
 		'https://apigw-uswest4.central.arubanetworks.com': 'https://app-uswest4.central.arubanetworks.com',
 		'https://apigw-ca.central.arubanetworks.com': 'app-ca.central.arubanetworks.com',
+		'https://apigw.central.arubanetworks.com.cn': 'app.central.arubanetworks.com.cn',
 		'https://apigw-apaceast.central.arubanetworks.com': 'https://app-apaceast.central.arubanetworks.com',
 		'https://eu-apigw.central.arubanetworks.com': 'https://app2-eu.central.arubanetworks.com',
 		'https://apigw-eucentral2.central.arubanetworks.com': 'https://app-eucentral2.central.arubanetworks.com',
@@ -38,6 +39,7 @@ var centralClusters = [
 		'EU-2': 'https://apigw-eucentral2.central.arubanetworks.com',
 		'EU-3': 'https://apigw-eucentral3.central.arubanetworks.com',
 		'Canada-1': 'https://apigw-ca.central.arubanetworks.com',
+		'CN-North': 'https://apigw.central.arubanetworks.com.cn',
 		//'Central On-Prem': 'COP',
 	},
 ];
@@ -55,6 +57,7 @@ var clusterNames = [
 		'https://apigw-eucentral2.central.arubanetworks.com': 'EU-2',
 		'https://apigw-eucentral3.central.arubanetworks.com': 'EU-3',
 		'https://apigw-ca.central.arubanetworks.com': 'Canada-1',
+		'https://apigw.central.arubanetworks.com.cn': 'CN-North',
 		//COP: 'Central On-Prem',
 	},
 ];
