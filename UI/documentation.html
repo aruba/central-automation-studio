@@ -105,7 +105,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.16.1</h1>
+                    <h1>Central Automation Studio v1.18.2</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -126,6 +126,10 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#navigation-row">Navigation</a>
                                     </li>
+									<li>&nbsp;</li>
+									<li>
+										<a href="#settings-row">Settings</a>
+									</li>
 									<li>&nbsp;</li>
                                     <li>
                                         <a href="#hydra-row">Hydra</a>
@@ -222,7 +226,7 @@ The above copyright notice and this permission notice shall be included in all c
 									In order for you to use this WebUI, you will need to obtain some API information from your Aruba Central account.
 								</p>
 								<p>
-									Follow the steps in the <a href="https://help.central.arubanetworks.com/latest/documentation/online_help/content/nms/api/creating-app.htm" target="_blank">Aruba Central documentation</a> on creating an API application and token using the "Offline Token Mechanism". </br><i>Note: If your Central account is on a Aruba Central Cluster that has been upgraded to version 2.5.5 (and using GLCP) the API token creation page has moved from the Account home to inside the Aruba Central app: Global > Organization > Platform Integration > Rest API</i>
+									Follow the steps in the <a href="https://www.arubanetworks.com/techdocs/central/latest/content/nms/api/creating-app.htm" target="_blank">Aruba Central documentation</a> on creating an API application and token using the "Offline Token Mechanism".
 								</p>
 								<p>
 									Obtain the <i>Customer ID</i> from the Account menu in the top right of the Central UI. The Customer ID is required by some APIs (e.g. ClientMatch).
@@ -267,9 +271,37 @@ The above copyright notice and this permission notice shall be included in all c
 								</p>
 								
 							</div>
+							<div class="tim-row" id="settings-row">
+								<h2 class="text-center">Settings</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="nc-icon nc-settings-gear-64 text-warning" id="settings_icon"></i>
+								</div>
+								<p>
+									The <a href="settings.html">Settings</a> page allows for control over this site. Central accounts are added in the Settings page using the information gathered in the <a href="#overview-row">Overview</a> section. Multiple accounts are supported.</br>	
+									The additional settings below the account table allow for customisation of the Central Automation Studio experience:
+									<ul>
+										<li> Naming Conventions</li>
+										<ul>
+											<li> <strong>Auto Device Naming Format</strong> - Format used when using "auto" device renaming</li>
+											<li> <strong>Template Hostname Variable</strong> - The variable used in templates to configure device hostnames</li>
+											<li> <strong>Switch Port Variable</strong> - The variable used to describe switch ports in templates when renaming switch ports</li>
+										</ul>
+										<li> Global Settings</li>
+										<ul>
+											<li> <strong>Refresh Interval (minutes)</strong> - How often Central Automation Studio will refresh data when left open</li>
+											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? ("Do Not Include" improves performance at the loss of client information/statistics)</li>
+											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? ("Do Not Include" improves performance of large numbers of groups)</li>
+											<li> <strong>AirMatch - All RF Events</strong> - Are "All" RF events downloaded for AirMatch? ("Do Not Include" improves performance on large networks with lots of RF events - channel changes, radar, noise)</li>
+											<li> <strong>QR Code Colour</strong> - Colour used when generating QR codes</li>
+											<li> <strong>QR Code Logo</strong> - URL for a custom logo when generating QR codes</li>
+										</ul>
+									</ul>
+								</p>
+								
+							</div>
 							<div class="tim-row" id="hydra-row">	
 								<h2 class="text-center">Hydra</h2>
-								 <div class="icon-massive text-center icon-warning">
+								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-api text-warning" id="hydra_icon"></i>
 								</div>
 								<p>
@@ -304,7 +336,9 @@ The above copyright notice and this permission notice shall be included in all c
 							</div>
 							<div class="tim-row" id="dashboard-row">
 								<h2 class="text-center">Dashboard</h2>
-								<legend></legend>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-dashboard text-warning" id="dashboard_icon"></i>
+								</div>
 								<p>
 									The dashboard page is the launching page to the different modules as well as providing overview information into the information available in Aruba Central. The top section of the page displays the following pieces of information:
 									<div class="img-container">
@@ -344,6 +378,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Authentication Server Deployment</li>
 										<li> Switch Deployment</li>
 										<li> Gateways</li>
+										<li> Country Codes</li>
 									</ul>
 									<h2>Central Services</h2>
 									Tiles to launch the different Central Services modules supported by Central Automation Studio:
@@ -356,6 +391,7 @@ The above copyright notice and this permission notice shall be included in all c
 									Tiles to launch the different Central Services modules supported by Central Automation Studio:
 									<ul>
 										<li> Client Statistics</li>
+										<li> AP Statistics</li>
 										<li> AP Rebooting</li>
 										<li> IPAM Monitoring</li>
 									</ul>
@@ -394,15 +430,25 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> GROUP</li>
 										<li> SITE</li>
 										<li> ZONE</li>
-										<li> RF PROFILE (AOS10 only)</li>
+										<li> RF PROFILE</li>
+										<li> RADIO 0 MODE</li>
+										<li> RADIO 1 MODE</li>
+										<li> RADIO 2 MODE</li>
+										<li> DUAL 5GHZ MODE</li>
+										<li> SPLIT 5GHZ MODE</li>
 									</ul>
-									If the DEVICE NAME not be included, the device renaming workflows will skip that device during the processing.</br>
-									If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway).</br>
-									If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV.</br>
-									If the SITE is missing, the device will be skipped when assigning devices to a Site. </br>
-									If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone to an Access Point. </br>
-									If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point. </br>
-									Skipped devices will be listed in the Log for the task/automation.</br></br>
+									Behaviour Notes:
+									<ul>
+									<li>If the DEVICE NAME is not included, the device renaming workflows will skip that device during the processing</li>
+									<li>If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway)</li>
+									<li>If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV</li>
+									<li>If the SITE is missing, the device will be skipped when assigning devices to a Site</li>
+									<li>If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone to an Access Point</li>
+									<li>If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
+									<li>If any of the RADIO 0/1/2 MODE values are missing or is equal to "-", the device will be skipped when assigning a radio mode for that particular radio to an Access Point. RADIO 2 MODE is only applied to supported AP Models (AP-555, AP-635, AP-655)</li>
+									<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
+									<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
+									<li>Skipped devices will be listed in the Log for the task/automation.</li></br>
 									Let's look at the tasks and automations one by one:
                                 </p>
                                 <h2>Individual Tasks</h2>
@@ -489,6 +535,29 @@ The above copyright notice and this permission notice shall be included in all c
 									If the RF PROFILE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the RF Profile set.
 									If the RF Profile name supplied in the CSV is not configured in the Group for which the AP is configured, the "default" RF Profile is assigned.
 								</p>
+								<h4>Set Radio Mode</h4>
+								<p>
+									Uses the SERIAL, RADIO MODE columns (RADIO 0 MODE, RADIO 1 MODE, RADIO 2 MODE) and DUAL 5GHZ MODE in the CSV file to set the mode on the corresponding radio on Access Points in Aruba Central.</br>
+									If the RADIO MODE is missing, or is equal to "-" for a radio on an AP (or all APs) in the CSV, the AP will not have the mode set for that particular radio.</br>
+									The supported values for each of the RADIO MODES are (the values are not case sensitive): 
+									<ul>
+										<li>Access</li>
+										<li>Monitor</li>
+										<li>Spectrum</li>
+										<li>Off - disables the radio for the AP</li>
+									</ul>
+									The supported values for the DUAL 5GHZ MODE are (the values are not case sensitive): 
+									<ul>
+										<li>Automatic</li>
+										<li>Enabled</li>
+										<li>Disabled</li>
+									</ul>
+									The supported values for the SPLIT 5GHZ MODE are (the values are not case sensitive): 
+									<ul>
+										<li>Enabled</li>
+										<li>Disabled</li>
+									</ul>
+								</p>
 								<h4>Enable 2.4GHz radios</h4>
 								<p>
 									Uses the SERIAL column in the CSV file to enable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
@@ -526,6 +595,10 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
 								<p>
 									For AOS-S Switches in UI Group, port renaming is now available as well. UI Groups use APIs to modify the switchport names - not variables. As such the "switchport name variable" is not used for UI Groups.
+								</p>
+								<h4>Reboot Devices</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to trigger a device reboot.
 								</p>
                                 <h2>Automated Tasks</h2>
                                 <p>
@@ -575,6 +648,18 @@ The above copyright notice and this permission notice shall be included in all c
 								<p>
 									For AOS-S Switches in UI Group, port renaming is now available as well. UI Groups use APIs to modify the switchport names - not variables. As such the "switchport name variable" is not used for UI Groups.
                                 </p>
+								<h4>Update AP Country Codes</h4>
+								<p>
+									This task configures the Virtual Controller(s) Country Code to match that of the selected Site address - ensuring that each site uses the correct Tx Power limits and Channels.
+								</p>
+								<h4>Enable Split-5GHz Mode (AP-555)</h4>
+								<p>
+									This task configures each AP-555 on the site to be enabled for <a href='https://www.arubanetworks.com/techdocs/central/latest/content/nms/access-points/mrt/ap-tri_radio.htm?Highlight=Split%205GHz%20Mode' target='_blank'>Tri-Radio Mode</a>.
+								</p>
+								<h4>Enable Dual-5GHz Mode (AP-340 Series)</h4>
+								<p>
+									This task configures each AP-340 Series AP on the site to be enabled for <a href='https://www.arubanetworks.com/techdocs/central/latest/content/aos10x/monitoring/dual-5g.htm?Highlight=dual%205ghz' target='_blank'>Dual 5GHz Mode</a>.
+								</p>
                                 <h2>Automated Tasks</h2>
                                 <p>
                                 	The automated tasks are the individual tasks linked together. Refer to the descriptions above for each individual task.
@@ -927,6 +1012,14 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Static Radios</li>
 									</ul>
 								</p>
+								<p> Run Now Modes:
+									<ul>
+										<li> On-Demand - Full AirMatch solution generation</li>
+										<li> Incremental - Runs for all the APs for the tenant but it freezes solution for the APs which already have solution generated</li>
+										<li> EIRP Only - Just update the EIRP, don't change the channels</li>
+										<li> Opmode Update - Full + opmode update</li>
+										<li> New APs Only - Runs only for APs without solution generated</li>
+									</ul>
 								<p>
 									<div class="img-container">
 										<img src="assets/img/static.png" alt="Static Radios">
@@ -954,6 +1047,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> The state of ClientMatch can be controlled by clicking on the state buttons</li>
 										<li> Unsteerable Clients - with the ability to remove the client from the unsteerable list</li>
 										<li> Recent ClientMatch events</li>
+										<li> ClientMatch Statistics Graphs</li>
 									</ul>
 								</p>
 								<p>
@@ -962,6 +1056,13 @@ The above copyright notice and this permission notice shall be included in all c
 										<p>Unsteerable Clients</p>
 									</div>
 									The Unsteerable Clients table supports "Make Steerable" by using the action button in the right of the table. 
+								</p>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/cm-graphs.png" alt="ClientMatch Statistics">
+										<p>ClientMatch Statistics Graphs</p>
+									</div>
+									The ClientMatch Statistics Graphs display various statistical information about the recent Steering attempts made by ClientMatch
 								</p>
 								<p> The ClientMatch service control requires the Central Customer ID for your account to be entered in <a href="settings.html">Settings</a>. The Central Customer ID can be found in the account menu in the top right of Central.
 									<div class="img-container">
@@ -1057,6 +1158,7 @@ The above copyright notice and this permission notice shall be included in all c
 									<img src="assets/img/APStats1.png" alt="AP Stats">
 									<p>AP Statistics</p>
 								</div>
+								The Global list of BSSIDs is also available for viewing, filtering and downloading as a CSV.
 								
 								<h2>AP Reboot</h2>
 								The <a href="monitoring-reboot.html">AP Reboot</a> page is also accessible from the bottom of the  Access Points table. The following is supported:
@@ -1168,6 +1270,25 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul> 
 									Only radios that are up are listed in the actions. The 3rd radio in tri-radio APs is currently not supported due to lack of CLI commands being available.
 								</p>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-aaa.png" alt="AP Troubleshooting AAA">
+									<p>AP Troubleshooting AAA Details</p>
+								</div>
+								<p>&nbsp;</p>
+								<h2>Bulk AP Configuration</h2>
+								<div class="img-container">
+									<img src="assets/img/bulk-ap-antenna.png" alt="Bulk AP Config">
+									<p>Bulk Antenna Configuration</p>
+								</div>
+								<p>
+									The <a href="deployment-bulk-ap.html">Bulk AP Configuration</a> page provides the ability to easily configure multiple APs at a time. The following configuration items are configurable:
+									<ul>
+										<li>RF Profile <button class="btn btn-round btn-sm btn-outline btn-default">for AOS10 APs</button></li>
+										<li>Antenna Gain</li>
+									</ul>
+									Simply select a group, provide any additional filtering to reduce the group to only the APs you want to configure. Then configure all the APs in the list at the same time.<br />
+									Antenna configuration provides a simple list of Aruba antennas (that will auto fill the correct antenna gains), and also allows for custom antenna gains for 3rd party antenna support.
+								</p>
                             </div>
 							<div class="tim-row" id="management-row">
 								<h2 class="text-center">Management Features</h2>
@@ -1200,9 +1321,66 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
-									<h4>Version 1.16.1 (2022/10/21)</h4>
+									<h4>Version 1.18.2 (2022/10/23)</h4>
 									<ul>
+										<li> Improved support for CSV files with empty lines</li>
+										<li> Improved feedback on long running tasks (Progress bars now in the notifications)</li>
+										<li> Protection against code failure when caching large amounts of information (Clients, APs, Switches, Gateways, etc)</li>
+									</ul>
+									<h4>Version 1.18.1 (2022/10/21)</h4>
+									<ul>
+										<li> Add Device Reboot to the CSV Workflows</li>
 										<li> Added support for the CN-North Central Cluster</li>
+									</ul>
+									<h4>Version 1.18 (2022/10/18) - <i>"Trouble Brewing"</i></h4>
+									<ul>
+										<li> <a href="#experimental-row">Bulk AP Config</a> page added (under the Experimental Section until it is feature complete)</li>
+										<li> AAA Troubleshooting tool added to the <a href="#experimental-row">AP Troubleshooting</a> page</li>
+										<li> Global BSSID Table now available on the <a href="#monitoring-row">AP Statistics</a> page (Replacing the "APs Processed" card)</li>
+										<li> Daily API Count and Usage now displayed as a tooltip on the Central Automation Studio header on each page (updated after each GET command is called)</li>
+										<li> Additional support for Central 2.5.6</li>
+										<ul>
+											<li> Support for AirMatch "Performance" run now option (shown as "New APs Only")</li>
+										</ul>
+									</ul>
+									<h4>Version 1.17.2 (2022/10/05)</h4>
+									<ul>
+										<li> AP Statistics Uptime table no longer lists down APs</li>
+									</ul>
+									<h4>Version 1.17.1 (2022/09/29)</h4>
+									<ul>
+										<li> Improved Inventory API limits (now back to 1000 devices per call) - this API response time is still slow though</li>
+										<li> Improvements to "Unlicense Devices" to protect against supplied serial numbers missing from the inventory</li>
+									</ul>
+									<h4>Version 1.17 (2022/09/28) - <i>"Spectrum Access"</i></h4>
+									<ul>
+										<li> <a href="#clientmatch-row">ClientMatch</a> Improvements</li>
+										<ul>
+											<li> Added RSSI for the From, To and Destination APs</li>
+											<li> Added Radio MAC and Band of the APs to the From, To and Destination APs columns as a tooltip</li>
+											<li> Added 11v result to the tooltip for the ClientMatch result column</li>
+											<li> Statistics Graphs for recent ClientMatch steers</li>
+										</ul>
+										<li> New <a href="#csv-row">CSV workflows</a></li>
+										<ul>
+											<li> Support for Radio Modes bulk config (Access, Monitor, Spectrum) using RADIO 0 MODE, RADIO 1 MODE, RADIO 2 MODE columns in the CSV</li>
+											<li> Support for Dual 5GHz Mode bulk config (Automatic, Enabled, Disabled) as part of the Radio Modes workflow for the AP-340 Series</li>
+											<li> Support for Tri-Radio (Split 5GHz) Mode bulk config (Enabled, Disabled) as part of the Radio Modes workflow for the AP-555</li>
+											<li> New Automated workflow combining AP Hostname and Radio Modes: Rename APs + Update Radio Modes</li>
+										</ul>
+										<li> New <a href="#site-row">Site workflows</a></li>
+										<ul>
+											<li> Support for Dual 5GHz Mode bulk config for all AP340 Series APs that are part of the selected site</li>
+											<li> Support for Tri-Radio (Split 5GHz) Mode bulk config for AP-555 that are part of the selected site</li>
+										</ul>
+										<li> Improved support for 6GHz APs and Clients (AirMatch, ClientMatch, AP Statistics)</li>
+										<li> Added the ability to see the list of the APs with issues on the AP Statistics page (Clickable tiles)</li>
+										<li> Added setting for not including "All" AirMatch RF Events. This is due to UI performance when there is a large amount of events on the network over time. If the AirMatch page is freezing/stalling then set this to "Do Not Include"</li>
+										<li> Updated Documentation and Icons</li>
+									</ul>
+									<h4>Version 1.16.1 (2022/09/24)</h4>
+									<ul>
+										<li> ClientMatch Steering History fix to display entries</li>
 									</ul>
 									<h4>Version 1.16 (2022/09/09) - <i>"Statistically Speaking"</i></h4>
 									<ul>
