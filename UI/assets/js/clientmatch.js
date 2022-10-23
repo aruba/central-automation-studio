@@ -1,10 +1,14 @@
 /*
 Central Automation v1.8.0
-Updated: 1.8.2
+Updated: 1.17
 Aaron Scott (WiFi Downunder) 2022
 */
 
 var clientList = [];
+var graphDataType = {};
+var graphDataMode = {};
+var graphDataStatus = {};
+var graphDataClients = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
@@ -59,6 +63,7 @@ function updateClientMatchData() {
 			getLoadBalanceStatus();
 			getUnsteerableClients();
 			getSteerHistory();
+			$('[data-toggle="tooltip"]').tooltip();
 		});
 	}
 }
@@ -69,7 +74,7 @@ function updateClientMatchData() {
 function getClientMatchStatus() {
 	showNotification('ca-crossroad', 'Getting ClientMatch status...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -81,13 +86,21 @@ function getClientMatchStatus() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/cm-enabled/v1/)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/cm-enabled/v1/<CENTRAL-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log("CM Status: "+ JSON.stringify(response));
 		if (response.status === 'Success') {
 			if (response.result.includes('Client Match enabled')) {
@@ -160,7 +173,7 @@ function toggleCMState() {
 function getLoadBalanceStatus() {
 	showNotification('ca-scale', 'Getting ClientMatch Load Balance status...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -172,14 +185,21 @@ function getLoadBalanceStatus() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log("Load Balance Status: "+ JSON.stringify(response));
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/loadbal-enable/v1)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/loadbal-enable/v1/<CENTRAL-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.status === 'Success') {
 			if (response.result.includes('Client Match Load Balance enabled')) {
 				$(document.getElementById('loadbalBtn')).addClass('btn-success');
@@ -260,7 +280,7 @@ function getUnsteerableClients() {
 		.draw();
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -272,13 +292,20 @@ function getUnsteerableClients() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/unsteerable/v1)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/unsteerable/v1/<CENTRAL-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		//console.log("Unsteerable Clients: "+ JSON.stringify(response.result.UnsteerableEntries))
 		if (response.result.UnsteerableEntries !== 'Not found') {
 			$.each(response.result.UnsteerableEntries, function() {
@@ -401,6 +428,7 @@ function steerClient(macaddr) {
 function getSteerHistory() {
 	showNotification('ca-m-search', 'Getting Steering History...', 'bottom', 'center', 'info');
 
+	graphDataStatus = {};
 	$('#history-table')
 		.DataTable()
 		.clear();
@@ -410,7 +438,7 @@ function getSteerHistory() {
 		.draw();
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -422,14 +450,21 @@ function getSteerHistory() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log("History: "+ JSON.stringify(response))
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/history/v1)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/history/v1/<CENTRAL-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.result.SteerHistory !== 'Not found') {
 			$.each(response.result.SteerHistory, function() {
 				if (!this.hasOwnProperty('TimeNow')) {
@@ -438,46 +473,98 @@ function getSteerHistory() {
 					var m = moment(Object.keys(this)[0], 'YYYY-MM-DD hh:mm:ss.SSS Z');
 
 					//Event string
-					var result = this[Object.keys(this)[0]].split(', ');
+
 					var client_name;
+					var client_type = 'Unknown';
 					var macaddr = '';
 					var type = '';
 					var mode = '';
 					var status = '';
+					var statusResult = '';
 					var fromRadio = '';
 					var fromAP;
 					var toRadio = '';
 					var toAP;
+					var destRadio = '';
+					var destAP = '';
 					var roamTime = '';
 
-					$.each(result, function() {
-						if (this.includes('Mac=')) {
-							macaddr = this.replace('Mac=', '');
-							macaddr = macaddr.replace(/(..)/g, '$1:').slice(0, -1);
-							client_name = macaddr;
-							$.each(clientList, function() {
-								if (this['macaddr'] === macaddr) {
-									if (this['name']) client_name = this['name'];
-								}
-							});
-						} else if (this.includes('Type=')) {
-							type = titleCase(this.replace('Type=', ''));
-							type = type.replace('Band_steer', 'Band Steer');
-						} else if (this.includes('Mode=')) {
-							mode = titleCase(this.replace('Mode=', ''));
-						} else if (this.includes('Status=')) {
-							status = titleCase(this.replace('Status=', ''));
-						} else if (this.includes('FromRadio=(')) {
-							fromRadio = titleCase(this.replace('FromRadio=(', ''));
-							fromAP = findAPForRadio(fromRadio.replace(/(..)/g, '$1:').slice(0, -1));
-						} else if (this.includes('ToRadio=(')) {
-							toRadio = titleCase(this.replace('ToRadio=(', ''));
-							toAP = findAPForRadio(toRadio.replace(/(..)/g, '$1:').slice(0, -1));
-						} else if (this.includes('RoamTime=')) {
-							roamTime = this.replace('RoamTime=', '');
-							roamTime = roamTime.replace('s', '');
+					var steerString = this[Object.keys(this)[0]].toString();
+					//console.log(steerString);
+					macaddr = steerString.match(/Mac=(.+?),/)[1];
+					client_name = macaddr;
+					$.each(clientList, function() {
+						var cleanMac = this['macaddr'].replace(/:/g, '');
+						if (cleanMac === macaddr) {
+							if (this['name']) client_name = this['name'];
+							if (this['os_type']) client_type = this['os_type'];
 						}
 					});
+
+					type = titleCase(steerString.match(/Type=(.+?),/)[1]);
+					type = type.replace('Band_steer', 'Band Steer');
+					mode = titleCase(steerString.match(/Mode=(.+?),/)[1]);
+
+					status = titleCase(steerString.match(/Status=(.+?),/)[1]);
+					statusResult = titleCase(steerString.match(/11vResult=(.+?),/)[1]);
+					var statusString = status;
+					if (mode === '11v') var statusString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="11v Result: ' + statusResult + '">' + status + '</span>';
+
+					// Update Graph data...
+					if (!graphDataStatus.hasOwnProperty(status)) graphDataStatus[status] = 1;
+					else graphDataStatus[status] = graphDataStatus[status] + 1;
+
+					if (!graphDataType.hasOwnProperty(type)) graphDataType[type] = 1;
+					else graphDataType[type] = graphDataType[type] + 1;
+
+					if (!graphDataMode.hasOwnProperty(mode)) graphDataMode[mode] = 1;
+					else graphDataMode[mode] = graphDataMode[mode] + 1;
+
+					if (!graphDataClients.hasOwnProperty(client_type)) graphDataClients[client_type] = 1;
+					else graphDataClients[client_type] = graphDataClients[client_type] + 1;
+
+					var fromRadio = steerString.match(/FromRadio=\((.+?)\)/)[1].split(', ');
+					var fromRadioClean = fromRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					fromAP = findAPForRadio(fromRadioClean);
+					var fromBand = '';
+					for (var i = 0, len = fromAP.radios.length; i < len; i++) {
+						if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
+							if (fromAP.radios[i].band == 3) fromBand = '6GHz';
+							else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
+							else fromBand = '5GHz';
+						}
+					}
+					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '">' + fromAP.name + ' (-' + fromRadio[1] + 'dBm)' + '</span>';
+
+					var toRadio = steerString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
+					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					toAP = findAPForRadio(toRadioClean);
+					var toBand = '';
+					for (var i = 0, len = toAP.radios.length; i < len; i++) {
+						if (toAP.radios[i]['macaddr'] === toRadioClean) {
+							if (toAP.radios[i].band == 3) toBand = '6GHz';
+							else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
+							else toBand = '5GHz';
+						}
+					}
+					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '">' + toAP.name + ' (-' + toRadio[1] + 'dBm)' + '</span>';
+
+					var destRadio = steerString.match(/DstRadio=\((.+?)\)/)[1].split(', ');
+					var destRadioClean = destRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					destAP = findAPForRadio(destRadioClean);
+					destStatus = titleCase(steerString.match(/DstAcceptable=(.+?),/)[1]);
+					var destBand = '';
+					for (var i = 0, len = destAP.radios.length; i < len; i++) {
+						if (destAP.radios[i]['macaddr'] === destRadioClean) {
+							if (destAP.radios[i].band == 3) destBand = '6GHz';
+							else if (destAP.radios[i].band == 0) destBand = '2.4GHz';
+							else destBand = '5GHz';
+						}
+					}
+					var destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + destAP.name + ' (-' + destRadio[1] + 'dBm)' + '</span>';
+
+					roamTime = steerString.match(/RoamTime=(.*)/)[1];
+					roamTime = roamTime.replace('s', '');
 
 					// Make link to Central
 					client_name_url = encodeURI(client_name);
@@ -486,10 +573,11 @@ function getSteerHistory() {
 
 					// Add row to table
 					var table = $('#history-table').DataTable();
-					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, status, fromAP.name, toAP.name, roamTime]);
+					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime]);
 				}
 			});
 		}
+		updateGraphs();
 		$('#history-table')
 			.DataTable()
 			.rows()
@@ -497,4 +585,88 @@ function getSteerHistory() {
 		$('[data-toggle="tooltip"]').tooltip();
 		showNotification('ca-m-search', 'Retrieved History', 'bottom', 'center', 'success');
 	});
+}
+
+function updateGraphs() {
+	// CM Type Graph
+	var cmType = Object.keys(graphDataType).map(function(key) {
+		return { meta: key, value: graphDataType[key] };
+	});
+
+	Chartist.Bar(
+		'#chartCMType',
+		{
+			labels: Object.keys(graphDataType),
+			series: cmType,
+		},
+		{
+			distributeSeries: true,
+			plugins: [Chartist.plugins.tooltip()],
+		}
+	);
+
+	// CM Mode Graph
+	var cmMode = Object.keys(graphDataMode).map(function(key) {
+		return { meta: key, value: graphDataMode[key] };
+	});
+
+	Chartist.Bar(
+		'#chartCMMode',
+		{
+			labels: Object.keys(graphDataMode),
+			series: cmMode,
+		},
+		{
+			distributeSeries: true,
+			plugins: [Chartist.plugins.tooltip()],
+		}
+	);
+
+	// CM Status Graph
+	var cmStatus = Object.keys(graphDataStatus).map(function(key) {
+		return { meta: key, value: graphDataStatus[key] };
+	});
+
+	Chartist.Bar(
+		'#chartCMStatus',
+		{
+			labels: Object.keys(graphDataStatus),
+			series: cmStatus,
+		},
+		{
+			distributeSeries: true,
+			plugins: [Chartist.plugins.tooltip()],
+		}
+	);
+
+	// CM Clients Graph
+	var cmClients = Object.keys(graphDataClients).map(function(key) {
+		return { meta: key, value: graphDataClients[key] };
+	});
+	// Sort based on count
+	cmClients.sort(function(a, b) {
+		return b['value'] - a['value'];
+	});
+	// Keep on the top 5
+	cmClients = cmClients.slice(0, 5);
+	//Build the labels to match the top 5
+	labels = [];
+	$.each(cmClients, function() {
+		labels.push(this.meta);
+	});
+
+	Chartist.Bar(
+		'#chartCMClients',
+		{
+			labels: labels,
+			series: cmClients,
+		},
+		{
+			distributeSeries: true,
+			plugins: [Chartist.plugins.tooltip()],
+		}
+	);
+
+	// Show the graphs section
+	document.getElementById('cmGraphs').hidden = false;
 }

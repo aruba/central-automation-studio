@@ -155,7 +155,7 @@ function getGroupConfig() {
 
 			// Grab config for Group in Central
 			var settings = {
-				url: getAPIURL() + '/tools/getCommand',
+				url: getAPIURL() + '/tools/getCommandwHeaders',
 				method: 'POST',
 				timeout: 0,
 				headers: {
@@ -167,13 +167,21 @@ function getGroupConfig() {
 				}),
 			};
 
-			$.ajax(settings).done(function(response) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli)');
-						return;
-					}
+			$.ajax(settings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
 				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
 				showNotification('ca-folder-settings', 'Retrieved ' + currentGroup + ' WLAN Configs... Processing...', 'bottom', 'center', 'info');
 				// save the group config for modifications
 				groupConfigs[currentGroup] = response;
@@ -187,6 +195,7 @@ function getGroupConfig() {
 			});
 		});
 	}
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function getWLANsFromConfig(config, group) {

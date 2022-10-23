@@ -1,6 +1,6 @@
 /*
 Central Automation v1.6.0
-Updated: 1.11.1
+Updated: 1.17
 Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -18,8 +18,14 @@ function saveGlobalSettings() {
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
 	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').value === 'Include' ? true : false);
+	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').value === 'Include' ? true : false);
 	localStorage.setItem('qr_color', $('#color_picker').val());
 	localStorage.setItem('qr_logo', $('#qr_logo').val());
+	// remove existing client data
+	if (document.getElementById('load_clients').value === 'Do Not Include') {
+		localStorage.setItem('monitoring_wirelessClients', JSON.stringify([]));
+		localStorage.setItem('monitoring_wiredClients', JSON.stringify([]));
+	}
 	logInformation('Central Automation Studio settings saved');
 }
 
@@ -120,7 +126,7 @@ function tokenRefreshForAccount(clientID) {
 	};
 
 	return $.ajax(settings)
-		.done(function(response) {
+		.done(function(response, textStatus, jqXHR) {
 			//console.log(response);
 			if (response.hasOwnProperty('status')) {
 				if (response.status === '503') {
@@ -171,7 +177,7 @@ function tokenRefreshForAccount(clientID) {
 
 function getDashboardData() {
 	// Try and refresh the token
-	showNotification('ca-contactless-card', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'info');
+	showNotification('ca-api', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'info');
 
 	// Refresh card data
 	var account_details = localStorage.getItem('account_details');
@@ -201,7 +207,7 @@ function getDashboardData() {
 				}),
 			};
 
-			$.ajax(settings).done(function(response) {
+			$.ajax(settings).done(function(response, textStatus, jqXHR) {
 				if (response.hasOwnProperty('status')) {
 					if (response.status === '503') {
 						logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
@@ -487,7 +493,7 @@ function getWirelessClientOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsConnected).done(function(response) {
+	$.ajax(settingsConnected).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -517,7 +523,7 @@ function getWirelessClientOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsNotConnected).done(function(response) {
+	$.ajax(settingsNotConnected).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -549,7 +555,7 @@ function getWiredClientOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsConnected).done(function(response) {
+	$.ajax(settingsConnected).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 		} else {
@@ -573,7 +579,7 @@ function getWiredClientOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsNotConnected).done(function(response) {
+	$.ajax(settingsNotConnected).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -605,7 +611,7 @@ function getWiredClientDataForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -641,7 +647,7 @@ function getAPOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsUp).done(function(response) {
+	$.ajax(settingsUp).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -677,7 +683,7 @@ function getAPOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsDown).done(function(response) {
+	$.ajax(settingsDown).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -715,7 +721,7 @@ function getSwitchOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsUp).done(function(response) {
+	$.ajax(settingsUp).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -751,7 +757,7 @@ function getSwitchOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsDown).done(function(response) {
+	$.ajax(settingsDown).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -789,7 +795,7 @@ function getGatewayOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsUp).done(function(response) {
+	$.ajax(settingsUp).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -825,7 +831,7 @@ function getGatewayOverviewForAccount(clientID) {
 		}),
 	};
 
-	$.ajax(settingsDown).done(function(response) {
+	$.ajax(settingsDown).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
@@ -970,7 +976,7 @@ function getSiteDataForAccount(clientID, offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {

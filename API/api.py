@@ -55,6 +55,29 @@ def tokenRefresh():
 		result = jsonify(status=str(response.status_code), reason=response.reason);
 	return result;
 
+@app.route('/auth/refreshwHeaders', methods = ["POST"])
+def tokenRefreshwHeaders():
+	data = request.get_json()
+	url = data['base_url'] + "/oauth2/token"
+	payload = json.dumps({
+	  "client_id": data['client_id'],
+	  "client_secret": data['client_secret'],
+	  "grant_type": "refresh_token",
+	  "refresh_token": data['refresh_token']
+	})
+	headers = {
+	  'Authorization': 'Bearer ' + data['access_token'],
+	  'Content-Type': 'application/json'
+	}
+	response = requests.request("POST", url, headers=headers, data=payload)
+	
+	headers_json = json.dumps(dict(response.headers))
+	try:
+		result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json);
+	except ValueError:
+		# no JSON returned
+		result = jsonify(status=str(response.status_code), reason=response.reason);
+	return result;
 
 
 @app.route('/tools/getCommand', methods = ["POST"])
@@ -83,7 +106,36 @@ def getCommand():
 		# ...
 	except ValueError:
 		# no JSON returned
-		result = jsonify(status=str(response.status_code), reason=response.reason, resultBody=str(response.text));
+		result = jsonify(status=str(response.status_code), reason=response.reason, responseBody=str(response.text));
+	return result;
+
+
+@app.route('/tools/getCommandwHeaders', methods = ["POST"])
+def getCommandwHeaders():
+	data = request.get_json();
+	url = data['url'];
+	if 'tenantID' in data:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json',
+		  'TenantID': data['tenantID']
+		};
+	else:
+		headers = { 
+		  'cache-control': "no-cache",
+		  'Authorization': 'Bearer ' + data['access_token'],
+		  'Content-Type': 'application/json'
+		};
+	
+	response = requests.request("GET", url, headers=headers);
+	headers_json = json.dumps(dict(response.headers))
+	try:
+		result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json);
+		# ...
+	except ValueError:
+		# no JSON returned
+		result = jsonify(responseBody=str(response.text), status=str(response.status_code), reason=response.reason);
 	return result;
 	
 	
@@ -306,6 +358,7 @@ def deleteCommand():
 		result = jsonify(status=str(response.status_code), reason=response.reason), response.status_code;
 	return result;
 
+		
 
 
 @app.route("/")
@@ -318,7 +371,6 @@ def hello():
 def reachable():
     return flask.request.url_root;
 
-    
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

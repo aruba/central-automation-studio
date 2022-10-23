@@ -13,6 +13,7 @@ var highCPUCount = 0;
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageAP() {
 	checkDevices();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function checkDevices() {
@@ -120,7 +121,11 @@ function checkDevices() {
 		}
 	}
 
-	localStorage.setItem('rebooted_aps', JSON.stringify(deviceInfo));
+	try {
+		localStorage.setItem('rebooted_aps', JSON.stringify(deviceInfo));
+	} catch (e) {
+		console.log('Browser Storage Full. Not able to cache rebooted AP information');
+	}
 }
 function loadDeviceInfo() {
 	deviceInfo = JSON.parse(localStorage.getItem('rebooted_aps'));

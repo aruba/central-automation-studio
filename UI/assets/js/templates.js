@@ -37,6 +37,7 @@ var groupsLoaded = false;
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageSwitch() {
 	getSwitchStacks();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -81,7 +82,7 @@ function updateData() {
 
 function getStacks(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -93,26 +94,25 @@ function getStacks(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switch_stacks)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-		if (response.hasOwnProperty('message')) {
-			if (response.message === 'API rate limit exceeded')
-				Swal.fire({
-					title: 'API Limit',
-					text: 'Daily API limit reached',
-					icon: 'error',
-				});
-		} else {
-			stacks = stacks.concat(response.stacks);
-			if (offset + apiLimit <= response.total) getStacks(offset + apiLimit);
-			else {
-				stacksPromise.resolve();
-			}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v1/switch_stacks)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		stacks = stacks.concat(response.stacks);
+		if (offset + apiLimit <= response.total) getStacks(offset + apiLimit);
+		else {
+			stacksPromise.resolve();
 		}
 	});
 	return stacksPromise.promise();
@@ -120,7 +120,7 @@ function getStacks(offset) {
 
 function getStackSwitches(stack_id, stackName) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -132,13 +132,21 @@ function getStackSwitches(stack_id, stackName) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switch_stacks)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v1/switches)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		stackSwitches[stack_id] = response.switches;
 		var switchCounter = 0;
 		var stackCommander = '';
@@ -146,7 +154,7 @@ function getStackSwitches(stack_id, stackName) {
 		$.each(response.switches, function() {
 			var currentSerial = this.serial;
 			var settings = {
-				url: getAPIURL() + '/tools/getCommand',
+				url: getAPIURL() + '/tools/getCommandwHeaders',
 				method: 'POST',
 				timeout: 0,
 				headers: {
@@ -158,13 +166,21 @@ function getStackSwitches(stack_id, stackName) {
 				}),
 			};
 
-			$.ajax(settings).done(function(response) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switches)');
-						return;
-					}
+			$.ajax(settings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
 				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v1/switches)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
 				switchCounter++;
 
 				for (i = 0; i < stackSwitches[stack_id].length; i++) {
@@ -205,7 +221,7 @@ function getSwitchVariables() {
 
 function getVariablesForAllDevices(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -217,35 +233,34 @@ function getVariablesForAllDevices(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template_variables)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-		if (response.hasOwnProperty('message')) {
-			if (response.message === 'API rate limit exceeded')
-				Swal.fire({
-					title: 'API Limit',
-					text: 'Daily API limit reached',
-					icon: 'error',
-				});
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/devices/template_variables)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		var variablesText = response;
+
+		switchVariables = Object.assign({}, switchVariables, response);
+
+		variableTotal = Object.keys(variablesText).length;
+		if (Object.keys(variablesText).length == apiGroupLimit) {
+			// not an empty result - there might be more to get
+			getVariablesForAllDevices(offset + apiGroupLimit);
 		} else {
-			var variablesText = response;
+			showNotification('ca-document-copy', 'All variables have been downloaded', 'bottom', 'center', 'success');
 
-			switchVariables = Object.assign({}, switchVariables, response);
-
-			variableTotal = Object.keys(variablesText).length;
-			if (Object.keys(variablesText).length == apiGroupLimit) {
-				// not an empty result - there might be more to get
-				getVariablesForAllDevices(offset + apiGroupLimit);
-			} else {
-				showNotification('ca-document-copy', 'All variables have been downloaded', 'bottom', 'center', 'success');
-
-				//load switches table
-				loadSwitchesTable();
-			}
+			//load switches table
+			loadSwitchesTable();
 		}
 	});
 }
@@ -254,7 +269,7 @@ function getVariablesForSingleDevice(serialNumber) {
 	// gets template variables for single device and updates the dictionary of variables
 	variablesPromise = new $.Deferred();
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -266,25 +281,24 @@ function getVariablesForSingleDevice(serialNumber) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/<SERIAL>/template_variables)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-		if (response.hasOwnProperty('message')) {
-			if (response.message === 'API rate limit exceeded')
-				Swal.fire({
-					title: 'API Limit',
-					text: 'Daily API limit reached',
-					icon: 'error',
-				});
-		} else {
-			// save out the current variables
-			switchVariables[serialNumber] = response['data']['variables'];
-			variablesPromise.resolve();
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/devices/<SERIAL>/template_variables)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
 		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		// save out the current variables
+		switchVariables[serialNumber] = response['data']['variables'];
+		variablesPromise.resolve();
 	});
 	return variablesPromise.promise();
 }
@@ -321,7 +335,7 @@ function getTemplateForSwitch(currentSerial) {
 	templatePromise = new $.Deferred();
 	// Get the template name for the selected switch
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -333,72 +347,79 @@ function getTemplateForSwitch(currentSerial) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template)');
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/devices/template)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		var data = response.data;
+		// grab out the group name and the template name.
+		currentGroup = data[currentSerial]['group_name'];
+		currentTemplate = data[currentSerial]['template_name'];
+		currentTemplateType = 'ArubaSwitch';
+		//console.log(currentTemplate);
+
+		showNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
+
+		var settings = {
+			url: getAPIURL() + '/tools/getCommandwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/configuration/v1/groups/' + currentGroup + '/templates/' + currentTemplate,
+				access_token: localStorage.getItem('access_token'),
+			}),
+		};
+
+		$.ajax(settings).done(function(commandResults, statusText, xhr) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/devices/template)');
+				apiErrorCount++;
+				return;
+			} else if (commandResults.hasOwnProperty('error_code')) {
+				logError(commandResults.description);
+				apiErrorCount++;
 				return;
 			}
-		}
-		if (response.hasOwnProperty('message')) {
-			if (response.message === 'API rate limit exceeded')
-				Swal.fire({
-					title: 'API Limit',
-					text: 'Daily API limit reached',
-					icon: 'error',
-				});
-		} else {
-			var data = response.data;
-			// grab out the group name and the template name.
-			currentGroup = data[currentSerial]['group_name'];
-			currentTemplate = data[currentSerial]['template_name'];
-			currentTemplateType = 'ArubaSwitch';
-			//console.log(currentTemplate);
+			var response = JSON.parse(commandResults.responseBody);
 
-			showNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
-
-			var settings = {
-				url: getAPIURL() + '/tools/getCommand',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v1/groups/' + currentGroup + '/templates/' + currentTemplate,
-					access_token: localStorage.getItem('access_token'),
-				}),
-			};
-
-			$.ajax(settings).done(function(response) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/groups/<GROUP>/templates)');
-						return;
-					}
+			if (response.error_code) {
+				if (response.description.includes('not found as a Template group')) {
+					Swal.fire({
+						title: 'No Template',
+						text: 'This switch (' + currentSerial + ') is no longer in a Template group',
+						icon: 'warning',
+					});
+				} else {
+					Swal.fire({
+						title: 'Template Failure',
+						text: response.description,
+						icon: 'error',
+					});
 				}
-				if (response.error_code) {
-					if (response.description.includes('not found as a Template group')) {
-						Swal.fire({
-							title: 'No Template',
-							text: 'This switch (' + currentSerial + ') is no longer in a Template group',
-							icon: 'warning',
-						});
-					} else {
-						Swal.fire({
-							title: 'Template Failure',
-							text: response.description,
-							icon: 'error',
-						});
-					}
-					return null;
-				} else if (response.resultBody) {
-					// store the template returned.
-					switchTemplate = response.resultBody;
-					templatePromise.resolve();
-				}
-			});
-		}
+				return null;
+			} else if (response.responseBody) {
+				// store the template returned.
+				switchTemplate = response.responseBody;
+				templatePromise.resolve();
+			}
+		});
 	});
 	return templatePromise.promise();
 }
@@ -1349,7 +1370,7 @@ function checkTemplateVariable(currentSerial) {
 	var currentVariables = switchVariables[currentSerial];
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1361,79 +1382,78 @@ function checkTemplateVariable(currentSerial) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/devices/template)');
-				return;
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/devices/template)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		var data = response.data;
+		var currentGroup = data[currentSerial]['group_name'];
+		var currentTemplate = data[currentSerial]['template_name'];
+		//console.log(currentTemplate);
+
+		showNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
+
+		var settings = {
+			url: getAPIURL() + '/tools/getCommandwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/configuration/v1/groups/' + currentGroup + '/templates/' + currentTemplate,
+				access_token: localStorage.getItem('access_token'),
+			}),
+		};
+
+		$.ajax(settings).done(function(response) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/groups/<GROUP>/templates)');
+					return;
+				}
 			}
-		}
-		if (response.hasOwnProperty('message')) {
-			if (response.message === 'API rate limit exceeded')
-				Swal.fire({
-					title: 'API Limit',
-					text: 'Daily API limit reached',
-					icon: 'error',
+			if (response.error_code) {
+				if (response.description.includes('not found as a Template group')) {
+					Swal.fire({
+						title: 'No Template',
+						text: 'This switch (' + currentSerial + ') is no longer in a Template group',
+						icon: 'warning',
+					});
+				} else {
+					Swal.fire({
+						title: 'Template Failure',
+						text: response.description,
+						icon: 'error',
+					});
+				}
+			} else if (response.responseBody) {
+				var templateVariables = findVariablesInTemplate(response.responseBody);
+				var currentVariableKeys = Object.keys(currentVariables);
+				var missingVariables = [];
+				var extraVariables = [];
+				$.each(templateVariables, function() {
+					if (!currentVariableKeys.includes(String(this))) missingVariables.push(String(this));
 				});
-		} else {
-			var data = response.data;
-			var currentGroup = data[currentSerial]['group_name'];
-			var currentTemplate = data[currentSerial]['template_name'];
-			//console.log(currentTemplate);
+				$.each(currentVariableKeys, function() {
+					var stringKey = String(this);
+					if (!templateVariables.includes(stringKey) && stringKey !== '_sys_serial' && stringKey !== '_sys_lan_mac') extraVariables.push(String(this));
+				});
 
-			showNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
-
-			var settings = {
-				url: getAPIURL() + '/tools/getCommand',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v1/groups/' + currentGroup + '/templates/' + currentTemplate,
-					access_token: localStorage.getItem('access_token'),
-				}),
-			};
-
-			$.ajax(settings).done(function(response) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/groups/<GROUP>/templates)');
-						return;
-					}
-				}
-				if (response.error_code) {
-					if (response.description.includes('not found as a Template group')) {
-						Swal.fire({
-							title: 'No Template',
-							text: 'This switch (' + currentSerial + ') is no longer in a Template group',
-							icon: 'warning',
-						});
-					} else {
-						Swal.fire({
-							title: 'Template Failure',
-							text: response.description,
-							icon: 'error',
-						});
-					}
-				} else if (response.resultBody) {
-					var templateVariables = findVariablesInTemplate(response.resultBody);
-					var currentVariableKeys = Object.keys(currentVariables);
-					var missingVariables = [];
-					var extraVariables = [];
-					$.each(templateVariables, function() {
-						if (!currentVariableKeys.includes(String(this))) missingVariables.push(String(this));
-					});
-					$.each(currentVariableKeys, function() {
-						var stringKey = String(this);
-						if (!templateVariables.includes(stringKey) && stringKey !== '_sys_serial' && stringKey !== '_sys_lan_mac') extraVariables.push(String(this));
-					});
-
-					loadVerifyUI(missingVariables, extraVariables, currentSerial);
-				}
-			});
-		}
+				loadVerifyUI(missingVariables, extraVariables, currentSerial);
+			}
+		});
 	});
 }
 

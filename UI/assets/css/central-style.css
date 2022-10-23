@@ -666,9 +666,25 @@ Generated using nucleoapp.com
   content: "\ea75";
 }
 
+.ca-duplicate::before {
+  content: "\ea76";
+}
+
+.ca-two-way-direction::before {
+  content: "\ea77";
+}
+
+.ca-stack::before {
+  content: "\ea78";
+}
+
 /*------------------------
 	Extra Styling
 -------------------------*/
+
+.extra-h5-padding {
+  margin-top: 30px;
+}
 
 .textarea {
   height: 400px !important;
@@ -908,8 +924,21 @@ Generated using nucleoapp.com
 }
 
 .refresh-link:hover {
-	color: #ff8500 !important;
+  color: #ff8500 !important;
 }
+
+.right-link {
+  color: #000;
+  padding-top: 6px;
+  float: right;
+  padding-right: 10px;
+}
+
+.right-link:hover {
+  color: #ff8500 !important;
+}
+
+
 
 td.cellDivider {
 	border-left: 1px solid #e9ecef !important;
@@ -976,6 +1005,18 @@ input[type=search]::-webkit-search-cancel-button {
 .text-series8,
 .text-series8:hover {
     color: #DD4B39 !important;
+}
+
+.details-label {
+  font-size: .875rem;
+  padding-top: 8px;
+  color: #23CCEF !important
+}
+
+.tooltip-inner {
+    max-width: 350px;
+    /* If max-width does not work, try using width instead 
+    width: 350px; */
 }
 
 .form-group label {

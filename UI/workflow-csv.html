@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.0
-Updated: 1.6.0
+Updated: 1.18
 Copyright Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -49,7 +49,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: CSV Workflows </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: CSV Workflows </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="nav navbar-nav">
@@ -355,6 +355,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														</td>
 														<td>Set RF Profiles (AOS10 Only)</td>
 													</tr>
+													<tr class="clickable-row" data-href="setRadioMode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-router"></i>
+															</div>
+														</td>
+														<td>Set Radio Modes</td>
+													</tr>
 													<tr class="clickable-row" data-href="enable24">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -386,6 +394,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 															</div>
 														</td>
 														<td>Update Switch Port Descriptions</td>
+													</tr>
+													<tr class="clickable-row" data-href="rebootDevices">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-reload"></i>
+															</div>
+														</td>
+														<td>Reboot Devices</td>
 													</tr>
 												</tbody>
 											</table>
@@ -462,6 +478,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 															</div>
 														</td>
 														<td>Move To Site + Auto Rename APs + Update Port Descriptions</td>
+													</tr>
+													<tr class="clickable-row" data-href="auto-renameap-radiomode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-contactless-card"></i>
+															</div>
+														</td>
+														<td>Rename APs + Update Radio Modes</td>
 													</tr>
 												</tbody>
 											</table>
@@ -964,7 +988,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js"></script>
+	<script src="assets/js/main.js?v=221023"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
 </html>

@@ -23,6 +23,7 @@ function loadCurrentPageGroup() {
 	} else {
 		getFirmwareCompliance();
 	}
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -127,19 +128,35 @@ function cloneGroup() {
 }
 
 function updateGroup() {
+	var enableAPs = document.getElementById('deviceTypeAccessPoint').checked;
 	var enableAOSS = document.getElementById('deviceTypeSwitchesAOS').checked;
 	var enableCX = document.getElementById('deviceTypeSwitchesCX').checked;
+	var enableGateways = document.getElementById('deviceTypeGateways').checked;
 	var properties = modifyGroup['group_properties'];
 
 	var allowedDevTypes = properties['AllowedDevTypes'];
-	if (enableAOSS && !allowedDevTypes.includes('Switches')) allowedDevTypes.push('Switches');
-	else if (enableCX && !allowedDevTypes.includes('Switches')) allowedDevTypes.push('Switches');
+	var allowedSwitchTypes = properties['AllowedSwitchTypes'];
+
+	// If switches are being added to the group (no adding of switch types after switching has been added is allowed)
+	if (!allowedDevTypes.includes('Switches')) {
+		if (enableAOSS) allowedSwitchTypes.push('AOS_S');
+		else if (enableCX) allowedSwitchTypes.push('AOS_CX');
+	}
+	properties['AllowedSwitchTypes'] = allowedSwitchTypes;
+
+	// Set the allowedDevTypes
+	if (!allowedDevTypes.includes('AccessPoints')) {
+		if (enableAPs) allowedDevTypes.push('AccessPoints');
+	}
+	if (!allowedDevTypes.includes('Switches')) {
+		if (enableAOSS) allowedDevTypes.push('Switches');
+		else if (enableCX) allowedDevTypes.push('Switches');
+	}
+	if (!allowedDevTypes.includes('Gateways')) {
+		if (enableGateways) allowedDevTypes.push('Gateways');
+	}
 	properties['AllowedDevTypes'] = allowedDevTypes;
 
-	var allowedSwitchTypes = properties['AllowedSwitchTypes'];
-	if (enableAOSS && !allowedSwitchTypes.includes('AOS_S')) allowedSwitchTypes.push('AOS_S');
-	else if (enableCX && !allowedSwitchTypes.includes('AOS_CX')) allowedSwitchTypes.push('AOS_CX');
-	properties['AllowedSwitchTypes'] = allowedSwitchTypes;
 	console.log(properties);
 	var apSettings = {
 		url: getAPIURL() + '/tools/patchCommand',
@@ -174,19 +191,98 @@ function loadModifyGroup(groupName) {
 	// Update checkboxes
 	document.getElementById('modifyGroupName').value = groupName;
 	var devTypes = modifyGroup['group_properties']['AllowedDevTypes'];
-	if (devTypes.includes('AccessPoints')) document.getElementById('deviceTypeAccessPoint').checked = true;
-	else document.getElementById('deviceTypeAccessPoint').checked = false;
 
-	if (devTypes.includes('Gateways')) document.getElementById('deviceTypeGateways').checked = true;
-	else document.getElementById('deviceTypeGateways').checked = false;
+	document.getElementById('monitorAOSS').disabled = false;
+	document.getElementById('monitorCX').disabled = false;
+
+	var templateModes = modifyGroup['template_details'];
+	document.getElementById('templateWireless').disabled = false;
+	document.getElementById('templateWired').disabled = false;
+
+	if (templateModes.Wired == false) document.getElementById('templateWired').checked = false;
+	else document.getElementById('templateWired').checked = true;
+	if (templateModes.Wireless == false) document.getElementById('templateWireless').checked = false;
+	else document.getElementById('templateWireless').checked = true;
+
+	if (devTypes.includes('AccessPoints')) {
+		document.getElementById('deviceTypeAccessPoint').checked = true;
+		document.getElementById('deviceTypeAccessPoint').disabled = true;
+		document.getElementById('templateWireless').disabled = true;
+	} else {
+		document.getElementById('deviceTypeAccessPoint').checked = false;
+		document.getElementById('deviceTypeAccessPoint').disabled = false;
+	}
+
+	document.getElementById('gatewayMobility').disabled = true;
+	document.getElementById('gatewayBranch').disabled = true;
+	document.getElementById('gatewayVPNC').disabled = true;
+	if (devTypes.includes('Gateways')) {
+		document.getElementById('deviceTypeGateways').checked = true;
+		document.getElementById('deviceTypeGateways').disabled = true;
+		document.getElementById('templateWireless').disabled = true;
+		document.getElementById('gatewayMobility').checked = false;
+		document.getElementById('gatewayBranch').checked = false;
+		document.getElementById('gatewayVPNC').checked = false;
+		if (modifyGroup['group_properties']['GwNetworkRole'] && modifyGroup['group_properties']['GwNetworkRole'] === 'WLANGateway') document.getElementById('gatewayMobility').checked = true;
+		else document.getElementById('gatewayMobility').checked = false;
+		if (modifyGroup['group_properties']['GwNetworkRole'] && modifyGroup['group_properties']['GwNetworkRole'] === 'BranchGateway') document.getElementById('gatewayBranch').checked = true;
+		else document.getElementById('gatewayBranch').checked = false;
+		if (modifyGroup['group_properties']['GwNetworkRole'] && modifyGroup['group_properties']['GwNetworkRole'] === 'VPNConcentrator') document.getElementById('gatewayVPNC').checked = true;
+		else document.getElementById('gatewayVPNC').checked = false;
+	} else {
+		document.getElementById('deviceTypeGateways').checked = false;
+		document.getElementById('deviceTypeGateways').disabled = false;
+		document.getElementById('gatewayMobility').checked = false;
+		document.getElementById('gatewayBranch').checked = false;
+		document.getElementById('gatewayVPNC').checked = false;
+	}
+	enablePersonas();
 
 	var switchTypes = modifyGroup['group_properties']['AllowedSwitchTypes'];
-	if (devTypes.includes('Switches') && switchTypes.includes('AOS_S')) document.getElementById('deviceTypeSwitchesAOS').checked = true;
-	else document.getElementById('deviceTypeSwitchesAOS').checked = false;
-	if (devTypes.includes('Switches') && switchTypes.includes('AOS_CX')) document.getElementById('deviceTypeSwitchesCX').checked = true;
-	else document.getElementById('deviceTypeSwitchesCX').checked = false;
+	if (devTypes.includes('Switches')) {
+		if (switchTypes.includes('AOS_S')) document.getElementById('deviceTypeSwitchesAOS').checked = true;
+		if (switchTypes.includes('AOS_CX')) document.getElementById('deviceTypeSwitchesCX').checked = true;
+		document.getElementById('deviceTypeSwitchesAOS').disabled = true;
+		document.getElementById('deviceTypeSwitchesCX').disabled = true;
+		document.getElementById('templateWired').disabled = true;
+		document.getElementById('monitorAOSS').disabled = true;
+		document.getElementById('monitorCX').disabled = true;
+		if (modifyGroup['group_properties']['MonitorOnly'] && modifyGroup['group_properties']['MonitorOnly'].includes('AOS_S')) {
+			document.getElementById('monitorAOSS').checked = true;
+		} else {
+			document.getElementById('monitorAOSS').checked = false;
+		}
+		if (modifyGroup['group_properties']['MonitorOnly'] && modifyGroup['group_properties']['MonitorOnly'].includes('AOS_CX')) {
+			document.getElementById('monitorCX').checked = true;
+		} else {
+			document.getElementById('monitorCX').checked = false;
+		}
+	} else {
+		document.getElementById('deviceTypeSwitchesAOS').checked = false;
+		document.getElementById('deviceTypeSwitchesCX').checked = false;
+		document.getElementById('deviceTypeSwitchesAOS').disabled = false;
+		document.getElementById('deviceTypeSwitchesCX').disabled = false;
+	}
 
 	$('#ModifyGroupModalLink').trigger('click');
+}
+
+function enablePersonas() {
+	if (document.getElementById('deviceTypeGateways').checked) {
+		document.getElementById('GatewayDivider').hidden = false;
+		document.getElementById('GatewayPersonas').hidden = false;
+		if (!document.getElementById('deviceTypeGateways').disabled) {
+			document.getElementById('gatewayMobility').disabled = false;
+			document.getElementById('gatewayBranch').disabled = false;
+			document.getElementById('gatewayVPNC').disabled = false;
+		}
+	} else {
+		document.getElementById('GatewayDivider').hidden = true;
+		document.getElementById('GatewayPersonas').hidden = true;
+		document.getElementById('gatewayMobility').disabled = true;
+		document.getElementById('gatewayBranch').disabled = true;
+		document.getElementById('gatewayVPNC').disabled = true;
+	}
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -203,7 +299,7 @@ function getFirmwareVersions() {
 	// AP Firmware Versions
 	$('#apselector').append($('<option>', { value: 'No AP Compliance', text: 'No AP Compliance' }));
 	var apSettings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -215,7 +311,21 @@ function getFirmwareVersions() {
 		}),
 	};
 
-	$.ajax(apSettings).done(function(response, statusText, xhr) {
+	$.ajax(apSettings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/versions)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		$.each(response, function() {
 			$('#apselector').append($('<option>', { value: this['firmware_version'], text: this['firmware_version'] }));
 			if ($('#apselector').length != 0) {
@@ -227,7 +337,7 @@ function getFirmwareVersions() {
 	// Switch Firmware Versions
 	$('#switchselector').append($('<option>', { value: 'No Switch Compliance', text: 'No Switch Compliance' }));
 	var switchAOSSSettings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -239,7 +349,21 @@ function getFirmwareVersions() {
 		}),
 	};
 
-	$.ajax(switchAOSSSettings).done(function(response, statusText, xhr) {
+	$.ajax(switchAOSSSettings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/versions)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		$.each(response, function() {
 			$('#switchselector').append($('<option>', { value: this['firmware_version'], text: this['firmware_version'] }));
 			if ($('#switchselector').length != 0) {
@@ -249,24 +373,38 @@ function getFirmwareVersions() {
 	});
 
 	/*var switchCXSettings = {
-			url: getAPIURL() + '/tools/getCommand',
-			method: 'POST',
-			timeout: 0,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			data: JSON.stringify({
-				url: localStorage.getItem('base_url') + '/firmware/v1/versions?device_type=CX',
-				access_token: localStorage.getItem('access_token'),
-			}),
-		};*/
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/firmware/v1/versions?device_type=CX',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
 
-	//$.ajax(switchCXSettings).done(function(response, statusText, xhr) {});
+	$.ajax(gatewaySettings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/versions)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+	});*/
 
 	// Gateway Firmware Versions
 	$('#gatewayselector').append($('<option>', { value: 'No Gateway Compliance', text: 'No Gateway Compliance' }));
 	var gatewaySettings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -278,7 +416,21 @@ function getFirmwareVersions() {
 		}),
 	};
 
-	$.ajax(gatewaySettings).done(function(response, statusText, xhr) {
+	$.ajax(gatewaySettings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/versions)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		$.each(response, function() {
 			$('#gatewayselector').append($('<option>', { value: this['firmware_version'], text: this['firmware_version'] }));
 			if ($('#gatewayselector').length != 0) {
@@ -302,7 +454,7 @@ function getFirmwareCompliance() {
 		// Check if group includes APs
 		if (this['group_properties']['AllowedDevTypes'].includes('AccessPoints')) {
 			var apSettings = {
-				url: getAPIURL() + '/tools/getCommand',
+				url: getAPIURL() + '/tools/getCommandwHeaders',
 				method: 'POST',
 				timeout: 0,
 				headers: {
@@ -314,7 +466,21 @@ function getFirmwareCompliance() {
 				}),
 			};
 			// Get AP Compliance
-			$.ajax(apSettings).done(function(response, statusText, xhr) {
+			$.ajax(apSettings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
+				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/upgrade/compliance_version)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
 				currentInfo = groupInfo[groupName];
 				if (response['firmware_compliance_version']) {
 					currentInfo['APVersion'] = response['firmware_compliance_version'];
@@ -334,7 +500,7 @@ function getFirmwareCompliance() {
 		// Check if group includes Switches
 		if (this['group_properties']['AllowedDevTypes'].includes('Switches')) {
 			var switchSettings = {
-				url: getAPIURL() + '/tools/getCommand',
+				url: getAPIURL() + '/tools/getCommandwHeaders',
 				method: 'POST',
 				timeout: 0,
 				headers: {
@@ -346,7 +512,21 @@ function getFirmwareCompliance() {
 				}),
 			};
 			// Get Switch Compliance
-			$.ajax(switchSettings).done(function(response, statusText, xhr) {
+			$.ajax(switchSettings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
+				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/upgrade/compliance_version)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
 				currentInfo = groupInfo[groupName];
 				if (response['firmware_compliance_version']) {
 					currentInfo['SwitchVersion'] = response['firmware_compliance_version'];
@@ -366,7 +546,7 @@ function getFirmwareCompliance() {
 		// Check if group includes Gateways
 		if (this['group_properties']['AllowedDevTypes'].includes('Gateways')) {
 			var gatewaySettings = {
-				url: getAPIURL() + '/tools/getCommand',
+				url: getAPIURL() + '/tools/getCommandwHeaders',
 				method: 'POST',
 				timeout: 0,
 				headers: {
@@ -378,7 +558,21 @@ function getFirmwareCompliance() {
 				}),
 			};
 			// Get Gateway Compliance
-			$.ajax(gatewaySettings).done(function(response, statusText, xhr) {
+			$.ajax(gatewaySettings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
+				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/upgrade/compliance_version)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
 				currentInfo = groupInfo[groupName];
 				if (response['firmware_compliance_version']) {
 					currentInfo['GatewayVersion'] = response['firmware_compliance_version'];
@@ -441,8 +635,11 @@ function loadFirmwareTable(checked) {
 		.DataTable()
 		.rows()
 		.draw();
-
-	localStorage.setItem('firmware_groups', JSON.stringify(groupInfo));
+	try {
+		localStorage.setItem('firmware_groups', JSON.stringify(groupInfo));
+	} catch (e) {
+		console.log('Browser Storage Full. Not able to cache Firmware information');
+	}
 }
 
 function checkFirmwareUpdateDone() {

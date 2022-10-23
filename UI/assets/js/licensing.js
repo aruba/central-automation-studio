@@ -16,7 +16,7 @@ function getLicensingData() {
 
 	// Get overview stats
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -28,17 +28,22 @@ function getLicensingData() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/licensing/v1/subscriptions/stats)');
-			}
-		} else if (response.hasOwnProperty('error_code')) {
-			logError(response.description);
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/licensing/v1/subscriptions/stats)');
 			apiErrorCount++;
-		} else if (response.hasOwnProperty('error')) {
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
 				authPromise = new $.Deferred();
@@ -105,7 +110,7 @@ function getLicensingData() {
 	});
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -117,7 +122,28 @@ function getLicensingData() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/licensing/v1/subscriptions/stats)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('status') && commandResults.status === '401') {
+			// Access Token expired - get a new one and try again.
+			authPromise = new $.Deferred();
+			$.when(authRefresh(authPromise)).then(function() {
+				getLicensingData();
+			});
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+
+		var response = JSON.parse(commandResults.responseBody);
 		//console.log(response);
 		// Empty the table
 		$('#subscription-table')
@@ -125,44 +151,28 @@ function getLicensingData() {
 			.rows()
 			.remove();
 
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/licensing/v1/subscriptions)');
-			} else if (response.status === '401') {
-				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
-					getLicensingData();
-				});
-			}
-		} else if (response.hasOwnProperty('error_code')) {
-			logError(response.description);
-			apiErrorCount++;
-		} else {
-			var table = $('#subscription-table').DataTable();
-			$.each(response.subscriptions, function() {
-				// Add row to table
-				keys.push(this);
-				var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa fa-circle text-danger"></i></span>';
-				if (this.status === 'OK') {
-					var today = moment();
-					var endDate = moment(this.end_date);
-					if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 30) {
-						status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 30 days"><i class="fa fa-circle text-warning"></i></span>';
-						showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> expiring soon...', 'bottom', 'center', 'warning');
-					} else {
-						status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa fa-circle text-success"></i></span>';
-					}
+		var table = $('#subscription-table').DataTable();
+		$.each(response.subscriptions, function() {
+			// Add row to table
+			keys.push(this);
+			var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa fa-circle text-danger"></i></span>';
+			if (this.status === 'OK') {
+				var today = moment();
+				var endDate = moment(this.end_date);
+				if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 30) {
+					status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 30 days"><i class="fa fa-circle text-warning"></i></span>';
+					showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> expiring soon...', 'bottom', 'center', 'warning');
+				} else {
+					status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa fa-circle text-success"></i></span>';
 				}
+			}
 
-				var subType = this.subscription_type;
-				if (subType === 'EVAL') subType = 'Evaluation';
-				else if (subType === 'NONE') subType = 'Paid';
+			var subType = this.subscription_type;
+			if (subType === 'EVAL') subType = 'Evaluation';
+			else if (subType === 'NONE') subType = 'Paid';
 
-				table.row.add(['<strong>' + this.subscription_key + '</strong>', subType, status, this.license_type, this.quantity, '<span style="display:none;">' + this.start_date + '</span>' + moment(this.start_date).format('L'), '<span style="display:none;">' + this.end_date + '</span>' + moment(this.end_date).format('L')]);
-			});
-		}
+			table.row.add(['<strong>' + this.subscription_key + '</strong>', subType, status, this.license_type, this.quantity, '<span style="display:none;">' + this.start_date + '</span>' + moment(this.start_date).format('L'), '<span style="display:none;">' + this.end_date + '</span>' + moment(this.end_date).format('L')]);
+		});
 
 		$('#subscription-table')
 			.DataTable()

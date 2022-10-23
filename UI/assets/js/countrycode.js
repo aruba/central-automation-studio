@@ -316,7 +316,7 @@ function loadCurrentPageGroup() {
 function configureSwarm(swarmID, countryCode) {
 	// for each VC
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -328,14 +328,20 @@ function configureSwarm(swarmID, countryCode) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/iap_variables/)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/iap_variables/<SWARM-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 
 		var currentVariables = response.variables[0];
 		if (currentVariables.country === countryCode) {
@@ -425,6 +431,7 @@ function loadClusterTable(checked) {
 		.DataTable()
 		.rows()
 		.draw();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function configureSelectedClusters() {
@@ -626,7 +633,7 @@ function configureSite(siteName) {
 
 	// get the site details to get the country (used to find the country code)
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -638,13 +645,20 @@ function configureSite(siteName) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/central/v2/sites)');
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/central/v2/sites/<SITE-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 
 		var countryCode = countryCodes[response.country].code;
 		$.each(siteClusters, function() {

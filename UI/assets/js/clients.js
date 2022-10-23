@@ -1043,4 +1043,5 @@ function updateClientGraphs() {
 			.draw();
 		$('#SelectedClientModalLink').trigger('click');
 	});
+	$('[data-toggle="tooltip"]').tooltip();
 }

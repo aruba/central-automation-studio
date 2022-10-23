@@ -26,6 +26,7 @@ function loadCurrentPageAP() {
 	$.when(getPoolConfig(), getIPPools()).then(function() {
 		getIPAllocations();
 	});
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function getPoolConfig() {
@@ -33,7 +34,7 @@ function getPoolConfig() {
 	config = {};
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -45,14 +46,21 @@ function getPoolConfig() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log('getPoolConfig: ' + JSON.stringify(response));
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/ipms-config/v1/node_list/GLOBAL/GLOBAL/config)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/ipms-config/v1/node_list/GLOBAL/GLOBAL/config/)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		$.each(response['address_pool'], function() {
 			var poolname = this['pool_id'].toString();
 			config[poolname] = this;
@@ -71,7 +79,7 @@ function getIPPools() {
 	dhcpPools = [];
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -83,14 +91,21 @@ function getIPPools() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log('getIPPools: ' + JSON.stringify(response));
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/ipmsapi/v1/pool)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/ipmsapi/v1/pool)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		$.each(response['pools'], function() {
 			var poolname = this['name'].toString();
 			pools[poolname] = this;
@@ -113,7 +128,7 @@ function getIPAllocations() {
 	systemInfo = [];
 	dhcpInfo = [];
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -125,14 +140,21 @@ function getIPAllocations() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log("getIPAllocations: "+ JSON.stringify(response["device_allocations"]))
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/ipmsapi/v1/allocation)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/ipmsapi/v1/allocation)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		var allocations = response['device_allocations'];
 		console.log(allocations);
 		$.each(allocations, function() {

@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.0
-Updated: 1.10.2
+Updated: 1.17
 Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -51,7 +51,7 @@ Aaron Scott (WiFi Downunder) 2022
                     	<div class="icon-big text-center icon-warning">
 							<i class="central-icon ca-api text-warning"></i>
 						</div>
-                        <a class="navbar-brand" href="dashboard.html"> Central Automation Studio: AirMatch </a>
+                        <a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: AirMatch </a>
                     </div>
                     <div class="collapse navbar-collapse justify-content-end">
                         <ul class="navbar-nav">
@@ -105,6 +105,7 @@ Aaron Scott (WiFi Downunder) 2022
 										<option value="INCREMENTAL">Incremental</option>
 										<option value="EIRP">EIRP Only</option>
 										<option value="OPMODE">Opmode Update</option>
+										<option value="PERFORMANCE">New APs Only</option>
                                     </select>
                                 </div>
                                 <div class="card-footer ">
@@ -131,7 +132,7 @@ Aaron Scott (WiFi Downunder) 2022
 										</div>
 									</div>
 									<div class="row">
-										<div class="col-md-4" hidden>
+										<div class="col-md-4">
 											<h5>6GHz</h5>
 											<hr>
 											<ul class="list-inline">
@@ -168,7 +169,7 @@ Aaron Scott (WiFi Downunder) 2022
 											</ul>
 										</div>
 									</div>
-									<button class="btn btn-outline btn-info" name="loadOptimizationBtn" id="loadOptimizationBtn" onclick="loadOptimization(0)">View Optimisation Details</button>
+									<button class="btn btn-default" name="loadOptimizationBtn" id="loadOptimizationBtn" onclick="loadOptimization(0)">View Optimisation Details</button>
 									<hr>
 									<h4 class="card-title">Previous AirMatch Optimisations</h4>
 									</br></br>
@@ -180,6 +181,7 @@ Aaron Scott (WiFi Downunder) 2022
 														<tr>
 															<th rowspan="1">Optimization</th>
 															<th colspan="2"></th>
+															<th colspan="4" class="cellDivider">6GHz</th>
 															<th colspan="4" class="cellDivider">5GHz</th>
 															<th colspan="4" class="cellDivider">2.4GHz</th>
 														</tr>
@@ -187,6 +189,10 @@ Aaron Scott (WiFi Downunder) 2022
 															<th>Timestamp</th>
 															<th>Date Run</th>
 															<th>Mode</th>
+															<th class="cellDivider">Deployed</th>
+															<th>APs</th>
+															<th>Radios</th>
+															<th>Improvement %</th>
 															<th class="cellDivider">Deployed</th>
 															<th>APs</th>
 															<th>Radios</th>
@@ -208,9 +214,22 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 						</div>
 					</div>
-                     <div class="row">
+                    <div class="row">
 						<div class="col-md-12">
-                    		<div class="card ">
+							<div class="card ">
+								<div class="card-header ">
+									<h4 class="card-title">Channel Usage</h4>
+									<p class="card-category">6GHz (Primary Channel)</p>
+								</div>
+								<div class="card-body ">
+									<div id="channelChart6GHz" class="ct-chart"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<div class="card ">
 								<div class="card-header ">
 									<h4 class="card-title">Channel Usage</h4>
 									<p class="card-category">5GHz (Primary Channel)</p>
@@ -252,7 +271,7 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 						</div>
 					</div>
-                    <div class="row">
+                    <div class="row" id='rfevents-row'>
 						<div class="col-md-12">
 							<div class="card">
 								<div class="card-header">
@@ -663,13 +682,25 @@ Aaron Scott (WiFi Downunder) 2022
 					updateSelectedAPs(data[3]);
 				})
 			});
+			
+			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
+			if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
+				loadAirMatchEvents = true;
+			} else {
+				loadAirMatchEvents = JSON.parse(loadAirMatchEvents);
+			}
+			if (loadAirMatchEvents) {
+				document.getElementById('rfevents-row').hidden = false;
+			} else {
+				document.getElementById('rfevents-row').hidden = true;
+			}
 		});		
 		
     	
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js"></script>
+<script src="assets/js/main.js?v=221023"></script>
 <script src="assets/js/proxy.js"></script>
 <script src="assets/js/hydra.js"></script>
 <script src="assets/js/airmatch.js"></script>

@@ -50,7 +50,7 @@ Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: Group Management </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Group Management </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -210,36 +210,119 @@ Aaron Scott (WiFi Downunder) 2022
 											<div class="col-md-9">
 												<div class="form-check">
 													<label class="form-check-label">
-														<input class="form-check-input" type="checkbox" id="deviceTypeAccessPoint" onclick="return false;" />
+														<input class="form-check-input" type="checkbox" id="deviceTypeAccessPoint" />
 														<span class="form-check-sign"></span>
 														Access Points
 													</label>
 													<label class="form-check-label">
-														<input class="form-check-input" type="checkbox" id="deviceTypeSwitchesAOS" onclick="return false;" />
+														<input class="form-check-input" type="checkbox" id="deviceTypeSwitchesAOS" />
 														<span class="form-check-sign"></span>
 														AOS-S Switches
 													</label>
 													<label class="form-check-label">
-														<input class="form-check-input" type="checkbox" id="deviceTypeSwitchesCX" onclick="return false;" />
+														<input class="form-check-input" type="checkbox" id="deviceTypeSwitchesCX" />
 														<span class="form-check-sign"></span>
 														AOS-CX Switches
 													</label>
 													<label class="form-check-label">
-														<input class="form-check-input" type="checkbox" id="deviceTypeGateways" onclick="return false;" />
+														<input class="form-check-input" type="checkbox" id="deviceTypeGateways" onclick="enablePersonas()"/>
 														<span class="form-check-sign"></span>
 														Gateways
 													</label>
 												</div>
 											</div>
 										</div>
+										<hr  />
+										<div class="row" id="wiressArch">
+											<label class="col-md-3">Template Mode</label>
+											<div class="col-md-9">
+												<div class="form-check">
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="templateWireless" />
+														<span class="form-check-sign"></span>
+														Wireless & Gateway
+													</label>
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="templateWired" />
+														<span class="form-check-sign"></span>
+														Switches
+													</label>
+												</div>
+											</div>
+										</div>
+										<hr  />
+										<div class="row" id="wiressArch">
+											<label class="col-md-3">Wireless Architecture</label>
+											<div class="col-md-9">
+												<div class="form-check">
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="arch10Campus" />
+														<span class="form-check-sign"></span>
+														ArubaOS 10 Campus AP
+													</label>
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="arch10MB" />
+														<span class="form-check-sign"></span>
+														ArubaOS 10 Microbranch AP
+													</label>
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="arch8AP" />
+														<span class="form-check-sign"></span>
+														ArubaOS 8 Instant AP
+													</label>
+												</div>
+											</div>
+										</div>
+										<hr  />
+										<div class="row" id="SwitchOptions" >
+											<label class="col-md-3">Switch Options</label>
+											<div class="col-md-9">
+												<div class="form-check">
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="monitorAOSS" />
+														<span class="form-check-sign"></span>
+														Monitor only for AOS-S
+													</label>
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="monitorCX" />
+														<span class="form-check-sign"></span>
+														Monitor only for AOS-CX
+													</label>
+												</div>
+											</div>
+										</div>
+										<hr id='GatewayDivider' />
+										<div class="row" id="GatewayPersonas" >
+											<label class="col-md-3">Gateway Persona</label>
+											<div class="col-md-9">
+												<div class="form-check">
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="gatewayMobility" />
+														<span class="form-check-sign"></span>
+														Mobility
+													</label>
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="gatewayBranch" />
+														<span class="form-check-sign"></span>
+														Branch
+													</label>
+													<label class="form-check-label">
+														<input class="form-check-input" type="checkbox" id="gatewayVPNC" />
+														<span class="form-check-sign"></span>
+														VPN Concentrator
+													</label>
+													<label class="form-check-label">
+												</div>
+											</div>
+										</div>
 									</div>
 								</form>
 							</div>
-							<!--<div class="card-footer ">
+							<div class="card-footer ">
 								<div class="col-md-9">
 									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="groupBtn" id="groupBtn" onclick="updateGroup()">Update Group</button>
 								</div>
-							</div>-->
+							</div>
 						</div>
 					</div>
 				</div>
@@ -513,7 +596,7 @@ Aaron Scott (WiFi Downunder) 2022
 			});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js"></script>
+	<script src="assets/js/main.js?v=221023"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
 	<script src="assets/js/group-mgmt.js"></script>

@@ -55,7 +55,7 @@ function getWLANsforGroup() {
 	var wlanGroup = select.value;
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -67,28 +67,33 @@ function getWLANsforGroup() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-		if (response.hasOwnProperty('error_code')) {
-			showNotification('ca-folder-settings', response.description, 'bottom', 'center', 'danger');
-		} else {
-			$.each(response.wlans, function() {
-				$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
-			});
-			if (response.wlans.length > 0) {
-				if ($('.selectpicker').length != 0) {
-					$('.selectpicker').selectpicker('refresh');
-				}
-			} else {
-				showNotification('ca-wifi', 'There are no WLANs in the "' + wlanGroup + '" group', 'bottom', 'center', 'danger');
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		$.each(response.wlans, function() {
+			$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
+		});
+		if (response.wlans.length > 0) {
+			if ($('.selectpicker').length != 0) {
+				$('.selectpicker').selectpicker('refresh');
 			}
+		} else {
+			showNotification('ca-wifi', 'There are no WLANs in the "' + wlanGroup + '" group', 'bottom', 'center', 'danger');
 		}
 	});
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function getConfigforWLAN() {
@@ -99,7 +104,7 @@ function getConfigforWLAN() {
 	var wlanselect = document.getElementById('wlanselector');
 	var wlan = wlanselect.value;
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -111,27 +116,31 @@ function getConfigforWLAN() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-		if (response.hasOwnProperty('error_code')) {
-			showNotification('ca-wifi', response.description, 'bottom', 'center', 'danger');
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/wlan/<GROUP>/<WLAN>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.wlan.wpa_passphrase === '') {
+			showNotification('ca-wifi-protected', 'The selected WLAN is not a PSK-based network', 'bottom', 'center', 'danger');
+			document.getElementById('qrBtn').disabled = true;
 		} else {
-			if (response.wlan.wpa_passphrase === '') {
-				showNotification('ca-wifi-protected', 'The selected WLAN is not a PSK-based network', 'bottom', 'center', 'danger');
-				document.getElementById('qrBtn').disabled = true;
-			} else {
-				//console.log(response.wlan);
-				document.getElementById('pskPassphrase').value = response.wlan.wpa_passphrase;
-				existingPassphrase = response.wlan.wpa_passphrase;
-				document.getElementById('savePSKBtn').disabled = true;
-				wlanConfig = response;
-				document.getElementById('qrBtn').disabled = false;
-			}
+			//console.log(response.wlan);
+			document.getElementById('pskPassphrase').value = response.wlan.wpa_passphrase;
+			existingPassphrase = response.wlan.wpa_passphrase;
+			document.getElementById('savePSKBtn').disabled = true;
+			wlanConfig = response;
+			document.getElementById('qrBtn').disabled = false;
 		}
 	});
 }
@@ -292,7 +301,7 @@ function getWLANs() {
 		$.each(configGroups, function() {
 			var currentGroup = this.group;
 			var settings = {
-				url: getAPIURL() + '/tools/getCommand',
+				url: getAPIURL() + '/tools/getCommandwHeaders',
 				method: 'POST',
 				timeout: 0,
 				headers: {
@@ -304,13 +313,21 @@ function getWLANs() {
 				}),
 			};
 
-			$.ajax(settings).done(function(response) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
-						return;
-					}
+			$.ajax(settings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
 				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
 				// save the group config for modifications
 				groupConfigs[currentGroup] = response;
 				// pull the roles out of each group config
@@ -389,7 +406,7 @@ function getConfigforGroup() {
 function getPSKForWLAN(wlanGroup, wlan) {
 	if (!wlan.includes(' ')) {
 		var settings = {
-			url: getAPIURL() + '/tools/getCommand',
+			url: getAPIURL() + '/tools/getCommandwHeaders',
 			method: 'POST',
 			timeout: 0,
 			headers: {
@@ -401,13 +418,21 @@ function getPSKForWLAN(wlanGroup, wlan) {
 			}),
 		};
 
-		$.ajax(settings).done(function(response) {
-			if (response.hasOwnProperty('status')) {
-				if (response.status === '503') {
-					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/wlan/<GROUP>)');
-					return;
-				}
+		$.ajax(settings).done(function(commandResults, statusText, xhr) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
 			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/wlan/<GROUP>/<WLAN>)');
+				apiErrorCount++;
+				return;
+			} else if (commandResults.hasOwnProperty('error_code')) {
+				logError(commandResults.description);
+				apiErrorCount++;
+				return;
+			}
+			var response = JSON.parse(commandResults.responseBody);
+
 			if (response.wlan && response.wlan.wpa_passphrase) {
 				var passphrase = response.wlan.wpa_passphrase;
 				$.each(wlans, function() {

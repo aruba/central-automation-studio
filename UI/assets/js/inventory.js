@@ -12,6 +12,7 @@ var deviceList = [];
 
 function loadCurrentPageAP() {
 	loadFullInventory();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function loadFullInventory() {
@@ -36,10 +37,11 @@ function loadFullInventory() {
 				if (monitoringInfo.status == 'Up') {
 					status = '<i class="fa fa-circle text-success"></i>';
 				}
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
+
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
 			} else {
 				var status = '<i class="fa fa-circle text-muted"></i>';
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
 			}
 		});
 
@@ -145,6 +147,39 @@ function moveToSite(selectedSite) {
 	processCSV(csvDataBlob);
 	// Move devices to the selected Site
 	moveDevicesToSite();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Licensing Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function askToLicense() {
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'This will change the licensing for all devices shown in the table (provided auto-licensing is disabled)',
+		icon: 'warning',
+		showDenyButton: true,
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		denyButtonColor: '#ff8500',
+		denyButtonText: 'Unlicense',
+		confirmButtonText: 'License',
+	}).then(result => {
+		if (result.isDenied) {
+			unlicenseDevices();
+		}
+	});
+}
+
+function unlicenseDevices() {
+	// Build CSV with selected site name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(undefined, undefined);
+	processCSV(csvDataBlob);
+	// Move devices to the selected Site
+	unlicenseDevicesFromCSV();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------

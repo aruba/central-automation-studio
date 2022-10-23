@@ -50,7 +50,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: AP Troubleshooting </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: AP Troubleshooting </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -143,12 +143,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 										<div class="row"></div>
 										<div class="row">
 											<div class="col-md-6">
-												<h5>Hardware</h5>
+												<h5 class="extra-h5-padding">Hardware</h5>
 												<hr />
 												<ul class="list-inline" id="hardwareIssues"></ul>
 											</div>
 											<div class="col-md-6">
-												<h5>Interfaces</h5>
+												<h5 class="extra-h5-padding">Interfaces</h5>
 												<hr />
 												<ul class="list-inline" id="interfaceIssues"></ul>
 											</div>
@@ -231,6 +231,61 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- AAA Modal -->
+				<div class="modal fade modal-mini modal-primary" id="AAAModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title" id="aaaTitle">AAA Details</h4>
+									</div>
+									<div class="card-body">
+										<div class="row">
+											<div class="col-md-6">
+												<h5>Average Response Times</h5>
+												<hr />
+												<ul class="list-inline" id="aaaResponseTimes"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Response Stats</h5>
+												<hr />
+												<ul class="list-inline" id="aaaResponseStats"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="row">
+											<div class="col-md-6">
+												<h5 class="extra-h5-padding">Possible Issues</h5>
+												<hr />
+												<ul class="list-inline" id="aaaPossibleIssues"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="accordions" id="accordion">
+											<div class="card">
+												<div class="card-header">
+													<h4 class="card-title">
+														<a data-target="#collapseAAA" href="#" data-toggle="collapse">
+															Raw Results
+															<b class="caret"></b>
+														</a>
+													</h4>
+												</div>
+												<div id="collapseAAA" class="card-collapse collapse">
+													<div class="card-body">
+														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="aaaText" rows="50"></textarea>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -252,6 +307,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
 						<a data-toggle="modal" data-target="#RadioStatsModal" href="#pablo" id="RadioStatsModalLink"></a>
 						<a data-toggle="modal" data-target="#SystemStatusModal" href="#pablo" id="SystemStatusModalLink"></a>
+						<a data-toggle="modal" data-target="#AAAModal" href="#pablo" id="AAAModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -349,7 +405,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js"></script>
+	<script src="assets/js/main.js?v=221023"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
 	<script src="assets/js/troubleshooting-ap.js"></script>

@@ -8,12 +8,14 @@ var selectedClusters = {};
 var selectedDevices = {};
 var clusterInfo = {};
 var deviceInfo = {};
+var aaaInfo = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageAP() {
 	getDevices();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function getDevices() {
@@ -81,9 +83,12 @@ function loadDevicesTable(checked) {
 			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugSystemStatus(\'' + device.serial + '\')">System</button> ';
 
 			$.each(device.radios, function() {
+				//console.log(this);
 				// no support for radio 3 (6GHz) in troubleshooting APIs
 				if (this.band < 2 && this.status == 'Up') tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugRadioStats(\'' + device.serial + "','" + this.index + '\')">' + this.radio_name.replace('Radio ', '') + '</button> ';
 			});
+
+			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugAAA(\'' + device.serial + '\')">AAA</button> ';
 		}
 
 		// Add AP to table
@@ -140,7 +145,7 @@ function debugRadioStats(deviceSerial, radioBand) {
 
 function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -152,14 +157,21 @@ function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
@@ -300,7 +312,7 @@ function debugSystemStatus(deviceSerial) {
 
 function checkDebugSystemStatus(session_id, deviceSerial) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -312,14 +324,21 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
@@ -445,9 +464,9 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 						var macaddr = '?';
 					}
 					if (intDetails.includes('RUNNING')) {
-						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>' + intSpeed + 'Mbps (' + intDuplex + ' Duplex)<strong></li>');
+						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>' + intSpeed + 'Mbps (' + intDuplex + ' Duplex)</strong></li>');
 					} else {
-						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>Down<strong></li>');
+						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>Down</strong></li>');
 					}
 				});
 
@@ -513,7 +532,7 @@ function obtainCrashLog(deviceSerial) {
 
 function checkCrashLog(session_id, deviceSerial) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -522,6 +541,65 @@ function checkCrashLog(session_id, deviceSerial) {
 		data: JSON.stringify({
 			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
 			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkDebugSystemStatus, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				//console.log(response.output);
+				var crashBlob = new Blob([response.output], { type: 'text/csv;charset=utf-8;' });
+				var crashURL = window.URL.createObjectURL(crashBlob);
+				var crashLink = document.createElement('a');
+				crashLink.href = crashURL;
+				crashLink.setAttribute('download', 'CrashInformation-' + response.serial + '.txt');
+				crashLink.click();
+				window.URL.revokeObjectURL(crashLink);
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
+		}
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	AAA Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function debugAAA(deviceSerial) {
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 108 }] });
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
 		}),
 	};
 
@@ -535,19 +613,123 @@ function checkCrashLog(session_id, deviceSerial) {
 		}
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkAAA, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkAAA(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
 			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
 				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
-				setTimeout(checkDebugSystemStatus, 10000, session_id, response.serial);
+				setTimeout(checkAAA, 10000, session_id, response.serial);
 			} else if (response.status === 'COMPLETED') {
-				console.log(response.output);
-				var crashBlob = new Blob([response.output], { type: 'text/csv;charset=utf-8;' });
-				var crashURL = window.URL.createObjectURL(crashBlob);
-				var crashLink = document.createElement('a');
-				crashLink.href = crashURL;
-				crashLink.setAttribute('download', 'CrashInformation-' + response.serial + '.txt');
-				crashLink.click();
-				window.URL.revokeObjectURL(crashLink);
+				$('#aaaResponseTimes').empty();
+				$('#aaaResponseStats').empty();
+				$('#aaaPossibleIssues').empty();
+
+				var deviceDetails = findDeviceInMonitoring(response.serial);
+				document.getElementById('aaaTitle').innerHTML = 'AAA Details for ' + deviceDetails.name; // + ' (' + runTime + ')';
+
+				aaaInfo = {};
+				var columnIndexes = [];
+				var columnNames = [];
+				//console.log(response.output);
+				//var results = decodeURI(response.output);
+				var results = response.output;
+
+				// Process the response...
+				var lines = results.split('\n');
+				var startLine = 0;
+				// Get AAA Server Names
+				for (var i = 0; i < lines.length; i++) {
+					var currentLine = lines[i];
+					// Pull out the Server Names
+					if (currentLine.startsWith('Statistics')) {
+						var nameLine = currentLine;
+						var serverNames = nameLine.match(/[^\s]+/g);
+						// get column index for server
+						$.each(serverNames, function() {
+							if (this != 'Statistics') {
+								aaaInfo[this] = {};
+								columnNames.push(this.toString());
+								columnIndexes.push(nameLine.indexOf(this));
+							}
+						});
+						startLine = i + 2;
+						break;
+					}
+				}
+				lines = lines.splice(startLine);
+
+				// For each server get the values
+				$.each(lines, function() {
+					var currentLine = this.toString();
+					if (currentLine.trim() != '' && !currentLine.includes('=== Troubleshooting session completed ===')) {
+						var statName = currentLine.substring(0, columnIndexes[0]).trim();
+						for (var i = 0; i < columnIndexes.length; i++) {
+							var statValue = '';
+							if (i == columnIndexes.length - 1) {
+								var aaaStats = aaaInfo[columnNames[i]];
+								aaaStats[statName] = currentLine.substring(columnIndexes[i]).trim();
+								aaaInfo[columnNames[i]] = aaaStats;
+							} else {
+								var columnName = columnNames[i];
+								var aaaStats = aaaInfo[columnName];
+								aaaStats[statName] = currentLine.substring(columnIndexes[i], columnIndexes[i + 1]).trim();
+								aaaInfo[columnName] = aaaStats;
+							}
+						}
+					}
+				});
+				console.log(aaaInfo);
+
+				// Build out the UI elements
+				for (const [key, value] of Object.entries(aaaInfo)) {
+					if (value['AvgRespTime (ms)'] != '0') $('#aaaResponseTimes').append('<li>' + key + ': <strong>' + value['AvgRespTime (ms)'] + ' ms</strong></li>');
+					if (value['Access-Accept'] != '0' || value['Access-Reject'] != '0') $('#aaaResponseStats').append('<li>' + key + ': Access-Accept: <strong>' + value['Access-Accept'] + ' </strong> Access-Reject: <strong>' + value['Access-Reject'] + '</strong></li>');
+
+					if (value['Invalid Secret'] != '0') $('#aaaPossibleIssues').append('<li>' + key + ': <strong>Invalid Secret (' + value['Invalid Secret'] + ')</strong></li>');
+					if (value['Read Error'] != '0') $('#aaaPossibleIssues').append('<li>' + key + ': <strong>Read Error (' + value['Read Error'] + ')</strong></li>');
+					if (value['Mismatch Response'] != '0') $('#aaaPossibleIssues').append('<li>' + key + ': <strong>Mismatch Response (' + value['Mismatch Response'] + ')</strong></li>');
+				}
+
+				document.getElementById('aaaText').innerHTML = results;
+				$('#AAAModalLink').trigger('click');
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
 			} else {
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');

@@ -51,6 +51,7 @@ function buildGroupDeviceList() {
 			$('.selectpicker').selectpicker('refresh');
 		}
 	});
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function viewConfig() {
@@ -78,7 +79,7 @@ function getConfigforSelected() {
 	//}
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -90,7 +91,21 @@ function getConfigforSelected() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/caasapi/v1/showcommand/object/committed)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		document.getElementById('gatewayConfigView').value = response.config.join('\n');
 		document.getElementById('viewGatewayBtn').disabled = false;
 	});
@@ -103,7 +118,7 @@ function getEffectiveConfigForSelected() {
 	var selectedEntity = groupselect.value;
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -115,7 +130,21 @@ function getEffectiveConfigForSelected() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/caasapi/v1/showcommand/object/effective)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		document.getElementById('gatewayEffectiveConfigView').value = response.config.join('\n');
 		document.getElementById('viewEffectiveGatewayBtn').disabled = false;
 	});

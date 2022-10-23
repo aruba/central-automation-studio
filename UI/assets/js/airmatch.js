@@ -1,6 +1,6 @@
 /*
 Central Automation v1.1.4
-Updated: 1.8.2
+Updated: 1.17
 Copyright Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -9,6 +9,8 @@ var noiseEvents = [];
 var rfhistory = [];
 var staticRadios = [];
 var powerLabels = [];
+var rfNeighbours = {};
+var channelAPs = {};
 
 var optimizations = {};
 
@@ -21,6 +23,7 @@ var twoPower;
 
 var labels2 = ['1', '6', '11'];
 var labels5 = ['36', '40', '44', '48', '52', '56', '60', '64', '100', '104', '108', '112', '116', '120', '124', '128', '132', '136', '140', '144', '149', '153', '157', '161', '165'];
+var labels6 = ['5', '21', '37', '53', '69', '85', '101', '117', '133', '149', '165', '181', '197', '213', '229'];
 
 var selectedDevices = {};
 var deviceInfo = {};
@@ -106,6 +109,7 @@ function updateAirMatchData() {
 	$.when(tokenRefresh()).then(function() {
 		showNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
 		$.when(getAPData(0, false)).then(function() {
+			sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
 			fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
 			twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
 			sixPower = [];
@@ -122,13 +126,126 @@ function updateAirMatchData() {
 
 			powerLabels = [];
 
+			getRFNeighbours();
 			getEIRPDistribution();
 			getChannelDistribution();
-			getRFEvents();
+
 			getNoiseEvents();
 			getAirmatchOptimization();
 			getStaticRadios();
+			// Do we need to grab the group properties?
+			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
+			if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
+				loadAirMatchEvents = true;
+			} else {
+				loadAirMatchEvents = JSON.parse(loadAirMatchEvents);
+			}
+			if (loadAirMatchEvents) {
+				document.getElementById('rfevents-row').hidden = false;
+				getRFEvents();
+			} else {
+				document.getElementById('rfevents-row').hidden = true;
+			}
 			//getAirMatchHistory();
+			$('[data-toggle="tooltip"]').tooltip();
+		});
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	EIRP
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function getRFNeighbours() {
+	showNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
+	rfNeighbours = {};
+	var settings2 = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_all/2.4ghz',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings2).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_all/2.4ghz)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		rfNeighbours['2'] = response;
+
+		var settings5 = {
+			url: getAPIURL() + '/tools/getCommandwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_all/5ghz',
+				access_token: localStorage.getItem('access_token'),
+			}),
+		};
+
+		$.ajax(settings5).done(function(commandResults, statusText, xhr) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_all/5ghz)');
+				apiErrorCount++;
+				return;
+			} else if (commandResults.hasOwnProperty('error_code')) {
+				logError(commandResults.description);
+				apiErrorCount++;
+				return;
+			}
+			var response = JSON.parse(commandResults.responseBody);
+			rfNeighbours['5'] = response;
+
+			var settings6 = {
+				url: getAPIURL() + '/tools/getCommandwHeaders',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_all/6ghz',
+					access_token: localStorage.getItem('access_token'),
+				}),
+			};
+
+			$.ajax(settings6).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
+				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_all/6ghz)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+				rfNeighbours['6'] = response;
+				//console.log(rfNeighbours);
+			});
 		});
 	});
 }
@@ -139,7 +256,7 @@ function updateAirMatchData() {
 function getEIRPDistribution() {
 	showNotification('ca-chart-bar-32', 'Getting EIRP Distribution...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -151,14 +268,20 @@ function getEIRPDistribution() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log('EIRP Distribution: ' + JSON.stringify(response));
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/adv_eirp_distrubution)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/adv_eirp_distrubution)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		// Build labels and sort them
 		for (let k in response['6ghz']) {
 			var index = powerLabels.indexOf(k);
@@ -257,9 +380,13 @@ function getEIRPDistribution() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getChannelDistribution() {
 	showNotification('ca-chart-bar-32', 'Getting Channel Distribution...', 'bottom', 'center', 'info');
+	channelAPs = {};
+	channelAPs['2.4GHz'] = {};
+	channelAPs['5GHz'] = {};
+	channelAPs['6GHz'] = {};
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -271,15 +398,20 @@ function getChannelDistribution() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response);
-		//console.log("Channel Distribution: "+ JSON.stringify(response))
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/solver/v1/radio_plan)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/solver/v1/radio_plan)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		$.each(response, function() {
 			if (this['band'] === '2.4GHz') {
 				var index = labels2.indexOf(this['channel'].toString());
@@ -288,10 +420,15 @@ function getChannelDistribution() {
 				}
 			}
 			if (this['band'] === '5GHz') {
-				if (this['channel'].toString() === '120') console.log(this);
 				var index = labels5.indexOf(this['channel'].toString());
 				if (index != -1) {
 					fiveChannel[index] = fiveChannel[index] + 1;
+				}
+			}
+			if (this['band'] === '6GHz') {
+				var index = labels6.indexOf(this['channel'].toString());
+				if (index != -1) {
+					sixChannel[index] = sixChannel[index] + 1;
 				}
 			}
 		});
@@ -383,6 +520,50 @@ function getChannelDistribution() {
 				});
 			}
 		});
+
+		var data6 = {
+			labels: labels6,
+			series: [sixChannel],
+		};
+
+		var options6 = {
+			seriesBarDistance: 10,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
+			height: '200px',
+			plugins: [Chartist.plugins.tooltip()],
+		};
+
+		var responsiveOptions6 = [
+			[
+				'screen and (max-width: 640px)',
+				{
+					seriesBarDistance: 5,
+					axisX: {
+						labelInterpolationFnc: function(value) {
+							return value[0];
+						},
+					},
+				},
+			],
+		];
+		var sixGChart = Chartist.Bar('#channelChart6GHz', data6, options6, responsiveOptions5);
+		sixGChart.on('draw', function(data) {
+			if (data.type == 'bar') {
+				data.element.animate({
+					y2: {
+						dur: '0.2s',
+						from: data.y1,
+						to: data.y2,
+					},
+				});
+			}
+		});
 	});
 }
 
@@ -395,7 +576,7 @@ function getAirmatchOptimization() {
 
 	// Grab the optimizations - latest 11 (1 for Latest section, next 10 for the table)
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -407,15 +588,20 @@ function getAirmatchOptimization() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response)
-		//console.log("AirMatch Optimization: "+ JSON.stringify(response))
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/solver/v1/optimization)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/solver/v1/optimization)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 
 		var optimizationIndex = 0;
 
@@ -569,7 +755,7 @@ function getAirmatchOptimization() {
 			} else {
 				// rest of the results go into the table
 				var table = $('#lastrun-table').DataTable();
-				table.row.add([timestamp, '<strong><span style="display:none;">' + airMatchEpoch + '</span>' + eventTime.toLocaleString() + '</strong>', runModeType, five_deployedState, five_num_ap, five_num_radios, five_improvement_string, two_deployedState, two_num_ap, two_num_radios, two_improvement_string]);
+				table.row.add([timestamp, '<strong><span style="display:none;">' + airMatchEpoch + '</span>' + eventTime.toLocaleString() + '</strong>', runModeType, six_deployedState, six_num_ap, six_num_radios, six_improvement_string, five_deployedState, five_num_ap, five_num_radios, five_improvement_string, two_deployedState, two_num_ap, two_num_radios, two_improvement_string]);
 			}
 
 			// Add the radio info in under the timestamp
@@ -649,7 +835,7 @@ function getStaticRadios() {
 	staticRadios = [];
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -661,14 +847,20 @@ function getStaticRadios() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log("Static Radios: "+ JSON.stringify(response))
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/static_radio_all)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/static_radio_all)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 
 		staticRadios = staticRadios.concat(response);
 		$.each(response, function() {
@@ -732,7 +924,7 @@ function unfreezeAP(serial, band) {
 
 	// Get current AP settings
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -744,61 +936,61 @@ function unfreezeAP(serial, band) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-
-		if (response.hasOwnProperty('error_code')) {
-			logError(response.description);
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
 			apiErrorCount++;
-		} else {
-			// Update ap settings
-			var settings = {
-				url: getAPIURL() + '/tools/postCommand',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + serial,
-					access_token: localStorage.getItem('access_token'),
-					data: JSON.stringify({ achannel: band === '5GHz' ? '0' : response.achannel, atxpower: band === '5GHz' ? '-127' : response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: band === '2.4GHz' ? '0' : response.gchannel, gtxpower: band === '2.4GHz' ? '-127' : response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: response.hostname }),
-				}),
-			};
-
-			$.ajax(settings).done(function(response, statusText, xhr) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						apiErrorCount++;
-						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-						return;
-					}
-				}
-				if (response !== serial) {
-					logError(serial + ' was not unfrozen');
-					//console.log(response.reason);
-					apiErrorCount++;
-				} else {
-					showNotification('ca-sun', 'Radio unfrozen on ' + band, 'bottom', 'center', 'success');
-					$('#static-table')
-						.DataTable()
-						.clear();
-					$('#static-table')
-						.DataTable()
-						.rows()
-						.draw();
-					staticRadios = [];
-					getStaticRadios();
-				}
-			});
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
 		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		// Update ap settings
+		var settings = {
+			url: getAPIURL() + '/tools/postCommand',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + serial,
+				access_token: localStorage.getItem('access_token'),
+				data: JSON.stringify({ achannel: band === '5GHz' ? '0' : response.achannel, atxpower: band === '5GHz' ? '-127' : response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: band === '2.4GHz' ? '0' : response.gchannel, gtxpower: band === '2.4GHz' ? '-127' : response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: response.hostname }),
+			}),
+		};
+
+		$.ajax(settings).done(function(response, statusText, xhr) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					apiErrorCount++;
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+					return;
+				}
+			}
+			if (response !== serial) {
+				logError(serial + ' was not unfrozen');
+				//console.log(response.reason);
+				apiErrorCount++;
+			} else {
+				showNotification('ca-sun', 'Radio unfrozen on ' + band, 'bottom', 'center', 'success');
+				$('#static-table')
+					.DataTable()
+					.clear();
+				$('#static-table')
+					.DataTable()
+					.rows()
+					.draw();
+				staticRadios = [];
+				getStaticRadios();
+			}
+		});
 	});
 }
 
@@ -894,7 +1086,7 @@ function freezeAP(serial) {
 	var apMonitoring = findDeviceInMonitoring(serial);
 	// Get current AP settings
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -906,99 +1098,99 @@ function freezeAP(serial) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
-		if (response.hasOwnProperty('error_code')) {
-			logError(response.description);
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
 			apiErrorCount++;
-		} else {
-			// Update ap settings back into Central
-			var channel5 = '0';
-			var power5 = '-127';
-			var channel2 = '0';
-			var power2 = '-127';
-
-			$.each(apMonitoring['radios'], function() {
-				//console.log(this)
-				if (this['band'] == 1 && this['index'] == 0) {
-					if (this['channel'] && this['channel'] !== '0') channel5 = this['channel'];
-					if (channel5.includes('-')) {
-						// convert from - to a + channel
-						channel5int = parseInt(channel5.slice(0, -1));
-						channel5int = channel5int - 4;
-						channel5 = channel5int.toString() + '+';
-					}
-					if (this['tx_power']) power5 = this['tx_power'].toString();
-				} else if (this['band'] == 0) {
-					if (this['channel'] && this['channel'] !== '0') channel2 = this['channel'];
-					if (this['tx_power']) power2 = this['tx_power'].toString();
-				}
-			});
-
-			var apZone = response.zonename;
-			if (apZone === '_#ALL#_') apZone = '';
-
-			var settings = {
-				url: getAPIURL() + '/tools/postCommand',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + serial,
-					access_token: localStorage.getItem('access_token'),
-					data: JSON.stringify({ achannel: channel5, atxpower: power5, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: channel2, gtxpower: power2, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: apZone, hostname: response.hostname }),
-				}),
-			};
-
-			$.ajax(settings).done(function(response, statusText, xhr) {
-				if (xhr.status != 200) {
-					logError(serial + ' was not frozen');
-					//console.log(response.reason);
-					frozenErrors++;
-				} else {
-					frozenDevices++;
-				}
-
-				// check if finished
-				if (frozenDevices + frozenErrors == Object.keys(selectedDevices).length) {
-					if (frozenErrors > 0) {
-						Swal.fire({
-							title: 'Freeze Failure',
-							text: 'Some or all AP radios failed to be frozen',
-							icon: 'error',
-						});
-					} else {
-						Swal.fire({
-							title: 'Freeze Success',
-							text: 'All AP radios were frozen',
-							icon: 'success',
-						});
-					}
-					$('#static-table')
-						.DataTable()
-						.clear();
-					$('#static-table')
-						.DataTable()
-						.rows()
-						.draw();
-					staticRadios = [];
-					getStaticRadios();
-				} else {
-					// freeze next AP in list
-					currentAPIndex++;
-					freezeAP(Object.keys(selectedDevices)[currentAPIndex]);
-				}
-			});
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
 		}
+		var response = JSON.parse(commandResults.responseBody);
+		// Update ap settings back into Central
+		var channel5 = '0';
+		var power5 = '-127';
+		var channel2 = '0';
+		var power2 = '-127';
+
+		$.each(apMonitoring['radios'], function() {
+			//console.log(this)
+			if (this['band'] == 1 && this['index'] == 0) {
+				if (this['channel'] && this['channel'] !== '0') channel5 = this['channel'];
+				if (channel5.includes('-')) {
+					// convert from - to a + channel
+					channel5int = parseInt(channel5.slice(0, -1));
+					channel5int = channel5int - 4;
+					channel5 = channel5int.toString() + '+';
+				}
+				if (this['tx_power']) power5 = this['tx_power'].toString();
+			} else if (this['band'] == 0) {
+				if (this['channel'] && this['channel'] !== '0') channel2 = this['channel'];
+				if (this['tx_power']) power2 = this['tx_power'].toString();
+			}
+		});
+
+		var apZone = response.zonename;
+		if (apZone === '_#ALL#_') apZone = '';
+
+		var settings = {
+			url: getAPIURL() + '/tools/postCommand',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + serial,
+				access_token: localStorage.getItem('access_token'),
+				data: JSON.stringify({ achannel: channel5, atxpower: power5, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: channel2, gtxpower: power2, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: apZone, hostname: response.hostname }),
+			}),
+		};
+
+		$.ajax(settings).done(function(response, statusText, xhr) {
+			if (xhr.status != 200) {
+				logError(serial + ' was not frozen');
+				//console.log(response.reason);
+				frozenErrors++;
+			} else {
+				frozenDevices++;
+			}
+
+			// check if finished
+			if (frozenDevices + frozenErrors == Object.keys(selectedDevices).length) {
+				if (frozenErrors > 0) {
+					Swal.fire({
+						title: 'Freeze Failure',
+						text: 'Some or all AP radios failed to be frozen',
+						icon: 'error',
+					});
+				} else {
+					Swal.fire({
+						title: 'Freeze Success',
+						text: 'All AP radios were frozen',
+						icon: 'success',
+					});
+				}
+				$('#static-table')
+					.DataTable()
+					.clear();
+				$('#static-table')
+					.DataTable()
+					.rows()
+					.draw();
+				staticRadios = [];
+				getStaticRadios();
+			} else {
+				// freeze next AP in list
+				currentAPIndex++;
+				freezeAP(Object.keys(selectedDevices)[currentAPIndex]);
+			}
+		});
 	});
 }
 
@@ -1019,7 +1211,7 @@ function getRFEvents() {
 
 	rfEvents = [];
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1031,16 +1223,22 @@ function getRFEvents() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log("RF Events: "+ JSON.stringify(response))
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/rf_events_all)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/rf_events_all)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		rfEvents = rfEvents.concat(response);
-
+		rfEvents = rfEvents.slice(0, 500);
 		$.each(response, function() {
 			if (this['mac']) {
 				foundAP = findAPForRadio(this['mac']);
@@ -1090,7 +1288,7 @@ function getNoiseEvents() {
 	noiseEvents = [];
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1102,13 +1300,21 @@ function getNoiseEvents() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/priority_rf_events_all)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/rf_events_all)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log("RF Events: "+ JSON.stringify(response))
 		noiseEvents = noiseEvents.concat(response);
 
@@ -1156,11 +1362,12 @@ function getAirMatchHistory() {
 		if (this.firmware_version.startsWith('10.')) {
 			for (var i = 0, len = this.radios.length; i < len; i++) {
 				var url = localStorage.getItem('base_url') + '/airmatch/telemetry/v1/history/' + this.radios[i]['macaddr'];
-				if (this.radios[i].band == 0) url = url + '/5GHz';
+				if (this.radios[i].band == 3) url = url + '/6GHz';
+				else if (this.radios[i].band == 0) url = url + '/5GHz';
 				else url = url + '/2.4GHz';
 
 				var settings = {
-					url: getAPIURL() + '/tools/getCommand',
+					url: getAPIURL() + '/tools/getCommandwHeaders',
 					method: 'POST',
 					timeout: 0,
 					headers: {
@@ -1172,13 +1379,21 @@ function getAirMatchHistory() {
 					}),
 				};
 
-				$.ajax(settings).done(function(response, statusText, xhr) {
-					if (response.hasOwnProperty('status')) {
-						if (response.status === '503') {
-							logError('Central Server Error (503): ' + response.reason + ' (/airmatch/telemetry/v1/history/)');
-							return;
-						}
+				$.ajax(settings).done(function(commandResults, statusText, xhr) {
+					if (commandResults.hasOwnProperty('headers')) {
+						updateAPILimits(JSON.parse(commandResults.headers));
 					}
+					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+						logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/history/<RADIO-MAC>)');
+						apiErrorCount++;
+						return;
+					} else if (commandResults.hasOwnProperty('error_code')) {
+						logError(commandResults.description);
+						apiErrorCount++;
+						return;
+					}
+					var response = JSON.parse(commandResults.responseBody);
+
 					//console.log("AirMatch History: "+ JSON.stringify(response))
 
 					rfhistory = rfhistory.concat(response);

@@ -261,7 +261,7 @@ function testToken() {
 	};
 
 	return $.ajax(settings)
-		.done(function(response) {
+		.done(function(response, textStatus, jqXHR) {
 			//console.log(response);
 			if (response.hasOwnProperty('status')) {
 				if (response.status === '503') {

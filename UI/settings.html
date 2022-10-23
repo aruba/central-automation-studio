@@ -63,14 +63,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</a>
 						</li>
                         <li class="nav-item dropdown">
-							<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								<i class="nc-icon nc-bullet-list-67"></i>
 							</a>
 							<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
 								<a href="documentation.html" class="dropdown-item">
 									<i class="central-icon ca-book-open"></i> Help
 								</a>
-								<a href="hydra-settings.html" class="dropdown-item">
+								<a href="settings.html" class="dropdown-item">
 									<i class="nc-icon nc-settings-gear-64"></i> Settings
 								</a>
 							</div>
@@ -238,6 +238,17 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 																<label class="col-md-6 control-label">Group Properties</label>
 																<div class="col-md-6">
 																	<select id="load_group_properties" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
+																		<option value="Include">Include</option>
+																		<option value="Do Not Include">Do Not Include</option>
+																	</select>
+																</div>
+															</div>
+														</div>
+														<div class="form-group">
+															<div class="row">
+																<label class="col-md-6 control-label">AirMatch - All RF Events</label>
+																<div class="col-md-6">
+																	<select id="load_airmatch_events" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
 																		<option value="Include">Include</option>
 																		<option value="Do Not Include">Do Not Include</option>
 																	</select>
@@ -591,6 +602,14 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 			loadGroupProperties = JSON.parse(loadGroupProperties)
 		}
 		document.getElementById("load_group_properties").value = loadGroupProperties ? "Include" : "Do Not Include";
+		
+		var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
+		if (loadAirMatchEvents === null || loadAirMatchEvents === "") {
+			loadAirMatchEvents = true;
+		} else {
+			loadAirMatchEvents = JSON.parse(loadAirMatchEvents)
+		}
+		document.getElementById("load_airmatch_events").value = loadAirMatchEvents ? "Include" : "Do Not Include";
         
         var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
@@ -599,7 +618,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js"></script>
+<script src="assets/js/main.js?v=221023"></script>
 <script src="assets/js/proxy.js"></script>
 <script src="assets/js/hydra-main.js"></script>
 <script src="assets/js/hydra.js"></script>

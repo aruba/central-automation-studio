@@ -52,7 +52,7 @@ Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: Device Inventory </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Device Inventory </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -106,6 +106,7 @@ Aaron Scott (WiFi Downunder) 2022
 															<th>Part Number</th>
 															<th>Model</th>
 															<th>Status</th>
+															<th>Status Text</th>
 															<th>IP Address</th>
 															<th>Name</th>
 															<th>Group</th>
@@ -123,6 +124,7 @@ Aaron Scott (WiFi Downunder) 2022
 											<button type="submit" class="btn btn-fill btn-info" name="downloadInventoryBtn" id="downloadInventoryBtn" onclick="downloadDeviceInventory()">Download Inventory</button>
 											<button type="submit" class="btn btn-fill btn-warning" name="assignGroupBtn" id="assignGroupBtn" onclick="askToSelectGroup()">Move To Group</button>
 											<button type="submit" class="btn btn-fill btn-warning" name="assignSiteBtn" id="assignSiteBtn" onclick="askToSelectSite()">Move To Site</button>
+											<!--<button type="submit" class="btn btn-fill btn-warning" name="licenseBtn" id="licenseBtn" onclick="askToLicense()">Change Licensing</button>-->
 										</div>
 									</div>
 								</div>
@@ -286,13 +288,13 @@ Aaron Scott (WiFi Downunder) 2022
 						search: "_INPUT_",
 						searchPlaceholder: "Search Inventory",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 5 }]
+					columnDefs: [{ type: 'ip-address', targets: 7 }, { "targets": 6, "visible": false }]
 				});
 			});
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js"></script>
+	<script src="assets/js/main.js?v=221023"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
 	<script src="assets/js/inventory.js"></script>

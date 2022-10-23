@@ -1,6 +1,6 @@
 /*
 Central Automation v1.x
-Last Updated 1.16
+Last Updated 1.17.1
 Aaron Scott (WiFi Downunder) 2022
 */
 
@@ -77,8 +77,10 @@ var archiveCounter = 0;
 var licenseCounter = 0;
 var renameCounter = 0;
 var zoneCounter = 0;
+var radioModeCounter = 0;
 var rfCounter = 0;
 var radioCounter = 0;
+var antennaCounter = 0;
 var updateVariablesCounter = 0;
 var authPromise;
 var inventoryPromise;
@@ -90,11 +92,13 @@ var groupPromise;
 var customerPromise;
 var zonePromise;
 var rfPromise;
+var bssidPromise;
 
 var clients = [];
 var wirelessClients = [];
 var wiredClients = [];
 var aps = [];
+var bssids = [];
 var apInventory = [];
 var apInventoryCount = 0;
 var switches = [];
@@ -151,12 +155,23 @@ var autoMagicRenamePromise;
 var autoPortPromise;
 var autoCustomerPromise;
 var autoVariablesPromise;
+var autoAntennaPromise;
 
 var manualGroup = '';
 var manualCustomer = '';
 
 var existingPassphrase = '';
 var wlanConfig = {};
+
+var renameNotification;
+var zoneNotification;
+var profileNotification;
+var radioNotification;
+var antennaNotification;
+var licenseNotification;
+var moveNotification;
+var renameNotification;
+var rebootNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Cluster Utility functions
@@ -210,6 +225,7 @@ function onFinishSetup() {
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
 	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').value === 'Include' ? true : false);
+	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').value === 'Include' ? true : false);
 	localStorage.setItem('qr_color', $('#color_picker').val());
 	localStorage.setItem('qr_logo', $('#qr_logo').val());
 	localStorage.removeItem('monitoring_update');
@@ -337,6 +353,26 @@ function showNotification(icon, message, from, align, color) {
 	);
 }
 
+// Added in 1.18.2
+function showProgressNotification(icon, message, from, align, color) {
+	// Valid Colors: danger, warning, success, info, primary
+	var iconString = 'central-icon ' + icon;
+	return $.notify(
+		{
+			icon: iconString,
+			message: message,
+		},
+		{
+			type: color,
+			placement: {
+				from: from,
+				align: align,
+			},
+			showProgressbar: true,
+		}
+	);
+}
+
 // Updated 1.9.3
 function logError(message) {
 	var errorBody = document.getElementById('errorBody');
@@ -390,7 +426,7 @@ function loadCSVFile(clickedRow) {
 			delimiter: ',',
 			header: true,
 			complete: processCSV,
-			skipEmptyLines: true,
+			skipEmptyLines: 'greedy',
 		},
 		before: function(file, inputElem) {
 			showNotification('ca-cpu', 'Processing CSV File...', 'bottom', 'center', 'info');
@@ -452,6 +488,9 @@ function loadCSVFile(clickedRow) {
 			} else if (clickedRow === 'setRFProfile') {
 				currentWorkflow = '';
 				setRFProfile();
+			} else if (clickedRow === 'setRadioMode') {
+				currentWorkflow = '';
+				setRadioMode('all');
 			} else if (clickedRow === 'enable24') {
 				currentWorkflow = '';
 				enable24radios();
@@ -467,6 +506,9 @@ function loadCSVFile(clickedRow) {
 			} else if (clickedRow === 'countrycode') {
 				currentWorkflow = '';
 				updateCountryCodes();
+			} else if (clickedRow === 'rebootDevices') {
+				currentWorkflow = '';
+				rebootDevices();
 			} else if (clickedRow === 'auto-add-license') {
 				currentWorkflow = 'auto-add-license';
 				addAndLicense();
@@ -498,6 +540,9 @@ function loadCSVFile(clickedRow) {
 			} else if (clickedRow === 'auto-site-autorenameap-portdescriptions') {
 				currentWorkflow = 'auto-site-autorenameap-portdescriptions';
 				siteAndAutoRenameAndPortDescriptions();
+			} else if (clickedRow === 'auto-renameap-radiomode') {
+				currentWorkflow = 'auto-renameap-radiomode';
+				renameAndRadioMode();
 
 				// MSP Functions
 			} else if (clickedRow === 'assigntocustomer') {
@@ -622,6 +667,32 @@ function generateCSVForSite(clickedRow) {
 		} else if (clickedRow === 'countrycode') {
 			currentWorkflow = '';
 			updateCountryCodes();
+		} else if (clickedRow === 'split5GhzMode') {
+			currentWorkflow = '';
+			// get supported APs for site (rebuild the CSV)
+			var split5Key = 'SPLIT 5GHZ MODE';
+			var radio0Mode = 'RADIO 0 MODE';
+			var radio2Mode = 'RADIO 2 MODE';
+			csvData = [];
+			$.each(aps, function() {
+				if (this['site'] === selectedSite && this['model'].includes('555')) {
+					csvData.push({ [nameKey]: this['name'], [serialKey]: this['serial'], [macKey]: this['macaddr'], [groupKey]: this['group_name'], [siteKey]: this['site'], [radio0Mode]: 'access', [radio2Mode]: 'access', [split5Key]: 'enabled' });
+				}
+			});
+			setRadioMode('split');
+		} else if (clickedRow === 'dual5GhzMode') {
+			currentWorkflow = '';
+			// get supported APs for site (rebuild the CSV)
+			var dual5Key = 'DUAL 5GHZ MODE';
+			var radio0Mode = 'RADIO 0 MODE';
+			var radio1Mode = 'RADIO 1 MODE';
+			csvData = [];
+			$.each(aps, function() {
+				if (this['site'] === selectedSite && (this['model'].includes('344') || this['model'].includes('345'))) {
+					csvData.push({ [nameKey]: this['name'], [serialKey]: this['serial'], [macKey]: this['macaddr'], [groupKey]: this['group_name'], [siteKey]: this['site'], [radio0Mode]: 'access', [radio1Mode]: 'access', [dual5Key]: 'enabled' });
+				}
+			});
+			setRadioMode('dual');
 		} else if (clickedRow === 'auto-add-license') {
 			currentWorkflow = 'auto-add-license';
 			addAndLicense();
@@ -657,7 +728,7 @@ function generateCSVForSite(clickedRow) {
 function tokenRefresh() {
 	showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/auth/refresh',
+		url: getAPIURL() + '/auth/refreshwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -673,8 +744,50 @@ function tokenRefresh() {
 	};
 
 	return $.ajax(settings)
-		.done(function(response) {
-			//console.log(response);
+		.done(function(commandResults, statusText, jqXHR) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+
+			var response = JSON.parse(commandResults.responseBody);
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/auth/refresh)');
+			} else if (commandResults.hasOwnProperty('error')) {
+				Swal.fire({
+					title: 'Central API connection failed',
+					text: response.error_description.replace('refresh_token', 'Refresh Token'),
+					icon: 'error',
+				});
+			} else if (commandResults.responseBody) {
+				localStorage.setItem('refresh_token', response.refresh_token);
+				localStorage.setItem('access_token', response.access_token);
+
+				var cluster = getAccountforClientID(localStorage.getItem('client_id'));
+				cluster['refresh_token'] = response.refresh_token;
+				cluster['access_token'] = response.access_token;
+				updateAccountDetails(cluster);
+
+				var path = window.location.pathname;
+				var page = path.split('/').pop();
+				if (page.includes('settings')) {
+					document.getElementById('refresh_token').value = response.refresh_token;
+					document.getElementById('access_token').value = response.access_token;
+					Swal.fire({
+						title: 'Connected!',
+						text: 'Central API connection successful',
+						icon: 'success',
+						confirmButtonText: 'Go to Dashboard',
+					}).then(result => {
+						if (result.isConfirmed) {
+							window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'dashboard.html';
+						}
+					});
+				} else {
+					showNotification('ca-padlock', 'Authentication Tokens Updated', 'bottom', 'center', 'success');
+				}
+			}
+			/*console.log(jqXHR);
 			if (response.status === '503') {
 				apiErrorCount++;
 				logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
@@ -709,7 +822,7 @@ function tokenRefresh() {
 						}
 					});
 				}
-			}
+			}*/
 		})
 		.fail(function(XMLHttpRequest, textStatus, errorThrown) {
 			console.log('error');
@@ -729,7 +842,7 @@ function tokenRefresh() {
 function authRefresh(refreshPromise) {
 	showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/auth/refresh',
+		url: getAPIURL() + '/auth/refreshwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -744,22 +857,22 @@ function authRefresh(refreshPromise) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response)
-		if (response.status === '503') {
-			logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
-			Swal.fire({
-				title: 'Central API connection failed',
-				text: response.reason,
-				icon: 'error',
-			});
+	$.ajax(settings).done(function(commandResults, statusText, jqXHR) {
+		//console.log(commandResults)
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+
+		var response = JSON.parse(commandResults.responseBody);
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/auth/refresh)');
 		} else if (response.hasOwnProperty('error')) {
 			Swal.fire({
 				title: 'Central API connection failed',
-				text: response.error_description,
+				text: response.error_description.replace('refresh_token', 'Refresh Token'),
 				icon: 'error',
 			});
-		} else {
+		} else if (response) {
 			localStorage.setItem('refresh_token', response.refresh_token);
 			localStorage.setItem('access_token', response.access_token);
 
@@ -767,10 +880,22 @@ function authRefresh(refreshPromise) {
 			cluster['refresh_token'] = response.refresh_token;
 			cluster['access_token'] = response.access_token;
 			updateAccountDetails(cluster);
+
+			showNotification('ca-padlock', 'Authentication Tokens Updated', 'bottom', 'center', 'success');
 		}
 		refreshPromise.resolve();
 	});
 	return refreshPromise.promise();
+}
+
+function updateAPILimits(headers) {
+	if (headers['X-RateLimit-Limit-day']) {
+		var usage = parseInt(headers['X-RateLimit-Limit-day']) - parseInt(headers['X-RateLimit-Remaining-day']);
+		$('#titleText').attr('data-original-title', 'Daily API Usage: ' + usage.toString() + ' / ' + headers['X-RateLimit-Limit-day']);
+		if (parseInt(headers['X-RateLimit-Remaining-day']) == 0) showNotification('ca-api', 'Daily API limit reached', 'top', 'center', 'danger');
+	} else {
+		$('#titleText').attr('data-original-title', '');
+	}
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -829,10 +954,10 @@ function updateMonitoringWithClients(needClients) {
 	}
 
 	// Try and refresh the token
-	showNotification('ca-contactless-card', 'Updating Monitoring Data...', 'bottom', 'center', 'info');
+	showNotification('ca-dashboard', 'Updating Monitoring Data...', 'bottom', 'center', 'info');
 	showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/auth/refresh',
+		url: getAPIURL() + '/auth/refreshwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -848,21 +973,26 @@ function updateMonitoringWithClients(needClients) {
 	};
 
 	$.ajax(settings)
-		.done(function(response) {
-			//console.log(response)
-			if (response.status === '503') {
+		.done(function(commandResults, statusText, jqXHR) {
+			//console.log(commandResults);
+			var response = JSON.parse(commandResults.responseBody);
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/auth/refresh)');
 				Swal.fire({
 					title: 'Central API connection failed',
-					text: response.reason,
+					text: response.error_description.replace('refresh_token', 'Refresh Token'),
 					icon: 'error',
 				});
 			} else if (response.hasOwnProperty('error')) {
 				Swal.fire({
 					title: 'Central API connection failed',
-					text: response.error_description,
+					text: response.error_description.replace('refresh_token', 'Refresh Token'),
 					icon: 'error',
 				});
-			} else {
+			} else if (commandResults.responseBody) {
 				localStorage.setItem('refresh_token', response.refresh_token);
 				localStorage.setItem('access_token', response.access_token);
 
@@ -870,6 +1000,8 @@ function updateMonitoringWithClients(needClients) {
 				cluster['refresh_token'] = response.refresh_token;
 				cluster['access_token'] = response.access_token;
 				updateAccountDetails(cluster);
+
+				showNotification('ca-padlock', 'Authentication Tokens Updated', 'bottom', 'center', 'success');
 
 				// Empty universal search table
 				$('#universal-table')
@@ -924,7 +1056,7 @@ function updateMonitoringWithClients(needClients) {
 function getLicensingStats() {
 	// Get overview stats
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -936,18 +1068,25 @@ function getLicensingStats() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/licensing/v1/subscriptions/stats)');
-			}
-		} else if (response.hasOwnProperty('error_code')) {
-			logError(response.description);
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/licensing/v1/subscriptions/stats)');
 			apiErrorCount++;
-		} else if (response.expiring) {
-			showNotification('ca-license-key', 'A Subscription Key expiring soon...', 'bottom', 'center', 'warning');
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response) {
+			if (response.expiring) {
+				showNotification('ca-license-key', 'A Subscription Key expiring soon...', 'bottom', 'center', 'warning');
+			}
 		}
 	});
 }
@@ -1032,7 +1171,7 @@ function updateClientUI() {
 function getWirelessClientData(offset) {
 	if (offset == 0) showNotification('ca-laptop-1', 'Obtaining wireless clients...', 'bottom', 'center', 'info');
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1045,8 +1184,21 @@ function getWirelessClientData(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/clients)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('client_icon')).addClass('text-warning');
 			$(document.getElementById('client_icon')).removeClass('text-success');
@@ -1060,7 +1212,11 @@ function getWirelessClientData(offset) {
 			$(document.getElementById('client_icon')).addClass('text-warning');
 			$(document.getElementById('client_icon')).removeClass('text-primary');
 			$(document.getElementById('client_icon')).removeClass('text-danger');
-			localStorage.setItem('monitoring_wirelessClients', JSON.stringify([]));
+			try {
+				localStorage.setItem('monitoring_wirelessClients', JSON.stringify([]));
+			} catch (e) {
+				console.log('Browser Storage Full. Not able to cache client information');
+			}
 		} else {
 			$.each(response.clients, function() {
 				clients.push(this);
@@ -1071,7 +1227,11 @@ function getWirelessClientData(offset) {
 			if (offset + apiLimit < response.total) getWirelessClientData(offset + apiLimit);
 			else {
 				updateClientUI();
-				localStorage.setItem('monitoring_wirelessClients', JSON.stringify(wirelessClients));
+				try {
+					localStorage.setItem('monitoring_wirelessClients', JSON.stringify(wirelessClients));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache client information');
+				}
 			}
 		}
 	});
@@ -1081,7 +1241,7 @@ function getWiredClientData(offset) {
 	if (offset == 0) showNotification('ca-computer-monitor', 'Obtaining wired clients...', 'bottom', 'center', 'info');
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1094,8 +1254,21 @@ function getWiredClientData(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/clients)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('client_icon')).addClass('text-warning');
 			$(document.getElementById('client_icon')).removeClass('text-success');
@@ -1111,7 +1284,11 @@ function getWiredClientData(offset) {
 			$(document.getElementById('client_icon')).removeClass('text-success');
 			$(document.getElementById('client_icon')).removeClass('text-primary');
 			$(document.getElementById('client_icon')).removeClass('text-danger');
-			localStorage.setItem('monitoring_wiredClients', JSON.stringify([]));
+			try {
+				localStorage.setItem('monitoring_wiredClients', JSON.stringify([]));
+			} catch (e) {
+				console.log('Browser Storage Full. Not able to cache client information');
+			}
 		} else {
 			$.each(response.clients, function() {
 				clients.push(this);
@@ -1122,7 +1299,11 @@ function getWiredClientData(offset) {
 			if (offset + apiLimit < response.total) getWiredClientData(offset + apiLimit);
 			else {
 				updateClientUI();
-				localStorage.setItem('monitoring_wiredClients', JSON.stringify(wiredClients));
+				try {
+					localStorage.setItem('monitoring_wiredClients', JSON.stringify(wiredClients));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache client information');
+				}
 			}
 		}
 	});
@@ -1192,7 +1373,7 @@ function updateAPUI() {
 
 function getAPData(offset, needClients) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1204,7 +1385,21 @@ function getAPData(offset, needClients) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/aps)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('ap_icon')).addClass('text-warning');
@@ -1221,7 +1416,11 @@ function getAPData(offset, needClients) {
 			$(document.getElementById('ap_icon')).removeClass('text-success');
 			$(document.getElementById('ap_icon')).removeClass('text-primary');
 			$(document.getElementById('ap_icon')).removeClass('text-danger');
-			localStorage.setItem('monitoring_aps', JSON.stringify([]));
+			try {
+				localStorage.setItem('monitoring_aps', JSON.stringify([]));
+			} catch (e) {
+				console.log('Browser Storage Full. Not able to cache AP information');
+			}
 		} else {
 			if (offset === 0) {
 				downAPCount = 0;
@@ -1240,7 +1439,11 @@ function getAPData(offset, needClients) {
 			if (offset + apiLimit < response.total) getAPData(offset + apiLimit, needClients);
 			else {
 				updateAPUI();
-				localStorage.setItem('monitoring_aps', JSON.stringify(aps));
+				try {
+					localStorage.setItem('monitoring_aps', JSON.stringify(aps));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache AP information');
+				}
 				// Grab wireless client data after grabbing APs (so we can match AP Serials to AP Names)
 				if (needClients) getWirelessClientData(0);
 			}
@@ -1266,6 +1469,68 @@ function getAPsForGroup(group) {
 		if (this['group_name'] === group) groupAPs.push(this);
 	});
 	return groupAPs;
+}
+
+function getBSSIDData(offset) {
+	if (offset == 0) bssidPromise = new $.Deferred();
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v2/bssids?calculate_total=true&limit=' + apiLimit + '&offset=' + offset,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/bssids)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		//console.log(response);
+		if (response.hasOwnProperty('message')) {
+			if (!apiMessage) {
+				apiMessage = true;
+				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+			}
+			localStorage.setItem('monitoring_bssids', JSON.stringify([]));
+		} else {
+			if (offset === 0) {
+				bssids = [];
+			}
+
+			bssids = bssids.concat(response.aps);
+
+			if (offset + apiLimit < response.total) getBSSIDData(offset + apiLimit);
+			else {
+				bssidPromise.resolve();
+				try {
+					localStorage.setItem('monitoring_bssids', JSON.stringify(bssids));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache BSSID information');
+				}
+			}
+		}
+	});
+	return bssidPromise.promise();
+}
+
+function getBSSIDs() {
+	return bssids;
 }
 
 // Switches
@@ -1318,7 +1583,7 @@ function updateSwitchUI() {
 
 function getSwitchData(offset, needClients) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1330,7 +1595,21 @@ function getSwitchData(offset, needClients) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/switches)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -1374,7 +1653,11 @@ function getSwitchData(offset, needClients) {
 			if (offset + apiLimit < response.total) getSwitchData(offset + apiLimit, needClients);
 			else {
 				updateSwitchUI();
-				localStorage.setItem('monitoring_switches', JSON.stringify(switches));
+				try {
+					localStorage.setItem('monitoring_switches', JSON.stringify(switches));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache Switch information');
+				}
 				// Grab wired client data after grabbing switches (so we can match switch Serials to AP Names)
 				if (needClients) getWiredClientData(0);
 			}
@@ -1446,7 +1729,7 @@ function updateGatewayUI() {
 
 function getGatewayData(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1458,7 +1741,21 @@ function getGatewayData(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/gateways)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -1495,7 +1792,11 @@ function getGatewayData(offset) {
 			if (offset + apiLimit < response.total) getGatewayData(offset + apiLimit);
 			else {
 				updateGatewayUI();
-				localStorage.setItem('monitoring_gateways', JSON.stringify(gateways));
+				try {
+					localStorage.setItem('monitoring_gateways', JSON.stringify(gateways));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache Gateway information');
+				}
 			}
 		}
 	});
@@ -1683,7 +1984,7 @@ function updateSiteUI() {
 
 function getSiteData(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1695,7 +1996,21 @@ function getSiteData(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/branchhealth/v1/site)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -1735,7 +2050,11 @@ function getSiteData(offset) {
 				getSiteData(offset + apiSiteLimit);
 			} else {
 				updateSiteUI();
-				localStorage.setItem('monitoring_sites', JSON.stringify(sites));
+				try {
+					localStorage.setItem('monitoring_sites', JSON.stringify(sites));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache Site information');
+				}
 			}
 		}
 	});
@@ -1748,7 +2067,7 @@ function getSites() {
 // Groups
 function loadGroupUI(group) {
 	// Add row to table
-
+	//console.log(group);
 	var table = $('#group-table').DataTable();
 	var wiredTemplateUsed = '<button class="btn btn-round btn-outline btn-tag">UI Group</button>';
 	if (group.template_details && group.template_details['Wired']) wiredTemplateUsed = '<button class="btn btn-round btn-tag">Template</button>';
@@ -1785,7 +2104,6 @@ function loadGroupUI(group) {
 	var path = window.location.pathname;
 	var page = path.split('/').pop();
 	if ($('#groupselector')) {
-		//if (page.includes('workflow-csv') || page.includes('workflow-psk') || page.includes('deployment-wlan') || page.includes('deployment-group') || page.includes('workflow-msp') || page.includes('migration') || page.includes('dashboard') || page.includes('deployment-inventory')) {
 		// Add site to the dropdown selector
 		$('#groupselector').append($('<option>', { value: group['group'], text: group['group'] }));
 		if ($('#groupselector').length != 0) {
@@ -1812,7 +2130,7 @@ function updateGroupUI() {
 function getGroupData(offset) {
 	if (offset == 0) groupPromise = new $.Deferred();
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1824,7 +2142,21 @@ function getGroupData(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/groups)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
@@ -1906,7 +2238,7 @@ function getGroupTemplateInfo(currentGroups, last) {
 	//console.log(groupList)
 
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1920,7 +2252,21 @@ function getGroupTemplateInfo(currentGroups, last) {
 
 	//console.log(settings)
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/groups/template_info)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -1957,7 +2303,11 @@ function getGroupTemplateInfo(currentGroups, last) {
 
 				if (last) {
 					updateGroupUI();
-					localStorage.setItem('monitoring_groups', JSON.stringify(groups));
+					try {
+						localStorage.setItem('monitoring_groups', JSON.stringify(groups));
+					} catch (e) {
+						console.log('Browser Storage Full. Not able to cache Group information');
+					}
 					groupPromise.resolve();
 				}
 			}
@@ -1970,7 +2320,7 @@ function getGroupTemplateInfo(currentGroups, last) {
 // Get the group properties... Central 2.5.4 and later
 function getGroupProperties(groupList, last) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -1984,7 +2334,21 @@ function getGroupProperties(groupList, last) {
 
 	//console.log(settings)
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/groups/properties)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -2019,7 +2383,11 @@ function getGroupProperties(groupList, last) {
 
 			if (last) {
 				updateGroupUI();
-				localStorage.setItem('monitoring_groups', JSON.stringify(groups));
+				try {
+					localStorage.setItem('monitoring_groups', JSON.stringify(groups));
+				} catch (e) {
+					console.log('Browser Storage Full. Not able to cache Group information');
+				}
 				groupPromise.resolve();
 			}
 		}
@@ -2106,6 +2474,7 @@ function updateInventory() {
 	gatewayPromise = new $.Deferred();
 	$.when(getAPInventory(0), getSwitchInventory(0), getGatewayInventory(0)).then(function() {
 		//console.log('Got ALL Inventories');
+		showNotification('ca-stock-2', 'Device Inventory updated', 'bottom', 'center', 'success');
 		inventoryPromise.resolve();
 	});
 	return inventoryPromise.promise();
@@ -2119,21 +2488,18 @@ function getAPInventory(offset) {
 		(loop while there are still items to get)
 	*/
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=all_ap&limit=' + apiGLCPLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=all_ap&limit=' + apiLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 		complete: function() {
 			if (apInventory.length == apInventoryCount) {
-				/*$.each(apInventory, function(){
-					console.log(this.serial+","+this.macaddr);
-				})*/
 				apPromise.resolve();
 			}
 		},
@@ -2141,7 +2507,21 @@ function getAPInventory(offset) {
 
 	/* $.ajax returns a promise*/
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/device_inventory/v1/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -2153,8 +2533,8 @@ function getAPInventory(offset) {
 				apInventoryCount = response.total;
 			}
 			apInventory = apInventory.concat(response.devices);
-			if (offset + apiGLCPLimit < response.total) getAPInventory(offset + apiGLCPLimit); // if there are still objects to get
-			//console.log(apInventory);
+			if (offset + apiLimit < response.total) getAPInventory(offset + apiLimit); // if there are still objects to get
+			//console.log(response.devices);
 		}
 	});
 
@@ -2167,14 +2547,14 @@ function getSwitchInventory(offset) {
 		(loop while there are still items to get)
 	*/
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=switch&limit=' + apiGLCPLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=switch&limit=' + apiLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 		complete: function() {
@@ -2189,7 +2569,21 @@ function getSwitchInventory(offset) {
 
 	/* $.ajax returns a promise*/
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/device_inventory/v1/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -2201,7 +2595,7 @@ function getSwitchInventory(offset) {
 				switchInventoryCount = response.total;
 			}
 			switchInventory = switchInventory.concat(response.devices);
-			if (offset + apiGLCPLimit < response.total) getSwitchInventory(offset + apiGLCPLimit); // if there are still objects to get
+			if (offset + apiLimit < response.total) getSwitchInventory(offset + apiLimit); // if there are still objects to get
 		}
 	});
 
@@ -2214,14 +2608,14 @@ function getGatewayInventory(offset) {
 		(loop while there are still items to get)
 	*/
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=gateway&limit=' + apiGLCPLimit + '&offset=' + offset,
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices?sku_type=gateway&limit=' + apiLimit + '&offset=' + offset,
 			access_token: localStorage.getItem('access_token'),
 		}),
 		complete: function() {
@@ -2236,7 +2630,21 @@ function getGatewayInventory(offset) {
 
 	/* $.ajax returns a promise*/
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/device_inventory/v1/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -2248,7 +2656,7 @@ function getGatewayInventory(offset) {
 				gatewayInventoryCount = response.total;
 			}
 			gatewayInventory = gatewayInventory.concat(response.devices);
-			if (offset + apiGLCPLimit < response.total) getGatewayInventory(offset + apiGLCPLimit); // if there are still objects to get
+			if (offset + apiLimit < response.total) getGatewayInventory(offset + apiLimit); // if there are still objects to get
 			//console.log(apInventory)
 		}
 	});
@@ -2502,7 +2910,7 @@ function addDevices() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log('Add device response: ' + JSON.stringify(response));
 
 		if (response.hasOwnProperty('message')) {
@@ -2619,7 +3027,7 @@ function archiveDevices() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		console.log('Archive device response: ' + JSON.stringify(response));
 
 		if (response.hasOwnProperty('message')) {
@@ -2686,7 +3094,11 @@ function archiveDevices() {
 		Licensing functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function checkForLicensingCompletion() {
+	var licenseProgress = (licenseCounter / csvData.length) * 100;
+	licenseNotification.update({ progress: licenseProgress });
+
 	if (licenseCounter == csvData.length) {
+		licenseNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -2711,7 +3123,7 @@ function checkForLicensingCompletion() {
 
 /* Updated v.1.5.4 */
 function licenseDevicesFromCSV(msp) {
-	showNotification('ca-license-key', 'Licensing devices...', 'bottom', 'center', 'info');
+	licenseNotification = showProgressNotification('ca-license-key', 'Licensing devices...', 'bottom', 'center', 'info');
 	// variable to hold the device list per license service
 	var serviceList = {};
 
@@ -2834,7 +3246,7 @@ function licenseDevicesFromCSV(msp) {
 		licenseCounter = licenseCounter + value.length;
 		logInformation('Licensing with ' + key + ': ' + JSON.stringify(value));
 
-		$.ajax(settings).done(function(response) {
+		$.ajax(settings).done(function(response, textStatus, jqXHR) {
 			if (Array.isArray(response.status)) {
 				if (response.status[0].message.msg) {
 					logError(response.status[0].message.msg);
@@ -2885,7 +3297,11 @@ function licenseDevices() {
 
 // Added in 1.5.2
 function checkForUnlicensingCompletion() {
+	var licenseProgress = (licenseCounter / csvDataCount) * 100;
+	licenseNotification.update({ progress: licenseProgress });
+
 	if (licenseCounter == csvDataCount) {
+		licenseNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -2911,7 +3327,7 @@ function checkForUnlicensingCompletion() {
 /* Updated v1.5.4*/
 function unlicenseDevicesFromCSV() {
 	licenseCounter = 0;
-	showNotification('ca-license-key', 'Un-assigning licenses from devices', 'bottom', 'center', 'info');
+	licenseNotification = showProgessNotification('ca-license-key', 'Un-assigning licenses from devices', 'bottom', 'center', 'info');
 
 	// variable to hold the device list per license service
 	var serviceList = {};
@@ -2921,7 +3337,12 @@ function unlicenseDevicesFromCSV() {
 		if (this['SERIAL']) {
 			// find the device to be able to get current license assigned.
 			var device = findDeviceInInventory(this['SERIAL']);
-			if (device['services'].length > 0) {
+			if (!device) {
+				logError('Unable to find device ' + this['SERIAL'] + ' in the device inventory');
+				apiErrorCount++;
+				licenseCounter++;
+				checkForUnlicensingCompletion();
+			} else if (device['services'] && device['services'].length > 0) {
 				// convert the services into a string
 				var serviceName = JSON.stringify(device['services']);
 				// check if other devices have the same services assigned
@@ -2962,7 +3383,7 @@ function unlicenseDevicesFromCSV() {
 		};
 		licenseCounter = licenseCounter + value.length;
 
-		$.ajax(settings).done(function(response) {
+		$.ajax(settings).done(function(response, textStatus, jqXHR) {
 			//console.log(response);
 			if (Array.isArray(response.status)) {
 				if (response.status[0].message.msg) {
@@ -3042,7 +3463,8 @@ function moveDevicesToGroup() {
 	/*  
 		Move each device to the correct group
 	*/
-	showNotification('ca-folder-replace', 'Moving devices into groups...', 'bottom', 'center', 'info');
+	moveNotification = showProgressNotification('ca-folder-replace', 'Moving devices into groups...', 'bottom', 'center', 'info');
+
 	moveCounter = 0;
 	var groupsToUse = {};
 
@@ -3072,12 +3494,17 @@ function moveDevicesToGroup() {
 		while (serialArray.length > 0) {
 			var serialBlock = [];
 			serialBlock = serialArray.splice(0, 50);
-			console.log('Adding Devices to ' + groupName + ': ' + JSON.stringify(serialBlock));
+			logInformation('Adding Devices to ' + groupName + ': ' + JSON.stringify(serialBlock));
 
 			// Move the block of serials in separate function to avoid variable changing between API call and response (due to looping) - enables better error and completion tracking
 			$.when(performDeviceMove(groupName, serialBlock, new $.Deferred())).then(function() {
 				// check for completion after each bulk move
+
+				var moveProgress = (moveCounter / devicesToMove) * 100;
+				moveNotification.update({ progress: moveProgress });
+
 				if (moveCounter == devicesToMove) {
+					moveNotification.close();
 					if (currentWorkflow === '') {
 						if (apiErrorCount != 0) {
 							showLog();
@@ -3130,6 +3557,7 @@ function performDeviceMove(groupName, serialNumbers, movePromiseVar) {
 	};
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		//console.log(response);
 		if (response.includes('Controller/Gateway group move has been initiated, please check audit trail for details')) {
 			logInformation('Controller/Gateway group move has been initiated, please check audit trail in Central for details');
 		} else if (response.hasOwnProperty('error_code') || response !== 'Success') {
@@ -3217,7 +3645,7 @@ function createSiteFromCSV() {
 					};
 				}
 
-				return $.ajax(settings).done(function(response) {
+				return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 					//console.log(response)
 					if (response.hasOwnProperty('error_code')) {
 						apiErrorCount++;
@@ -3320,7 +3748,7 @@ function createSite() {
 			};
 		}
 
-		return $.ajax(settings).done(function(response) {
+		return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 			//console.log(response)
 			if (response.hasOwnProperty('error_code')) {
 				apiErrorCount++;
@@ -3375,7 +3803,7 @@ function unassignDeviceFromSite(device) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				apiErrorCount++;
@@ -3411,7 +3839,7 @@ function assignDeviceToSite(device, site) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.status !== '200') {
 			logError(device['serial'] + ' was not assigned to site ' + site);
@@ -3444,7 +3872,11 @@ function getIDforSite(site) {
 }
 
 function checkForSiteMoveCompletion() {
+	var moveProgress = (moveCounter / csvData.length) * 100;
+	moveNotification.update({ progress: moveProgress });
+
 	if (moveCounter == csvData.length) {
+		moveNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -3478,7 +3910,7 @@ function moveDevicesToSite() {
 		assign new site
 	*/
 
-	showNotification('ca-world-pin', 'Moving devices into sites...', 'bottom', 'center', 'info');
+	moveNotification = showProgressNotification('ca-world-pin', 'Moving devices into sites...', 'bottom', 'center', 'info');
 	moveCounter = 0;
 	// Get the device monitoring data (IAP, Switch, Gateway) to determine device type
 	$.each(csvData, function() {
@@ -3547,7 +3979,11 @@ function moveDevicesToSite() {
 		Renaming functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function checkForRenameCompletion() {
+	var renameProgress = (renameCounter / csvData.length) * 100;
+	renameNotification.update({ progress: renameProgress });
+
 	if (renameCounter == csvData.length) {
+		renameNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -3585,7 +4021,7 @@ function renameDevices() {
 	renameCounter = 0;
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-card-update', 'Renaming devices...', 'bottom', 'center', 'info');
+		renameNotification = showProgressNotification('ca-card-update', 'Renaming devices...', 'bottom', 'center', 'info');
 
 		var hostnameVariable = localStorage.getItem('hostname_variable');
 		if (hostnameVariable === null || hostnameVariable === '') {
@@ -3596,7 +4032,6 @@ function renameDevices() {
 			// find device in inventory to get device type
 			if (this['SERIAL'] && this['DEVICE NAME']) {
 				var currentSerial = this['SERIAL'].trim();
-				var currentMac = this['MAC'].trim();
 				var newHostname = this['DEVICE NAME'].trim();
 				if (!newHostname) {
 					logError('Device with Serial Number: ' + currentSerial + ' has no device name in the CSV file');
@@ -3612,7 +4047,7 @@ function renameDevices() {
 					} else if (deviceType === 'IAP') {
 						// if AP then get AP settings
 						var settings = {
-							url: getAPIURL() + '/tools/getCommand',
+							url: getAPIURL() + '/tools/getCommandwHeaders',
 							method: 'POST',
 							timeout: 0,
 							headers: {
@@ -3624,25 +4059,22 @@ function renameDevices() {
 							}),
 						};
 
-						$.ajax(settings).done(function(response) {
-							//console.log(response);
-							if (response.hasOwnProperty('status')) {
-								if (response.status === '503') {
-									apiErrorCount++;
-									logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-								}
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
 							}
-							if (response.hasOwnProperty('error_code')) {
-								logError(response.description);
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
 								apiErrorCount++;
 								renameCounter = renameCounter + 1;
 								checkForRenameCompletion();
-							} else if (response.hostname === newHostname) {
-								// no need to do anything as the name already matches
-								logInformation('Device ' + currentSerial + " hostname doesn't need to be updated");
-								renameCounter = renameCounter + 1;
-								checkForRenameCompletion();
 							} else {
+								var response = JSON.parse(commandResults.responseBody);
+
 								// Update ap settings
 								var settings = {
 									url: getAPIURL() + '/tools/postCommand',
@@ -3658,7 +4090,7 @@ function renameDevices() {
 									}),
 								};
 
-								$.ajax(settings).done(function(response) {
+								$.ajax(settings).done(function(response, textStatus, jqXHR) {
 									if (response.hasOwnProperty('status')) {
 										if (response.status === '503') {
 											apiErrorCount++;
@@ -3666,9 +4098,11 @@ function renameDevices() {
 										}
 									}
 									if (response !== currentSerial) {
-										logError(device + ' was not renamed');
+										logError(currentSerial + ' was not renamed');
 										//console.log(response.reason);
 										apiErrorCount++;
+									} else {
+										logInformation(currentSerial + ' was renamed successfully');
 									}
 									renameCounter = renameCounter + 1;
 									checkForRenameCompletion();
@@ -3676,6 +4110,7 @@ function renameDevices() {
 							}
 						});
 					} else if (deviceType === 'SWITCH') {
+						var currentMac = this['MAC'].trim();
 						// patch the switch template variables
 						var variables = {};
 						variables[hostnameVariable] = newHostname;
@@ -3696,7 +4131,7 @@ function renameDevices() {
 							}),
 						};
 
-						$.ajax(settings).done(function(response) {
+						$.ajax(settings).done(function(response, textStatus, jqXHR) {
 							if (response.hasOwnProperty('status')) {
 								if (response.status === '503') {
 									apiErrorCount++;
@@ -3742,10 +4177,9 @@ function magicRenameDevices() {
 	magicNames = {};
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-pattern-recognition', 'Renaming devices...', 'bottom', 'center', 'info');
+		renameNotification = showProgressNotification('ca-pattern-recognition', 'Renaming devices...', 'bottom', 'center', 'info');
 
 		var hostnameVariable = localStorage.getItem('hostname_variable');
-		console.log(hostnameVariable);
 		if (hostnameVariable === null || hostnameVariable === '') {
 			hostnameVariable = '_sys_hostname';
 		}
@@ -3824,7 +4258,7 @@ function magicRenameDevices() {
 
 						// if AP then get AP settings
 						var settings = {
-							url: getAPIURL() + '/tools/getCommand',
+							url: getAPIURL() + '/tools/getCommandwHeaders',
 							method: 'POST',
 							timeout: 0,
 							headers: {
@@ -3836,55 +4270,58 @@ function magicRenameDevices() {
 							}),
 						};
 
-						$.ajax(settings).done(function(response) {
-							//console.log(response);
-							if (response.hasOwnProperty('status')) {
-								if (response.status === '503') {
-									apiErrorCount++;
-									logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-								}
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
 							}
-							if (response.hasOwnProperty('error_code')) {
-								logError(response.description);
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
 								apiErrorCount++;
 								renameCounter = renameCounter + 1;
 								checkForRenameCompletion();
-							} else if (response.hostname === newHostname) {
-								// no need to do anything as the name already matches
-								logInformation('Device ' + currentSerial + " hostname doesn't need to be updated");
-								renameCounter = renameCounter + 1;
-								checkForRenameCompletion();
 							} else {
-								// Update ap settings
-								var settings = {
-									url: getAPIURL() + '/tools/postCommand',
-									method: 'POST',
-									timeout: 0,
-									headers: {
-										'Content-Type': 'application/json',
-									},
-									data: JSON.stringify({
-										url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-										access_token: localStorage.getItem('access_token'),
-										data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: newHostname }),
-									}),
-								};
-
-								$.ajax(settings).done(function(response) {
-									if (response.hasOwnProperty('status')) {
-										if (response.status === '503') {
-											apiErrorCount++;
-											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-										}
-									}
-									if (response !== currentSerial) {
-										logError(device + ' was not renamed');
-										//console.log(response.reason);
-										apiErrorCount++;
-									}
+								var response = JSON.parse(commandResults.responseBody);
+								if (response.hostname === newHostname) {
+									// no need to do anything as the name already matches
+									logInformation('Device ' + currentSerial + " hostname doesn't need to be updated");
 									renameCounter = renameCounter + 1;
 									checkForRenameCompletion();
-								});
+								} else {
+									// Update ap settings
+									var settings = {
+										url: getAPIURL() + '/tools/postCommand',
+										method: 'POST',
+										timeout: 0,
+										headers: {
+											'Content-Type': 'application/json',
+										},
+										data: JSON.stringify({
+											url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
+											access_token: localStorage.getItem('access_token'),
+											data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: response.dot11g_radio_disable, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: newHostname }),
+										}),
+									};
+
+									$.ajax(settings).done(function(response, textStatus, jqXHR) {
+										if (response.hasOwnProperty('status')) {
+											if (response.status === '503') {
+												apiErrorCount++;
+												logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+											}
+										}
+										if (response !== currentSerial) {
+											logError(device.serial + ' was not renamed');
+											//console.log(response.reason);
+											apiErrorCount++;
+										}
+										renameCounter = renameCounter + 1;
+										checkForRenameCompletion();
+									});
+								}
 							}
 						});
 					} else if (deviceType === 'SWITCH') {
@@ -3944,7 +4381,7 @@ function magicRenameDevices() {
 							}),
 						};
 
-						$.ajax(settings).done(function(response) {
+						$.ajax(settings).done(function(response, textStatus, jqXHR) {
 							console.log(response);
 							if (response.hasOwnProperty('status')) {
 								if (response.status === '503') {
@@ -4007,7 +4444,7 @@ function getAnyTopologyNeighbors(serial) {
 		get LLDP neighbours for AP
 	*/
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -4019,13 +4456,21 @@ function getAnyTopologyNeighbors(serial) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/topology_external_api/apNeighbors/<SERIAL>)');
-			}
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/topology_external_api/apNeighbors/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		var neighbors = response.neighbors;
 
 		$.each(neighbors, function() {
@@ -4043,7 +4488,7 @@ function getTopologyNeighbors(serial) {
 		get LLDP neighbours for AP
 	*/
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -4055,13 +4500,21 @@ function getTopologyNeighbors(serial) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/topology_external_api/apNeighbors/<SERIAL>)');
-			}
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/topology_external_api/apNeighbors/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		var neighbors = response.neighbors;
 		$.each(neighbors, function() {
 			// Neighbour is a switch, and AP connects on Eth0, and its one of our managed switches
@@ -4080,7 +4533,7 @@ function getSwitchPorts(currentSerial) {
 		Get switch port details from AOS-S UI Group API
 	*/
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -4092,13 +4545,20 @@ function getSwitchPorts(currentSerial) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/aos_switch/ports/devices/<SERIAL>)');
-			}
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/aos_switch/ports/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		//console.log('Got Switch port details for switch: ' + currentSerial);
 		modifiedUISwitches[currentSerial] = response;
 	});
@@ -4196,7 +4656,7 @@ function updatePortDescription(magic) {
 							}),
 						};
 
-						$.ajax(settings).done(function(response) {
+						$.ajax(settings).done(function(response, textStatus, jqXHR) {
 							if (response.hasOwnProperty('status')) {
 								if (response.status === '503') {
 									apiErrorCount++;
@@ -4269,7 +4729,7 @@ function updatePortDescription(magic) {
 							})
 						};
 						
-						$.ajax(settings).done(function (response) {
+						$.ajax(settings).done(function (response, textStatus, jqXHR) {
 							if (response.hasOwnProperty('status')) {
 								if (response.status === '503') {
 									apiErrorCount++;
@@ -4340,7 +4800,7 @@ function updateDeviceVariables() {
 			}),
 		};
 
-		$.ajax(settings).done(function(response) {
+		$.ajax(settings).done(function(response, textStatus, jqXHR) {
 			if (response.hasOwnProperty('status')) {
 				if (response.status === '503') {
 					apiErrorCount++;
@@ -4365,7 +4825,11 @@ function updateDeviceVariables() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function checkForZoneCompletion() {
+	var zoneProgress = (zoneCounter / csvData.length) * 100;
+	zoneNotification.update({ progress: zoneProgress });
+
 	if (zoneCounter == csvData.length) {
+		zoneNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -4402,7 +4866,7 @@ function setAPZone() {
 	zoneCounter = 0;
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-setup-tools', 'Setting AP Zones...', 'bottom', 'center', 'info');
+		zoneNotification = showProgressNotification('ca-setup-tools', 'Setting AP Zones...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
@@ -4424,7 +4888,7 @@ function setAPZone() {
 					} else if (deviceType === 'IAP') {
 						// if AP then get AP settings
 						var settings = {
-							url: getAPIURL() + '/tools/getCommand',
+							url: getAPIURL() + '/tools/getCommandwHeaders',
 							method: 'POST',
 							timeout: 0,
 							headers: {
@@ -4436,14 +4900,22 @@ function setAPZone() {
 							}),
 						};
 
-						$.ajax(settings).done(function(response) {
-							if (response.hasOwnProperty('status')) {
-								if (response.status === '503') {
-									apiErrorCount++;
-									logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-								}
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
 							}
-							//console.log(response);
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
+								apiErrorCount++;
+								return;
+							}
+							var response = JSON.parse(commandResults.responseBody);
+
+							//console.log(response, textStatus, jqXHR);
 							if (response.hasOwnProperty('error_code')) {
 								logError(response.description);
 								apiErrorCount++;
@@ -4470,7 +4942,7 @@ function setAPZone() {
 									}),
 								};
 
-								$.ajax(settings).done(function(response) {
+								$.ajax(settings).done(function(response, textStatus, jqXHR) {
 									if (response.hasOwnProperty('status')) {
 										if (response.status === '503') {
 											apiErrorCount++;
@@ -4511,7 +4983,11 @@ function setAPZone() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function checkForRFCompletion() {
+	var profileProgress = (rfCounter / csvData.length) * 100;
+	profileNotification.update({ progress: profileProgress });
+
 	if (rfCounter == csvData.length) {
+		profileProgress.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -4548,7 +5024,7 @@ function setRFProfile() {
 	rfCounter = 0;
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-antenna', 'Setting RF Profiles...', 'bottom', 'center', 'info');
+		profileNotification = showProgressNotification('ca-antenna', 'Setting RF Profiles...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
@@ -4570,7 +5046,7 @@ function setRFProfile() {
 					} else if (deviceType === 'IAP') {
 						// if AP then get AP settings
 						var settings = {
-							url: getAPIURL() + '/tools/getCommand',
+							url: getAPIURL() + '/tools/getCommandwHeaders',
 							method: 'POST',
 							timeout: 0,
 							headers: {
@@ -4582,13 +5058,20 @@ function setRFProfile() {
 							}),
 						};
 
-						$.ajax(settings).done(function(response, statusText, xhr) {
-							if (response.hasOwnProperty('status')) {
-								if (response.status === '503') {
-									apiErrorCount++;
-									logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
-								}
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
 							}
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
+								apiErrorCount++;
+								return;
+							}
+							var response = JSON.parse(commandResults.responseBody);
 
 							if (response.hasOwnProperty('error_code')) {
 								logError(response.description);
@@ -4652,11 +5135,463 @@ function setRFProfile() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		Radio Mode functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function checkForRadioModeCompletion() {
+	var radioProgress = (radioModeCounter / csvData.length) * 100;
+	radioNotification.update({ progress: radioProgress });
+
+	if (radioModeCounter >= csvData.length) {
+		radioNotification.close();
+		if (currentWorkflow === '') {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'Radio Mode Configuration Failure',
+					text: 'Some or all devices failed to be set to the correct Radio Modes',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'Radio Mode Configuration Success',
+					text: 'All devices were set to the correct Radio Modes',
+					icon: 'success',
+				});
+			}
+		}
+	}
+}
+
+function setRadioMode(specificMode) {
+	/*  
+		if AP - grab ap settings via API, then update the wifi0-mode, wifi1-mode, wifi2-mode, split-5ghz-mode and dual-5ghz-mode
+	*/
+	var settingsList = {};
+	radioModeCounter = 0;
+	inventoryPromise = new $.Deferred();
+	$.when(updateInventory()).then(function() {
+		radioNotification = showProgressNotification('ca-router', 'Setting Radio Mode...', 'bottom', 'center', 'info');
+		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				var currentSerial = this['SERIAL'].trim();
+				var newRadio0Mode = this['RADIO 0 MODE'];
+				var newRadio1Mode = this['RADIO 1 MODE'];
+				var newRadio2Mode = this['RADIO 2 MODE'];
+				var dualRadioMode = this['DUAL 5GHZ MODE'];
+				var splitRadioMode = this['SPLIT 5GHZ MODE'];
+				if ((!newRadio0Mode || newRadio0Mode === '-') && (!newRadio1Mode || newRadio1Mode === '-') && (!newRadio2Mode || newRadio2Mode === '-')) {
+					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+					logInformation('Device with Serial Number: ' + currentSerial + ' has no Radio Mode in the CSV file');
+					radioModeCounter++;
+					checkForRadioModeCompletion();
+				} else {
+					var device = findDeviceInInventory(currentSerial);
+					if (!device) {
+						logError('Unable to find device ' + currentSerial + ' in the device inventory');
+						apiErrorCount++;
+						radioModeCounter++;
+						checkForRadioModeCompletion();
+					} else if (deviceType === 'IAP') {
+						settingsList[device.macaddr.toLowerCase()] = this;
+						// if AP then get AP settings
+						var settings = {
+							url: getAPIURL() + '/tools/getCommandwHeaders',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+								access_token: localStorage.getItem('access_token'),
+							}),
+						};
+
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
+							}
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
+								apiErrorCount++;
+								return;
+							}
+							var response = JSON.parse(commandResults.responseBody);
+
+							if (response.hasOwnProperty('error_code')) {
+								logError(response.description);
+								apiErrorCount++;
+								radioModeCounter++;
+								checkForRadioModeCompletion();
+							} else {
+								var apCLIResponse = response;
+								// Pull in the new settings from the settingsList (ensures correct settings are used)
+								var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
+								var newSettings = settingsList[newSettingsKey];
+
+								var currentSerial = newSettings['SERIAL'].trim();
+								var newRadio0Mode = newSettings['RADIO 0 MODE'];
+								var newRadio1Mode = newSettings['RADIO 1 MODE'];
+								var newRadio2Mode = newSettings['RADIO 2 MODE'];
+								var dualRadioMode = newSettings['DUAL 5GHZ MODE'];
+								var splitRadioMode = newSettings['SPLIT 5GHZ MODE'];
+
+								// rebuild each line required for the radio config
+								var wifi0mode = -1;
+								var wifi1mode = -1;
+								var wifi2mode = -1;
+								// Radio 0
+								if (newRadio0Mode && newRadio0Mode !== '-' && (specificMode === 'all' || specificMode === 'split' || specificMode === 'dual')) {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  radio-0-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-0-disable'), 1);
+									if (apCLIResponse.indexOf('  dot11a-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11a-radio-disable'), 1);
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('wifi0-mode')) wifi0mode = i;
+									}
+									if (wifi0mode != -1) apCLIResponse.splice(wifi0mode, 1);
+
+									// add in the new config but only on supported AP models
+									var newRadioMode = newRadio0Mode.trim().toLowerCase();
+									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+										apCLIResponse.push('  wifi0-mode ' + newRadioMode);
+									} else if (newRadioMode === 'off') {
+										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-0-disable');
+										else apCLIResponse.push('  dot11a-radio-disable');
+									}
+								}
+
+								// Radio 1
+								if (newRadio1Mode && newRadio1Mode !== '-' && (specificMode === 'all' || specificMode === 'dual')) {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  radio-1-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-1-disable'), 1);
+									if (apCLIResponse.indexOf('  dot11g-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11g-radio-disable'), 1);
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('wifi1-mode')) wifi1mode = i;
+									}
+									if (wifi1mode != -1) apCLIResponse.splice(wifi1mode, 1);
+
+									// add in the new config but only on supported AP models
+									var newRadioMode = newRadio1Mode.trim().toLowerCase();
+									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+										apCLIResponse.push('  wifi1-mode ' + newRadioMode);
+									} else if (newRadioMode === 'off') {
+										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-1-disable');
+										else apCLIResponse.push('  dot11g-radio-disable');
+									}
+								}
+
+								// Radio 2
+								if (newRadio2Mode && newRadio2Mode !== '-' && (specificMode === 'all' || specificMode === 'split')) {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  radio-2-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-2-disable'), 1);
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('wifi2-mode')) wifi2mode = i;
+									}
+									if (wifi2mode != -1) apCLIResponse.splice(wifi2mode, 1);
+
+									// Check if Split radio is enabled - which allow use of radio2
+									var split555 = false;
+									if (splitRadioMode && splitRadioMode !== '-') {
+										var newRadioMode = splitRadioMode.trim().toLowerCase();
+										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled' || newRadioMode === 'enable') split555 = true;
+									}
+									// add in the new config but only on supported AP models
+									if (device.model.includes('635') || device.model.includes('655') || split555) {
+										var newRadioMode = newRadio2Mode.trim().toLowerCase();
+										if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+											apCLIResponse.push('  wifi2-mode ' + newRadioMode);
+										} else if (newRadioMode === 'off') {
+											apCLIResponse.push('  radio-2-disable');
+										}
+									}
+								}
+
+								// Dual 5GHz Mode
+								if (dualRadioMode && dualRadioMode !== '-' && (specificMode === 'all' || specificMode === 'dual')) {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  dual-5GHz-mode disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode disable'), 1);
+									if (apCLIResponse.indexOf('  dual-5GHz-mode enable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode enable'), 1);
+
+									// add in the new config but only on supported AP models
+									if (device.model.includes('344') || device.model.includes('345')) {
+										// Standardize inputs for correct setting
+										var newRadioMode = dualRadioMode.trim().toLowerCase();
+										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
+										if (newRadioMode === 'false' || newRadioMode === 'no' || newRadioMode === 'n' || newRadioMode === 'disabled') newRadioMode = 'disable';
+										if (newRadioMode === 'enable' || newRadioMode === 'disable') {
+											apCLIResponse.push('  dual-5GHz-mode ' + newRadioMode);
+										}
+									}
+								}
+
+								// Split 5GHz Mode on 555
+								if (splitRadioMode && splitRadioMode !== '-' && (specificMode === 'all' || specificMode === 'split')) {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  split-5ghz-mode enabled') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  split-5ghz-mode enabled'), 1);
+
+									// add in the new config but only on supported AP models
+									if (device.model.includes('555')) {
+										// Standardize inputs for correct setting
+										var newRadioMode = splitRadioMode.trim().toLowerCase();
+										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
+										if (newRadioMode === 'enable') {
+											apCLIResponse.push('  split-5ghz-mode enabled');
+										}
+									}
+								}
+								//console.log(apCLIResponse);
+
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ clis: apCLIResponse }),
+									}),
+								};
+
+								$.ajax(settings).done(function(response, statusText, xhr) {
+									if (response.hasOwnProperty('status')) {
+										if (response.status === '503') {
+											apiErrorCount++;
+											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+										}
+									}
+									if (response !== currentSerial) {
+										logError(currentSerial + ' was not assigned the new Radio Modes. Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation(currentSerial + ' was assigned the new Radio Modes ');
+									}
+									radioModeCounter++;
+									checkForRadioModeCompletion();
+								});
+							}
+						});
+					} else {
+						// Either switch or controller/gateway
+						radioModeCounter++;
+						checkForRadioModeCompletion();
+					}
+				}
+			} else {
+				radioModeCounter++;
+				checkForRadioModeModeCompletion();
+			}
+		});
+	});
+	if (currentWorkflow !== '') {
+		return autoRadioModeModePromise.promise();
+	}
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		Antenna functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function checkForAntennaCompletion() {
+	var antennaProgress = (antennaCounter / csvData.length) * 100;
+	antennaNotification.update({ progress: antennaProgress });
+
+	if (antennaCounter >= csvData.length) {
+		antennaNotification.close();
+		if (currentWorkflow === '') {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'Antenna Configuration Failure',
+					text: 'Some or all devices failed to be set to the correct antenna gains',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'Antenna Configuration Success',
+					text: 'All devices were set to the correct antenna gains',
+					icon: 'success',
+				});
+			}
+		}
+	}
+}
+
+function setAntennaGain() {
+	/*  
+		if AP - grab ap settings via API, then update the antenna gain values
+	*/
+	var settingsList = {};
+	antennaCounter = 0;
+	inventoryPromise = new $.Deferred();
+	$.when(updateInventory()).then(function() {
+		antennaNotification = showProgressNotification('ca-antenna', 'Setting Antenna Gains...', 'bottom', 'center', 'info');
+		if (csvData.length == 0) showNotification('ca-router', 'No external antenna APs available', 'bottom', 'center', 'warning');
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				var currentSerial = this['SERIAL'].trim();
+				var newRadio0Gain = this['RADIO 0 GAIN'];
+				var newRadio1Gain = this['RADIO 1 GAIN'];
+				if ((!newRadio0Gain || newRadio0Gain === '-') && (!newRadio1Gain || newRadio1Gain === '-')) {
+					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+					logInformation('Device with Serial Number: ' + currentSerial + ' has no antenna gain in the CSV file');
+					antennaCounter++;
+					checkForAntennaCompletion();
+				} else {
+					var device = findDeviceInInventory(currentSerial);
+					if (!device) {
+						logError('Unable to find device ' + currentSerial + ' in the device inventory');
+						apiErrorCount++;
+						antennaCounter++;
+						checkForAntennaCompletion();
+					} else if (deviceType === 'IAP') {
+						settingsList[device.macaddr.toLowerCase()] = this;
+						// if AP then get AP settings
+						var settings = {
+							url: getAPIURL() + '/tools/getCommandwHeaders',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+								access_token: localStorage.getItem('access_token'),
+							}),
+						};
+
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
+							}
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
+								apiErrorCount++;
+								return;
+							}
+							var response = JSON.parse(commandResults.responseBody);
+
+							if (response.hasOwnProperty('error_code')) {
+								logError(response.description);
+								apiErrorCount++;
+								antennaCounter++;
+								checkForAntennaCompletion();
+							} else {
+								var apCLIResponse = response;
+								// Pull in the new settings from the settingsList (ensures correct settings are used)
+								var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
+								var newSettings = settingsList[newSettingsKey];
+
+								var currentSerial = newSettings['SERIAL'].trim();
+								var newRadio0Gain = newSettings['RADIO 0 GAIN'];
+								var newRadio1Gain = newSettings['RADIO 1 GAIN'];
+
+								// rebuild each line required for the radio config
+								var gAntenna = -1;
+								var aAntenna = -1;
+								// Radio 0
+								if (newRadio0Gain && newRadio0Gain !== '-') {
+									// remove the old settings
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('a-external-antenna')) aAntenna = i;
+									}
+									if (aAntenna != -1) apCLIResponse.splice(aAntenna, 1);
+
+									// add in the new config but only on supported AP models
+									var newRadioGain = newRadio0Gain.trim();
+									apCLIResponse.push('  a-external-antenna ' + newRadioGain);
+								}
+
+								// Radio 1
+								if (newRadio1Gain && newRadio1Gain !== '-') {
+									// remove the old settings
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('g-external-antenna')) gAntenna = i;
+									}
+									if (gAntenna != -1) apCLIResponse.splice(gAntenna, 1);
+
+									// add in the new config but only on supported AP models
+									var newRadioGain = newRadio1Gain.trim();
+									apCLIResponse.push('  g-external-antenna ' + newRadioGain);
+								}
+
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ clis: apCLIResponse }),
+									}),
+								};
+
+								$.ajax(settings).done(function(response, statusText, xhr) {
+									if (response.hasOwnProperty('status')) {
+										if (response.status === '503') {
+											apiErrorCount++;
+											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+										}
+									}
+									if (response !== currentSerial) {
+										logError(currentSerial + ' was not assigned the new Antenna gain values. Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation(currentSerial + ' was assigned the new Antenna gain values');
+									}
+									antennaCounter++;
+									checkForAntennaCompletion();
+								});
+							}
+						});
+					} else {
+						// Either switch or controller/gateway
+						antennaCounter++;
+						checkForAntennaCompletion();
+					}
+				}
+			} else {
+				antennaCounter++;
+				checkForAntennaCompletion();
+			}
+		});
+	});
+	if (currentWorkflow !== '') {
+		return autoAntennaPromise.promise();
+	}
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		2.4GHz Radio functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function checkForRadioCompletion() {
+	var radioProgress = (radioCounter / csvData.length) * 100;
+	radioNotification.update({ progress: radioProgress });
+
 	if (radioCounter == csvData.length) {
+		radioNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -4684,7 +5619,7 @@ function disable24radios() {
 	radioCounter = 0;
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-wifi-off', 'Disabling 2.4GHz radios...', 'bottom', 'center', 'info');
+		radioNotification = showProgressNotification('ca-wifi-off', 'Disabling 2.4GHz radios...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
@@ -4699,7 +5634,7 @@ function disable24radios() {
 				} else if (deviceType === 'IAP') {
 					// if AP then get AP settings
 					var settings = {
-						url: getAPIURL() + '/tools/getCommand',
+						url: getAPIURL() + '/tools/getCommandwHeaders',
 						method: 'POST',
 						timeout: 0,
 						headers: {
@@ -4711,13 +5646,21 @@ function disable24radios() {
 						}),
 					};
 
-					$.ajax(settings).done(function(response) {
-						if (response.hasOwnProperty('status')) {
-							if (response.status === '503') {
-								apiErrorCount++;
-								logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-							}
+					$.ajax(settings).done(function(commandResults, statusText, xhr) {
+						if (commandResults.hasOwnProperty('headers')) {
+							updateAPILimits(JSON.parse(commandResults.headers));
 						}
+						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+							apiErrorCount++;
+							return;
+						} else if (commandResults.hasOwnProperty('error_code')) {
+							logError(commandResults.description);
+							apiErrorCount++;
+							return;
+						}
+						var response = JSON.parse(commandResults.responseBody);
+
 						//console.log(response);
 						if (response.hasOwnProperty('error_code')) {
 							logError(response.description);
@@ -4745,7 +5688,7 @@ function disable24radios() {
 								}),
 							};
 
-							$.ajax(settings).done(function(response) {
+							$.ajax(settings).done(function(response, textStatus, jqXHR) {
 								if (response.hasOwnProperty('status')) {
 									if (response.status === '503') {
 										apiErrorCount++;
@@ -4788,7 +5731,7 @@ function enable24radios() {
 	radioCounter = 0;
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		showNotification('ca-wifi', 'Enabling 2.4GHz radios...', 'bottom', 'center', 'info');
+		radioNotification = showProgressNotification('ca-wifi', 'Enabling 2.4GHz radios...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
@@ -4803,7 +5746,7 @@ function enable24radios() {
 				} else if (deviceType === 'IAP') {
 					// if AP then get AP settings
 					var settings = {
-						url: getAPIURL() + '/tools/getCommand',
+						url: getAPIURL() + '/tools/getCommandwHeaders',
 						method: 'POST',
 						timeout: 0,
 						headers: {
@@ -4815,13 +5758,20 @@ function enable24radios() {
 						}),
 					};
 
-					$.ajax(settings).done(function(response) {
-						if (response.hasOwnProperty('status')) {
-							if (response.status === '503') {
-								apiErrorCount++;
-								logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-							}
+					$.ajax(settings).done(function(commandResults, statusText, xhr) {
+						if (commandResults.hasOwnProperty('headers')) {
+							updateAPILimits(JSON.parse(commandResults.headers));
 						}
+						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
+							apiErrorCount++;
+							return;
+						} else if (commandResults.hasOwnProperty('error_code')) {
+							logError(commandResults.description);
+							apiErrorCount++;
+							return;
+						}
+						var response = JSON.parse(commandResults.responseBody);
 						//console.log(response);
 						if (response.hasOwnProperty('error_code')) {
 							logError(response.description);
@@ -4849,7 +5799,7 @@ function enable24radios() {
 								}),
 							};
 
-							$.ajax(settings).done(function(response) {
+							$.ajax(settings).done(function(response, textStatus, jqXHR) {
 								if (response.hasOwnProperty('status')) {
 									if (response.status === '503') {
 										apiErrorCount++;
@@ -5115,6 +6065,278 @@ function siteAndAutoRenameAndPortDescriptions() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Automated Tasks functions - using "ap_settings_cli"
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function checkForNameAndRadioModeCompletion() {
+	if (radioModeCounter == csvData.length) {
+		if (apiErrorCount != 0) {
+			showLog();
+			Swal.fire({
+				title: 'Automation Configuration Failure',
+				text: 'Some or all devices failed to be set to the correct Hostname and Radio Modes',
+				icon: 'error',
+			});
+		} else {
+			Swal.fire({
+				title: 'Automation Configuration Success',
+				text: 'All devices were set to the correct Hostanme and Radio Modes',
+				icon: 'success',
+			});
+		}
+	}
+}
+
+function renameAndRadioMode() {
+	/*  
+		if AP - grab ap settings via API, then update the wifi0-mode, wifi1-mode, wifi2-mode, + hostname
+		Modified version of setRadioMode function (includes Hostname changes)
+	*/
+	var settingsList = {};
+	radioModeCounter = 0;
+	inventoryPromise = new $.Deferred();
+	$.when(updateInventory()).then(function() {
+		showNotification('ca-contactless-card', 'Setting Hostname and Radio Mode...', 'bottom', 'center', 'info');
+
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				var currentSerial = this['SERIAL'].trim();
+				var newAPHostname = this['DEVICE NAME'].trim();
+				var newRadio0Mode = this['RADIO 0 MODE'];
+				var newRadio1Mode = this['RADIO 1 MODE'];
+				var newRadio2Mode = this['RADIO 2 MODE'];
+				var dualRadioMode = this['DUAL 5GHZ MODE'];
+				var splitRadioMode = this['SPLIT 5GHZ MODE'];
+				if ((!newRadio0Mode || newRadio0Mode === '-') && (!newRadio1Mode || newRadio1Mode === '-') && (!newRadio2Mode || newRadio2Mode === '-') && (!newAPHostname || newAPHostname === '-')) {
+					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+					logInformation('Device with Serial Number: ' + currentSerial + ' has no Hostname AND Radio Mode in the CSV file');
+					radioModeCounter++;
+					checkForNameAndRadioModeCompletion();
+				} else {
+					var device = findDeviceInInventory(currentSerial);
+					if (!device) {
+						logError('Unable to find device ' + currentSerial + ' in the device inventory');
+						apiErrorCount++;
+						radioModeCounter++;
+						checkForNameAndRadioModeCompletion();
+					} else if (deviceType === 'IAP') {
+						settingsList[device.macaddr.toLowerCase()] = this;
+						// if AP then get AP settings
+						var settings = {
+							url: getAPIURL() + '/tools/getCommandwHeaders',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+								access_token: localStorage.getItem('access_token'),
+							}),
+						};
+
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
+							}
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
+								apiErrorCount++;
+								return;
+							}
+							var response = JSON.parse(commandResults.responseBody);
+
+							if (response.hasOwnProperty('error_code')) {
+								logError(response.description);
+								apiErrorCount++;
+								radioModeCounter++;
+								checkForNameAndRadioModeCompletion();
+							} else {
+								var apCLIResponse = response;
+								// Pull in the new settings from the settingsList (ensures correct settings are used)
+								var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
+								var newSettings = settingsList[newSettingsKey];
+
+								var currentSerial = newSettings['SERIAL'].trim();
+								var newAPHostname = newSettings['DEVICE NAME'].trim();
+								var newRadio0Mode = newSettings['RADIO 0 MODE'];
+								var newRadio1Mode = newSettings['RADIO 1 MODE'];
+								var newRadio2Mode = newSettings['RADIO 2 MODE'];
+								var dualRadioMode = newSettings['DUAL 5GHZ MODE'];
+								var splitRadioMode = newSettings['SPLIT 5GHZ MODE'];
+
+								// rebuild each line required for the radio config
+								var wifi0mode = -1;
+								var wifi1mode = -1;
+								var wifi2mode = -1;
+								// Radio 0
+								if (newRadio0Mode && newRadio0Mode !== '-') {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  radio-0-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-0-disable'), 1);
+									if (apCLIResponse.indexOf('  dot11a-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11a-radio-disable'), 1);
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('wifi0-mode')) wifi0mode = i;
+									}
+									if (wifi0mode != -1) apCLIResponse.splice(wifi0mode, 1);
+
+									// add in the new config but only on supported AP models
+									var newRadioMode = newRadio0Mode.trim().toLowerCase();
+									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+										apCLIResponse.push('  wifi0-mode ' + newRadioMode);
+									} else if (newRadioMode === 'off') {
+										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-0-disable');
+										else apCLIResponse.push('  dot11a-radio-disable');
+									}
+								}
+
+								// Radio 1
+								if (newRadio1Mode && newRadio1Mode !== '-') {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  radio-1-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-1-disable'), 1);
+									if (apCLIResponse.indexOf('  dot11g-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11g-radio-disable'), 1);
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('wifi1-mode')) wifi1mode = i;
+									}
+									if (wifi1mode != -1) apCLIResponse.splice(wifi1mode, 1);
+
+									// add in the new config but only on supported AP models
+									var newRadioMode = newRadio1Mode.trim().toLowerCase();
+									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+										apCLIResponse.push('  wifi1-mode ' + newRadioMode);
+									} else if (newRadioMode === 'off') {
+										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-1-disable');
+										else apCLIResponse.push('  dot11g-radio-disable');
+									}
+								}
+
+								// Radio 2
+								if (newRadio2Mode && newRadio2Mode !== '-') {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  radio-2-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-2-disable'), 1);
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('wifi2-mode')) wifi2mode = i;
+									}
+									if (wifi2mode != -1) apCLIResponse.splice(wifi2mode, 1);
+
+									// add in the new config but only on supported AP models
+									var split555 = false;
+									if (splitRadioMode && splitRadioMode !== '-') {
+										var newRadioMode = splitRadioMode.trim().toLowerCase();
+										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled' || newRadioMode === 'enable') split555 = true;
+									}
+									if (device.model.includes('635') || device.model.includes('655') || split555) {
+										var newRadioMode = newRadio2Mode.trim().toLowerCase();
+										if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+											apCLIResponse.push('  wifi2-mode ' + newRadioMode);
+										} else if (newRadioMode === 'off') {
+											apCLIResponse.push('  radio-2-disable');
+										}
+									}
+								}
+
+								// Dual 5GHz Mode
+								if (dualRadioMode && dualRadioMode !== '-') {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  dual-5GHz-mode disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode disable'), 1);
+									if (apCLIResponse.indexOf('  dual-5GHz-mode enable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode enable'), 1);
+
+									// add in the new config but only on supported AP models
+									if (device.model.includes('344') || device.model.includes('345')) {
+										var newRadioMode = dualRadioMode.trim().toLowerCase();
+										// Standardize inputs for correct setting
+										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
+										if (newRadioMode === 'false' || newRadioMode === 'no' || newRadioMode === 'n' || newRadioMode === 'disabled') newRadioMode = 'disable';
+										if (newRadioMode === 'enable' || newRadioMode === 'disable') {
+											apCLIResponse.push('  dual-5GHz-mode ' + newRadioMode);
+										}
+									}
+								}
+
+								// Split 5GHz Mode on 555
+								if (splitRadioMode && splitRadioMode !== '-') {
+									// remove the old settings
+									if (apCLIResponse.indexOf('  split-5ghz-mode enabled') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  split-5ghz-mode enabled'), 1);
+
+									// add in the new config but only on supported AP models
+									if (device.model.includes('555')) {
+										var newRadioMode = splitRadioMode.trim().toLowerCase();
+										// Standardize inputs for correct setting
+										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
+										if (newRadioMode === 'enable') {
+											apCLIResponse.push('  split-5ghz-mode enabled');
+										}
+									}
+								}
+
+								// Hostname
+								if (newAPHostname && newAPHostname !== '-') {
+									// remove the old hostname
+									var hostnameIndex = -1;
+									for (i = 0; i < apCLIResponse.length; i++) {
+										if (apCLIResponse[i].includes('hostname')) hostnameIndex = i;
+									}
+									if (hostnameIndex != -1) apCLIResponse.splice(hostnameIndex, 1);
+
+									// add in the new config but only on supported AP models
+									var newAPHostname = newAPHostname.trim();
+									apCLIResponse.push('  hostname ' + newAPHostname);
+								}
+								//console.log(apCLIResponse);
+
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ clis: apCLIResponse }),
+									}),
+								};
+
+								$.ajax(settings).done(function(response, statusText, xhr) {
+									if (response.hasOwnProperty('status')) {
+										if (response.status === '503') {
+											apiErrorCount++;
+											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+										}
+									}
+									if (response !== currentSerial) {
+										logError(currentSerial + ' was not assigned the new Hostname and Radio Modes. Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation(currentSerial + ' was assigned the new Hostname and Radio Modes ');
+									}
+									radioModeCounter++;
+									checkForNameAndRadioModeCompletion();
+								});
+							}
+						});
+					} else {
+						// Either switch or controller/gateway
+						radioModeCounter++;
+						checkForNameAndRadioModeCompletion();
+					}
+				}
+			} else {
+				radioModeCounter++;
+				checkForNameAndRadioModeCompletion();
+			}
+		});
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		MSP functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getIDforCustomer(customer) {
@@ -5162,7 +6384,7 @@ function showMSPCard(display) {
 
 function isMSP(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5174,14 +6396,21 @@ function isMSP(offset) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/msp_api/v1/devices)');
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/msp_api/v1/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.hasOwnProperty('message')) {
 			if (response.message.includes('Permission denied')) {
 				showMSPCard(false);
@@ -5202,7 +6431,7 @@ function updateMSPData() {
 		Grab all inventories 
 		after complete trigger promise
 	*/
-	showNotification('ca-contactless-card', 'Updating MSP Data...', 'bottom', 'center', 'info');
+	showNotification('ca-dish', 'Updating MSP Data...', 'bottom', 'center', 'info');
 	// Get the device inventories (IAP, Switch, Gateway) to determine device type
 	getMSPResources();
 
@@ -5222,7 +6451,7 @@ function updateMSPData() {
 
 function getMSPResources() {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5234,14 +6463,21 @@ function getMSPResources() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/msp_api/v1/resource)');
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/msp_api/v1/resource)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		//console.log(response);
 		if (response.branding.logo_image_url) {
 			document.getElementById('msp_logo').src = response.branding.logo_image_url;
 			document.getElementById('msp_logo_card').style.display = 'block';
@@ -5253,7 +6489,7 @@ function getMSPResources() {
 
 function getMSPAPData(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5270,15 +6506,20 @@ function getMSPAPData(offset) {
 		},
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/device_inventory/v1/msp/devices)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/device_inventory/v1/msp/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 			$(document.getElementById('ap_icon')).removeClass('text-success');
 			$(document.getElementById('ap_icon')).addClass('text-warning');
@@ -5347,7 +6588,7 @@ function loadMSPAPUI() {
 
 function getCustomerAPData(offset, customerId) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5360,15 +6601,20 @@ function getCustomerAPData(offset, customerId) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v2/aps)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/aps)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 		} else if (response.hasOwnProperty('message')) {
 			showNotification('ca-globe', response.message, 'bottom', 'center', 'danger');
@@ -5386,7 +6632,7 @@ function getCustomerAPData(offset, customerId) {
 
 function getMSPSwitchData(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5403,15 +6649,20 @@ function getMSPSwitchData(offset) {
 		},
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/device_inventory/v1/msp/devices)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/device_inventory/v1/msp/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 			$(document.getElementById('switch_icon')).removeClass('text-success');
 			$(document.getElementById('switch_icon')).addClass('text-warning');
@@ -5480,7 +6731,7 @@ function loadMSPSwitchUI() {
 
 function getCustomerSwitchData(offset, customerId) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5493,15 +6744,21 @@ function getCustomerSwitchData(offset, customerId) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/switches)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v1/switches)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 		} else if (response.hasOwnProperty('message')) {
 			showNotification('ca-globe', response.message, 'bottom', 'center', 'danger');
@@ -5519,7 +6776,7 @@ function getCustomerSwitchData(offset, customerId) {
 
 function getMSPGatewayData(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5536,15 +6793,20 @@ function getMSPGatewayData(offset) {
 		},
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/device_inventory/v1/msp/devices)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/device_inventory/v1/msp/devices)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
@@ -5613,7 +6875,7 @@ function loadMSPGatewayUI() {
 
 function getCustomerGatewayData(offset, customerId) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5626,15 +6888,20 @@ function getCustomerGatewayData(offset, customerId) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
-		//console.log(response);
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/monitoring/v1/gateways)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v1/gateways)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error') || response.hasOwnProperty('errorcode')) {
 		} else if (response.hasOwnProperty('message')) {
 			showNotification('ca-globe', response.message, 'bottom', 'center', 'danger');
@@ -5652,7 +6919,7 @@ function getCustomerGatewayData(offset, customerId) {
 
 function getMSPCustomerData(offset) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -5669,14 +6936,20 @@ function getMSPCustomerData(offset) {
 		},
 	};
 
-	$.ajax(settings).done(function(response) {
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/msp_api/v1/customers)');
-				return;
-			}
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
 		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/msp_api/v1/customers)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error')) {
 			$(document.getElementById('customer_icon')).removeClass('text-success');
 			$(document.getElementById('customer_icon')).addClass('text-warning');
@@ -5800,7 +7073,7 @@ function unassignDeviceFromCustomer(device) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 		if (response.status != 202) {
 			if (response.status === '503') {
 				apiErrorCount++;
@@ -5833,7 +7106,7 @@ function assignDeviceToCustomer(device, customerId) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 		if (response.status != 202) {
 			if (response.status === '503') {
 				apiErrorCount++;
@@ -5867,7 +7140,7 @@ function unassignDevicesFromCustomers(devices) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 		if (response.status != 202) {
 			if (response.status === '503') {
 				apiErrorCount++;
@@ -5899,7 +7172,7 @@ function assignDevicesToSingleCustomer(devices, customerId) {
 		}),
 	};
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
 		if (response.status != 202) {
 			if (response.status === '503') {
 				apiErrorCount++;
@@ -6162,7 +7435,7 @@ function createCustomer() {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		if (response.status === '503') {
 			apiErrorCount++;
 			logError('Central Server Error (503): ' + response.reason + ' (/msp_api/v1/customers)');
@@ -6298,7 +7571,7 @@ function getSwitchPortDetails(serial) {
 	var url = '/monitoring/v1/switches/';
 	if (getSwitchType(serial) === 'AOS-CX') url = '/monitoring/v1/cx_switches/';
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -6312,7 +7585,20 @@ function getSwitchPortDetails(serial) {
 
 	/* $.ajax returns a promise*/
 
-	return $.ajax(settings).done(function(response) {
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (' + url + ')');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
@@ -6412,7 +7698,7 @@ function poeBounce(switchSerial, switchPort) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -6447,7 +7733,7 @@ function interfaceBounce(switchSerial, switchPort) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -6500,7 +7786,7 @@ function confirmCableTest(switchSerial, switchPort) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -6515,7 +7801,7 @@ function confirmCableTest(switchSerial, switchPort) {
 
 function checkTroubleshootingResult(session_id, deviceSerial, switchPort) {
 	var settings = {
-		url: getAPIURL() + '/tools/getCommand',
+		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
 		headers: {
@@ -6527,7 +7813,21 @@ function checkTroubleshootingResult(session_id, deviceSerial, switchPort) {
 		}),
 	};
 
-	$.ajax(settings).done(function(response) {
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -6563,6 +7863,80 @@ function checkTroubleshootingResult(session_id, deviceSerial, switchPort) {
 			} else {
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
 			}
+		}
+	});
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	CSV Reboot Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+function rebootDevices() {
+	var rebootedDevices = 0;
+	var rebootErrors = 0;
+	var skippedDevices = 0;
+	rebootNotification = showProgressNotification('ca-reload', 'Rebooting devices...', 'bottom', 'center', 'info');
+
+	$.each(csvData, function() {
+		// build array for uploading.
+		console.log(this);
+		if (!this['SERIAL']) {
+			skippedDevices++;
+		} else {
+			var key = this['SERIAL'].trim();
+
+			var settings = {
+				url: getAPIURL() + '/tools/postCommand',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/device_management/v1/device/' + key + '/action/reboot',
+					access_token: localStorage.getItem('access_token'),
+				}),
+			};
+
+			$.ajax(settings).done(function(response) {
+				//console.log('Device Reboot response: ' + JSON.stringify(response));
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/device_management/v1/device/<SERIAL>/action/reboot)');
+						return;
+					}
+				}
+				if (response['state'] && response['state'].toLowerCase() === 'success') {
+					rebootedDevices++;
+					logInformation('Rebooted ' + response['serial'] + ': ' + rebootedDevices + ' of ' + csvData.length);
+				} else {
+					rebootErrors++;
+					//console.log('Failed to reboot ' + response['serial'] + ': ' + rebootErrors + ' of ' + csvData.length);
+					if (response['description']) logError(response['description']);
+				}
+
+				var rebootProgress = ((rebootedDevices + rebootErrors + skippedDevices) / csvData.length) * 100;
+				rebootNotification.update({ progress: rebootProgress });
+
+				// check if finished
+				if (rebootedDevices + rebootErrors + skippedDevices == csvData.length) {
+					rebootNotification.close();
+					if (rebootErrors > 0) {
+						showLog();
+						Swal.fire({
+							title: 'Reboot Failure',
+							text: 'Some or all devices (' + rebootErrors + ') failed to be rebooted',
+							icon: 'error',
+						});
+						if (skippedDevices > 0) console.log('CSV file contained ' + skippedDevices + ' empty rows');
+					} else {
+						Swal.fire({
+							title: 'Reboot Success',
+							text: 'All ' + rebootedDevices + ' devices were rebooted',
+							icon: 'success',
+						});
+					}
+				}
+			});
 		}
 	});
 }

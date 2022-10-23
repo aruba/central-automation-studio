@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.8
-Updated:
+Updated: 1.17
 Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -37,8 +37,7 @@ Aaron Scott (WiFi Downunder) 2022
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
 		<link href="assets/css/central-style.css" rel="stylesheet" />
-		<!-- CSS Just for demo purpose, don't include it in your project -->
-		<link href="assets/css/demo.css" rel="stylesheet" />
+		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -51,12 +50,12 @@ Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html"> Central Automation Studio: ClientMatch </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: ClientMatch </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
 								<li class="nav-item active ">
-									<a class="nav-link" onclick="getMonitoringData()">
+									<a class="nav-link" onclick="updateClientMatchData()">
 										<i class="central-icon ca-reload"></i>
 									</a>
 								</li>
@@ -169,15 +168,70 @@ Aaron Scott (WiFi Downunder) 2022
 															<th>Type</th>
 															<th>Mode</th>
 															<th>Status</th>
-															<th>From AP</th>
-															<th>To AP</th>
-															<th>Roam Time (seconds)</th>
+															<th>From AP (RSSI)</th>
+															<th>To AP (RSSI)</th>
+															<th>Destination AP (RSSI)</th>
+															<th>Roam Time (msecs)</th>
 														</thead>
 														<tbody></tbody>
 													</table>
 												</div>
 											</div>
 										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row" id="cmGraphs" hidden>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">ClientMatch Type</h4>
+										<p class="card-category">Type of Steers</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chartCMType" class="ct-chart ct-minor-third"></div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">ClientMatch Mode</h4>
+										<p class="card-category">Mode of Steers</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chartCMMode" class="ct-chart ct-minor-third"></div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">ClientMatch Steers</h4>
+										<p class="card-category">Status of Steers</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chartCMStatus" class="ct-chart ct-minor-third"></div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">Client Type per Steer</h4>
+										<p class="card-category">Top 5 Client Types</p>
+										<p></p>
+									</div>
+
+									<div class="card-body ">
+										<div id="chartCMClients" class="ct-chart ct-minor-third"></div>
 									</div>
 								</div>
 							</div>
@@ -200,9 +254,28 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Graph Modal -->
+				<div class="modal fade modal-small modal-primary" id="GraphModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">ClientMatch Graphs</h4>
+									</div>
+									<div class="card-body ">
+										<div id="chartCMStatus" class="ct-chart ct-minor-third"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#GraphModal" id="GraphModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -226,6 +299,7 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/bootstrap-switch.js"></script>
 	<!--  Chartist Plugin  -->
 	<script src="assets/js/plugins/chartist.min.js"></script>
+	<script src="assets/js/plugins/chartist-plugin-tooltip.js"></script>
 	<!--  Notifications Plugin    -->
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
@@ -261,59 +335,65 @@ Aaron Scott (WiFi Downunder) 2022
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
-		 $(document).ready(function() {
-		 	var reachabilityPromise = new $.Deferred();
-		     $.when(checkReachability(reachabilityPromise)).then(function () {
-
-		$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
-
-		loadMonitoringData();
-		var refreshrate = localStorage.getItem('refresh_rate');
-		if (refreshrate === null || refreshrate === "") {
-			refreshrate = "30";
-		}
-		var loadIntervalID;
-		loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
-
-		document.addEventListener("visibilitychange", function handleVisibilityChange() {
-		  if (!document.hidden) {
+		$(document).ready(function() {
 			var reachabilityPromise = new $.Deferred();
-			$.when(checkReachability(reachabilityPromise)).then(function () {
+		    $.when(checkReachability(reachabilityPromise)).then(function () {
+				$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
+
+				loadMonitoringData();
+				var refreshrate = localStorage.getItem('refresh_rate');
+				if (refreshrate === null || refreshrate === "") {
+					refreshrate = "30";
+				}
+				var loadIntervalID;
 				loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+
+				document.addEventListener("visibilitychange", function handleVisibilityChange() {
+					if (!document.hidden) {
+						var reachabilityPromise = new $.Deferred();
+						$.when(checkReachability(reachabilityPromise)).then(function () {
+							loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+						});
+					} else {
+						clearInterval(loadIntervalID);
+					}
+				}, false);
+
+				$('#unsteerable-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": true,
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Clients",
+					},
+					columnDefs: [{ type: 'ip-address', targets: 3 }]
+				});
+
+				$('#history-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": true,
+					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search History",
+					},
+					'order': [[0, 'desc']],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
 			});
-		  } else {
-			clearInterval(loadIntervalID);
-		  }
-		}, false);
 
-		$('#unsteerable-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": true,
-			"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search Clients",
-			},
-			columnDefs: [{ type: 'ip-address', targets: 3 }]
-		});
 
-		$('#history-table').DataTable({
-			"pagingType": "simple_numbers",
-			"autoWidth": true,
-			"lengthMenu": [[-1, 25, 50], ["All", 25, 50]],
-			responsive: true,
-			language: {
-				search: "_INPUT_",
-				searchPlaceholder: "Search History",
-			},
-			'order': [[0, 'desc']]
+			Chartist.Bar('#chartCMStatus', {labels: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
+				  series: [20, 60, 120, 200, 180, 20, 10]}, {
+					distributeSeries: true
+				  });
 		});
-		 	});
-		 });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js"></script>
+	<script src="assets/js/main.js?v=221023"></script>
 	<script src="assets/js/proxy.js"></script>
 	<script src="assets/js/hydra.js"></script>
 	<script src="assets/js/clientmatch.js"></script>
