@@ -54,6 +54,8 @@ COPY apache_main.conf /central/apacheconfig
 COPY apache_main_ssl.conf /central/apacheconfig
 COPY apache_ssl.conf /central/apacheconfig
 
+RUN echo "Mutex posixsem" >> /etc/apache2/apache2.conf
+
 WORKDIR /central/API
 CMD ["/central/API/start.sh"]
 
