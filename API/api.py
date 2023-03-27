@@ -1,6 +1,6 @@
-# API Proxy v1.2
-# Updated: 2022/03/20
-# Aaron Scott (WiFi Downunder) 2022
+# API Proxy v1.2.1
+# Updated: 2023/03/20
+# Aaron Scott (WiFi Downunder) 2023
 # ------------------------------------------------------------------------------------------
 # Convert JS based API calls into Python calls (to work around CORS) and return the results
 # ------------------------------------------------------------------------------------------
@@ -131,11 +131,11 @@ def getCommandwHeaders():
 	response = requests.request("GET", url, headers=headers);
 	headers_json = json.dumps(dict(response.headers))
 	try:
-		result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json);
+		result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json, requestedUrl=url);
 		# ...
 	except ValueError:
 		# no JSON returned
-		result = jsonify(responseBody=str(response.text), status=str(response.status_code), reason=response.reason);
+		result = jsonify(responseBody=str(response.text), status=str(response.status_code), reason=response.reason, requestedUrl=url);
 	return result;
 	
 	

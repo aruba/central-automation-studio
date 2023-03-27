@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7.5
 Updated: 1.8.2
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 const innerPoolType = 'INNER_IP_POOL_TYPE';
@@ -17,6 +17,10 @@ var config = {};
 var poolsPromise;
 var configPromise;
 
+var configNotification;
+var poolNotification;
+var allocationsNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -30,7 +34,7 @@ function loadCurrentPageAP() {
 }
 
 function getPoolConfig() {
-	showNotification('ca-hierarchy-55', 'Getting Pool Configurations...', 'bottom', 'center', 'info');
+	configNotification = showNotification('ca-hierarchy-55', 'Getting Pool Configurations...', 'bottom', 'center', 'info');
 	config = {};
 
 	var settings = {
@@ -66,14 +70,14 @@ function getPoolConfig() {
 			config[poolname] = this;
 		});
 		//console.log(config);
-		showNotification('ca-hierarchy-55', 'Retrieved Pool Configurations', 'bottom', 'center', 'success');
+		configNotification.close();
 		configPromise.resolve();
 	});
 	return configPromise.promise();
 }
 
 function getIPPools() {
-	showNotification('ca-hierarchy-55', 'Getting IP Pools...', 'bottom', 'center', 'info');
+	poolNotification = showNotification('ca-hierarchy-55', 'Getting IP Pools...', 'bottom', 'center', 'info');
 	pools = {};
 	systemPools = [];
 	dhcpPools = [];
@@ -117,14 +121,14 @@ function getIPPools() {
 			}
 		});
 		//console.log(systemPools);
-		showNotification('ca-hierarchy-55', 'Retrieved IP Pools...', 'bottom', 'center', 'success');
+		poolNotification.close();
 		poolsPromise.resolve();
 	});
 	return poolsPromise.promise();
 }
 
 function getIPAllocations() {
-	showNotification('ca-check-list', 'Getting IP Allocations...', 'bottom', 'center', 'info');
+	allocationsNotification = showNotification('ca-check-list', 'Getting IP Allocations...', 'bottom', 'center', 'info');
 	systemInfo = [];
 	dhcpInfo = [];
 	var settings = {
@@ -168,7 +172,7 @@ function getIPAllocations() {
 		loadSystemTables();
 		loadDHCPTables();
 
-		showNotification('ca-check-list', 'Retrieved IP Allocations...', 'bottom', 'center', 'success');
+		allocationsNotification.close();
 	});
 }
 

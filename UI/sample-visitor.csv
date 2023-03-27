@@ -1,0 +1,3 @@
+﻿NAME,COMPANY,PHONE,EMAIL,PASSWORD,ENABLED,DAYS,HOURS,MINUTES,NOTIFY
+Bob Smith,CAS Demo,+61412345678,bob.smith@casdemo.com,password123,Yes,1,,,email
+Jane Smith,CAS Demo,+61409876543,jane.smith@casdemo.com,password456,TRUE,,,,phone

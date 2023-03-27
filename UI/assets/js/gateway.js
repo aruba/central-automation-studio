@@ -6,6 +6,8 @@ Aaron Scott (WiFi Downunder) 2022
 
 var groupDeviceList = {};
 
+var updateNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		UI functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -186,7 +188,7 @@ function applyCLICommands() {
 	var newConfig = document.getElementById('gatewayConfig').value;
 	var currentConfig = newConfig.split('\n');
 
-	showNotification('ca-window-code', 'Updating Gateway Config...', 'bottom', 'center', 'info');
+	updateNotification = showNotification('ca-window-code', 'Updating Gateway Config...', 'bottom', 'center', 'info');
 
 	// need to push config back to Central.
 	var settings = {
@@ -202,8 +204,11 @@ function applyCLICommands() {
 			data: JSON.stringify({ cli_cmds: currentConfig }),
 		}),
 	};
+	//console.log(JSON.stringify({ cli_cmds: currentConfig }));
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		//console.log(response);
+		updateNotification.close();
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				logError('Central Server Error (503): ' + response.reason + ' (/caasapi/v1/exec/cmd)');
@@ -213,6 +218,7 @@ function applyCLICommands() {
 		var result = response['_global_result'];
 		if (result['status_str'] === 'Success') {
 			showNotification('ca-window-code', 'Gateway config for ' + selectedText + ' was successfully updated', 'bottom', 'center', 'success');
+			getConfigforSelected();
 		} else {
 			logError('Config for ' + selectedText + ' failed to be applied: ' + result['status_str']);
 			showLog();

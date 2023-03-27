@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7
-Updated: 1.8.2
-© Aaron Scott (WiFi Downunder) 2022
+Updated: 1.28
+© Aaron Scott (WiFi Downunder) 2023
 */
 
 var selectedGroups = {};
@@ -12,15 +12,26 @@ var groupInfo = {};
 var siteInfo = {};
 var clusterInfo = {};
 var deviceInfo = {};
+var countryPromise;
 var sitePromise;
-var swarmPromise;
+
+var siteCountries = {};
 
 var swarmCounter = 0;
 var swarmTotal = 0;
 var clusterCounter = 0;
 var clusterTotal = 0;
+var deviceCounter = 0;
+var deviceTotal = 0;
+var countryCounter = 0;
+var countryTotal = 0;
+var siteCounter = 0;
+var siteTotal = 0;
 
 var currentVariables = {};
+
+var progressNotification;
+var countryCodeNotification;
 
 var countryCodes = {
 	Andorra: { code: 'AD', label: 'AD - Andorra' },
@@ -239,6 +250,11 @@ function getDevices() {
 		var swarmID = this['swarm_id'];
 		var siteName = this['site'];
 
+		if (siteName && !siteInfo[siteName]) {
+			var siteStructure = { swarms: [], aps: [] };
+			siteInfo[siteName] = siteStructure;
+		}
+
 		// If this AP is in a swarm/cluster
 		if (swarmID) {
 			// Check if this swarm has been seen before
@@ -253,16 +269,22 @@ function getDevices() {
 
 			if (siteName) {
 				// Check if this swarm has been seen before
-				if (!siteInfo[siteName]) {
-					siteInfo[siteName] = [];
-				}
-
 				// Add serial to the list that matches the swarm_id.
-				var swarms = siteInfo[siteName];
+				var swarms = siteInfo[siteName].swarms;
 				if (swarms.indexOf(swarmID) == -1) {
 					swarms.push(swarmID);
-					siteInfo[siteName] = swarms;
+					siteInfo[siteName].swarms = swarms;
 				}
+			}
+		} else {
+			// AOS10 AP
+			if (siteName) {
+				// Check if this swarm has been seen before
+
+				// Add serial to the list that matches the swarm_id.
+				var siteAPs = siteInfo[siteName].aps;
+				siteAPs.push(this);
+				siteInfo[siteName].aps = siteAPs;
 			}
 		}
 		// Add the device for the APs list
@@ -314,6 +336,8 @@ function loadCurrentPageGroup() {
 	Swarm update function
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function configureSwarm(swarmID, countryCode) {
+	var swarmPromise = new $.Deferred();
+
 	// for each VC
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -348,7 +372,9 @@ function configureSwarm(swarmID, countryCode) {
 			// No need to update the country code
 			logInformation('Country for Virtual Controller "' + currentVariables.name + '" does not need updating.');
 			clusterCounter++;
-			if (clusterCounter >= clusterTotal) swarmPromise.resolve();
+			if (clusterCounter >= clusterTotal) {
+				swarmPromise.resolve();
+			}
 		} else {
 			// Create the updated JSON
 			currentVariables.country = countryCode;
@@ -455,10 +481,10 @@ function configureSelectedClusters() {
 		clusterTotal = Object.keys(selectedClusters).length;
 	}
 
+	logStart('Configuring Selected Clusters...');
 	// Update each selected cluster
 	for (const [key, value] of Object.entries(selectedClusters)) {
 		// for each VC
-		swarmPromise = new $.Deferred(); // promise to ensure variables aren't changed by the following cluster (wait until each cluster is done)
 		$.when(configureSwarm(key, countryCode)).then(function() {
 			checkClusterUpdateDone();
 		});
@@ -482,6 +508,86 @@ function checkClusterUpdateDone() {
 			});
 		}
 	}
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Device update function
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function configureDevice(deviceID, countryCode) {
+	var devicePromise = new $.Deferred(); // promise to ensure variables aren't changed by the following device (wait until each device is done)
+
+	var currentDevice = findDeviceInMonitoring(deviceID);
+
+	// for each VC
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/iap_variables/' + deviceID,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/iap_variables/<DEVICE-SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		var currentVariables = response.variables[0];
+		if (currentVariables.country === countryCode) {
+			// No need to update the country code
+			logInformation('Country for AP "' + currentDevice.name + '" does not need updating.');
+			deviceCounter++;
+			devicePromise.resolve();
+		} else {
+			// Create the updated JSON
+			currentVariables.country = countryCode;
+			var variablesArray = [];
+			variablesArray.push(currentVariables);
+			var uploadData = { variables: variablesArray };
+
+			var settings = {
+				url: getAPIURL() + '/tools/postCommand',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/configuration/v1/iap_variables/' + deviceID,
+					access_token: localStorage.getItem('access_token'),
+					data: JSON.stringify(uploadData),
+				}),
+			};
+
+			$.ajax(settings).done(function(response, statusText, xhr) {
+				if (response === deviceID) {
+					// success
+					logInformation('Country for AP "' + currentDevice.name + '" was configured to ' + countryCode);
+				} else {
+					apiErrorCount++;
+					logError('Country for AP "' + currentDevice.name + '" failed to be configured configured to ' + countryCode);
+				}
+				deviceCounter++;
+				devicePromise.resolve();
+			});
+		}
+	});
+	return devicePromise.promise();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -516,25 +622,122 @@ function loadDevicesTable(checked) {
 		.remove();
 	for (const [key, value] of Object.entries(deviceInfo)) {
 		var device = value;
+		if (device['firmware_version'].startsWith('10.')) {
+			// Build checkbox using serial number as key/id
+			var checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')">';
+			if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')" checked>';
 
-		// Build checkbox using serial number as key/id
-		var checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')">';
-		if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')" checked>';
+			// Build Status dot
+			var status = '<i class="fa fa-circle text-danger"></i>';
+			if (device['status'] == 'Up') {
+				status = '<i class="fa fa-circle text-success"></i>';
+			}
 
-		// Build Status dot
-		var status = '<i class="fa fa-circle text-danger"></i>';
-		if (device['status'] == 'Up') {
-			status = '<i class="fa fa-circle text-success"></i>';
+			// Add VC Cluster to table
+			var table = $('#country-device-table').DataTable();
+			table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version']]);
 		}
-
-		// Add VC Cluster to table
-		var table = $('#country-device-table').DataTable();
-		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version']]);
 	}
 	$('#country-device-table')
 		.DataTable()
 		.rows()
 		.draw();
+}
+
+function configureSelectedDevices() {
+	// setup counters for messaging
+	deviceCounter = 0;
+	deviceTotal = 0;
+	apiErrorCount = 0;
+
+	siteTotal = 0;
+
+	// UI Sanity Checks
+	var select = document.getElementById('device-countryselector');
+	var countryCode = select.value;
+	if (!countryCode) {
+		showNotification('ca-networking', 'Please select a Country from the dropdown', 'bottom', 'center', 'warning');
+		return;
+	}
+
+	if (Object.keys(selectedDevices).length <= 0) {
+		showNotification('ca-router', 'Please select one or more APs from the table', 'bottom', 'center', 'warning');
+		return;
+	} else {
+		deviceTotal = Object.keys(selectedDevices).length;
+	}
+
+	// Update each selected AP
+	logStart('Configuring Selected APs...');
+	progressNotification = showProgressNotification('ca-world', 'Configuring APs...', 'bottom', 'center', 'info');
+	for (const [key, value] of Object.entries(selectedDevices)) {
+		// for each AP
+		$.when(configureDevice(key, countryCode)).then(function() {
+			checkDeviceUpdateDone();
+		});
+	}
+}
+
+function configureSelectedDevicesUsingSite() {
+	// setup counters for messaging
+	deviceCounter = 0;
+	deviceTotal = 0;
+	apiErrorCount = 0;
+
+	siteTotal = 0;
+
+	// UI Sanity Checks
+	if (Object.keys(selectedDevices).length <= 0) {
+		showNotification('ca-router', 'Please select one or more APs from the table', 'bottom', 'center', 'warning');
+		return;
+	} else {
+		deviceTotal = Object.keys(selectedDevices).length;
+	}
+
+	logStart('Configuring Selected APs using Site Address...');
+	// Get the country codes for the sites for the selected APs
+	countryCodeNotification = showNotification('ca-square-pin', 'Obtaining Site Country Codes...', 'bottom', 'center', 'info');
+	countryPromise = new $.Deferred();
+	$.when(getAllCountryCodesForSelectedDevices()).then(function() {
+		countryCodeNotification.close();
+		var delayCounter = 0;
+		progressNotification = showProgressNotification('ca-world', 'Configuring APs...', 'bottom', 'center', 'info');
+		for (const [key, value] of Object.entries(selectedDevices)) {
+			var currentDevice = findDeviceInMonitoring(key);
+			siteDetails = siteCountries[currentDevice.site];
+			//console.log(siteDetails);
+			$.when(configureDevice(key, siteDetails.country)).then(function() {
+				checkDeviceUpdateDone();
+			});
+		}
+	});
+}
+
+function checkDeviceUpdateDone() {
+	var progress = (deviceCounter / deviceTotal) * 100;
+	progressNotification.update({ progress: progress });
+
+	if (deviceCounter >= deviceTotal) {
+		progressNotification.close();
+		if (siteTotal == 0) {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'Country Codes Assignment Failure',
+					text: 'Some or all of the selected APs failed to be configured',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'Country Codes Assignment Success',
+					text: 'All the selected APs were configured',
+					icon: 'success',
+				});
+			}
+		} else {
+			sitePromise.resolve();
+		}
+	}
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -574,15 +777,22 @@ function loadSiteTable(checked) {
 		var checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedSites(\'' + key + '\')">';
 		if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedSites(\'' + key + '\')" checked>';
 
-		// Get AP Counts
-		var apCount = 0;
-		$.each(value, function() {
-			apCount += clusterInfo[this].length;
-		});
+		if (site.swarms.length > 0) {
+			// Site has Virtual Controllers (item is a swarmID)
+			// Get AP Counts
+			var apCount = 0;
+			$.each(site.swarms, function() {
+				apCount += clusterInfo[this].length;
+			});
 
-		// Add VC Cluster to table
-		var table = $('#country-site-table').DataTable();
-		table.row.add([key, checkBoxString, '<strong>' + key + '</strong>', value.length, apCount]);
+			// Add VC Cluster to table
+			var table = $('#country-site-table').DataTable();
+			table.row.add([key, checkBoxString, '<strong>' + key + '</strong>', site.swarms.length, apCount]);
+		} else {
+			// Site is AOS10 - list of APs not swarmID
+			var table = $('#country-site-table').DataTable();
+			table.row.add([key, checkBoxString, '<strong>' + key + '</strong>', '-', site.aps.length]);
+		}
 	}
 	$('#country-site-table')
 		.DataTable()
@@ -590,7 +800,7 @@ function loadSiteTable(checked) {
 		.draw();
 }
 
-function configureSelectedSites() {
+async function configureSelectedSites() {
 	// setup counters for messaging
 	clusterCounter = 0;
 	clusterTotal = 0;
@@ -602,24 +812,30 @@ function configureSelectedSites() {
 		return;
 	}
 
+	logStart('Configuring Selected Sites...');
+	siteTotal = Object.entries(selectedSites).length;
+	siteCounter = 0;
 	// for each site get each VC out of selectedSites
 	for (const [key, value] of Object.entries(selectedSites)) {
 		var currentSite = key;
-		var siteClusters = siteInfo[key];
+		var siteClusters = siteInfo[key].swarms;
 		clusterTotal += siteClusters.length;
 
 		// wait for each site to be updated (stops subsequent site/cluster from overriding variable)
-		sitePromise = new $.Deferred();
-		$.when(configureSite(currentSite)).then(function() {
+		await $.when(configureSite(currentSite)).then(function() {
+			siteCounter++;
 			checkSiteUpdateDone();
 		});
 	}
 }
 
 function configureSite(siteName) {
+	sitePromise = new $.Deferred();
+
 	// Get the site list
 	var allSites = getSites();
-	var siteClusters = siteInfo[siteName];
+	var siteClusters = siteInfo[siteName].swarms;
+	var siteAPs = siteInfo[siteName].aps;
 
 	var siteID;
 	// find Site ID...
@@ -632,6 +848,7 @@ function configureSite(siteName) {
 	});
 
 	// get the site details to get the country (used to find the country code)
+	console.log('Getting country code for ' + siteName);
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -661,31 +878,65 @@ function configureSite(siteName) {
 		var response = JSON.parse(commandResults.responseBody);
 
 		var countryCode = countryCodes[response.country].code;
-		$.each(siteClusters, function() {
-			// wait for each swarm to be updated
-			swarmPromise = new $.Deferred();
-			$.when(configureSwarm(this, countryCode)).then(function() {
-				checkSiteUpdateDone();
-				sitePromise.resolve();
+
+		// If there are 8.x VCs - set at the VC level
+		if (siteClusters && siteClusters.length > 0) {
+			var siteClusterCounter = 0;
+			progressNotification = showProgressNotification('ca-world', 'Configuring Virtual Contollers at ' + siteName, 'bottom', 'center', 'info');
+
+			$.each(siteClusters, function() {
+				// wait for each swarm to be updated
+				$.when(configureSwarm(this, countryCode)).then(function() {
+					siteClusterCounter++;
+					var progress = (siteClusterCounter / siteClusters.length) * 100;
+					progressNotification.update({ progress: progress });
+
+					if (siteClusterCounter >= siteClusters.length) {
+						progressNotification.close();
+						sitePromise.resolve();
+					}
+				});
 			});
-		});
+
+			// If there are 10.x APs at the site - set at the AP level
+		} else if (siteAPs.length > 0) {
+			deviceCounter = 0;
+			deviceTotal = siteAPs.length;
+
+			progressNotification = showProgressNotification('ca-world', 'Configuring APs at ' + siteName, 'bottom', 'center', 'info');
+
+			$.each(siteAPs, function() {
+				if (this['firmware_version'].startsWith('10.')) {
+					console.log('Attempting to configure ' + this['serial'] + ' with Country Code: ' + countryCode);
+					$.when(configureDevice(this['serial'], countryCode)).then(function() {
+						checkDeviceUpdateDone();
+					});
+				} else {
+					deviceCounter++;
+					checkDeviceUpdateDone();
+				}
+			});
+		} else {
+			checkSiteUpdateDone();
+			sitePromise.resolve();
+		}
 	});
 	return sitePromise.promise();
 }
 
 function checkSiteUpdateDone() {
-	if (swarmCounter >= swarmTotal) {
+	if (siteCounter >= siteTotal) {
 		if (apiErrorCount != 0) {
 			showLog();
 			Swal.fire({
 				title: 'Country Codes Assignment Failure',
-				text: 'Some or all Virtual Controllers at the selected sites failed to be configured',
+				text: 'Some or all Virtual Controllers/APs at the selected sites failed to be configured',
 				icon: 'error',
 			});
 		} else {
 			Swal.fire({
 				title: 'Country Codes Assignment Success',
-				text: 'All Virtual Controllers at the selected sites were configured',
+				text: 'All Virtual Controllers/APs at the selected sites were configured',
 				icon: 'success',
 			});
 		}
@@ -760,6 +1011,7 @@ function configureSelectedGroups() {
 		clusterTotal = Object.keys(selectedGroups).length;
 	}
 
+	logStart('Configuring Selected Groups...');
 	// for each group
 	var groupArray = [];
 	for (const [key, value] of Object.entries(selectedGroups)) {
@@ -802,6 +1054,81 @@ function configureSelectedGroups() {
 				text: 'Some or all Groups failed to be configured',
 				icon: 'error',
 			});
+		}
+	});
+}
+
+/* Site Country Code */
+function getAllCountryCodesForSelectedDevices() {
+	countryCounter = 0;
+	countryTotal = Object.entries(selectedDevices).length;
+	for (const [key, value] of Object.entries(selectedDevices)) {
+		var currentDevice = findDeviceInMonitoring(key);
+		if (!siteCountries[currentDevice.site]) {
+			siteCountries[currentDevice.site] = {};
+			getCountryCodeForSite(currentDevice.site);
+		} else {
+			// either already have the country code - or are in the process of getting it for another AP.
+			countryCounter++;
+			if (countryCounter >= countryTotal) {
+				countryPromise.resolve();
+			}
+		}
+	}
+	return countryPromise.promise();
+}
+
+function getCountryCodeForSite(siteName) {
+	console.log('Getting country code for ' + siteName);
+	var siteID;
+
+	// find Site ID...
+	var allSites = getSites();
+	$.each(allSites, function() {
+		if (this.name === siteName.toString()) {
+			// found the site name so can get the site ID.
+			siteID = this.id;
+			return false;
+		}
+	});
+
+	// get the site details to get the country (used to find the country code)
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/central/v2/sites/' + siteID,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/central/v2/sites/<SITE-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		// Grab country code and store it
+		var countryCode = countryCodes[response.country].code;
+		siteCountries[siteName] = { name: siteName, id: siteID, country: countryCode };
+		//console.log(siteCountries[siteName]);
+
+		countryCounter++;
+		if (countryCounter >= countryTotal) {
+			countryPromise.resolve();
 		}
 	});
 }

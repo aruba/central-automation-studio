@@ -1,7 +1,7 @@
 /*
 Central Automation v1.1.4
 Updated: 1.17
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var rfEvents = [];
@@ -31,6 +31,17 @@ var frozenDevices = 0;
 var frozenErrors = 0;
 var currentAPIndex = 0;
 
+var apNotification;
+var channelNotification;
+var powerNotification;
+var staticNotification;
+var radarNotification;
+var eventNotification;
+var noiseNotification;
+var neighbourNotification;
+var optimizationNotification;
+var runNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -56,7 +67,7 @@ function findAPForRadio(radiomac) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 // Updated: 1.8.0
 function airmatchRunNow() {
-	showNotification('ca-run-shoes', 'Running AirMatch...', 'bottom', 'center', 'info');
+	runNotification = showNotification('ca-run-shoes', 'Running AirMatch...', 'bottom', 'center', 'info');
 
 	var select = document.getElementById('modeselector');
 	var runmode = select.value;
@@ -77,6 +88,7 @@ function airmatchRunNow() {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log("Run Now: "+ JSON.stringify(response))
+		runNotification.close();
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				logError('Central Server Error (503): ' + response.reason + ' (/airmatch/scheduler/v1/runnow)');
@@ -107,8 +119,9 @@ function airmatchRunNow() {
 // Updated: 1.8.0
 function updateAirMatchData() {
 	$.when(tokenRefresh()).then(function() {
-		showNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
+		apNotification = showNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
 		$.when(getAPData(0, false)).then(function() {
+			apNotification.close();
 			sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
 			fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
 			twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
@@ -130,9 +143,9 @@ function updateAirMatchData() {
 			getEIRPDistribution();
 			getChannelDistribution();
 
-			getNoiseEvents();
 			getAirmatchOptimization();
 			getStaticRadios();
+			getNoiseEvents();
 			// Do we need to grab the group properties?
 			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
 			if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
@@ -156,7 +169,7 @@ function updateAirMatchData() {
 	EIRP
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getRFNeighbours() {
-	showNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
+	neighbourNotification = showNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
 	rfNeighbours = {};
 	var settings2 = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -245,6 +258,8 @@ function getRFNeighbours() {
 				var response = JSON.parse(commandResults.responseBody);
 				rfNeighbours['6'] = response;
 				//console.log(rfNeighbours);
+
+				neighbourNotification.close();
 			});
 		});
 	});
@@ -254,7 +269,7 @@ function getRFNeighbours() {
 		EIRP
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getEIRPDistribution() {
-	showNotification('ca-chart-bar-32', 'Getting EIRP Distribution...', 'bottom', 'center', 'info');
+	powerNotification = showNotification('ca-chart-bar-32', 'Getting EIRP Distribution...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -372,6 +387,7 @@ function getEIRPDistribution() {
 				}
 			});
 		}
+		powerNotification.close();
 	});
 }
 
@@ -379,7 +395,7 @@ function getEIRPDistribution() {
 		Channels
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getChannelDistribution() {
-	showNotification('ca-chart-bar-32', 'Getting Channel Distribution...', 'bottom', 'center', 'info');
+	channelNotification = showNotification('ca-chart-bar-32', 'Getting Channel Distribution...', 'bottom', 'center', 'info');
 	channelAPs = {};
 	channelAPs['2.4GHz'] = {};
 	channelAPs['5GHz'] = {};
@@ -564,6 +580,7 @@ function getChannelDistribution() {
 				});
 			}
 		});
+		channelNotification.close();
 	});
 }
 
@@ -572,7 +589,7 @@ function getChannelDistribution() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 // Updated: 1.8.0
 function getAirmatchOptimization() {
-	showNotification('ca-hotspot', 'Getting AirMatch Optimisation...', 'bottom', 'center', 'info');
+	optimizationNotification = showNotification('ca-hotspot', 'Getting AirMatch Optimisation...', 'bottom', 'center', 'info');
 
 	// Grab the optimizations - latest 11 (1 for Latest section, next 10 for the table)
 	var settings = {
@@ -767,7 +784,7 @@ function getAirmatchOptimization() {
 				.rows()
 				.draw();
 		});
-		showNotification('ca-hotspot', 'Retrieved Lastest AirMatch Optimisation', 'bottom', 'center', 'success');
+		optimizationNotification.close();
 	});
 }
 
@@ -823,7 +840,7 @@ function loadOptimization(timestamp) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 // Updated: 1.8.0
 function getStaticRadios() {
-	showNotification('ca-snow', 'Getting Static radios...', 'bottom', 'center', 'info');
+	staticNotification = showNotification('ca-snow', 'Getting Static radios...', 'bottom', 'center', 'info');
 
 	$('#static-table')
 		.DataTable()
@@ -914,12 +931,13 @@ function getStaticRadios() {
 			}
 		});
 		$('[data-toggle="tooltip"]').tooltip();
+		staticNotification.close();
 	});
 }
 
 // Added: 1.8.0
 function unfreezeAP(serial, band) {
-	showNotification('ca-sun', 'Unfreezing radio on ' + band, 'bottom', 'center', 'info');
+	staticNotification = showNotification('ca-sun', 'Unfreezing radio on ' + band, 'bottom', 'center', 'info');
 	//console.log(band)
 
 	// Get current AP settings
@@ -991,6 +1009,7 @@ function unfreezeAP(serial, band) {
 				getStaticRadios();
 			}
 		});
+		staticNotification.close();
 	});
 }
 
@@ -1073,7 +1092,7 @@ function freezeSelectedAPs() {
 
 // Added: 1.8.0
 function confirmedAPFreeze() {
-	showNotification('ca-snow', 'Freezing radios on selected APs', 'bottom', 'center', 'info');
+	staticNotification = showNotification('ca-snow', 'Freezing radios on selected APs', 'bottom', 'center', 'info');
 	frozenDevices = 0;
 	frozenErrors = 0;
 	currentAPIndex = 0;
@@ -1191,6 +1210,7 @@ function freezeAP(serial) {
 				freezeAP(Object.keys(selectedDevices)[currentAPIndex]);
 			}
 		});
+		staticNotification.close();
 	});
 }
 
@@ -1198,7 +1218,7 @@ function freezeAP(serial) {
 		RF Events
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getRFEvents() {
-	showNotification('ca-opening-times', 'Getting Events...', 'bottom', 'center', 'info');
+	eventNotification = showNotification('ca-opening-times', 'Getting Events...', 'bottom', 'center', 'info');
 
 	$('#rfevents-table')
 		.DataTable()
@@ -1272,11 +1292,12 @@ function getRFEvents() {
 			.DataTable()
 			.rows()
 			.draw();
+		eventNotification.close();
 	});
 }
 
 function getNoiseEvents() {
-	showNotification('ca-radar', 'Getting Radar & Noise Events...', 'bottom', 'center', 'info');
+	noiseNotification = showNotification('ca-radar', 'Getting Radar & Noise Events...', 'bottom', 'center', 'info');
 
 	$('#noise-table')
 		.DataTable()
@@ -1341,6 +1362,7 @@ function getNoiseEvents() {
 			.DataTable()
 			.rows()
 			.draw();
+		noiseNotification.close();
 	});
 }
 

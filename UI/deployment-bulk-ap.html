@@ -37,7 +37,7 @@ Aaron Scott (WiFi Downunder) 2022
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/central-style.css" rel="stylesheet" />
+		<link href="assets/css/cas.css" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -317,7 +317,7 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Bulk Config Modal -->
+				<!-- Bulk Antenna Modal -->
 				<div class="modal fade modal-700 modal-primary" id="BulkAntennaConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
 						<div class="modal-content">
@@ -365,7 +365,7 @@ Aaron Scott (WiFi Downunder) 2022
 						</div>
 					</div>
 				</div>
-				<!--  End Modal -->
+				<!--  End Antenna Modal -->
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -374,6 +374,8 @@ Aaron Scott (WiFi Downunder) 2022
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+
 									</div>
 									<div class="card-body" id="errorBody"></div>
 								</div>
@@ -447,6 +449,7 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function() {
+		openIndexedDB();
 			var reachabilityPromise = new $.Deferred();
 		     $.when(checkReachability(reachabilityPromise)).then(function () {
 
@@ -489,8 +492,8 @@ Aaron Scott (WiFi Downunder) 2022
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=221023"></script>
-	<script src="assets/js/proxy.js"></script>
+	<script src="assets/js/main.js?v=230326"></script>
+	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js"></script>
 	<script src="assets/js/bulk-ap.js"></script>
 </html>

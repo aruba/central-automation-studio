@@ -1,7 +1,7 @@
 /*
 Central Automation v1.4.5
-Updated: 1.12.3
-Aaron Scott (WiFi Downunder) 2022
+Updated: 1.21
+Aaron Scott (WiFi Downunder) 2023
 */
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -948,6 +948,7 @@ function updateClientGraphs() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 	var barOptions = {
+		distributeSeries: true,
 		seriesBarDistance: 10,
 		axisX: {
 			showGrid: false,
@@ -985,9 +986,20 @@ function updateClientGraphs() {
 		'#chartOS',
 		{
 			labels: osLabels,
-			series: [osSeries],
+			series: osSeries,
 		},
-		barOptions
+		{
+			distributeSeries: true,
+			height: 250,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
+			plugins: [Chartist.plugins.tooltip()],
+		}
 	);
 
 	$('#chartOS').on('click', '.ct-bar', function() {

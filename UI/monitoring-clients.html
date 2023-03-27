@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2022
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/central-style.css" rel="stylesheet" />
+		<link href="assets/css/cas.css" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -97,7 +97,7 @@ Aaron Scott (WiFi Downunder) 2022
 						<div class="row">
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#ClientModal" href="#pablo">
+									<a data-toggle="modal" data-target="#ClientModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -118,7 +118,7 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#APModal" href="#pablo">
+									<a data-toggle="modal" data-target="#APModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -139,12 +139,12 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#SwitchModal" href="#pablo">
+									<a data-toggle="modal" data-target="#SwitchModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-server-rack text-warning" id="switch_icon"></i>
+														<i class="central-icon ca-switch-stack text-warning" id="switch_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -160,7 +160,7 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#GatewayModal" href="#pablo">
+									<a data-toggle="modal" data-target="#GatewayModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -181,7 +181,7 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#SiteModal" href="#pablo">
+									<a data-toggle="modal" data-target="#SiteModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -202,7 +202,7 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#GroupModal" href="#pablo">
+									<a data-toggle="modal" data-target="#GroupModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -240,7 +240,7 @@ Aaron Scott (WiFi Downunder) 2022
 						</div>
 						<div class="row" id="mainBoxes">
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11 Mix</h4>
 										<p class="card-category">Breakdown of 802.11 support</p>
@@ -256,7 +256,7 @@ Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">Band Split</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz</p>
@@ -272,7 +272,7 @@ Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">Authentication Types</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz vs Wired</p>
@@ -288,7 +288,7 @@ Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">Randomized MAC Addresses</h4>
 										<p class="card-category">Randomized vs Actual</p>
@@ -306,7 +306,7 @@ Aaron Scott (WiFi Downunder) 2022
 						</div>
 						<div class="row" id="amendmentSupportBoxes">
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11k Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -322,7 +322,7 @@ Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11v Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -338,7 +338,7 @@ Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks">
+								<div class="card  card-tasks" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11r Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -410,8 +410,9 @@ Aaron Scott (WiFi Downunder) 2022
 														<th>Status Text</th>
 														<th>IP Address</th>
 														<th>Model</th>
-														<th>Serial Number</th>
-														<th>Firmware Version</th>
+														<th>Serial</th>
+														<th>Clients</th>
+														<th>Firmware</th>
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
@@ -454,8 +455,8 @@ Aaron Scott (WiFi Downunder) 2022
 														<th>Status Text</th>
 														<th>IP Address</th>
 														<th>Model</th>
-														<th>Serial Number</th>
-														<th>Firmware Version</th>
+														<th>Serial</th>
+														<th>Firmware</th>
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
@@ -489,12 +490,16 @@ Aaron Scott (WiFi Downunder) 2022
 														<th>Status</th>
 														<th>Status Text</th>
 														<th>IP Address</th>
+														<th>Public IP</th>
 														<th>Model</th>
-														<th>Serial Number</th>
-														<th>Firmware Version</th>
+														<th>Serial</th>
+														<th>Firmware</th>
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
+														<th>Uplinks</th>
+														<th>Tunnels</th>
+														<th>Reboot Reason</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -536,9 +541,7 @@ Aaron Scott (WiFi Downunder) 2022
 										</div>
 									</div>
 									<div class="card-footer ">
-										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
-										</div>
+										<div class="col-md-12"><a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>&nbsp;<a class="btn btn-fill btn-info" href="deployment-site-mgmt.html">Bulk Manage Sites</a></div>
 									</div>
 								</div>
 							</div>
@@ -589,6 +592,8 @@ Aaron Scott (WiFi Downunder) 2022
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+
 									</div>
 									<div class="card-body" id="errorBody"></div>
 								</div>
@@ -671,9 +676,9 @@ Aaron Scott (WiFi Downunder) 2022
 				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#UniversalModal" href="#pablo" id="UniversalModalLink"></a>
-						<a data-toggle="modal" data-target="#SelectedClientModal" href="#pablo" id="SelectedClientModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
+						<a data-toggle="modal" data-target="#SelectedClientModal" id="SelectedClientModalLink"></a>
 
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
@@ -734,6 +739,7 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
 		  $(document).ready(function() {
+		openIndexedDB();
 		  	var reachabilityPromise = new $.Deferred();
 		      $.when(checkReachability(reachabilityPromise)).then(function () {
 
@@ -790,6 +796,11 @@ Aaron Scott (WiFi Downunder) 2022
 
 			Chartist.Bar('#chartAuth', data, options, responsiveOptions);
 
+			Chartist.Bar('#chartOS', {labels: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
+			  series: [20, 60, 120, 200, 180, 20, 10]}, {
+				distributeSeries: true
+			  });
+
 			$(".clickable-row").click(function() {
 				var clickedRow = $(this).data("href");
 				generateCSVForSite(clickedRow);
@@ -836,18 +847,39 @@ Aaron Scott (WiFi Downunder) 2022
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
-			$('#gateway-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Gateways",
-				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-			});
+			var loadGatewayDetails = localStorage.getItem('load_gateway_details');
+			if (loadGatewayDetails === null || loadGatewayDetails === "") {
+				loadGatewayDetails = false;
+			} else {
+				loadGatewayDetails = JSON.parse(loadGatewayDetails)
+			}
+			if (loadGatewayDetails) {
+				$('#gateway-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Gateways",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+			} else {
+				$('#gateway-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Gateways",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,11,12], "visible": false }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+			}
 
 			$('#site-table').DataTable({
 				"pagingType": "simple_numbers",
@@ -915,8 +947,8 @@ Aaron Scott (WiFi Downunder) 2022
 		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=221023"></script>
-	<script src="assets/js/proxy.js"></script>
+	<script src="assets/js/main.js?v=230326"></script>
+	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js"></script>
 	<script src="assets/js/clients.js"></script>
 </html>

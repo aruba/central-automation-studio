@@ -1,12 +1,13 @@
 /*
 Central Automation v1.10
-Updated:
+Updated: 1.28
 Used to verify API proxy accessibility and to update the UI Footer
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var api_url = 'Replace with API URL';
 var reachableProxies = [];
+var proxyNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		API Proxy Functions
@@ -20,7 +21,8 @@ function getAPIURL() {
 // Added: 1.8.3
 // Updated: 1.10
 function checkReachability(reachablePromise) {
-	showNotification('ca-api', 'Checking API Proxy reachability...', 'bottom', 'center', 'primary');
+	if (reachablePromise) proxyNotification = showNotification('ca-api', 'Checking API Proxy reachability...', 'top', 'center', 'primary'); // Only show notification on the page load
+	console.log('Checking API Proxy reachability...'); // log in console every time though
 	var testingOrder = [api_url];
 	var reachabilityCounter = 0;
 
@@ -34,7 +36,7 @@ function checkReachability(reachablePromise) {
 		var settings = {
 			url: this + '/reachable',
 			method: 'GET',
-			timeout: 0,
+			timeout: 8000,
 			headers: {
 				'Content-Type': 'application/json',
 			},
@@ -62,6 +64,10 @@ function checkReachability(reachablePromise) {
 					});
 				}
 				if (reachablePromise) reachablePromise.resolve();
+			}
+			if (reachablePromise && reachableProxies.length != 0) {
+				reachablePromise.resolve();
+				proxyNotification.close();
 			}
 		});
 	});

@@ -1,7 +1,7 @@
 /*
 Central Automation v1.3
-Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Updated: 1.20
+Aaron Scott (WiFi Downunder) 2023
 */
 
 var stacks = [];
@@ -29,12 +29,12 @@ function getSwitchStacks() {
 		switchVariables = {};
 		showNotification('ca-document-copy', 'Getting Switch variables...', 'bottom', 'center', 'info');
 		getVariablesForAllDevices(0);
-		showNotification('ca-server-rack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
+		showNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
 		$.when(getStacks(0)).then(function() {
-			showNotification('ca-server-rack', 'Downloaded Switch Stack Information', 'bottom', 'center', 'success');
+			showNotification('ca-switch-stack', 'Downloaded Switch Stack Information', 'bottom', 'center', 'success');
 
 			// loop through each stack and get details for each switch in the the stack
-			showNotification('ca-server-rack', 'Getting Switch Details...', 'bottom', 'center', 'info');
+			showNotification('ca-switch-stack', 'Getting Switch Details...', 'bottom', 'center', 'info');
 			$.each(stacks, function() {
 				getStackSwitches(this.id, this.name);
 			});
@@ -169,7 +169,7 @@ function getStackSwitches(stack_id, stackName) {
 						.draw();
 
 					stackCounter++;
-					if (stackCounter === stacks.length) showNotification('ca-server-rack', 'Downloaded Switch Details', 'bottom', 'center', 'success');
+					if (stackCounter === stacks.length) showNotification('ca-switch-stack', 'Downloaded Switch Details', 'bottom', 'center', 'success');
 				}
 			});
 		});

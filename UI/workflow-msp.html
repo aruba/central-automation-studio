@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.0
 Updated: 1.6.0
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 -->
 
 <!DOCTYPE html>
@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/central-style.css" rel="stylesheet" />
+		<link href="assets/css/cas.css" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -89,7 +89,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 						<div class="row">
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#APModal" href="#pablo">
+									<a data-toggle="modal" data-target="#APModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -110,12 +110,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#SwitchModal" href="#pablo">
+									<a data-toggle="modal" data-target="#SwitchModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-server-rack text-warning" id="switch_icon"></i>
+														<i class="central-icon ca-switch-stack text-warning" id="switch_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -131,7 +131,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GatewayModal" href="#pablo">
+									<a data-toggle="modal" data-target="#GatewayModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -152,7 +152,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GroupModal" href="#pablo">
+									<a data-toggle="modal" data-target="#GroupModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -173,7 +173,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#CustomerModal" href="#pablo">
+									<a data-toggle="modal" data-target="#CustomerModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -402,7 +402,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 												<table id="ap-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Customer</th>
-														<th>Serial Number</th>
+														<th>Serial</th>
 														<th>MAC Address</th>
 														<th>Type</th>
 														<th>Part Number</th>
@@ -441,7 +441,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 												<table id="switch-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Customer</th>
-														<th>Serial Number</th>
+														<th>Serial</th>
 														<th>MAC Address</th>
 														<th>Type</th>
 														<th>Part Number</th>
@@ -480,7 +480,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 												<table id="gateway-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Customer</th>
-														<th>Serial Number</th>
+														<th>Serial</th>
 														<th>MAC Address</th>
 														<th>Type</th>
 														<th>Part Number</th>
@@ -573,6 +573,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+
 									</div>
 									<div class="card-body" id="errorBody"></div>
 								</div>
@@ -699,9 +701,9 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#CustomerSelectionModal" href="#pablo" id="CustomerModalLink"></a>
-						<a data-toggle="modal" data-target="#AddCustomerModal" href="#pablo" id="AddCustomerModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal"  id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#CustomerSelectionModal"  id="CustomerModalLink"></a>
+						<a data-toggle="modal" data-target="#AddCustomerModal"  id="AddCustomerModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -760,6 +762,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
 		 $(document).ready(function() {
+		openIndexedDB();
 		 	var reachabilityPromise = new $.Deferred();
 		     $.when(checkReachability(reachabilityPromise)).then(function () {
 
@@ -861,7 +864,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		 });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=221023"></script>
-	<script src="assets/js/proxy.js"></script>
+	<script src="assets/js/main.js?v=230326"></script>
+	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js"></script>
 </html>

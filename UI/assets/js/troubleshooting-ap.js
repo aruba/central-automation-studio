@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7
-Updated: 1.8.2
-© Aaron Scott (WiFi Downunder) 2022
+Updated: 1.24.1
+© Aaron Scott (WiFi Downunder) 2023
 */
 
 var selectedClusters = {};
@@ -9,12 +9,14 @@ var selectedDevices = {};
 var clusterInfo = {};
 var deviceInfo = {};
 var aaaInfo = {};
+var apBSSIDs = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageAP() {
 	getDevices();
+	refreshBSSIDs();
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
@@ -89,11 +91,13 @@ function loadDevicesTable(checked) {
 			});
 
 			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugAAA(\'' + device.serial + '\')">AAA</button> ';
+			//tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugTech(\'' + device.serial + '\')">Tech-Support</button> ';
+			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugNeighbours(\'' + device.serial + '\')">Neighbours</button> ';
 		}
 
 		// Add AP to table
 		var table = $('#device-table').DataTable();
-		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], uptimeString, tshootBtns]);
+		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], uptimeString, tshootBtns]);
 	}
 	$('#device-table')
 		.DataTable()
@@ -731,6 +735,383 @@ function checkAAA(session_id, deviceSerial) {
 				document.getElementById('aaaText').innerHTML = results;
 				$('#AAAModalLink').trigger('click');
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
+		}
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Tech Support Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function debugTech(deviceSerial) {
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 257 }, { command_id: 201 }] });
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkDebugTech, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkDebugTech(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkDebugTech, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				console.log(response.output);
+				/*//var results = decodeURI(response.output);
+				var results = response.output;
+
+				// Command Run Time
+				var startString = 'Output Time: ';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var runTime = results.substring(startLocation, endLocation).trim();
+
+				// Populate the SystemStatus Modal
+				var deviceDetails = findDeviceInMonitoring(response.serial);
+				document.getElementById('systemStatusTitle').innerHTML = 'System Status for ' + deviceDetails.name; // + ' (' + runTime + ')';
+
+				$('#generalSystemIssues').empty();
+				$('#powerIssues').empty();
+				$('#hardwareIssues').empty();
+				$('#interfaceIssues').empty();
+
+				// Find AP Uptime
+				var startString = 'AP Uptime\n---------\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var uptime = results.substring(startLocation, endLocation).trim();
+				$('#generalSystemIssues').append('<li>Uptime: <strong>' + uptime + '</strong></li>');
+
+				// Find Reboot Reason "AP Reboot reason:  "
+				var startString = 'Reboot Information\n------------------\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var rebootReason = results.substring(startLocation, endLocation).trim();
+				$('#generalSystemIssues').append('<li>Reboot Reason: <strong>' + rebootReason + '</strong></li>');
+
+				// Check if crash log exists
+				var startString = 'Crash Information\n-----------------';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('------------', startLocation);
+				var crashReason = results.substring(startLocation, endLocation).trim();
+				if (crashReason !== '(none found)') {
+					if (crashReason == "Crash information is available; use 'show ap debug crash-info' to retrieve") {
+						$('#generalSystemIssues').append('<li id="crashInfo">Crash Information: <button class="btn btn-round btn-sm btn-outline btn-warning" onclick="obtainCrashLog(\'' + response.serial + '\')">Download Crash Information</button></li>');
+					} else {
+						$('#generalSystemIssues').append('<li id="crashInfo">Crash Information: <strong>' + crashReason + '</strong></li>');
+					}
+				}
+
+				// Power Information
+				var startString = 'Power Status\n------------\nItem                        Value\n----                        -----\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n\n', startLocation);
+				var powerInformationBlock = results.substring(startLocation, endLocation).trim();
+				addPowerInfoForLabel(powerInformationBlock, 'Power Supply');
+				addPowerInfoForLabel(powerInformationBlock, 'LLDP Power');
+				addPowerInfoForLabel(powerInformationBlock, 'Current Operational State');
+
+				if (results.indexOf('Power Monitoring Information') != -1) {
+					var startString = 'Power Monitoring Information\n----------------------------\nCurrent(mW)  Average(mW)  Minimum(mW)  Maximum(mW)\n-----------  -----------  -----------  -----------\n';
+					var startLocation = results.indexOf(startString) + startString.length;
+					var endLocation = results.indexOf(' ', startLocation);
+					//console.log(results.substring(startLocation, endLocation).trim());
+					var currentDraw = parseInt(results.substring(startLocation, endLocation).trim()) / 1000;
+					$('#powerIssues').append('<li>Current Power Draw: <strong>' + currentDraw.toFixed(2) + 'W</strong></li>');
+				}
+
+				// Hardware status
+				var startString = 'Peak CPU Util in the last one hour\n----------------------------------\nTimestamp            CPU Util(%)  Memory Util(%)\n---------            -----------  --------------\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n', startLocation);
+				var memoryLine = results.substring(startLocation, endLocation).trim();
+
+				// CPU
+				startString = '  ';
+				var startLocation = memoryLine.indexOf(startString) + startString.length;
+				var endLocation = memoryLine.indexOf('   ', startLocation);
+				var lastCPUValue = memoryLine.substring(startLocation, endLocation).trim();
+				$('#hardwareIssues').append('<li>CPU Usage: <strong>' + lastCPUValue + '%</strong></li>');
+				// Memory
+				startString = '   ';
+				var startLocation = memoryLine.indexOf(startString) + startString.length;
+				var lastMemoryValue = parseInt(memoryLine.substring(startLocation).trim());
+				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
+				else $('#hardwareIssues').append('<li>Memory Usage: <strong>' + lastMemoryValue + '%</strong></li>');
+
+				// Ethernet status
+				var startString = 'Ethernet Duplex/Speed Settings\n------------------------------\nAutoneg  Speed (Mbps)  Duplex  Iface\n-------  ------------  ------  -----\n';
+				if (results.indexOf(startString) == -1) startString = 'Ethernet Duplex/Speed Settings\n------------------------------\nAutoneg  Speed (Mbps)  Duplex   Iface\n-------  ------------  ------   -----\n';
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf('\n\n', startLocation);
+				var ethernetInterfaces = results.substring(startLocation, endLocation).trim();
+				//console.log(ethernetInterfaces);
+				var interfaces = ethernetInterfaces.split('\n');
+				$.each(interfaces, function() {
+					var intString = this.replace(/  +/g, ' ');
+					var intParts = intString.split(' ');
+					var intSpeed = intParts[1];
+					var intDuplex = intParts[2];
+					var intName = intParts[3];
+					// check if int is actually up
+					var startString = 'ifconfig output for ' + intName + '\n';
+					var endString = '\n\n';
+					if (results.indexOf(startString) == -1) {
+						startString = '====== ifconfig ' + intName + ' ======';
+						endString = 'B)   ';
+					}
+					if (results.indexOf(startString) != -1) {
+						startLocation = results.indexOf(startString) + startString.length;
+						var endLocation = results.indexOf(endString, startLocation);
+						var intDetails = results.substring(startLocation, endLocation).trim();
+
+						startString = 'HWaddr';
+						var startLocation = intDetails.indexOf(startString) + startString.length;
+						var endLocation = intDetails.indexOf('\n', startLocation);
+						var macaddr = intDetails.substring(startLocation, endLocation).trim();
+					} else {
+						var intDetails = '';
+						var macaddr = '?';
+					}
+					if (intDetails.includes('RUNNING')) {
+						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>' + intSpeed + 'Mbps (' + intDuplex + ' Duplex)</strong></li>');
+					} else {
+						$('#interfaceIssues').append('<li>' + intName + ' (' + macaddr + '): <strong>Down</strong></li>');
+					}
+				});
+
+				document.getElementById('systemStatusText').innerHTML = results;
+				$('#SystemStatusModalLink').trigger('click');
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+				*/
+			} else {
+				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+			}
+		}
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	ARM Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function refreshBSSIDs() {
+	showNotification('ca-wifi', 'Obtaining BSSIDs...', 'bottom', 'center', 'info');
+	$.when(getBSSIDData(0)).then(function() {
+		// build BSSID to AP mapping
+		var rawBSSIDs = getBSSIDs();
+		$.each(rawBSSIDs, function() {
+			var ap = findDeviceInMonitoring(this.serial);
+			$.each(this.radio_bssids, function() {
+				var radio = this;
+				$.each(radio.bssids, function() {
+					apBSSIDs[this.macaddr] = ap;
+				});
+			});
+		});
+		console.log(apBSSIDs);
+		showNotification('ca-wifi', 'Obtained BSSIDs', 'bottom', 'center', 'success');
+	});
+}
+
+function debugNeighbours(deviceSerial) {
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 18 }] });
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkDebugNeighbours, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+function checkDebugNeighbours(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				setTimeout(checkDebugNeighbours, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				$('#BSSIDModalLink').trigger('click');
+				$('#bssid-table')
+					.DataTable()
+					.rows()
+					.remove();
+				var table = $('#bssid-table').DataTable();
+
+				var results = response.output;
+
+				// For each block of BSSIDs (column widths could be different!!!)
+				var bssidBlocks = results.split('ARM Neighbors\n-------------\n');
+				bssidBlocks.shift(); // no need for the first block (not useful info)
+
+				$.each(bssidBlocks, function() {
+					// Get column widths by dissecting the header row
+					var headerLocation = this.indexOf('bssid              essid');
+					var headers = this.substring(headerLocation, this.indexOf('\n', headerLocation));
+					var bssidLocation = headers.indexOf('bssid');
+					var essidLocation = headers.indexOf('essid');
+					var bandLocation = headers.indexOf('phy-type');
+					var channelLocation = headers.indexOf('channel');
+					var snrLocation = headers.indexOf('snr');
+					var txLocation = headers.indexOf('tx-power');
+					var pathLossLocation = headers.indexOf('PL (dB)');
+					var flagsLocation = headers.indexOf('AP Flags');
+					var updateLocation = headers.indexOf('Last Update');
+
+					// Rip out the Neighbour BSSIDs
+					var foundBSSIDs = this.match(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2}).*$/gm);
+					$.each(foundBSSIDs, function() {
+						// Dissect each line for the pieces needed
+						var bssid = this.match(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/gm);
+						var essid = this.substring(essidLocation, bandLocation).trim();
+						var band = this.substring(bandLocation, channelLocation).trim();
+						if (bandLocation == -1) {
+							essid = this.substring(essidLocation, channelLocation).trim();
+							band = '';
+						}
+						var channel = this.substring(channelLocation, snrLocation).trim();
+						var snr = this.substring(snrLocation, txLocation).trim();
+						var txPower = this.substring(txLocation, pathLossLocation).trim();
+						var pathLoss = this.substring(pathLossLocation, flagsLocation).trim();
+						var flags = this.substring(flagsLocation, updateLocation).trim();
+						var update = this.substring(updateLocation).trim();
+
+						var ap = apBSSIDs[bssid];
+						if (ap) {
+							// Make AP Name as a link to Central
+							var name = encodeURI(ap['name']);
+							var apiURL = localStorage.getItem('base_url');
+							var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+
+							table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank" data-toggle="tooltip" data-placement="right" title="' + bssid + '"><strong>' + ap['name'] + '</strong></a>', essid, band, channel, snr, txPower, pathLoss, flags]);
+						} else {
+							table.row.add([bssid, essid, band, channel, snr, txPower, pathLoss, flags]);
+						}
+					});
+				});
+
+				$('#bssid-table')
+					.DataTable()
+					.rows()
+					.draw();
+				$('[data-toggle="tooltip"]').tooltip();
 			} else {
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
 			}

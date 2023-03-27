@@ -1,10 +1,11 @@
 /*
 Central Automation v1.6.0
-Updated: 1.17
-Copyright Aaron Scott (WiFi Downunder) 2022
+Updated: 1.22
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var hydraMonitoringData = {};
+var authNotification;
 
 /*  ----------------------------------------------------------------------------------
 		Utility functions
@@ -16,15 +17,17 @@ function saveGlobalSettings() {
 	localStorage.setItem('hostname_variable', $('#hostname_variable').val());
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
-	localStorage.setItem('load_clients', document.getElementById('load_clients').value === 'Include' ? true : false);
-	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').value === 'Include' ? true : false);
-	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').value === 'Include' ? true : false);
+	localStorage.setItem('load_clients', document.getElementById('load_clients').checked);
+	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').checked);
+	localStorage.setItem('load_gateway_details', document.getElementById('load_gateway_details').checked);
+	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').checked);
+	localStorage.setItem('load_vc_config', document.getElementById('load_vc_config').checked);
 	localStorage.setItem('qr_color', $('#color_picker').val());
 	localStorage.setItem('qr_logo', $('#qr_logo').val());
 	// remove existing client data
-	if (document.getElementById('load_clients').value === 'Do Not Include') {
-		localStorage.setItem('monitoring_wirelessClients', JSON.stringify([]));
-		localStorage.setItem('monitoring_wiredClients', JSON.stringify([]));
+	if (!document.getElementById('load_clients').checked) {
+		saveDataToDB('monitoring_wirelessClients', JSON.stringify([]));
+		saveDataToDB('monitoring_wiredClients', JSON.stringify([]));
 	}
 	logInformation('Central Automation Studio settings saved');
 }
@@ -52,22 +55,45 @@ function loadDashboardData(refreshrate) {
 			console.log('Reading new hydra monitoring data from Central');
 			getDashboardData();
 		} else {
-			console.log('Reading hydra monitoring data from local storage');
-
-			var monitoringData = localStorage.getItem('monitoring_hydra');
-			if (monitoringData != null && monitoringData != 'undefined') {
-				hydraMonitoringData = JSON.parse(monitoringData);
-				loadHydraTable();
-			}
+			console.log('Reading hydra monitoring data from the IndexedDB');
+			const transaction = db.transaction('general', 'readonly');
+			const store = transaction.objectStore('general');
+			const monitoringQuery = store.get('monitoring_hydra');
+			monitoringQuery.onsuccess = function() {
+				if (monitoringQuery.result && monitoringQuery.result.data) {
+					hydraMonitoringData = JSON.parse(monitoringQuery.result.data);
+					loadHydraTable();
+				}
+			};
 		}
 	}
+}
+
+function saveDataToDB(indexKey, data) {
+	const transaction = db.transaction('general', 'readwrite');
+	const store = transaction.objectStore('general');
+	store.put({ key: indexKey, data: data });
+}
+
+function deleteDataFomDB(indexKey) {
+	const transaction = db.transaction('general', 'readwrite');
+	const store = transaction.objectStore('general');
+	const request = store.delete(indexKey);
+
+	request.onsuccess = () => {
+		console.log('Data deleted');
+	};
+
+	request.onerror = err => {
+		console.error('Failed to delete data: ${err}');
+	};
 }
 
 /*  ----------------------------------------------------------------------------------
 		Authentication functions
 	---------------------------------------------------------------------------------- */
 function tokenRefreshForAll() {
-	showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
+	authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	authCounter = 0;
 	authErrorCount = 0;
 	authPromise = new $.Deferred();
@@ -250,7 +276,7 @@ function loadHydraTable() {
 		.rows()
 		.remove();
 	for (let k in hydraMonitoringData) {
-		//console.log(getNameforClientID(k));
+		//console.log(hydraMonitoringData[k]);
 
 		// Process Clients
 		var clientString = '';
@@ -474,6 +500,7 @@ function loadIndividualAccount(client_id, hydra) {
 	else localStorage.removeItem('from_hydra');
 
 	localStorage.removeItem('monitoring_update');
+	deleteDataFomDB('monitoring_bssids');
 	window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'dashboard.html';
 }
 
@@ -504,7 +531,7 @@ function getWirelessClientOverviewForAccount(clientID) {
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wirelessClientsUp'] = response.total;
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -534,7 +561,7 @@ function getWirelessClientOverviewForAccount(clientID) {
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wirelessClientsDown'] = response.total;
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -550,7 +577,7 @@ function getWiredClientOverviewForAccount(clientID) {
 		},
 		data: JSON.stringify({
 			//url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true',
-			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&timerange=3H&client_type=WIRED&client_status=CONNECTED',
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&offset=0&limit=' + apiLimit + '&timerange=3H&client_type=WIRED&client_status=CONNECTED&show_usage=true&show_manufacturer=true',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
@@ -560,7 +587,7 @@ function getWiredClientOverviewForAccount(clientID) {
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wiredClientsUp'] = response.total;
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -574,7 +601,7 @@ function getWiredClientOverviewForAccount(clientID) {
 		},
 		data: JSON.stringify({
 			//url: getbaseURLforClientID(clientID) + '/monitoring/v1/clients/wireless?calculate_total=true',
-			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&timerange=3H&client_type=WIRED&client_status=FAILED_TO_CONNECT',
+			url: getbaseURLforClientID(clientID) + '/monitoring/v2/clients?calculate_total=true&offset=0&limit=' + apiLimit + '&timerange=3H&client_type=WIRED&client_status=FAILED_TO_CONNECT&show_usage=true&show_manufacturer=true',
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
@@ -590,13 +617,13 @@ function getWiredClientOverviewForAccount(clientID) {
 		if (response.hasOwnProperty('error')) {
 		} else {
 			hydraMonitoringData[clientID]['wiredClientsDown'] = response.total;
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
 }
 
-function getWiredClientDataForAccount(clientID) {
+/*function getWiredClientDataForAccount(clientID) {
 	//showNotification("ca-computer-monitor", 'Getting wired clients for "'+getNameforClientID(clientID)+'"', "bottom", "center", 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommand',
@@ -626,11 +653,11 @@ function getWiredClientDataForAccount(clientID) {
 			if (document.getElementById('client_count')) document.getElementById('client_count').innerHTML = '-';
 		} else {
 			hydraMonitoringData[clientID]['wiredClients'] = response.total;
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
-}
+}*/
 
 function getAPOverviewForAccount(clientID) {
 	// Get Up AP Count for account
@@ -664,7 +691,7 @@ function getAPOverviewForAccount(clientID) {
 			this['client_id'] = clientID;
 			hydraMonitoringData[clientID]['apsUp'] = response.total;
 
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -700,7 +727,7 @@ function getAPOverviewForAccount(clientID) {
 			this['client_id'] = clientID;
 			hydraMonitoringData[clientID]['apsDown'] = response.total;
 
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -738,7 +765,7 @@ function getSwitchOverviewForAccount(clientID) {
 			this['client_id'] = clientID;
 			hydraMonitoringData[clientID]['switchesUp'] = response.total;
 
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -774,7 +801,7 @@ function getSwitchOverviewForAccount(clientID) {
 			this['client_id'] = clientID;
 			hydraMonitoringData[clientID]['switchesDown'] = response.total;
 
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -812,7 +839,7 @@ function getGatewayOverviewForAccount(clientID) {
 			this['client_id'] = clientID;
 			hydraMonitoringData[clientID]['gatewaysUp'] = response.total;
 
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -848,7 +875,7 @@ function getGatewayOverviewForAccount(clientID) {
 			this['client_id'] = clientID;
 			hydraMonitoringData[clientID]['gatewaysDown'] = response.total;
 
-			localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+			saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 			loadHydraTable();
 		}
 	});
@@ -1005,7 +1032,7 @@ function getSiteDataForAccount(clientID, offset) {
 				getSiteDataForAccount(clientID, offset + apiSiteLimit);
 			} else {
 				//console.log(hydraMonitoringData[clientID]["sites"])
-				localStorage.setItem('monitoring_hydra', JSON.stringify(hydraMonitoringData));
+				saveDataToDB('monitoring_hydra', JSON.stringify(hydraMonitoringData));
 				loadHydraTable();
 			}
 		}

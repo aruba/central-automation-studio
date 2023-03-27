@@ -1,7 +1,7 @@
 /*
 Central Automation v1.18
-Updated: v1.18
-Copyright Aaron Scott (WiFi Downunder) 2022
+Updated: v1.23
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var deviceList = [];
@@ -149,21 +149,6 @@ function profileSelected() {
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
-function loadAntennas() {
-	select = document.getElementById('antennaSelector');
-	if (select) select.options.length = 0;
-	var antennaKeys = Object.keys(antennas);
-	$.each(antennaKeys, function() {
-		$('#antennaSelector').append($('<option>', { value: this, text: this }));
-	});
-	$('#antennaSelector').selectpicker('refresh');
-}
-
-function antennaSelected() {
-	var selectedAntenna = antennas[document.getElementById('antennaSelector').value];
-	if (selectedAntenna.five) document.getElementById('antennaGain0').value = selectedAntenna.five;
-	if (selectedAntenna.two) document.getElementById('antennaGain1').value = selectedAntenna.two;
-}
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Opening Modals 

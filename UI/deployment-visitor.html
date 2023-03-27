@@ -13,9 +13,9 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.8
-Updated: 1.17
-Aaron Scott (WiFi Downunder) 2022
+Central Automation v1.0
+Updated: 1.18
+Copyright Aaron Scott (WiFi Downunder) 2023
 -->
 
 <!DOCTYPE html>
@@ -26,19 +26,19 @@ Aaron Scott (WiFi Downunder) 2022
 		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32" />
-
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
 		<link href="assets/css/cas.css" rel="stylesheet" />
-		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
+		<!-- CSS Just for demo purpose, don't include it in your project -->
+		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -51,12 +51,20 @@ Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: ClientMatch </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Visitor Management </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
+							<ul class="nav navbar-nav">
+								<form class="navbar-form navbar-left navbar-search-form" id="searchForm" onSubmit="return false;">
+									<div class="input-group">
+										<i class="nc-icon nc-zoom-split"></i>
+										<input type="search" value="" class="form-control" placeholder="Search..." id="universalSearchInput" />
+									</div>
+								</form>
+							</ul>
 							<ul class="navbar-nav">
 								<li class="nav-item active ">
-									<a class="nav-link" onclick="updateClientMatchData()">
+									<a class="nav-link" onclick="getMonitoringData()" href="#">
 										<i class="central-icon ca-reload"></i>
 									</a>
 								</li>
@@ -66,7 +74,7 @@ Aaron Scott (WiFi Downunder) 2022
 									</a>
 								</li>
 								<li class="nav-item">
-									<a class="nav-link" onclick="showLog()">
+									<a class="nav-link" onclick="showLog()" href="#">
 										<i class="central-icon ca-research"></i>
 									</a>
 								</li>
@@ -86,157 +94,107 @@ Aaron Scott (WiFi Downunder) 2022
 				<!-- End Navbar -->
 				<div class="content">
 					<div class="container-fluid">
+						<!-- CSV Card -->
 						<div class="row">
-							<!-- CM State Card -->
 							<div class="col-md-4">
 								<div class="card  card-tasks">
 									<div class="card-header ">
-										<h4 class="card-title">ClientMatch State</h4>
-										<p class="card-category">Show the state of ClientMatch for this tenant</p>
+										<h4 class="card-title">Visitor Portal</h4>
+										<a class="refresh-link" onclick="getVisitorPortals()"><i class="central-icon ca-reload"></i></a>
+										<p class="card-category">Select a portal to work with below...</p>
 										<p></p>
 									</div>
 
 									<div class="card-body">
-										<button class="btn btn-fill btn-default" name="cmStateBtn" id="cmStateBtn" onclick="toggleCMState()">Unknown</button>
-									</div>
-								</div>
-							</div>
-							<!-- End CM State Card -->
-							<!-- CM State Card -->
-							<div class="col-md-4">
-								<div class="card  card-tasks">
-									<div class="card-header ">
-										<h4 class="card-title">Load Balancing State</h4>
-										<p class="card-category">Show the state of ClientMatch Load Balancing for this tenant</p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
-										<button class="btn btn-fill btn-default" name="loadbalBtn" id="loadbalBtn" onclick="toggleLoadBal()">Unknown</button>
-									</div>
-								</div>
-							</div>
-							<!-- End CM State Card -->
-						</div>
-						<!-- Unsteerable Clients Card -->
-						<div class="row">
-							<div class="col-md-12">
-								<div class="card">
-									<div class="card-header">
-										<h4 class="card-title">Unsteerable Clients</h4>
-										<a class="refresh-link" onclick="getUnsteerableClients()"><i class="central-icon ca-reload"></i></a>
-									</div>
-									<div class="card-body">
-										<div class="card data-tables">
-											<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
-												<div class="fresh-datatables">
-													<table id="unsteerable-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
-														<thead>
-															<th>Name</th>
-															<th>Health</th>
-															<th>MAC Address</th>
-															<th>IP Address</th>
-															<th>Client OS</th>
-															<th>Connected To</th>
-															<th>Site</th>
-															<th>VLAN</th>
-															<th>Actions</th>
-														</thead>
-														<tbody></tbody>
-													</table>
+										<div class="row">
+											<div class="col-md-6">
+												<select id="portalselector" class="selectpicker" data-title="Select a Portal..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="loadPortalDetails()"> </select>
+											</div>
+										</div>
+										<hr id="portalSeparator" hidden />
+										<div class="row" id="portalDetails" hidden>
+											<div class="card-header">
+												<h4 class="card-title">Portal Details</h4>
+											</div>
+											<div class="col-md-12">
+												<div class="card-body">
+													<ul class="list-inline" id="portalInformation"></ul>
 												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
+							<div class="col-md-4">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">CSV Upload</h4>
+										<p class="card-category">Upload CSV data here... <a href="/sample-visitor.csv" download>Download Sample CSV</a></p>
+										<p></p>
+									</div>
+
+									<div class="card-body">
+										<form class="form-inline">
+											<div class="form-group">
+												<input type="file" id="files" class="form-control btn btn-fill btn-info" accept=".csv" required />
+											</div>
+										</form>
+										<div id="manualGroupDiv">
+											<p class="card-category text-warning" id="manualGroupParagraph"></p>
+											<p></p>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="card  card-tasks">
+									<div class="card-header ">
+										<h4 class="card-title">Create Visitors</h4>
+										<p class="card-category">Using selected portal and CSV data</p>
+									</div>
+
+									<div class="card-body">
+										<button class="btn btn-fill btn-info" name="createVisitorBtn" id="createVisitorBtn" onclick="uploadVisitors()">Create Visitors</button>
+									</div>
+								</div>
+							</div>
 						</div>
+						<!-- End CSV Cards -->
+						<!-- Visitor Card -->
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card">
 									<div class="card-header">
-										<h4 class="card-title">Recent Steering History</h4>
-										<a class="refresh-link" onclick="getSteerHistory()"><i class="central-icon ca-reload"></i></a>
+										<h4 class="card-title">Visitor Accounts</h4>
 									</div>
 									<div class="card-body">
 										<div class="card data-tables">
 											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 												<div class="fresh-datatables">
-													<table id="history-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<table id="visitor-table" class="table table-striped table-no-bordered table-hover table-fixed" cellspacing="0" width="100%">
 														<thead>
-															<th>Event Time</th>
-															<th>Client</th>
-															<th>Type</th>
-															<th>Mode</th>
+															<th>ID</th>
+															<th>Name</th>
+															<th>Company</th>
 															<th>Status</th>
-															<th>From AP (RSSI)</th>
-															<th>To AP (RSSI)</th>
-															<th>Destination AP (RSSI)</th>
-															<th>Roam Time (msecs)</th>
+															<th>Enabled</th>
+															<th>Email</th>
+															<th>Phone</th>
+															<th>Expires</th>
+															<th>Action</th>
 														</thead>
 														<tbody></tbody>
 													</table>
 												</div>
 											</div>
 										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row" id="cmGraphs">
-							<div class="col-md-3">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch Type</h4>
-										<p class="card-category">Type of Steers</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMType" class="ct-chart"></div>
-									</div>
-								</div>
-							</div>
-							<div class="col-md-3">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch Mode</h4>
-										<p class="card-category">Mode of Steers</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMMode" class="ct-chart"></div>
-									</div>
-								</div>
-							</div>
-							<div class="col-md-6">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch Steers</h4>
-										<p class="card-category">Status of Steers</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMStatus" class="ct-chart"></div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row" id="cmGraphs2">
-							<div class="col-md-12">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">Client Type per Steer</h4>
-										<p class="card-category">Top 10 Client Types</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMClients" class="ct-chart"></div>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -255,28 +213,13 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Graph Modal -->
-				<div class="modal fade modal-small modal-primary" id="GraphModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="card-header">
-										<h4 class="card-title">ClientMatch Graphs</h4>
-									</div>
-									<div class="card-body ">
-										<div id="chartCMStatus" class="ct-chart ct-minor-third"></div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!--  End Modal -->
+
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#GraphModal" id="GraphModalLink"></a>
+						<a data-toggle="modal" data-target="#GroupSelectionModal" id="GroupModalLink"></a>
+						<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
+						<a data-toggle="modal" data-target="#AntennaConfigModal" id="AntennaConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -300,7 +243,6 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/bootstrap-switch.js"></script>
 	<!--  Chartist Plugin  -->
 	<script src="assets/js/plugins/chartist.min.js"></script>
-	<script src="assets/js/plugins/chartist-plugin-tooltip.js"></script>
 	<!--  Notifications Plugin    -->
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
@@ -325,7 +267,6 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/bootstrap-table.js"></script>
 	<!--  DataTable Plugin -->
 	<script src="assets/js/plugins/jquery.dataTables.min.js"></script>
-	<script src="assets/js/plugins/datetime-moment.js"></script>
 	<!--  Full Calendar   -->
 	<script src="assets/js/plugins/fullcalendar.min.js"></script>
 	<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
@@ -337,61 +278,37 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function() {
-		openIndexedDB();
+			openIndexedDB();
 			var reachabilityPromise = new $.Deferred();
-		    $.when(checkReachability(reachabilityPromise)).then(function () {
-				$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
+			$.when(checkReachability(reachabilityPromise)).then(function () {
 
-				loadMonitoringData();
-				var refreshrate = localStorage.getItem('refresh_rate');
-				if (refreshrate === null || refreshrate === "") {
-					refreshrate = "30";
-				}
-				var loadIntervalID;
-				loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+				var mgd = document.getElementById("manualGroupDiv");
+				mgd.style.display = "none";
 
-				document.addEventListener("visibilitychange", function handleVisibilityChange() {
-					if (!document.hidden) {
-						var reachabilityPromise = new $.Deferred();
-						$.when(checkReachability(reachabilityPromise)).then(function () {
-							loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
-						});
-					} else {
-						clearInterval(loadIntervalID);
-					}
-				}, false);
-
-				$('#unsteerable-table').DataTable({
+				$('#visitor-table').DataTable({
 					"pagingType": "simple_numbers",
-					"autoWidth": true,
-					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					"order": [[ 1, "asc" ]],
 					responsive: true,
 					language: {
 						search: "_INPUT_",
-						searchPlaceholder: "Search Clients",
+						searchPlaceholder: "Search Visitors",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }]
+					"columnDefs": [{
+						"targets": [ 0 ],
+						"visible": false,
+						"searchable": false
+					}]
 				});
 
-				$('#history-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": true,
-					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search History",
-					},
-					'order': [[0, 'desc']],
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
+				getVisitorPortals();
 			});
-
 		});
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/main.js?v=230326"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js"></script>
-	<script src="assets/js/clientmatch.js?v=221024"></script>
+	<script src="assets/js/visitor.js"></script>
 </html>

@@ -1,10 +1,11 @@
 /*
 Central Automation v1.10
 Updated: v1.11
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var deviceList = [];
+var deviceDisplay = []; // used to store devices in the unfiltered table (depending on the empty group toggle)
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Build Inventory Table
@@ -18,38 +19,57 @@ function loadCurrentPageAP() {
 function loadFullInventory() {
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
-		// Empty the table
-		$('#inventory-table')
-			.DataTable()
-			.rows()
-			.remove();
+		loadTable();
+	});
+}
 
-		// build table data
-		deviceList = getFullInventory();
+function loadTable() {
+	// Empty the table
+	$('#inventory-table')
+		.DataTable()
+		.rows()
+		.remove();
 
-		$.each(deviceList, function() {
-			var monitoringInfo = findDeviceInMonitoring(this.serial);
+	// build table data
+	deviceList = getFullInventory();
+	deviceDisplay = [];
 
-			// Add row to table
-			var table = $('#inventory-table').DataTable();
-			if (monitoringInfo) {
+	$.each(deviceList, function() {
+		var monitoringInfo = findDeviceInMonitoring(this.serial);
+
+		// Add row to table
+		var table = $('#inventory-table').DataTable();
+		if (monitoringInfo) {
+			if (document.getElementById('emptyGroupCheckbox').checked) {
+				if (monitoringInfo.group_name === '') {
+					var status = '<i class="fa fa-circle text-danger"></i>';
+					if (monitoringInfo.status == 'Up') {
+						status = '<i class="fa fa-circle text-success"></i>';
+					}
+
+					deviceDisplay.push(this);
+					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
+				}
+			} else {
 				var status = '<i class="fa fa-circle text-danger"></i>';
 				if (monitoringInfo.status == 'Up') {
 					status = '<i class="fa fa-circle text-success"></i>';
 				}
 
+				deviceDisplay.push(this);
 				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
-			} else {
-				var status = '<i class="fa fa-circle text-muted"></i>';
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
 			}
-		});
-
-		$('#inventory-table')
-			.DataTable()
-			.rows()
-			.draw();
+		} else {
+			deviceDisplay.push(this);
+			var status = '<i class="fa fa-circle text-muted"></i>';
+			table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
+		}
 	});
+
+	$('#inventory-table')
+		.DataTable()
+		.rows()
+		.draw();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -208,7 +228,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 
 	// For each row in the filtered set
 	$.each(filteredRows[0], function() {
-		var device = deviceList[this];
+		var device = deviceDisplay[this];
 		// Find monitoring data if there is any
 		var monitoringInfo = findDeviceInMonitoring(device.serial);
 		if (monitoringInfo) {
@@ -234,4 +254,16 @@ function buildCSVData(selectedGroup, selectedSite) {
 	});
 
 	return csvDataBuild;
+}
+
+function emptyGroupDisplay() {
+	var table = $('#inventory-table').DataTable();
+	if (document.getElementById('emptyGroupCheckbox').checked) {
+		table
+			.column(9)
+			.search('^$', false, true)
+			.draw();
+	} else {
+		table.search('').draw();
+	}
 }

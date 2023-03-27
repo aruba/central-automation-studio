@@ -1,7 +1,7 @@
 /*
 Central Automation v1.10.4
-Updated: 
-Aaron Scott (WiFi Downunder) 2022
+Updated: 1.23
+Aaron Scott (WiFi Downunder) 2023
 */
 
 var configGroups = [];
@@ -12,6 +12,9 @@ var groupCounter = 0;
 var updateCounter = 0;
 var errorCounter = 0;
 var wlanPrefix = 'wlan ssid-profile ';
+
+var groupsLoaded = false;
+var swarmsLoaded = false;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -49,10 +52,18 @@ Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 function getConfigforGroup() {
 	var select = document.getElementById('groupselector');
 	var wlanGroup = select.value;
+	var wlanGroupName = select.options[select.selectedIndex].text;
+	var swarmSelected = false;
+	var notificationString = wlanGroup;
+	if (wlanGroupName !== wlanGroup) {
+		// Swarm - not a group
+		swarmSelected = true;
+		notificationString = wlanGroupName.substring(wlanGroupName.indexOf(' > ') + 3);
+	}
 
-	showNotification('ca-folder-settings', 'Getting "' + wlanGroup + '" WLAN Config...', 'bottom', 'center', 'info');
+	showNotification('ca-folder-settings', 'Getting "' + notificationString + '" WLAN Config...', 'bottom', 'center', 'info');
 
-	configGroups = getGroups();
+	//configGroups = getGroups();
 	groupCounter = 0;
 	groupConfigs = {};
 	wlans = [];
@@ -88,7 +99,7 @@ function getConfigforGroup() {
 		// save the group config for modifications
 		groupConfigs[wlanGroup] = response;
 
-		showNotification('ca-folder-settings', 'Retrieved "' + wlanGroup + '" WLAN Config', 'bottom', 'center', 'success');
+		showNotification('ca-folder-settings', 'Retrieved "' + notificationString + '" WLAN Config', 'bottom', 'center', 'success');
 
 		if (groupConfigs[wlanGroup].hasOwnProperty('error_code')) {
 			document.getElementById('wlanConfig').value = '';
@@ -105,6 +116,16 @@ function updateFullWLAN() {
 
 	var select = document.getElementById('groupselector');
 	var currentGroup = select.value;
+	var wlanGroupName = select.options[select.selectedIndex].text;
+	var swarmSelected = false;
+	var notificationString = currentGroup;
+	var configType = 'Group';
+	if (wlanGroupName !== currentGroup) {
+		// Swarm - not a group
+		swarmSelected = true;
+		notificationString = wlanGroupName.substring(wlanGroupName.indexOf(' > ') + 3);
+		configType = 'VC';
+	}
 
 	var newConfig = document.getElementById('wlanConfig').value;
 	var currentConfig = newConfig.split('\n');
@@ -141,7 +162,7 @@ function updateFullWLAN() {
 			});
 		} else if (response.code && response.code == 429) {
 			console.log('errorCode');
-			logError('User role was not applied to group ' + currentGroup);
+			logError('WLAN config was not applied to ' + configType + ': ' + notificationString);
 			Swal.fire({
 				title: 'API Limit Reached',
 				text: 'You have reached your daily API limit. No more API calls will succeed today.',
@@ -151,22 +172,78 @@ function updateFullWLAN() {
 			logError(response.description);
 			errorCounter++;
 		} else if (response !== '' + currentGroup) {
-			logError('WLAN change was not applied to group "' + currentGroup + '"');
+			logError('WLAN change was not applied to ' + configType + ': "' + notificationString + '"');
 			errorCounter++;
 		}
 		if (errorCounter != 0) {
 			showLog();
 			Swal.fire({
 				title: 'WLAN Configuration',
-				text: 'The WLAN configuration failed to be deployed for the selected Group',
+				text: 'The WLAN configuration failed to be deployed for the selected ' + configType,
 				icon: 'error',
 			});
 		} else {
 			Swal.fire({
 				title: 'WLAN Configuration',
-				text: 'WLAN was deployed to the "' + currentGroup + '" group',
+				text: 'WLAN was deployed to the "' + notificationString + '" ' + configType,
 				icon: 'success',
 			});
 		}
 	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Swarm Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function loadCurrentPageSwarm() {
+	// Needs groups to be finished loading first
+	if (groupsLoaded) {
+		var swarmList = getSwarms();
+		if (swarmList.length > 0) {
+			// Add UI elements for separators and titles
+			var select = document.getElementById('groupselector');
+			addSelectSeparator(select);
+			addSelectTitle(select, 'Virtual Controllers', true);
+			addSelectTitle(select, 'Groups', false);
+
+			swarmList.sort((a, b) => {
+				const swarmAGroup = a.group_name.toUpperCase(); // ignore upper and lowercase
+				const swarmAVC = a.name.toUpperCase(); // ignore upper and lowercase
+				const swarmBGroup = b.group_name.toUpperCase(); // ignore upper and lowercase
+				const swarmBVC = b.name.toUpperCase(); // ignore upper and lowercase
+				// Sort on Group then on VC
+				if (swarmAGroup < swarmBGroup) {
+					return -1;
+				}
+				if (swarmAGroup > swarmBGroup) {
+					return 1;
+				}
+				if (swarmAVC < swarmBVC) {
+					return -1;
+				}
+				if (swarmAVC > swarmBVC) {
+					return 1;
+				}
+				return 0;
+			});
+			$.each(swarmList, function() {
+				loadSwarmUI(this);
+			});
+		}
+		swarmsLoaded = true;
+	}
+}
+
+/*
+	Group Functions
+*/
+function loadCurrentPageGroup() {
+	// override on visible page - used as a notification
+	groupsLoaded = true;
+	if (!swarmsLoaded) loadCurrentPageSwarm(); // Once groups are loaded add the Swarms to the list
+}
+
+function loadCurrentPageCleanup() {
+	groupsLoaded = false;
+	swarmsLoaded = false;
 }

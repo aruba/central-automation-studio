@@ -23,33 +23,6 @@ The above copyright notice and this permission notice shall be included in all c
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>Central Automation Studio: Documentation</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
-    <!-- Canonical SEO -->
-    <link rel="canonical" href="https://www.creative-tim.com/product/light-bootstrap-dashboard-pro" />
-    <!--  Social tags      -->
-    <meta name="keywords" content="creative tim, html dashboard, html css dashboard, web dashboard, bootstrap 4 dashboard, bootstrap 4, css3 dashboard, bootstrap 4 admin, light bootstrap 4 dashboard, frontend, responsive bootstrap dashboard">
-    <meta name="description" content="Forget about boring dashboards, get a bootstrap 4 admin template designed to be simple and beautiful.">
-    <!-- Schema.org markup for Google+ -->
-    <meta itemprop="name" content="Light Bootstrap Dashboard PRO by Creative Tim">
-    <meta itemprop="description" content="Forget about boring dashboards, get a bootstrap 4 admin template designed to be simple and beautiful.">
-    <meta itemprop="image" content="https://s3.amazonaws.com/creativetim_bucket/products/34/original/opt_lbd_pro_thumbnail.jpg">
-    <!-- Twitter Card data -->
-    <meta name="twitter:card" content="product">
-    <meta name="twitter:site" content="@creativetim">
-    <meta name="twitter:title" content="Light Bootstrap Dashboard PRO by Creative Tim">
-    <meta name="twitter:description" content="Forget about boring dashboards, get a bootstrap 4 admin template designed to be simple and beautiful.">
-    <meta name="twitter:creator" content="@creativetim">
-    <meta name="twitter:image" content="https://s3.amazonaws.com/creativetim_bucket/products/34/original/opt_lbd_pro_thumbnail.jpg">
-    <meta name="twitter:data1" content="Light Bootstrap Dashboard PRO by Creative Tim">
-    <meta name="twitter:label1" content="Product Type">
-    <meta name="twitter:data2" content="$39">
-    <meta name="twitter:label2" content="Price">
-    <!-- Open Graph data -->
-    <meta property="og:title" content="Light Bootstrap Dashboard PRO by Creative Tim" />
-    <meta property="og:type" content="article" />
-    <meta property="og:url" content="https://demos.creative-tim.com/light-bootstrap-dashboard-pro/examples/dashboard.html" />
-    <meta property="og:image" content="https://s3.amazonaws.com/creativetim_bucket/products/34/original/opt_lbd_pro_thumbnail.jpg" />
-    <meta property="og:description" content="Forget about boring dashboards, get a bootstrap 4 admin template designed to be simple and beautiful." />
-    <meta property="og:site_name" content="Creative Tim" />
     <!--     Fonts and icons     -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
@@ -60,7 +33,7 @@ The above copyright notice and this permission notice shall be included in all c
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/central-style.css" rel="stylesheet" />
+    <link href="assets/css/cas.css" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -106,7 +79,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.18.2</h1>
+                    <h1>Central Automation Studio v1.28</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -150,7 +123,7 @@ The above copyright notice and this permission notice shall be included in all c
                                     </li>
 									<li>&nbsp;</li>
                                     <li>
-                                        <a href="#group-config-row">Group Configuration</a>
+                                        <a href="#group-config-row">AP Group Configuration</a>
                                     </li>
                                     <li>
                                         <a href="#wlan-row">WLAN Deployment</a>
@@ -249,7 +222,13 @@ The above copyright notice and this permission notice shall be included in all c
 									The WebUI uses Javascript to make API calls to the API Proxy Server. The API Proxy Server converts those Javascript requests into Python API calls and makes the call to Aruba Central, returning any data back to the WebUI for processing in Javascript.
 								</p>
 								<p>
-									The API Proxy Server is incorporated into the Docker container. API Proxy Server Accessibility is available in the footer of each page
+									Multiple API Proxy Servers exist for speed and redundancy. The API Proxy Server used depends on the Central instance being communicated with:
+									<ul>
+										<li> APAC-based Central Cluster = https://api.wifidownunder.com (Hosted in Sydney - Azure Australia East)</li>
+										<li> US-based Central Cluster = https://api-usw.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
+										<li> EU-based Central Cluster = https://api-euw.wifidownunder.com (Hosted in Amsterdam - Azure Europe West)</li>
+									</ul>
+									API Proxy Server Accessibility is available in the footer of each page
 									<div class="img-container">
 										<img src="assets/img/proxy-status.png" alt="...">
 									</div>
@@ -281,20 +260,31 @@ The above copyright notice and this permission notice shall be included in all c
 									The <a href="settings.html">Settings</a> page allows for control over this site. Central accounts are added in the Settings page using the information gathered in the <a href="#overview-row">Overview</a> section. Multiple accounts are supported.</br>	
 									The additional settings below the account table allow for customisation of the Central Automation Studio experience:
 									<ul>
-										<li> Naming Conventions</li>
-										<ul>
-											<li> <strong>Auto Device Naming Format</strong> - Format used when using "auto" device renaming</li>
-											<li> <strong>Template Hostname Variable</strong> - The variable used in templates to configure device hostnames</li>
-											<li> <strong>Switch Port Variable</strong> - The variable used to describe switch ports in templates when renaming switch ports</li>
-										</ul>
 										<li> Global Settings</li>
 										<ul>
+											<li> Basic Settings</li>
+											<ul>
 											<li> <strong>Refresh Interval (minutes)</strong> - How often Central Automation Studio will refresh data when left open</li>
-											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? ("Do Not Include" improves performance at the loss of client information/statistics)</li>
-											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? ("Do Not Include" improves performance of large numbers of groups)</li>
-											<li> <strong>AirMatch - All RF Events</strong> - Are "All" RF events downloaded for AirMatch? ("Do Not Include" improves performance on large networks with lots of RF events - channel changes, radar, noise)</li>
+											</ul>
+											<li> Optional Information</li>
+											<ul>
+											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? ("Do Not Include" improves performance at the loss of client information/statistics). This is enabled by default</li>
+											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? ("Do Not Include" improves performance of large numbers of groups). This is enabled by default</li>
+											<li> <strong>Gateway Details</strong> - Are detailed Gateway properties fetched? ("Do Not Include" improves performance of large numbers of gateways). This is disabled by default</li>
+											<li> <strong>Virtual Controller Config</strong> - Are Virtual Controllers added in the WLAN Group config page? ("Do Not Include" improves performance of large numbers of Virtual Controllers). This is enabled by default</li>
+											<li> <strong>AirMatch - All RF Events</strong> - Are "All" RF events downloaded for AirMatch? ("Do Not Include" improves performance on large networks with lots of RF events - channel changes, radar, noise). This is enabled by default</li>
+											</ul>
+											<li> QR Code Settings</li>
+											<ul>
 											<li> <strong>QR Code Colour</strong> - Colour used when generating QR codes</li>
 											<li> <strong>QR Code Logo</strong> - URL for a custom logo when generating QR codes</li>
+											</ul>
+										</ul>
+										<li> Naming Conventions</li>
+										<ul>
+											<li> <strong>Auto Device Naming Format</strong> - Format used when using "auto" device renaming. Supported variables are described in the "Auto Rename Devices" information below</li>
+											<li> <strong>Template Hostname Variable</strong> - The variable used in templates to configure device hostnames</li>
+											<li> <strong>Switch Port Variable</strong> - The variable used to describe switch ports in templates when renaming switch ports</li>
 										</ul>
 									</ul>
 								</p>
@@ -372,7 +362,7 @@ The above copyright notice and this permission notice shall be included in all c
 									<h2>Configuration Deployment</h2>
 									There are tiles to launch the different deployment modules supported by Central Automation Studio:
 									<ul>
-										<li> Group Configuration</li>
+										<li> AP Group Configuration</li>
 										<li> WLAN Deployment</li>
 										<li> User Role Deployment</li>
 										<li> MPSK-Local Deployment</li>
@@ -387,6 +377,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> AirMatch</li>
 										<li> ClientMatch</li>
 										<li> Device Inventory</li>
+										<li> License Monitoring</li>
 									</ul>
 									<h2>Monitoring Features</h2>
 									Tiles to launch the different Central Services modules supported by Central Automation Studio:
@@ -395,17 +386,20 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> AP Statistics</li>
 										<li> AP Rebooting</li>
 										<li> IPAM Monitoring</li>
+										<li> RAPIDS</li>
 									</ul>
 									<h2>Experimental Features</h2>
 									These are the tiles for features that are "in the works" and not fully fleshed out:
 									<ul>
 										<li> AOS-Switch Template Config</li>
 										<li> AP Troubleshooting</li>
+										<li> Bulk AP Configuration</li>
 									</ul>
 									<h2>Management Tasks</h2>
 									<ul>
 										<li> Group Management </li>
-										<li> Add Sites </li>
+										<li> Site Management </li>
+										<li> Visitor Management </li>
 									</ul>
 								</p>
 							</div>
@@ -437,19 +431,30 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> RADIO 2 MODE</li>
 										<li> DUAL 5GHZ MODE</li>
 										<li> SPLIT 5GHZ MODE</li>
+										
+										<li> IP ADDRESS</li>
+										<li> SUBNET MASK</li>
+										<li> DEFAULT GATEWAY</li>
+										<li> DNS SERVER</li>
+										<li> DOMAIN NAME</li>
 									</ul>
 									Behaviour Notes:
 									<ul>
-									<li>If the DEVICE NAME is not included, the device renaming workflows will skip that device during the processing</li>
-									<li>If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway)</li>
-									<li>If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV</li>
-									<li>If the SITE is missing, the device will be skipped when assigning devices to a Site</li>
-									<li>If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone to an Access Point</li>
-									<li>If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
-									<li>If any of the RADIO 0/1/2 MODE values are missing or is equal to "-", the device will be skipped when assigning a radio mode for that particular radio to an Access Point. RADIO 2 MODE is only applied to supported AP Models (AP-555, AP-635, AP-655)</li>
-									<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
-									<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
-									<li>Skipped devices will be listed in the Log for the task/automation.</li></br>
+										<li>If the DEVICE NAME is not included, the device renaming workflows will skip that device during the processing</li>
+										<li>If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway)</li>
+										<li>If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV</li>
+										<li>If the SITE is missing, the device will be skipped when assigning devices to a Site</li>
+										<li>If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone / SSID to an Access Point</li>
+										<li>If the ZONE is equal to "*", the device will be set to no zone or all SSIDs when assigning an AP Zone / SSID to an Access Point</li>
+										<li>If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
+										<li>If any of the RADIO 0/1/2 MODE values are missing or is equal to "-", the device will be skipped when assigning a radio mode for that particular radio to an Access Point. RADIO 2 MODE is only applied to supported AP Models (AP-555, AP-635, AP-655)</li>
+										<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
+										<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
+										<li>Static IP Addresses will only be <strong>set</strong> if all of the required values are provided (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER). If any of the Static IP values (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER) are missing, the device will be skipped when assigning a static IP address for that Access Point</li>
+										<li>Static IP Address information will <strong>updated</strong> (if the Access Point is already configured for a Static IP) using any supplied fields (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER, DOMAIN NAME). Any fields not supplied will be left as previously configured</li>
+										<li><b><i>Skipped devices will be listed in the Log for the task/automation</i></b></li>
+									</ul>
+									</br>
 									Let's look at the tasks and automations one by one:
                                 </p>
                                 <h2>Individual Tasks</h2>
@@ -525,10 +530,14 @@ The above copyright notice and this permission notice shall be included in all c
 								<p>
 									Devices in template groups are also supported. The default variable name used for the hostname is "_sys_hostname". A custom variable name can be designated in the <a href="settings.html" target="_blank">Settings</a> page - "TEMPLATE HOSTNAME VARIABLE"
                                 </p>
-                                <h4>Set AP Zones</h4>
+                                <h4>Set AP Zones / SSIDs</h4>
 								<p>
-									Uses the SERIAL and ZONE columns in the CSV file to set the AP Zone on the corresponding Access Points in Aruba Central.
+									If using <strong>ArubaOS 8.x</strong>, the SERIAL and ZONE columns in the CSV file are used to set the AP Zone on the corresponding Access Points in Aruba Central.
 									If the ZONE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the AP Zone set.
+									If the ZONE is equal to "*" for an AP (or all APs) in the CSV, the device will be set to not have a configured AP Zone.
+								</p>
+								<p>
+									If using <strong>ArubaOS 10.x</strong>, the ZONE column is used to specify which SSIDs profiles will be advertised by the AP. The ZONE column should be a list of SSID profiles separated by a comma (no spaces). E.g. "SSID1,SSID2,SSID3"
 								</p>
 								<h4>Set RF Profile</h4>
 								<p>
@@ -566,6 +575,30 @@ The above copyright notice and this permission notice shall be included in all c
 								<h4>Disable 2.4GHz radios</h4>
 								<p>
 									Uses the SERIAL column in the CSV file to disable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
+								</p>
+								<h4>Set Antenna Gain</h4>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/antenna.png" alt="Antenna Gain">
+										<p>Antenna Gain configuration</p>
+									</div>
+									Uses the SERIAL column in the CSV file to configure the selected antenna gain. The antenna gain is set either using the Aruba antenna dropdown selector or manual entry of the antenna gain values, along with the model of the AP for which you want to apply the gain. Additionally, it provides a single click to reboot all configured APs after the antenna gain configuration has synced to each AP.
+								</p>
+								<h4>Set AP Static IP Address</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified static IP address. The static IP address is configured using the following columns: 
+									<ul>
+										<li>IP ADDRESS</li>
+										<li> SUBNET MASK</li>
+										<li> DEFAULT GATEWAY</li>
+										<li> DNS SERVER </li>
+										<li> DOMAIN NAME</li>
+									</ul>
+									The DNS SERVER column can include multiple DNS servers separated by a comma. 
+								</p>
+								<p>
+									If any of the required information (IP Address, Subnet Mask, Default Gateway, DNS Server(s)) is missing the corresponding AP is skipped. <br />If the AP is already configured for a Static IP, then the values will be <strong>updated</strong> using the supplied information. e.g. If an AP is already configured for a Static IP, and a DNS Server is supplied in the CSV then only the DNS Server will be updated.
+									<br />Additionally, it provides a single click to reboot all configured APs after the static IP configuration has synced to each AP.
 								</p>
                                 <h4>Update Device Variables</h4>
                                 <p>
@@ -651,7 +684,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
 								<h4>Update AP Country Codes</h4>
 								<p>
-									This task configures the Virtual Controller(s) Country Code to match that of the selected Site address - ensuring that each site uses the correct Tx Power limits and Channels.
+									This task configures the ArubaOS 8.x Virtual Controller(s) or ArubaOS 10.x AP Country Code to match that of the selected Site address - ensuring that each site uses the correct Tx Power limits and Channels.
 								</p>
 								<h4>Enable Split-5GHz Mode (AP-555)</h4>
 								<p>
@@ -660,6 +693,18 @@ The above copyright notice and this permission notice shall be included in all c
 								<h4>Enable Dual-5GHz Mode (AP-340 Series)</h4>
 								<p>
 									This task configures each AP-340 Series AP on the site to be enabled for <a href='https://www.arubanetworks.com/techdocs/central/latest/content/aos10x/monitoring/dual-5g.htm?Highlight=dual%205ghz' target='_blank'>Dual 5GHz Mode</a>.
+								</p>
+								<h4>Set Antenna Gain</h4>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/antenna.png" alt="Antenna Gain">
+										<p>Antenna Gain configuration</p>
+									</div>
+									This task sets the antenna gain either using the Aruba antenna dropdown selector or manual entry of the antenna gain values, along with the model of the AP for which you want to apply the gain. Additionally, it provides a single click to reboot all configured APs after the antenna gain configuration has synced to each AP.
+								</p>
+								<h4>Reboot Devices</h4>
+								<p>
+									Choose the device types for the site for which you wish reboot (Access Points, Switches, Gateways) and then reboot all those devices at the selected site.
 								</p>
                                 <h2>Automated Tasks</h2>
                                 <p>
@@ -692,6 +737,23 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Cable Test (only supported on AOS-S switches)</li>
 									</ul>
                                 </p>
+								<h4>Antenna Gain Configuration</h4>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/missingAntenna.png" alt="AP with missing antenna configuration">
+										<p>AP with missing antenna configuration</p>
+									</div>
+								This test uses the APs on the selected site to check the configured antenna gain on any external antenna model APs. This provides a simple view to check if any APs are missing an antenna gain configuration.
+								This test also provides the ability to configure the antenna gain on APs that are missing the antenna gain configuration (those with the antenna gain that are highlighted in red).
+								</p>
+								<h4>AP Static IP Address</h4>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/staticip.png" alt="AP Static IP Test">
+										<p>Confirmation of static IP configuration</p>
+									</div>
+								This test uses the APs on the selected site to check if the AP's IP address is statically configured, and if the AP's current IP address matches that static IP. The test provides a single click to reboot all APs where the IPs are not matching.
+								</p>
                             </div>
                             <div class="tim-row" id="msp-row">  
                                 <h2 class="text-center">MSP Workflows</h2>
@@ -779,16 +841,16 @@ The above copyright notice and this permission notice shall be included in all c
 								</p>
 							</div>
 							<div class="tim-row" id="group-config-row">
-                                <h2 class="text-center">Group Configuration</h2>
+                                <h2 class="text-center">AP Group Configuration</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-setup-tools text-warning" id="workflow_ap_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-group.html">Group Configuration</a> allows for the modification of the wireless configuration for a selected group. This allows for entry/modification of configutration that doesn't yet have a UI knob in Central.
+                                	The <a href="deployment-group.html">AP Group Configuration</a> allows for the modification of the wireless configuration for a selected group or Virtual Controller. This allows for entry/modification of configuration that doesn't yet have a UI knob in Central.
                                 </p>
                                 <p>
-                                	<i><strong>Note:</strong> Background updating of the monitoring data is disabled on this page to ensure group lists are not modified whilst editing the group configuration. Use the refresh button in the top right to refresh the data in the page.</i>
+                                	<i><strong>Note:</strong> Background updating of the monitoring data is disabled on this page to ensure group and virtual controller lists are not modified whilst editing the group configuration. Use the refresh button in the top right to refresh the data in the page.</i>
                                 </p>
                             </div>
 							<div class="tim-row" id="wlan-row">
@@ -810,8 +872,16 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
                                 <p>
                                 	<i><strong>Note:</strong> WLAN configuration requires the WLAN Configuration API enabled on to automatically obtain the passphrases (PSK) used on WLANs being migrated. Reach out to your Aruba SE about getting this API enabled.</br>
-                                	You can alternatively use the <a href="deployment-group.html">Group Configuration</a> which does not attempt to obtain the PSK used in the WLANs. </i>
+                                	You can alternatively use the <a href="deployment-group.html">AP Group Configuration</a> which does not attempt to obtain the PSK used in the WLANs. </i>
                                 </p>
+								<h4>ArubaOS 10.x SSID Assignment</h4>
+								<p>
+									Provides the ability assign SSIDs to a selectable list of APs. Select the config Group, select the APs and then choose the SSIDs to assign.
+									<div class="img-container">
+										<img src="assets/img/assign-ssid.png" alt="Assign">
+										<p>Assign SSIDs to APs</p>
+									</div>
+								</p>
                                 <h4>WLAN Configuration</h4>
                                 <p>
 									
@@ -827,7 +897,7 @@ The above copyright notice and this permission notice shall be included in all c
                                 </p>
                                 <p>
                                 	<i><strong>Note:</strong> WLAN configuration requires the WLAN Configuration API enabled on to automatically obtain the passphrases (PSK) used on WLANs being migrated. Reach out to your Aruba SE about getting this API enabled.</br>
-                                	You can alternatively use the <a href="deployment-group.html">Group Configuration</a> which does not attempt to obtain the PSK used in the WLANs. </i>
+                                	You can alternatively use the <a href="deployment-group.html">AP Group Configuration</a> which does not attempt to obtain the PSK used in the WLANs. </i>
                                 </p>
                             </div>
                             <div class="tim-row" id="user-role-row">
@@ -937,7 +1007,7 @@ The above copyright notice and this permission notice shall be included in all c
                             <div class="tim-row" id="switch-row">
                                 <h2 class="text-center">Switch Deployment</h2>
                                 <div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-server-rack text-warning" id="switching_icon"></i>
+									<i class="central-icon ca-switch-stack text-warning" id="switching_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
@@ -982,13 +1052,14 @@ The above copyright notice and this permission notice shall be included in all c
 								<p>
 									<ul>
 										<li><strong>Group based config</strong> – select any number of Groups from the table (filtering works as well), select the Country Code and go</li>
-										<li><strong>Site based config</strong> – works for IAP clusters at the site (supports multiple clusters per site). Select any number of sites, and go. The tool pulls the country from the Site in Central and uses that to set the country code – no need to manually select the country code! Config is made at the Virtual Controller level</li>
+										<li><strong>Site based config</strong> – works for 10.x APs and IAP clusters (8.x) at the site (supports multiple clusters per site). Select any number of sites, and go. Central Automation Studio automatically gets the country from the Site in Central and uses that to set the country code – no need to manually select the country code! Config is made at the Virtual Controller level (IAP 8.x) and at the AP level (10.x)</li>
 										<li><strong>Virtual Controller based</strong> - select any number of VCs from the table (filtering works as well), select the country code and go</li>
+										<li><strong>Access Point based</strong> - select any number of ArubaOS 10.x APs from the table (filtering works as well), select the country code and go, or use the Site information for each AP to assign the country</li>
 									</ul>
 									Accessing the Country Code Deployment page is available from the Dashboard and from the AP, Site and Group overview tables (at the top of most pages)
 								</p>
 								<p>
-									<i><strong>Note: </strong>AOS10 APs can currently only be set using the Group based config.</i>
+									<i><strong>Note: </strong>AOS10 APs can be set using the Group based config, Site based or per AP</i>
 								</p>
 							</div>
                             <div class="tim-row" id="airmatch-row">
@@ -1099,10 +1170,10 @@ The above copyright notice and this permission notice shall be included in all c
 								</p>
                             </div>
 							<div class="tim-row" id="license-row">
+								<h2 class="text-center">Licensing Monitoring</h2>
 								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-license-key text-warning" id="license_monitoring_icon"></i>
 								</div>
-								<h2>Licensing Monitoring</h2>
 								<p>
 									The <a href="monitoring-licensing.html">License Monitoring</a> provides the ability to see the current state of all the subscription keys, as well as export the subscription key information to a CSV containing the filtered results in the Subscription Keys table. 
 									Status Key:
@@ -1178,6 +1249,13 @@ The above copyright notice and this permission notice shall be included in all c
 								
 								<h2>IPAM Monitoring</h2>
 								The <a href="monitoring-ipam.html">IP Address Management Monitoring</a> provides the ability to see which IP addresses (Inner IP Pools and Shared DHCP Pools) are assigned to Microbranch APs.
+								
+								<h2>RAPIDS</h2>
+								The <a href="monitoring-rapids.html">RAPIDS</a> page provides the ability to view and export APs detected by RAPIDS. Filtering and search of the detected APs is supported, along with exporting the displayed APs in CSV format. Additional information fields are available in the CSV.
+								<div class="img-container">
+									<img src="assets/img/rapids.png" alt="Rapids">
+									<p>RAPIDS Overview</p>
+								</div>
 								
 						
                             </div>
@@ -1266,9 +1344,15 @@ ip dns server-address priority 2 %dns2.ip%
 									From a searchable list of Access Points, the following troubleshooting actions/commands are currently supported:
 									<ul>
 										<li><strong>System</strong> - "show ap debug system-status"</li>
-										<li><strong>5GHz</strong> - "show ap debug radio-stats 1"</li>
-										<li><strong>2.4GHz</strong> - "show ap debug radio-stats 0"</li>
-									</ul> 
+										<li><strong>5GHz</strong> - "show ap debug radio-stats 0"</li>
+										<li><strong>2.4GHz</strong> - "show ap debug radio-stats 1"</li>
+										<li><strong>AAA</strong> - "show ap debug radius-statistics"</li>
+										<li><strong>Neighbours</strong> - "show ap arm neighbors"</li>	
+										<ul>
+											<li>Active: Discovered using OTA updates</li>
+											<li>Passive: Discovered using passive scan</li>
+											<li>Indirect: Two hop neighbours discovered using neighbours OTA update</li>
+									</ul> <br/>
 									Only radios that are up are listed in the actions. The 3rd radio in tri-radio APs is currently not supported due to lack of CLI commands being available.
 								</p>
 								<div class="img-container">
@@ -1312,21 +1396,142 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 								</p>
 								<p>&nbsp;</p>
-								<h2>Add Sites</h2>
+								<h2>Site Management</h2>
 								<p>
 									The <strong>Add Sites</strong> provides the quickly add Sites, either manually or using a CSV upload. Sites can be added either using street addresses or Geo-coordinates
 								</p>
+								<p>
+									Bulk deletion of Sites is supported through multi-select in the Sites table
+									<ul>
+										<li> Any devices associated to the site/s being deleted will be unassociated prior to the deletion.</li>
+									</ul>
+								</p>
+								<p>&nbsp;</p>
+								<h2>Visitor Management</h2>
+								<p>
+									The <a href="deployment-visitor.html">Visitor Management</a> page provides the following abilities:
+									<ul>
+										<li> Bulk creation of Visitor accounts via CSV upload</li>
+										<li> View and Delete Visitor accounts per Visitor Portal</li>
+									</ul>
+									The CSV format includes the following supported columns:
+									<ul>
+										<li> <strong>NAME</strong>: Visitor account name</li>
+										<li> <strong>COMPANY</strong>: Company name of the visitor - if required</li>
+										<li> <strong>PHONE</strong>: Phone number of the visitor; Format [+CountryCode][PhoneNumber]</li>
+										<li> <strong>EMAIL</strong>: Email address of the visitor</li>
+										<li> <strong>PASSWORD</strong>: Password for the visitor</li>
+										<li> <strong>ENABLED</strong>: Enable or disable the visitor account. If the value is "no", "false", or 0 (all case insensitive) then the account is created in a disabled state</li>
+										<li> <strong>DAYS/HOURS/MINUTES</strong>: Account validity in days/hours/minutes. If all values are blank then the account will not expire</li>
+										<li> <strong>NOTIFY</strong>: Flag to notify the password via "email" or "phone". Blank equates to no notification</li>
+									</ul>
+								</p>
+								<p>&nbsp;</p>
 							</div>
                             <div class="tim-row" id="changes-row">
                                 <h2 class="text-center">Change Log</h2>
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.28 (2023/03/25) - <i>"Carmen Sandiego"</i></h4>
+									<ul>	
+										<li> Added support for Per AP <a href="#country-row">Country Code</a> setting</li>
+										<li> Added support for ArubaOS 10.x per AP Country Code setting in the <a href="#site-row">Site</a> based workflows</li>
+										<li> Tweaks to some Notifications - most only stay on screen as long as the task is happening</li>
+										<li> Improved logging - now includes a button to clear the log</li>
+									</ul>
+									<h4>Version 1.27.1 (2023/03/16)</h4>
+									<ul>	
+										<li> Improved function of set Static IP Address</li>
+										<li> Tweak to settings page to prevent going to the Dashboard without having account information loaded</li>
+										<li> Added protection/support for CSV headers to have leading and trailing spaces</li>
+									</ul>
+									<h4>Version 1.27 (2023/03/07) - <i>"Location Location Location"</i></h4>
+									<ul>	
+										<li> Added new page to support <a href="#management-row">Site Management</a></li>
+										<li> Tweaks to the location of some Notifications</li>
+									</ul>
+									<h4>Version 1.26.1 (2023/03/05)</h4>
+									<ul>	
+										<li> High Memory Utilization table on <a href="monitoring-aps.html">Access Point Statistics</a> page now only lists "Up" APs</li>
+										<li> Improvements to Antenna Gain configuration code</li>
+										<li> Improvements to API Proxy selection code</li>
+									</ul>
+									<h4>Version 1.26 (2023/02/22) - <i>"Zone Offence"</i></h4>
+									<ul>	
+										<li> Added new page to support <a href="#management-row">Visitor Management</a></li>
+										<li> Added new page to support <a href="#wlan-row">bulk assignment of SSIDs</a> to individual ArubaOS 10.x Access Points</li>
+										<li> Added documentation for support of ArubaOS 10.x SSID assignment using the ZONE column header in CSV workflows</li>
+										<li> Reduced API calls on WLAN deployment page</li>
+										<li> Added API call delays on WLAN deployment and Visitor Management pages to avoid hitting Central API calls/sec limit - CAS sometimes is too quick for Central</li>
+									</ul>
+									<h4>Version 1.25.2 (2023/01/20)</h4>
+									<ul>	
+										<li> Site dropdowns are now alphabetically sorted</li>
+										<li> The <a href="#site-row">Site based Antenna Gain Configuration test</a> now supports setting gain on APs that are missing the configuration</li>
+									</ul>
+									<h4>Version 1.25.1 (2023/01/18)</h4>
+									<ul>	
+										<li> Added toggle in <a href="#inventory-row">Device Inventory</a> to show only devices without a Group assigned</li>
+									</ul>
+									<h4>Version 1.25 (2023/01/13) - <i>"Static Options"</i></h4>
+									<ul>	
+										<li> AP Static IP Configuration now available in the <a href="#csv-row">CSV</a> based workflows</li>
+										<li> Automated rebooting of APs following static IP assignment is also supported</li>
+									</ul>
+									<h4>Version 1.24.1 (2023/01/11)</h4>
+									<ul>	
+										<li> Added "Neighbours" to the AP Troubleshooting. Provides AP Name (and link to AP in Central) for known neighbours</li>
+										<li> Fix for loading Virtual Controllers in the group dropdown. All VCs now appears as expected</li>
+									</ul>
+									<h4>Version 1.24 (2023/01/09) - <i>"Static Improvements"</i></h4>
+									<ul>	
+										<li> Automated rebooting of APs following Antenna Gain configuration is now supported</li>
+										<li> AP Static IP Configuration testing now available in the <a href="#site-row">Site</a> based workflows</li>
+										<li> Progress bar improvements</li>
+									</ul>
+									<h4>Version 1.23 (2022/12/19) - <i>"Gaining Options"</i></h4>
+									<ul>	
+										<li> Setting antenna gain is now supported in <a href="#csv-row">CSV</a> and <a href="#site-row">Site</a> based workflows, in addition to the <a href="#experimental-row">Bulk AP config</a> workflows</li>
+										<li> Added the ability to check current antenna configuration for APs at a site in the <a href="#site-row">Site</a> based workflows</li>
+										<li> Rebooting devices is now supported in the Site based workflows</li>
+										<li> Improved information in <a href="#clientmatch-row">ClientMatch</a> Steering History table - Channel for From and To AP is now available in the tooltip, and AP names are now links to the AP in Central
+									</ul>
+									<h4>Version 1.22 (2022/11/29) - <i>"It's all in the details"</i></h4>
+									<ul>	
+										<li> New visual layout for the <a href="#settings-row">Settings Page</a></li>
+										<li> Added a new <a href="#settings-row">Setting</a> (Gateway Details) to download more detailed information on Gateways. New information available in the gateway table is the Public IP along with the Uplink and Tunnel status</li>
+									</ul>
+									<h4>Version 1.21.1 (2022/11/28)</h4>
+									<ul>
+										<li> Improved sorting throughout Central Automation Studio</li>
+									</ul>
+									<h4>Version 1.21 (2022/11/18) - <i>"Swarming"</i></h4>
+									<ul>
+										<li> Added <a href="#group-config-row">Virtual Controller WLAN Config</a> support - Virtual Controllers are listed below the Groups</li>
+									</ul>
+									<h4>Version 1.20 (2022/11/04) - <i>"Rapid Export"</i></h4>
+									<ul>
+										<li> Added <a href="#monitoring-row">RAPIDS</a> support - including filtering and downloading as a CSV</li>
+										<li> Improved icons</li>
+									</ul>
+									<h4>Version 1.19.1 (2022/10/26)</h4>
+									<ul>
+										<li> Support added for UAE-North and US-East-1 Central Clusters</li>
+									</ul>
+									<h4>Version 1.19 (2022/10/25) - <i>"Scaling Up Pt.1"</i></h4>
+									<ul>
+										<li> Migration from Local Storage to IndexedDB to store cached data (Clients, APs, Switches, Gateways, etc). Enables better support for very large Central accounts</li>
+										<li> Improved chart display</li>
+										<li> ClientMatch Steer history fix for missing Destination AP</li>
+										<li> CSV Device Reboot workflow improved as to not go too fast!</li>
+									</ul>
 									<h4>Version 1.18.2 (2022/10/23)</h4>
 									<ul>
 										<li> Improved support for CSV files with empty lines</li>
 										<li> Improved feedback on long running tasks (Progress bars now in the notifications)</li>
-										<li> Protection against code failure when caching large amounts of information (Clients, APs, Switches, Gateways, etc)</li>
+										<li> Protection against code failure when trying to cache large amounts of information (Clients, APs, Switches, Gateways, etc)</li>
+										<li> Modifications to simplify code merging between Live version and GitHub/Docker version</li>
 									</ul>
 									<h4>Version 1.18.1 (2022/10/21)</h4>
 									<ul>
@@ -1682,7 +1887,7 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
                                 	<h4>Version 1.5.0 (2021/10/22) - <i>"Heavy Lifting"</i></h4>
                                 	<ul>
-										<li> <a href="#group-config-row">Group Configuration</a> editing support added</li>
+										<li> <a href="#group-config-row">AP Group Configuration</a> editing support added</li>
 										<li> Under the hood improvements for upcoming features</li>
 										<li> Changes relating to Central 2.5.4 support</li>
 									</ul>
@@ -1818,7 +2023,7 @@ ip dns server-address priority 2 %dns2.ip%
                                 <h2 class="text-center">Further Information</h2>
                                 <legend></legend>
                                 <p>
-                                	For any further information on how Aruba Central Automation Studio works, or to request additional functionality, please send me an <a href="mailto:aaron@wifidownunder.com?subject=Central Automation Studio">email</a>.
+                                	For any further information on how the Central Automation Studio works, or to request additional functionality, please send me an <a href="mailto:aaron@wifidownunder.com?subject=Central Automation Studio">email</a>.
                                 </p>
 								<p>
 									A Docker container version of Central Automation Studio is available. The Docker container includes this WebUI and a API Proxy inside the same container, allowing for private use.
@@ -1836,7 +2041,7 @@ ip dns server-address priority 2 %dns2.ip%
 		</div> 
 		<footer class="footer">
 			<div class="container">
-				<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
+				<a data-toggle="modal" data-target="#ErrorModal"  id="ErrorModalLink"></a>
 				<nav>
 					<p class="copyright text-center">
 						©

@@ -1,17 +1,21 @@
 /*
 Central Automation v1.5
-Updated: 1.13
+Updated: 1.26
 Aaron Scott (WiFi Downunder) 2022
 */
 
 var configGroups = [];
 var groupConfigs = {};
+var groupWLANs = {};
 var wlans = [];
 
 var groupCounter = 0;
 var updateCounter = 0;
 var errorCounter = 0;
 var wlanPrefix = 'wlan ssid-profile ';
+
+var selectedDevices = {};
+var deviceInfo = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -43,18 +47,28 @@ Array.prototype.equals = function(array) {
 Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		PSK functions (1.2)
+		PSK functions (1.26)
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getWLANsforGroup() {
-	showNotification('ca-wifi-protected', 'Obtaining WLANs for selected group configuration', 'bottom', 'center', 'info');
-	document.getElementById('pskPassphrase').value = '';
+	//showNotification('ca-wifi-protected', 'Obtaining WLANs for selected group configuration', 'bottom', 'center', 'info');
+	if (document.getElementById('pskPassphrase')) document.getElementById('pskPassphrase').value = '';
 	var wlans = document.getElementById('wlanselector');
 	wlans.options.length = 0;
 
 	var select = document.getElementById('groupselector');
 	var wlanGroup = select.value;
 
-	var settings = {
+	var selectedGroupWLANs = groupWLANs[wlanGroup];
+	var wlans = document.getElementById('wlanselector');
+	wlans.options.length = 0;
+	if (!selectedGroupWLANs || selectedGroupWLANs.length == 0) showNotification('ca-wifi-protected', 'No WLANs are configured for selected group', 'bottom', 'center', 'warning');
+	$.each(selectedGroupWLANs, function() {
+		$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
+	});
+	$('#wlanselector').selectpicker('refresh');
+
+	// NOT NEEDED SINCE WE ALREADY HAVE THE FULL CONFIG - ARE ARE PULLING THE SSIDS OUT OF THAT CONFIG
+	/*var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
@@ -72,7 +86,7 @@ function getWLANsforGroup() {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
 		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/wlan/<GROUP>)');
 			apiErrorCount++;
 			return;
 		} else if (commandResults.hasOwnProperty('error_code')) {
@@ -92,7 +106,7 @@ function getWLANsforGroup() {
 		} else {
 			showNotification('ca-wifi', 'There are no WLANs in the "' + wlanGroup + '" group', 'bottom', 'center', 'danger');
 		}
-	});
+	});*/
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
@@ -281,9 +295,9 @@ function generateQRCode() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		WLAN functions (1.13)
+		WLAN functions (1.26)
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
-
+// UPDATED 1.26 - Added delay to prevent hitting API calls/sec limit
 function getWLANs() {
 	$.when(tokenRefresh()).then(function() {
 		//$.when(getGroupData(0)).then(function () {
@@ -297,95 +311,110 @@ function getWLANs() {
 		wlans = [];
 		showNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 
-		// Grab config for each Group in Central
+		// Grab config for each Group in Central - need to add in API call delay to not hit api/sec limit
+		var apiDelay = 0;
 		$.each(configGroups, function() {
-			var currentGroup = this.group;
-			var settings = {
-				url: getAPIURL() + '/tools/getCommandwHeaders',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
-					access_token: localStorage.getItem('access_token'),
-				}),
-			};
-
-			$.ajax(settings).done(function(commandResults, statusText, xhr) {
-				if (commandResults.hasOwnProperty('headers')) {
-					updateAPILimits(JSON.parse(commandResults.headers));
-				}
-				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-					logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
-					apiErrorCount++;
-					return;
-				} else if (commandResults.hasOwnProperty('error_code')) {
-					logError(commandResults.description);
-					apiErrorCount++;
-					return;
-				}
-				var response = JSON.parse(commandResults.responseBody);
-
-				// save the group config for modifications
-				groupConfigs[currentGroup] = response;
-				// pull the roles out of each group config
-				getWLANsFromConfig(response, currentGroup);
-				groupCounter++;
-				if (groupCounter == configGroups.length) {
-					// Build table of user roles
-					var table = $('#wlan-table').DataTable();
-					for (i = 0; i < wlans.length; i++) {
-						//console.log(wlans[i]['config']);
-						// Pull additional info out
-						var keyMgmt = '';
-						var fastRoaming = [];
-						var mbr;
-						var mbr2 = '1';
-						var mbr5 = '6';
-						var apZone = '';
-						var rfBand = 'All';
-						var rfBand6 = false;
-						$.each(wlans[i]['config'], function() {
-							if (this.includes('opmode ')) keyMgmt = this.replace('opmode ', '');
-							if (this.includes('g-min-tx-rate ')) mbr2 = this.replace('g-min-tx-rate ', '');
-							if (this.includes('a-min-tx-rate ')) mbr5 = this.replace('a-min-tx-rate ', '');
-							if (this.includes('dot11k')) fastRoaming.push('11k');
-							if (this.includes('dot11v')) fastRoaming.push('11v');
-							if (this.includes('dot11r')) fastRoaming.push('11r');
-							if (this.includes('zone')) apZone = this.replace('zone ', '');
-							if (this.includes('rf-band ')) rfBand = this.replace('rf-band ', '');
-							if (this.includes('rf-band-6ghz')) rfBand6 = true;
-						});
-						fastRoaming.sort();
-						mbr = '2.4GHz: ' + mbr2 + 'Mbps / 5GHz: ' + mbr5 + 'Mbps';
-						if (rfBand === '5.0') rfBand = '5';
-						if (rfBand !== 'All' && rfBand6) rfBand += 'GHz/6GHz';
-						if (rfBand !== 'All' && !rfBand6) rfBand += 'GHz';
-
-						// Action Buttons
-						var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-regular fa-pencil"></i></a> ';
-						if (wlans[i]['config'].indexOf('disable') != -1) {
-							actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-regular fa-wifi"></i></a>';
-						} else {
-							actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-regular fa-wifi"></i></a>';
-						}
-
-						// Add row to table
-						table.row.add([i, '<strong>' + wlans[i]['name'] + '</strong>', wlans[i]['groups'].join(', '), rfBand, keyMgmt, mbr, fastRoaming.join('/'), apZone, actionBtns]);
-					}
-					$('#wlan-table')
-						.DataTable()
-						.rows()
-						.draw();
-
-					showNotification('ca-folder-settings', 'Retrieved Group WLAN Configs...', 'bottom', 'center', 'success');
-					$('[data-toggle="tooltip"]').tooltip();
-				}
-			});
+			setTimeout(getWLANConfigForGroup, 250 * apiDelay, this.group);
+			apiDelay++;
 		});
 		//})
+	});
+}
+
+// UPDATED 1.26 - Added obtaining the RequestUrl back from the original call to get the Group name
+function getWLANConfigForGroup(group) {
+	var currentGroup = group;
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		// Get the original request URL
+		var requestedUrl = '';
+		if (commandResults.hasOwnProperty('requestedUrl')) requestedUrl = commandResults.requestedUrl;
+
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		// Get the correct group back from the original Group
+		var requestedGroup = requestedUrl.match(/[^\/]+$/)[0];
+
+		// save the group config for modifications
+		groupConfigs[requestedGroup] = response;
+		// pull the SSIDs out of each group config
+		getWLANsFromConfig(response, requestedGroup);
+
+		groupCounter++;
+		if (groupCounter >= configGroups.length) {
+			// Build table of user roles
+			var table = $('#wlan-table').DataTable();
+			for (i = 0; i < wlans.length; i++) {
+				//console.log(wlans[i]['config']);
+				// Pull additional info out
+				var keyMgmt = '';
+				var fastRoaming = [];
+				var mbr;
+				var mbr2 = '1';
+				var mbr5 = '6';
+				var apZone = '';
+				var rfBand = 'All';
+				var rfBand6 = false;
+				$.each(wlans[i]['config'], function() {
+					if (this.includes('opmode ')) keyMgmt = this.replace('opmode ', '');
+					if (this.includes('g-min-tx-rate ')) mbr2 = this.replace('g-min-tx-rate ', '');
+					if (this.includes('a-min-tx-rate ')) mbr5 = this.replace('a-min-tx-rate ', '');
+					if (this.includes('dot11k')) fastRoaming.push('11k');
+					if (this.includes('dot11v')) fastRoaming.push('11v');
+					if (this.includes('dot11r')) fastRoaming.push('11r');
+					if (this.includes('zone')) apZone = this.replace('zone ', '');
+					if (this.includes('rf-band ')) rfBand = this.replace('rf-band ', '');
+					if (this.includes('rf-band-6ghz')) rfBand6 = true;
+				});
+				fastRoaming.sort();
+				mbr = '2.4GHz: ' + mbr2 + 'Mbps / 5GHz: ' + mbr5 + 'Mbps';
+				if (rfBand === '5.0') rfBand = '5';
+				if (rfBand !== 'All' && rfBand6) rfBand += 'GHz/6GHz';
+				if (rfBand !== 'All' && !rfBand6) rfBand += 'GHz';
+
+				// Action Buttons
+				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-regular fa-pencil"></i></a> ';
+				if (wlans[i]['config'].indexOf('disable') != -1) {
+					actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-regular fa-wifi"></i></a>';
+				} else {
+					actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-regular fa-wifi"></i></a>';
+				}
+
+				// Add row to table
+				table.row.add([i, '<strong>' + wlans[i]['name'] + '</strong>', wlans[i]['groups'].join(', '), rfBand, keyMgmt, mbr, fastRoaming.join('/'), apZone, actionBtns]);
+			}
+			$('#wlan-table')
+				.DataTable()
+				.rows()
+				.draw();
+
+			showNotification('ca-folder-settings', 'Retrieved Group WLAN Configs...', 'bottom', 'center', 'success');
+			$('[data-toggle="tooltip"]').tooltip();
+		}
 	});
 }
 
@@ -452,18 +481,18 @@ function getPSKForWLAN(wlanGroup, wlan) {
 	}
 }
 
+// UPDATED 1.26 - Added the building of the SSID list per Group
 function getWLANsFromConfig(config, group) {
 	// Find the existing user role
 	var startIndex = -1;
 	var endIndex = -1;
 	var wlanName = '';
-
 	// check if is a UI group (this doesn't work for template groups... yet)
 	if (config.length) {
 		for (i = 0; i < config.length; i++) {
 			var currentLine = config[i];
 
-			// Find first row of the user role
+			// Find first row of the WLAN SSID
 			if (currentLine.includes(wlanPrefix) && startIndex == -1) {
 				// pull out the wlan name.
 				wlanName = currentLine.replace(wlanPrefix, '');
@@ -472,19 +501,26 @@ function getWLANsFromConfig(config, group) {
 				// next line after the end of the current role
 				endIndex = i;
 			}
-
 			if (endIndex != -1 && startIndex != -1) {
 				// Found the start and end of a WLAN
 				// Build the WLAN from the config.
 				// No need to keep the first line - since we already have the wlanName, the first line can be rebuilt.
 				var fullWLAN = config.slice(startIndex + 1, endIndex);
 
+				var essidName = 'abc';
 				var finalWLAN = [];
 				// Remove the "index #" line and "utf8"
 				$.each(fullWLAN, function() {
+					if (this.includes('essid')) essidName = this.match(/^.*essid\s(.*$)/)[1];
 					if (!this.includes('utf8') && !this.includes('index ')) finalWLAN.push(this.trim());
 					if (this.trim().includes('-psk-') || this.trim().includes('wpa3-sae')) getPSKForWLAN(group, wlanName);
 				});
+
+				// Build WLANs list for the group
+				var groupWLANList = groupWLANs[group];
+				if (!groupWLANList) groupWLANList = [];
+				groupWLANList.push({ name: wlanName, essid: essidName });
+				groupWLANs[group] = groupWLANList;
 
 				// Check if we have already found the exact same role in another group
 				var existingWLANMatch = false;
@@ -570,6 +606,18 @@ function checkSelectionCount() {
 	}
 }
 
+function checkSSIDSelectionCount() {
+	var select = document.getElementById('wlanselector');
+	var selectedSSIDs = [...select.selectedOptions].map(option => option.value);
+	if (selectedSSIDs.length == 0) {
+		document.getElementById('selectAllSSIDs').checked = false;
+	} else if (selectedSSIDs.length == $('#wlanselector option').length) {
+		document.getElementById('selectAllSSIDs').checked = true;
+	} else {
+		document.getElementById('selectAllSSIDs').checked = false;
+	}
+}
+
 function selectAll() {
 	$.each(configGroups, function(idx, val) {
 		$("select option[value='" + val.group + "']").prop('selected', document.getElementById('selectAllGroups').checked);
@@ -581,6 +629,15 @@ function selectAll() {
 	} else {
 		document.getElementById('saveWLANBtn').disabled = true;
 	}
+}
+
+function selectAllSSIDs() {
+	var select = document.getElementById('wlanselector');
+	var allSSIDs = [...select.options].map(option => option.value);
+	$.each(allSSIDs, function(idx, val) {
+		$("select option[value='" + val + "']").prop('selected', document.getElementById('selectAllSSIDs').checked);
+	});
+	$('.selectpicker').selectpicker('refresh');
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -937,4 +994,96 @@ function updateFullWLAN() {
 			getWLANs();
 		}
 	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	AOS10 SSID Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function updateSelectedDevices(serial) {
+	// Find the checkbox for the selected serial number
+	var rowSelected = document.getElementById(serial).checked;
+	if (!rowSelected) document.getElementById('device-select-all').checked = false;
+
+	if (selectedDevices[serial] && !rowSelected) delete selectedDevices[serial];
+	else selectedDevices[serial] = serial;
+}
+
+function loadDevicesAndSSIDs() {
+	document.getElementById('selectAllSSIDs').checked = false;
+	var select = document.getElementById('groupselector');
+
+	// Pull the SSIDs for the selected Group
+	var selectedGroupWLANs = groupWLANs[select.value];
+	var wlans = document.getElementById('wlanselector');
+	wlans.options.length = 0;
+	$.each(selectedGroupWLANs, function() {
+		$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
+	});
+	$('#wlanselector').selectpicker('refresh');
+
+	// Pull the APs for the selected Group (and build a reference list based on the serial number - for the selecting of the APs)
+	var select = document.getElementById('groupselector');
+	var groupAPs = getAPsForGroup(select.value);
+	deviceInfo = {};
+	$.each(groupAPs, function() {
+		deviceInfo[this['serial']] = this;
+	});
+
+	// Load up the table
+	loadDevicesTable(false);
+}
+
+function loadDevicesTable(checked) {
+	$('#device-table')
+		.DataTable()
+		.rows()
+		.remove();
+	for (const [key, value] of Object.entries(deviceInfo)) {
+		var device = value;
+
+		// Build checkbox using serial number as key/id
+		var checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')">';
+		if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')" checked>';
+
+		// Build Status dot
+		var status = '<i class="fa fa-circle text-danger"></i>';
+		if (device['status'] == 'Up') {
+			status = '<i class="fa fa-circle text-success"></i>';
+		}
+
+		// Add AP to table
+		var table = $('#device-table').DataTable();
+		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['model'], device['group_name'], device['site'], device['firmware_version']]);
+	}
+	$('#device-table')
+		.DataTable()
+		.rows()
+		.draw();
+}
+
+function assignSSIDs() {
+	// CSV header
+	var serialKey = 'SERIAL';
+	var ssidKey = 'ZONE';
+
+	var csvDataBuild = [];
+
+	// Get Selected SSIDs
+	var select = document.getElementById('wlanselector');
+	var selectedSSIDs = [...select.selectedOptions].map(option => option.value);
+	selectedSSIDstring = selectedSSIDs.join(',');
+	if (document.getElementById('selectAllSSIDs').checked) selectedSSIDstring = '*';
+
+	// Get selected APs
+	for (const [key, value] of Object.entries(selectedDevices)) {
+		csvDataBuild.push({ [serialKey]: key, [ssidKey]: selectedSSIDstring });
+	}
+
+	// Build CSV with selected SSIDs in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = csvDataBuild;
+	processCSV(csvDataBlob);
+
+	setAPZone();
 }

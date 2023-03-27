@@ -13,8 +13,8 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.8
-Updated: 1.17
+Central Automation v1.20
+Updated:
 Aaron Scott (WiFi Downunder) 2022
 -->
 
@@ -38,7 +38,8 @@ Aaron Scott (WiFi Downunder) 2022
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
 		<link href="assets/css/cas.css" rel="stylesheet" />
-		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
+		<!-- CSS Just for demo purpose, don't include it in your project -->
+		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -51,12 +52,12 @@ Aaron Scott (WiFi Downunder) 2022
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: ClientMatch </a>
+							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: RAPIDS </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
 								<li class="nav-item active ">
-									<a class="nav-link" onclick="updateClientMatchData()">
+									<a class="nav-link" onclick="getRapidsData()">
 										<i class="central-icon ca-reload"></i>
 									</a>
 								</li>
@@ -86,64 +87,116 @@ Aaron Scott (WiFi Downunder) 2022
 				<!-- End Navbar -->
 				<div class="content">
 					<div class="container-fluid">
+						<!-- Overview Cards -->
 						<div class="row">
-							<!-- CM State Card -->
-							<div class="col-md-4">
-								<div class="card  card-tasks">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch State</h4>
-										<p class="card-category">Show the state of ClientMatch for this tenant</p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
-										<button class="btn btn-fill btn-default" name="cmStateBtn" id="cmStateBtn" onclick="toggleCMState()">Unknown</button>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-rapids text-warning" id="total_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Total</p>
+													<h4 class="card-title" id="total_count">-</h4>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
-							<!-- End CM State Card -->
-							<!-- CM State Card -->
-							<div class="col-md-4">
-								<div class="card  card-tasks">
-									<div class="card-header ">
-										<h4 class="card-title">Load Balancing State</h4>
-										<p class="card-category">Show the state of ClientMatch Load Balancing for this tenant</p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
-										<button class="btn btn-fill btn-default" name="loadbalBtn" id="loadbalBtn" onclick="toggleLoadBal()">Unknown</button>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-rogue  text-warning" id="rogue_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Rogues</p>
+													<h4 class="card-title" id="rogue_count">-</h4>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
-							<!-- End CM State Card -->
-						</div>
-						<!-- Unsteerable Clients Card -->
-						<div class="row">
-							<div class="col-md-12">
-								<div class="card">
-									<div class="card-header">
-										<h4 class="card-title">Unsteerable Clients</h4>
-										<a class="refresh-link" onclick="getUnsteerableClients()"><i class="central-icon ca-reload"></i></a>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-suspected-rogue  text-warning" id="suspect_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Suspected Rogues</p>
+													<h4 class="card-title" id="suspect_count">-</h4>
+												</div>
+											</div>
+										</div>
 									</div>
-									<div class="card-body">
-										<div class="card data-tables">
-											<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
-												<div class="fresh-datatables">
-													<table id="unsteerable-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
-														<thead>
-															<th>Name</th>
-															<th>Health</th>
-															<th>MAC Address</th>
-															<th>IP Address</th>
-															<th>Client OS</th>
-															<th>Connected To</th>
-															<th>Site</th>
-															<th>VLAN</th>
-															<th>Actions</th>
-														</thead>
-														<tbody></tbody>
-													</table>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-interfering  text-warning" id="interfering_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Interfering</p>
+													<h4 class="card-title" id="interfering_count">-</h4>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-neighbour text-warning" id="neighbour_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Neighbours</p>
+													<h4 class="card-title" id="neighbour_count">-</h4>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-contained text-warning" id="contained_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Contained</p>
+													<h4 class="card-title" id="contained_count">-</h4>
 												</div>
 											</div>
 										</div>
@@ -151,28 +204,29 @@ Aaron Scott (WiFi Downunder) 2022
 								</div>
 							</div>
 						</div>
+						<!-- End Overview Cards -->
+						<!-- Rogue Card -->
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card">
 									<div class="card-header">
-										<h4 class="card-title">Recent Steering History</h4>
-										<a class="refresh-link" onclick="getSteerHistory()"><i class="central-icon ca-reload"></i></a>
+										<h4 class="card-title">Detected Access Points</h4>
 									</div>
 									<div class="card-body">
-										<div class="card data-tables">
+										<div class="data-tables">
 											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 												<div class="fresh-datatables">
-													<table id="history-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<table id="rapids-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 														<thead>
-															<th>Event Time</th>
-															<th>Client</th>
-															<th>Type</th>
-															<th>Mode</th>
+															<th>Name</th>
+															<th>Classification</th>
+															<th>SSID</th>
+															<th>Last Seen</th>
+															<th>Last Seen By</th>
+															<th>Site</th>
+															<th>Signal</th>
+															<th>Encryption</th>
 															<th>Status</th>
-															<th>From AP (RSSI)</th>
-															<th>To AP (RSSI)</th>
-															<th>Destination AP (RSSI)</th>
-															<th>Roam Time (msecs)</th>
 														</thead>
 														<tbody></tbody>
 													</table>
@@ -180,57 +234,10 @@ Aaron Scott (WiFi Downunder) 2022
 											</div>
 										</div>
 									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row" id="cmGraphs">
-							<div class="col-md-3">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch Type</h4>
-										<p class="card-category">Type of Steers</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMType" class="ct-chart"></div>
-									</div>
-								</div>
-							</div>
-							<div class="col-md-3">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch Mode</h4>
-										<p class="card-category">Mode of Steers</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMMode" class="ct-chart"></div>
-									</div>
-								</div>
-							</div>
-							<div class="col-md-6">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">ClientMatch Steers</h4>
-										<p class="card-category">Status of Steers</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMStatus" class="ct-chart"></div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row" id="cmGraphs2">
-							<div class="col-md-12">
-								<div class="card" style="height:450px;">
-									<div class="card-header ">
-										<h4 class="card-title">Client Type per Steer</h4>
-										<p class="card-category">Top 10 Client Types</p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartCMClients" class="ct-chart"></div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" name="downloadAPsBtn" id="downloadAPsBtn" onclick="downloadDetectedAPs()">Download Detected APs</button>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -255,28 +262,9 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Graph Modal -->
-				<div class="modal fade modal-small modal-primary" id="GraphModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="card-header">
-										<h4 class="card-title">ClientMatch Graphs</h4>
-									</div>
-									<div class="card-body ">
-										<div id="chartCMStatus" class="ct-chart ct-minor-third"></div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#GraphModal" id="GraphModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -300,7 +288,6 @@ Aaron Scott (WiFi Downunder) 2022
 	<script src="assets/js/plugins/bootstrap-switch.js"></script>
 	<!--  Chartist Plugin  -->
 	<script src="assets/js/plugins/chartist.min.js"></script>
-	<script src="assets/js/plugins/chartist-plugin-tooltip.js"></script>
 	<!--  Notifications Plugin    -->
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
@@ -339,59 +326,49 @@ Aaron Scott (WiFi Downunder) 2022
 		$(document).ready(function() {
 		openIndexedDB();
 			var reachabilityPromise = new $.Deferred();
-		    $.when(checkReachability(reachabilityPromise)).then(function () {
-				$.fn.dataTable.moment( 'DD/MM/YYYY, HH:mm:ss' );
+		     $.when(checkReachability(reachabilityPromise)).then(function () {
 
-				loadMonitoringData();
+				$.fn.dataTable.moment( 'DD/MM/YYYY' );
+
+
 				var refreshrate = localStorage.getItem('refresh_rate');
 				if (refreshrate === null || refreshrate === "") {
 					refreshrate = "30";
 				}
+
+				loadMonitoringData(refreshrate);
 				var loadIntervalID;
-				loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
+				loadIntervalID = setInterval(getRapidsData, parseInt(refreshrate)*60000);
 
 				document.addEventListener("visibilitychange", function handleVisibilityChange() {
-					if (!document.hidden) {
-						var reachabilityPromise = new $.Deferred();
-						$.when(checkReachability(reachabilityPromise)).then(function () {
-							loadIntervalID = setInterval(updateClientMatchData, parseInt(refreshrate)*60000);
-						});
-					} else {
-						clearInterval(loadIntervalID);
-					}
+				  if (!document.hidden) {
+					var reachabilityPromise = new $.Deferred();
+					$.when(checkReachability(reachabilityPromise)).then(function () {
+						loadIntervalID = setInterval(getRapidsData, parseInt(refreshrate)*60000);
+					});
+				  } else {
+					clearInterval(loadIntervalID);
+				  }
 				}, false);
 
-				$('#unsteerable-table').DataTable({
+				$('#rapids-table').DataTable({
 					"pagingType": "simple_numbers",
 					"autoWidth": true,
 					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
 					responsive: true,
+					"order": [[ 3, "desc" ]],
 					language: {
 						search: "_INPUT_",
-						searchPlaceholder: "Search Clients",
+						searchPlaceholder: "Search APs",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }]
-				});
-
-				$('#history-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": true,
-					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search History",
-					},
-					'order': [[0, 'desc']],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 			});
-
 		});
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/main.js?v=230326"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js"></script>
-	<script src="assets/js/clientmatch.js?v=221024"></script>
+	<script src="assets/js/rapids.js"></script>
 </html>

@@ -625,7 +625,7 @@ function updateGatewayConfig(gatewayGroups, roleName, gwProfile, removal) {
 
 	// If we are adding an MPSK
 	// Add user role + access list > link the two. Add in the derivation-rule for the correct gateway profile
-	var baseGatewayString = 'user-role <mpsk-name>\n!\nip access-list session <mpsk-name>\nuser any svc-dhcp permit\nuser any svc-dns permit\nuserrole <mpsk-name> userrole <mpsk-name> any permit\nuser alias private-networks any deny\nany any any permit\n!\nuser-role <mpsk-name>\naccess-list session <mpsk-name>\n!\naaa derivation-rules user <gw-profile>\n	set role condition mpsk-key-name equals "<mpsk-name>" set-value <mpsk-name>\n!';
+	var baseGatewayString = 'user-role <mpsk-name>\n!\nip access-list session <mpsk-name>\nuser any svc-dhcp permit\nuser any svc-dns permit\nuserrole <mpsk-name> userrole <mpsk-name> any permit\nuser alias private-networks any deny\nany any any permit\n!\nuser-role <mpsk-name>\naccess-list session <mpsk-name>\n!\naaa derivation-rules user <gw-profile>\nset role condition mpsk-key-name equals "<mpsk-name>" set-value <mpsk-name>\n!\naaa profile <gw-profile>\nuser-derivation-rules <gw-profile>\n!';
 
 	// If we are cleaning up the gateway config in a delete use case
 	if (removal) baseGatewayString = 'aaa derivation-rules user <gw-profile>\nno set role condition mpsk-key-name equals "<mpsk-name>"\n!\nip access-list session <mpsk-name>\nno userrole <mpsk-name> userrole <mpsk-name> any permit\n!\nno user-role <mpsk-name>\n!\nno ip access-list session <mpsk-name>\n!';
@@ -634,7 +634,7 @@ function updateGatewayConfig(gatewayGroups, roleName, gwProfile, removal) {
 		// Swap in the MPSK name and the Gateway profile (obatined from the SSID profile on the AP)
 		var gatewayString = baseGatewayString.replace(/<mpsk-name>/gi, roleName);
 		gatewayString = gatewayString.replace(/<gw-profile>/gi, gwProfile.toLowerCase());
-
+		console.log(gatewayString);
 		// push config back to group
 		var currentConfig = gatewayString.split('\n');
 
@@ -654,7 +654,7 @@ function updateGatewayConfig(gatewayGroups, roleName, gwProfile, removal) {
 		};
 
 		$.ajax(settings).done(function(response, statusText, xhr) {
-			//console.log(response);
+			console.log(response);
 			if (response.hasOwnProperty('status')) {
 				if (response.status === '503') {
 					gatewayErrorCount++;
@@ -893,6 +893,9 @@ function uploadMPSKCSV() {
 			delimiter: ',',
 			header: true,
 			complete: processMPSKCSV,
+			transformHeader: function(h) {
+				return h.trim();
+			},
 		},
 		before: function(file, inputElem) {
 			showNotification('ca-cpu', 'Processing CSV File...', 'bottom', 'center', 'info');

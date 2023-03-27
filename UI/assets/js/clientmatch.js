@@ -10,6 +10,11 @@ var graphDataMode = {};
 var graphDataStatus = {};
 var graphDataClients = {};
 
+var statusNotification;
+var balanceNotification;
+var unsteerableNotification;
+var historyNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -72,7 +77,7 @@ function updateClientMatchData() {
 		CM Status
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getClientMatchStatus() {
-	showNotification('ca-crossroad', 'Getting ClientMatch status...', 'bottom', 'center', 'info');
+	statusNotification = showNotification('ca-crossroad', 'Getting ClientMatch status...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -114,12 +119,12 @@ function getClientMatchStatus() {
 			}
 		}
 
-		showNotification('ca-crossroad', 'Retreived ClientMatch status', 'bottom', 'center', 'success');
+		statusNotification.close();
 	});
 }
 
 function toggleCMState() {
-	showNotification('ca-crossroad', 'Updating ClientMatch status...', 'bottom', 'center', 'info');
+	statusNotification = showNotification('ca-crossroad', 'Updating ClientMatch status...', 'bottom', 'center', 'info');
 	var cmState = true;
 	if (document.getElementById('cmStateBtn').innerHTML === 'Enabled') {
 		console.log('Disabling ClientMatch');
@@ -164,6 +169,7 @@ function toggleCMState() {
 				document.getElementById('cmStateBtn').innerHTML = 'Enabled';
 			}
 		}
+		statusNotification.close();
 	});
 }
 
@@ -171,7 +177,7 @@ function toggleCMState() {
 		CM Load Balance Status
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getLoadBalanceStatus() {
-	showNotification('ca-scale', 'Getting ClientMatch Load Balance status...', 'bottom', 'center', 'info');
+	balanceNotification = showNotification('ca-scale', 'Getting ClientMatch Load Balance status...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -211,13 +217,12 @@ function getLoadBalanceStatus() {
 				document.getElementById('loadbalBtn').innerHTML = 'Disabled';
 			}
 		}
-
-		showNotification('ca-scale', 'Retreived ClientMatch Load Balancing status', 'bottom', 'center', 'success');
+		balanceNotification.close();
 	});
 }
 
 function toggleLoadBal() {
-	showNotification('ca-scale', 'Updating ClientMatch Load Balancing status...', 'bottom', 'center', 'info');
+	balanceNotification = showNotification('ca-scale', 'Updating ClientMatch Load Balancing status...', 'bottom', 'center', 'info');
 	var cmState = true;
 	if (document.getElementById('loadbalBtn').innerHTML === 'Enabled') {
 		console.log('Disabling ClientMatch Load Balancing');
@@ -261,6 +266,7 @@ function toggleLoadBal() {
 				$(document.getElementById('loadbalBtn')).removeClass('btn-danger');
 				document.getElementById('loadbalBtn').innerHTML = 'Enabled';
 			}
+			balanceNotification.close();
 		}
 	});
 }
@@ -269,7 +275,7 @@ function toggleLoadBal() {
 		Unsteerable Clients
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getUnsteerableClients() {
-	showNotification('ca-m-delete', 'Getting Unsteerable Clients...', 'bottom', 'center', 'info');
+	unsteerableNotification = showNotification('ca-m-delete', 'Getting Unsteerable Clients...', 'bottom', 'center', 'info');
 
 	$('#unsteerable-table')
 		.DataTable()
@@ -387,12 +393,12 @@ function getUnsteerableClients() {
 			.rows()
 			.draw();
 		$('[data-toggle="tooltip"]').tooltip();
-		showNotification('ca-m-delete', 'Retrieved Unsteerable Clients', 'bottom', 'center', 'success');
+		unsteerableNotification.close();
 	});
 }
 
 function steerClient(macaddr) {
-	showNotification('ca-m-check', 'Making client steerable...', 'bottom', 'center', 'info');
+	unsteerableNotification = showNotification('ca-m-check', 'Making client steerable...', 'bottom', 'center', 'info');
 	// convert macaddr in to safe string with swapping colon to %3A
 	var settings = {
 		url: getAPIURL() + '/tools/deleteCommand',
@@ -409,6 +415,7 @@ function steerClient(macaddr) {
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
 		//console.log(response);
+		unsteerableNotification.close();
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				logError('Central Server Error (503): ' + response.reason + ' (/cm-api/unsteerable/v1)');
@@ -426,7 +433,7 @@ function steerClient(macaddr) {
 		 Steer History Clients
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getSteerHistory() {
-	showNotification('ca-m-search', 'Getting Steering History...', 'bottom', 'center', 'info');
+	historyNotification = showNotification('ca-m-search', 'Getting Steering History...', 'bottom', 'center', 'info');
 
 	graphDataStatus = {};
 	$('#history-table')
@@ -466,12 +473,14 @@ function getSteerHistory() {
 		var response = JSON.parse(commandResults.responseBody);
 
 		if (response.result.SteerHistory !== 'Not found') {
+			var centralURLs = getCentralURLs();
+			var centralHostURL = localStorage.getItem('base_url');
+
 			$.each(response.result.SteerHistory, function() {
 				if (!this.hasOwnProperty('TimeNow')) {
 					// process item
 					// Date and time string
 					var m = moment(Object.keys(this)[0], 'YYYY-MM-DD hh:mm:ss.SSS Z');
-
 					//Event string
 
 					var client_name;
@@ -527,41 +536,56 @@ function getSteerHistory() {
 					var fromRadioClean = fromRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					fromAP = findAPForRadio(fromRadioClean);
 					var fromBand = '';
+					var fromChannel = '';
 					for (var i = 0, len = fromAP.radios.length; i < len; i++) {
 						if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
+							fromChannel = fromAP.radios[i].channel;
 							if (fromAP.radios[i].band == 3) fromBand = '6GHz';
 							else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
 							else fromBand = '5GHz';
 						}
 					}
-					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '">' + fromAP.name + ' (-' + fromRadio[1] + 'dBm)' + '</span>';
+					// Make AP Name as a link to Central
+					var apName = encodeURI(fromAP['name']);
+					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
 
 					var toRadio = steerString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
 					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					toAP = findAPForRadio(toRadioClean);
 					var toBand = '';
+					var toChannel = '';
 					for (var i = 0, len = toAP.radios.length; i < len; i++) {
 						if (toAP.radios[i]['macaddr'] === toRadioClean) {
+							toChannel = toAP.radios[i].channel;
 							if (toAP.radios[i].band == 3) toBand = '6GHz';
 							else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
 							else toBand = '5GHz';
 						}
 					}
-					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '">' + toAP.name + ' (-' + toRadio[1] + 'dBm)' + '</span>';
+					// Make AP Name as a link to Central
+					var apName = encodeURI(toAP['name']);
+					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
 
 					var destRadio = steerString.match(/DstRadio=\((.+?)\)/)[1].split(', ');
 					var destRadioClean = destRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					destAP = findAPForRadio(destRadioClean);
 					destStatus = titleCase(steerString.match(/DstAcceptable=(.+?),/)[1]);
 					var destBand = '';
-					for (var i = 0, len = destAP.radios.length; i < len; i++) {
-						if (destAP.radios[i]['macaddr'] === destRadioClean) {
-							if (destAP.radios[i].band == 3) destBand = '6GHz';
-							else if (destAP.radios[i].band == 0) destBand = '2.4GHz';
-							else destBand = '5GHz';
+					if (destAP && destAP.radios) {
+						for (var i = 0, len = destAP.radios.length; i < len; i++) {
+							if (destAP.radios[i]['macaddr'] === destRadioClean) {
+								if (destAP.radios[i].band == 3) destBand = '6GHz';
+								else if (destAP.radios[i].band == 0) destBand = '2.4GHz';
+								else destBand = '5GHz';
+							}
 						}
 					}
-					var destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + destAP.name + ' (-' + destRadio[1] + 'dBm)' + '</span>';
+
+					var dstName = destRadioClean;
+					if (destAP) dstName = destAP.name;
+					var destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + dstName + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
 
 					roamTime = steerString.match(/RoamTime=(.*)/)[1];
 					roamTime = roamTime.replace('s', '');
@@ -583,7 +607,7 @@ function getSteerHistory() {
 			.rows()
 			.draw();
 		$('[data-toggle="tooltip"]').tooltip();
-		showNotification('ca-m-search', 'Retrieved History', 'bottom', 'center', 'success');
+		historyNotification.close();
 	});
 }
 
@@ -601,6 +625,7 @@ function updateGraphs() {
 		},
 		{
 			distributeSeries: true,
+			height: 250,
 			plugins: [Chartist.plugins.tooltip()],
 		}
 	);
@@ -618,6 +643,7 @@ function updateGraphs() {
 		},
 		{
 			distributeSeries: true,
+			height: 250,
 			plugins: [Chartist.plugins.tooltip()],
 		}
 	);
@@ -635,6 +661,14 @@ function updateGraphs() {
 		},
 		{
 			distributeSeries: true,
+			height: 250,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
 	);
@@ -648,8 +682,8 @@ function updateGraphs() {
 		return b['value'] - a['value'];
 	});
 	// Keep on the top 5
-	cmClients = cmClients.slice(0, 5);
-	//Build the labels to match the top 5
+	cmClients = cmClients.slice(0, 10);
+	//Build the labels to match the top 10
 	labels = [];
 	$.each(cmClients, function() {
 		labels.push(this.meta);
@@ -663,10 +697,19 @@ function updateGraphs() {
 		},
 		{
 			distributeSeries: true,
+			height: 250,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
 	);
 
 	// Show the graphs section
 	document.getElementById('cmGraphs').hidden = false;
+	document.getElementById('cmGraphs2').hidden = false;
 }

@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.0
 Updated: 1.18
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 -->
 
 <!DOCTYPE html>
@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/central-style.css" rel="stylesheet" />
+		<link href="assets/css/cas.css" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -97,7 +97,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 						<div class="row">
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#ClientModal" href="#pablo">
+									<a data-toggle="modal" data-target="#ClientModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -118,7 +118,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#APModal" href="#pablo">
+									<a data-toggle="modal" data-target="#APModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -139,12 +139,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#SwitchModal" href="#pablo">
+									<a data-toggle="modal" data-target="#SwitchModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-server-rack text-warning" id="switch_icon"></i>
+														<i class="central-icon ca-switch-stack text-warning" id="switch_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -160,7 +160,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GatewayModal" href="#pablo">
+									<a data-toggle="modal" data-target="#GatewayModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -181,7 +181,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#SiteModal" href="#pablo">
+									<a data-toggle="modal" data-target="#SiteModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -202,7 +202,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GroupModal" href="#pablo">
+									<a data-toggle="modal" data-target="#GroupModal" >
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -346,12 +346,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 																<i class="central-icon ca-maximize-area-1"></i>
 															</div>
 														</td>
-														<td>Set AP Zones</td>
+														<td>Set AP Zones / SSIDs</td>
 													</tr>
 													<tr class="clickable-row" data-href="setRFProfile">
 														<td>
 															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-antenna"></i>
+																<i class="central-icon ca-rf-profile"></i>
 															</div>
 														</td>
 														<td>Set RF Profiles (AOS10 Only)</td>
@@ -379,6 +379,22 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 															</div>
 														</td>
 														<td>Disable 2.4GHz radios</td>
+													</tr>
+													<tr class="clickable-row" data-href="antennaGain">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-antenna"></i>
+															</div>
+														</td>
+														<td>Set Antenna Gain</td>
+													</tr>
+													<tr class="clickable-row" data-href="staticIP">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-square-pin"></i>
+															</div>
+														</td>
+														<td>Set AP Static IP Address</td>
 													</tr>
 													<tr class="clickable-row" data-href="devicevariables">
 														<td>
@@ -555,8 +571,9 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														<th>Status Text</th>
 														<th>IP Address</th>
 														<th>Model</th>
-														<th>Serial Number</th>
-														<th>Firmware Version</th>
+														<th>Serial</th>
+														<th>Clients</th>
+														<th>Firmware</th>
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
@@ -599,8 +616,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														<th>Status Text</th>
 														<th>IP Address</th>
 														<th>Model</th>
-														<th>Serial Number</th>
-														<th>Firmware Version</th>
+														<th>Serial</th>
+														<th>Firmware</th>
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
@@ -634,13 +651,16 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 														<th>Status</th>
 														<th>Status Text</th>
 														<th>IP Address</th>
+														<th>Public IP</th>
 														<th>Model</th>
-														<th>Serial Number</th>
-														<th>Firmware Version</th>
+														<th>Serial</th>
+														<th>Firmware</th>
 														<th>Site</th>
 														<th>Group</th>
 														<th>MAC Address</th>
-														<th>Last Reboot Reason</th>
+														<th>Uplinks</th>
+														<th>Tunnels</th>
+														<th>Reboot Reason</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -679,6 +699,11 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 													<tbody></tbody>
 												</table>
 											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>&nbsp;<a class="btn btn-fill btn-info" href="deployment-site-mgmt.html">Bulk Manage Sites</a>
 										</div>
 									</div>
 								</div>
@@ -730,6 +755,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+
 									</div>
 									<div class="card-body" id="errorBody"></div>
 								</div>
@@ -758,6 +785,62 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Bulk Antenna Modal -->
+				<div class="modal fade modal-700 modal-primary" id="AntennaConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Antenna Configuration</h4>
+									</div>
+									<div class="card-body" id="groupBody">
+										<form class="form-horizontal">								
+											<div class="form-group">
+												<div class="row">
+													<label class="col-md-3">AP Model</label>
+													<div class="col-md-9">
+														<select data-title="Select AP Model..." name="apSelector" id="apSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+														</select>
+													</div>
+												</div>
+												<div class="row">
+													<label class="col-md-3">Antenna</label>
+													<div class="col-md-9">
+														<select data-title="Select Antenna..." name="antennaSelector" id="antennaSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="antennaSelected()">
+														</select>
+													</div>
+												</div>
+												</br>
+												<div class="row" id='customGain'>
+													<label class="col-md-3">Antenna Gain (dBi)</label>
+													<div class="col-md-3 rightVert">
+														<label class="col-md-8" data-toggle="tooltip" data-placement="bottom" data-html="true" title="5GHz Radio"><strong>Radio 0</strong></label>
+														<input type="text" placeholder="5" class="form-control" id="antennaGain0" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');">
+													</div>
+													<div class="col-md-3 rightVert">
+														<label class="col-md-8" data-toggle="tooltip" data-placement="bottom" data-html="true" title="2.4GHz Radio"><strong>Radio 1</strong></label>
+														<input type="text" placeholder="5" class="form-control" id="antennaGain1" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');">
+													</div>
+													<!--<div class="col-md-3">
+														<label class="col-md-8"><strong>Radio 2</strong></label>
+														<input type="text" placeholder="5" class="form-control" id="antennaGain2" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');">
+													</div>-->
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" name="applyAntennaChanges" id="applyAntennaChanges" onclick="applyAntennaGains()">Apply Antenna Gain</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Antenna Modal -->
 				<!-- Universal Search Modal -->
 				<div class="modal fade modal-mini modal-primary" id="UniversalModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -798,9 +881,10 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#GroupSelectionModal" href="#pablo" id="GroupModalLink"></a>
-						<a data-toggle="modal" data-target="#UniversalModal" href="#pablo" id="UniversalModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal"  id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#GroupSelectionModal"  id="GroupModalLink"></a>
+						<a data-toggle="modal" data-target="#UniversalModal"  id="UniversalModalLink"></a>
+						<a data-toggle="modal" data-target="#AntennaConfigModal" id="AntennaConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -858,138 +942,159 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
 	<script type="text/javascript">
-		  $(document).ready(function() {
-		  	var reachabilityPromise = new $.Deferred();
-		      $.when(checkReachability(reachabilityPromise)).then(function () {
+		$(document).ready(function() {
+			openIndexedDB();
+			var reachabilityPromise = new $.Deferred();
+			$.when(checkReachability(reachabilityPromise)).then(function () {
 
+				var mgd = document.getElementById("manualGroupDiv");
+				mgd.style.display = "none";
 
-			var mgd = document.getElementById("manualGroupDiv");
-			mgd.style.display = "none";
-
-			$(".clickable-row").click(function() {
-				var clickedRow = $(this).data("href");
-				loadCSVFile(clickedRow);
-			});
-
-			$('#client-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": true,
-				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Clients",
-				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }],
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-			});
-
-			$('#ap-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search APs",
-				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-			});
-
-			$('#switch-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Switches",
-				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-			});
-
-			$('#gateway-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Gateways",
-				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-			});
-
-			$('#site-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Sites",
-				}
-			});
-
-			$('#group-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Groups",
-				}
-			});
-
-			$('#universal-table').DataTable({
-				"pagingType": "simple_numbers",
-				"autoWidth": false,
-				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-				responsive: true,
-				language: {
-					search: "_INPUT_",
-					searchPlaceholder: "Search Devices",
-				},
-				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-			});
-
-			document.getElementById('searchForm').addEventListener('submit', function(e) {
-				e.preventDefault();
-				$('#universal-table').DataTable().rows().draw();
-				$('#UniversalModalLink').trigger('click');
-				$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
-			}, false);
-
-			// Check if we need to get the latest data - or can we just load it from localStorage
-			var refreshrate = localStorage.getItem('refresh_rate');
-			if (refreshrate === null || refreshrate === "") {
-				refreshrate = "30";
-			}
-
-			loadMonitoringData(refreshrate);
-
-			var loadIntervalID;
-			loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
-
-			document.addEventListener("visibilitychange", function handleVisibilityChange() {
-			  if (!document.hidden) {
-				var reachabilityPromise = new $.Deferred();
-				$.when(checkReachability(reachabilityPromise)).then(function () {
-					loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+				$(".clickable-row").click(function() {
+					var clickedRow = $(this).data("href");
+					loadCSVFile(clickedRow);
 				});
-			  } else {
-				clearInterval(loadIntervalID);
-			  }
-			}, false);
+
+				$('#client-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": true,
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Clients",
+					},
+					columnDefs: [{ type: 'ip-address', targets: 3 }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+				$('#ap-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search APs",
+					},
+					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+				$('#switch-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Switches",
+					},
+					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+				var loadGatewayDetails = localStorage.getItem('load_gateway_details');
+				if (loadGatewayDetails === null || loadGatewayDetails === "") {
+					loadGatewayDetails = false;
+				} else {
+					loadGatewayDetails = JSON.parse(loadGatewayDetails)
+				}
+				if (loadGatewayDetails) {
+					$('#gateway-table').DataTable({
+						"pagingType": "simple_numbers",
+						"autoWidth": false,
+						"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+						responsive: true,
+						language: {
+							search: "_INPUT_",
+							searchPlaceholder: "Search Gateways",
+						},
+						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
+						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+					});
+				} else {
+					$('#gateway-table').DataTable({
+						"pagingType": "simple_numbers",
+						"autoWidth": false,
+						"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+						responsive: true,
+						language: {
+							search: "_INPUT_",
+							searchPlaceholder: "Search Gateways",
+						},
+						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,11,12], "visible": false }],
+						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+					});
+				}
+
+				$('#site-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Sites",
+					}
+				});
+
+				$('#group-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Groups",
+					}
+				});
+
+				$('#universal-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Devices",
+					},
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+				document.getElementById('searchForm').addEventListener('submit', function(e) {
+					e.preventDefault();
+					$('#universal-table').DataTable().rows().draw();
+					$('#UniversalModalLink').trigger('click');
+					$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
+				}, false);
+
+				// Check if we need to get the latest data - or can we just load it from localStorage
+				var refreshrate = localStorage.getItem('refresh_rate');
+				if (refreshrate === null || refreshrate === "") {
+					refreshrate = "30";
+				}
+
+				loadMonitoringData(refreshrate);
+
+				var loadIntervalID;
+				loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+
+				document.addEventListener("visibilitychange", function handleVisibilityChange() {
+			  	if (!document.hidden) {
+					var reachabilityPromise = new $.Deferred();
+					$.when(checkReachability(reachabilityPromise)).then(function () {
+						loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+					});
+			  	} else {
+					clearInterval(loadIntervalID);
+			  	}
+				}, false);
+			});
 		});
-		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=221023"></script>
-	<script src="assets/js/proxy.js"></script>
+	<script src="assets/js/main.js?v=230326"></script>
+	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js"></script>
 </html>

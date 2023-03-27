@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7
-Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Updated: 1.21
+Aaron Scott (WiFi Downunder) 2023
 */
 
 var selectedClusters = {};
@@ -205,7 +205,7 @@ function loadDevicesTable(checked) {
 
 		// Add VC Cluster to table
 		var table = $('#device-table').DataTable();
-		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version']]);
+		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version']]);
 	}
 	$('#device-table')
 		.DataTable()

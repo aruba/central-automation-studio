@@ -1,7 +1,7 @@
 /*
 Central Automation v1.15.1
 Updated: 1.17 
-Aaron Scott (WiFi Downunder) 2022
+Aaron Scott (WiFi Downunder) 2023
 */
 
 var colorArray = ['text-info', 'text-danger', 'text-warning', 'text-purple', 'text-success', 'text-primary', 'text-series7', 'text-series8'];
@@ -13,9 +13,11 @@ var highMemoryAPs = [];
 var highCPUAPs = [];
 var apBSSIDs = [];
 
+var bssidNotification;
+
 function loadCurrentPageAP() {
 	updateAPGraphs();
-	loadBSSIDTable();
+	loadBSSIDs();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -68,19 +70,21 @@ function updateAPGraphs() {
 		}
 
 		apCounter++;
-		var memoryFree = this.mem_free;
-		var memoryTotal = this.mem_total;
-		var memoryFreePercentage = (memoryFree / memoryTotal) * 100;
-		var memoryUsed = 100 - memoryFreePercentage;
-		if (memoryFreePercentage < 25) {
-			highMemoryCount++;
-			highMemoryAPs.push(currentAP);
-		}
+		if (this.status === 'Up') {
+			var memoryFree = this.mem_free;
+			var memoryTotal = this.mem_total;
+			var memoryFreePercentage = (memoryFree / memoryTotal) * 100;
+			var memoryUsed = 100 - memoryFreePercentage;
+			if (memoryFreePercentage < 25) {
+				highMemoryCount++;
+				highMemoryAPs.push(currentAP);
+			}
 
-		var cpuUsed = this.cpu_utilization;
-		if (cpuUsed > 50) {
-			highCPUCount++;
-			highCPUAPs.push(currentAP);
+			var cpuUsed = this.cpu_utilization;
+			if (cpuUsed > 50) {
+				highCPUCount++;
+				highCPUAPs.push(currentAP);
+			}
 		}
 
 		$.each(currentAP.radios, function() {
@@ -186,6 +190,7 @@ function updateAPGraphs() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 	var barOptions = {
+		distributeSeries: true,
 		seriesBarDistance: 10,
 		axisX: {
 			showGrid: false,
@@ -223,7 +228,7 @@ function updateAPGraphs() {
 		'#chartModel',
 		{
 			labels: apLabels,
-			series: [apSeries],
+			series: apSeries,
 		},
 		barOptions
 	);
@@ -340,7 +345,7 @@ function updateAPGraphs() {
 		.draw();
 
 	/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		Memory Utilization Table
+		Memory Utilisation Table
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 	busyAPs = aps;
@@ -357,20 +362,27 @@ function updateAPGraphs() {
 		.remove();
 
 	var table = $('#memory-table').DataTable();
-	for (i = 0; i < busyAPs.length; i++) {
+	var i = 0;
+	$.each(busyAPs, function() {
 		if (i < maxAPLimit) {
-			var name = encodeURI(busyAPs[i]['name']);
-			var memoryUsage = (((busyAPs[i]['mem_total'] - busyAPs[i]['mem_free']) / busyAPs[i]['mem_total']) * 100).toFixed(0).toString();
+			var name = encodeURI(this['name']);
+			var memoryUsage = (((this['mem_total'] - this['mem_free']) / this['mem_total']) * 100).toFixed(0).toString();
 			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + busyAPs[i]['serial'] + '?casn=' + busyAPs[i]['serial'] + '&cdcn=' + name + '&nc=access_point';
+			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
 
-			var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Reboot AP" onclick="rebootAP(\'' + busyAPs[i]['serial'] + '\')"><i class="fa-regular fa-power-off"></i></a> ';
-
+			var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Reboot AP" onclick="rebootAP(\'' + this['serial'] + '\')"><i class="fa-regular fa-power-off"></i></a> ';
+			if (this.status !== 'Up') {
+				var actionBtns = '';
+			}
 			// Add row to table
-			table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + busyAPs[i]['name'] + '</strong></a>', memoryUsage + '%', actionBtns]);
+			table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a>', memoryUsage + '%', actionBtns]);
 			//table.row.add([busyAPs[i]['name'], duration.humanize()]);
-		} else break;
-	}
+			i++;
+		} else {
+			return false;
+		}
+	});
+
 	$('#memory-table')
 		.DataTable()
 		.rows()
@@ -534,58 +546,75 @@ function showAPs(showMode) {
 	$('#SelectedDeviceModalLink').trigger('click');
 }
 
-function loadBSSIDTable() {
-	showNotification('ca-wifi', 'Obtaining BSSIDs...', 'bottom', 'center', 'info');
+function loadBSSIDs() {
+	const transaction = db.transaction('general', 'readonly');
+	const store = transaction.objectStore('general');
+
+	const bssidQuery = store.get('monitoring_bssids');
+	bssidQuery.onsuccess = function() {
+		if (bssidQuery.result && bssidQuery.result.data) {
+			loadBSSIDTable(JSON.parse(bssidQuery.result.data));
+		} else {
+			refreshBSSIDs();
+		}
+	};
+}
+
+function refreshBSSIDs() {
+	bssidNotification = showNotification('ca-wifi', 'Obtaining BSSIDs...', 'bottom', 'center', 'info');
 	$.when(getBSSIDData(0)).then(function() {
-		apBSSIDs = [];
-		var currentBSSIDs = getBSSIDs();
-		$('#bssid-table')
-			.DataTable()
-			.rows()
-			.remove();
-		var table = $('#bssid-table').DataTable();
-		$.each(currentBSSIDs, function() {
-			var ap = findDeviceInMonitoring(this.serial);
-			var status = '<i class="fa fa-circle text-danger"></i>';
-			if (ap['status'] == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
-			}
-			var ip_address = ap['ip_address'];
-			if (!ip_address) ip_address = '';
-
-			// Make AP Name as a link to Central
-			var name = encodeURI(ap['name']);
-			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
-			$.each(this.radio_bssids, function() {
-				var radio = this;
-				$.each(radio.bssids, function() {
-					// Add row to table
-					table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr']]);
-
-					apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] });
-				});
-			});
-			if (document.getElementById('bssid_count')) {
-				document.getElementById('bssid_count').innerHTML = apBSSIDs.length;
-
-				if (apBSSIDs.length > 0) {
-					$(document.getElementById('bssid_icon')).addClass('text-primary');
-					$(document.getElementById('bssid_icon')).removeClass('text-warning');
-					$(document.getElementById('bssid_icon')).removeClass('text-danger');
-				} else {
-					$(document.getElementById('bssid_icon')).removeClass('text-success');
-					$(document.getElementById('bssid_icon')).removeClass('text-warning');
-					$(document.getElementById('bssid_icon')).addClass('text-danger');
-				}
-			}
-		});
-		$('#bssid-table')
-			.DataTable()
-			.rows()
-			.draw();
-		showNotification('ca-wifi', 'Obtained BSSIDs', 'bottom', 'center', 'success');
+		loadBSSIDTable(getBSSIDs());
+		bssidNotification.close();
 	});
+}
+
+function loadBSSIDTable(currentBSSIDs) {
+	apBSSIDs = [];
+	$('#bssid-table')
+		.DataTable()
+		.rows()
+		.remove();
+	var table = $('#bssid-table').DataTable();
+	$.each(currentBSSIDs, function() {
+		var ap = findDeviceInMonitoring(this.serial);
+		var status = '<i class="fa fa-circle text-danger"></i>';
+		if (ap['status'] == 'Up') {
+			status = '<i class="fa fa-circle text-success"></i>';
+		}
+		var ip_address = ap['ip_address'];
+		if (!ip_address) ip_address = '';
+
+		// Make AP Name as a link to Central
+		var name = encodeURI(ap['name']);
+		var apiURL = localStorage.getItem('base_url');
+		var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+		$.each(this.radio_bssids, function() {
+			var radio = this;
+			$.each(radio.bssids, function() {
+				// Add row to table
+				table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr']]);
+
+				apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] });
+			});
+		});
+		if (document.getElementById('bssid_count')) {
+			document.getElementById('bssid_count').innerHTML = apBSSIDs.length;
+
+			if (apBSSIDs.length > 0) {
+				$(document.getElementById('bssid_icon')).addClass('text-primary');
+				$(document.getElementById('bssid_icon')).removeClass('text-warning');
+				$(document.getElementById('bssid_icon')).removeClass('text-danger');
+			} else {
+				$(document.getElementById('bssid_icon')).removeClass('text-success');
+				$(document.getElementById('bssid_icon')).removeClass('text-warning');
+				$(document.getElementById('bssid_icon')).addClass('text-danger');
+			}
+		}
+	});
+	$('#bssid-table')
+		.DataTable()
+		.rows()
+		.draw();
 }
 
 function showBSSIDs() {

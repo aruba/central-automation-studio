@@ -1,7 +1,7 @@
 /*
 Central Automation v1
 Updated: 1.9.2
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 
@@ -678,6 +678,82 @@ Generated using nucleoapp.com
   content: "\ea78";
 }
 
+.ca-switch-stack::before {
+  content: "\ea79";
+}
+
+.ca-hook::before {
+  content: "\ea7a";
+}
+
+.ca-contained::before {
+  content: "\ea7b";
+}
+
+.ca-rapids::before {
+  content: "\ea7c";
+}
+
+.ca-interfering::before {
+  content: "\ea7d";
+}
+
+.ca-neighbour::before {
+  content: "\ea7e";
+}
+
+.ca-suspected-rogue::before {
+  content: "\ea7f";
+}
+
+.ca-rogue::before {
+  content: "\ea80";
+}
+
+.ca-bin::before {
+  content: "\ea81";
+}
+
+.ca-floppy-disk::before {
+  content: "\ea82";
+}
+
+.ca-alarm::before {
+  content: "\ea83";
+}
+
+.ca-leave::before {
+  content: "\ea84";
+}
+
+.ca-lifering::before {
+  content: "\ea85";
+}
+
+.ca-rf-profile::before {
+  content: "\ea86";
+}
+
+.ca-antenna-check::before {
+  content: "\ea87";
+}
+
+.ca-user-frame-33::before {
+  content: "\ea88";
+}
+
+.ca-pin-settings::before {
+  content: "\ea89";
+}
+
+.ca-pin-delete::before {
+  content: "\ea8a";
+}
+
+.ca-pin-add-2::before {
+  content: "\ea8b";
+}
+
 /*------------------------
 	Extra Styling
 -------------------------*/
@@ -757,12 +833,23 @@ Generated using nucleoapp.com
     border-radius: 4px;
 }
 
+
+
+
 .card .table tbody td:last-child,
 .card .table thead th:last-child {
     padding-right: 15px;
     display: block;
     width: 100%;
     padding-top: 30px;
+}
+
+.card .country-table tbody td:last-child,
+.card .country-table thead th:last-child {
+    padding-right: 8px;
+    display: block;
+    width: 100%;
+    padding-top: 12px;
 }
 
 
@@ -856,6 +943,19 @@ Generated using nucleoapp.com
     line-height: 26px;
     margin-bottom: 0;
     text-transform: capitalize;
+}
+
+.form-check .form-check-label-options {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    padding-left: 35px;
+    padding-top: 14px;
+    line-height: 26px;
+    margin-bottom: 0;
+    text-transform: capitalize;
+    font-size: 14px !important;
+    font-weight: bold;
 }
 
 .text-neutral,
@@ -1072,7 +1172,6 @@ input[type="color"] {
   border: none;
 }
 #color-picker-wrapper {
-  float: left;
   width: 100%;
   background-color: #E5E5E5;
   border-color: #E5E5E5;
@@ -1231,4 +1330,68 @@ pre {
 }
 .json-string {
   color: red;
+}
+
+.full-page>.content .card-register .card-subtitle-dark {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    font-size: 21px;
+    color: #808080;
+}
+
+.setting-label {
+  text-align: right;
+  margin-left:30px;
+  margin-bottom: 0px !important;
+  display: inline-block;
+  font-weight: bold !important;
+}
+
+.format-label {
+  text-align: right;
+  margin-top:12px;
+  margin-left:30px;
+  margin-bottom: 0px !important;
+  display: inline-block;
+  font-weight: bold !important;
+}
+
+.setting-input {
+  display: inline-block;
+  margin-right:20px;
+  padding-bottom:16px !important;
+}
+
+.proxy-status {
+    background-color: #FFFFFF;
+    width: 100%;
+}
+
+.proxy-status .footer-menu {
+    height: 41px;
+}
+
+.proxy-status nav>ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-weight: normal;
+}
+
+.proxy-status nav>ul li {
+    display: inline;
+    float: left;
+    padding-left: 50px;
+}
+
+.proxy-status nav>ul a:not(.btn) {
+    color: #9A9A9A;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.proxy-status nav>ul a:not(.btn):hover,
+.proxy-status nav>ul a:not(.btn):focus {
+    color: #797979;
 }

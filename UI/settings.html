@@ -15,12 +15,12 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.6.0
 Updated: 1.12.4
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 -->
 
 <!DOCTYPE html>
 <html lang="en">
-	<?php include 'hitCounter.php';?>
+<?php include 'hitCounter.php';?>
 <head>
     <meta charset="utf-8" />
     <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/central-style.css" rel="stylesheet" />
+    <link href="assets/css/cas.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -44,7 +44,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
         <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute">
             <div class="container">
                 <div class="navbar-wrapper">
-                    <a class="navbar-brand" href="#pablo">Central Automation</a>
+					<a class="navbar-brand" onclick="onFinishSetup()" href="" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Settings </a>
                     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-bar burger-lines"></span>
                         <span class="navbar-toggler-bar burger-lines"></span>
@@ -54,9 +54,9 @@ Copyright Aaron Scott (WiFi Downunder) 2022
                 <div class="collapse navbar-collapse justify-content-end" id="navbar">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a href="hydra-dashboard.html" class="nav-link" id="dashboardLink">
-                                <i class="central-icon ca-dashboard"></i>
-                            </a>
+							<a class="nav-link" onclick="onFinishSetup()" href="" id="dashboardLink">
+								<i class="central-icon ca-dashboard"></i>
+							</a>
                         </li>
                         <li class="nav-item">
 							<a class="nav-link" onclick="showLog()" href="#">
@@ -85,6 +85,12 @@ Copyright Aaron Scott (WiFi Downunder) 2022
         <div class="full-page register-page section-image" data-color="orange" data-image="assets/img/bg4.jpg">
             <div class="content">
                 <div class="container">
+					<div class='row'>
+						<div class="col-md-3 mx-auto">
+						<button type="submit" class="btn btn-fill btn-info btn-wd btn-lg" onclick="onFinishSetup()">Save & Go To Dashboard</button>
+						<br /><br />
+						</div>		
+					</div>							
 					<div class="row">
 						<div class="col-md-12 mx-auto">
 							<div class="card card-register card-plain text-center">
@@ -97,7 +103,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 											</div>
 										</div>
 									</div>
-									<button type="submit" class="btn btn-fill btn-info btn-wd btn-lg" onclick="onFinishSetup()">Save & Go To Dashboard</button>
+									
 								</div>
 								<div class="card card-body">
 									<div class="row">
@@ -143,7 +149,96 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-md-6 mx-auto">
+						<div class="col-md-12 mx-auto">
+							<div class="card card-register card-plain">
+								<div class="card-header text-center">
+									<div class="row  justify-content-center">
+										<div class="col-md-12">
+											<div class="header-text">
+												<h2 class="card-title">Global Settings</h2>
+												<h4 class="card-subtitle">General settings for Central Automation Studio</h4>
+												<hr />
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="card card-body ">
+									<h4 class="card-subtitle-dark">Basic Settings</h4>
+									<div class="row">
+										<div class="col-md-12 mx-auto">
+											<label class="col-md-3 setting-label">Refresh Interval (minutes)</label>
+											<div class="col-md-3 setting-input">
+												<input type="number" placeholder="30" class="form-control" id="refresh_rate" min="5"  onchange="saveGlobalSettings()" oninput="this.onchange();">
+											</div>
+										</div>
+									</div>
+									<hr  />
+									<h4 class="card-subtitle-dark">Optional Information</h4>
+									<div class="row">
+										
+										<div class="col-md-3 mx-auto">
+											<div class="form-check">
+												<label class="form-check-label-options">
+													<input class="form-check-input" type="checkbox" value="" id="load_clients" checked="true" onclick="saveGlobalSettings();" />
+													<span class="form-check-sign"></span>Client Monitoring
+												</label>
+											</div>
+										</div>
+										<div class="col-md-3 mx-auto">
+											<div class="form-check">
+												<label class="form-check-label-options">
+													<input class="form-check-input" type="checkbox" value="" id="load_group_properties" checked="true" onclick="saveGlobalSettings();" />
+													<span class="form-check-sign"></span>Group Properties
+												</label>
+											</div>
+										</div>
+										<div class="col-md-3 mx-auto">
+											<div class="form-check">
+												<label class="form-check-label-options">
+													<input class="form-check-input" type="checkbox" value="" id="load_gateway_details" checked="false" onclick="saveGlobalSettings();" />
+													<span class="form-check-sign"></span>Gateway Details
+												</label>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-3 mx-auto">
+											<div class="form-check">
+												<label class="form-check-label-options">
+													<input class="form-check-input" type="checkbox" value="" id="load_vc_config" checked="true" onclick="saveGlobalSettings();" />
+													<span class="form-check-sign"></span>Virtual Controller Config
+												</label>
+											</div>
+										</div>
+										<div class="col-md-3 mx-auto">
+											<div class="form-check">
+												<label class="form-check-label-options">
+													<input class="form-check-input" type="checkbox" value="" id="load_airmatch_events" checked="true" onclick="saveGlobalSettings();" />
+													<span class="form-check-sign"></span>AirMatch - All RF Events
+												</label>
+											</div>
+										</div>
+										<div class="col-md-3 mx-auto"></div>
+									</div>
+									<hr />
+									<h4 class="card-subtitle-dark">QR Code Settings</h4>
+									<div class="row">
+										<div class="col-md-10 mx-auto">
+											<label class="setting-label">QR Code Colour</label>
+											<div class='col-md-3 setting-input' id="color-picker-wrapper">
+												<input type="color" value="#FF8300" id="color_picker" onchange="saveGlobalSettings()" oninput="this.onchange();">
+											</div>
+											<label class="setting-label">QR Code Logo</label>
+											<div class="col-md-3 setting-input">
+												<input  type="text" placeholder="Custom Image URL" class="form-control" id="qr_logo"  onchange="saveGlobalSettings()" oninput="this.onchange();">
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<div class="col-md-12 mx-auto">
 							<div class="card card-register card-plain text-center">
 								<div class="card-header ">
 									<div class="row  justify-content-center">
@@ -156,132 +251,35 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 										</div>
 									</div>
 								</div>
-								<div class="card-body ">
-									<div class="row">
+								<div class="card card-body">
 										<div class="col-md-10 mx-auto">
-											<form method="#" action="#">
-												<div class="card card-plain">
-													<div class="content">
-														<form class="form-horizontal">
-															<div class="form-group">
-																<div class="row">
-																	<label class="col-md-6 control-label">Auto Device Naming Format</label>
-																	<div class="col-md-6">
-																		<input type="text" placeholder="{{initials}}-{{model}}-{{number}}" class="form-control" id="ap_naming_format"  onchange="saveGlobalSettings()" oninput="this.onchange();">
-																	</div>
-																</div>
-															</div>
-															<div class="form-group">
-																<div class="row">
-																	<label class="col-md-6 control-label">Template Hostname Variable</label>
-																	<div class="col-md-6">
-																		<input type="text" placeholder="_sys_hostname" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="hostname_variable"  onchange="saveGlobalSettings()" oninput="this.onchange();">
-																	</div>
-																</div>
-															</div>
-															<div class="form-group">
-																<div class="row">
-																	<label class="col-md-6 control-label">Switch Port Variable</label>
-																	<div class="col-md-6">
-																		<input type="text" placeholder="int{{number}}_name" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="port_variable_format"  onchange="saveGlobalSettings()" oninput="this.onchange();">
-																	</div>
-																</div>
-															</div>
-														</form>
-													</div>
+											<div class="row">
+												<label class="col-md-5 format-label">Auto Device Naming Format</label>
+												<div class="col-md-5 setting-input">
+													<input type="text" placeholder="{{initials}}-{{model}}-{{number}}" class="form-control" id="ap_naming_format"  onchange="saveGlobalSettings()" oninput="this.onchange();">
 												</div>
-											</form>
+											</div>
+										
+											<div class="row">
+												<label class="col-md-5 format-label">Template Hostname Variable</label>
+												<div class="col-md-5 setting-input">
+													<input type="text" placeholder="_sys_hostname" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="hostname_variable"  onchange="saveGlobalSettings()" oninput="this.onchange();">
+												</div>
+											</div>
+										
+											<div class="row">
+												<label class="col-md-5 format-label">Switch Port Variable</label>
+												<div class="col-md-5 setting-input">
+													<input type="text" placeholder="int{{number}}_name" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="port_variable_format"  onchange="saveGlobalSettings()" oninput="this.onchange();">
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-						<div class="col-md-6 mx-auto">
-							<div class="card card-register card-plain text-center">
-								<div class="card-header ">
-									<div class="row  justify-content-center">
-										<div class="col-md-12">
-											<div class="header-text">
-												<h2 class="card-title">Global Settings</h2>
-												<h4 class="card-subtitle">General settings for Central Automation Studio</h4>
-												<hr />
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="card-body ">
-									<div class="col-md-10 mx-auto">
-										<form method="#" action="#">
-											<div class="card card-plain">
-												<div class="content">
-													<form class="form-horizontal">
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-6 control-label">Refresh Interval (minutes)</label>
-																<div class="col-md-6">
-																	<input type="number" placeholder="30" class="form-control" id="refresh_rate" min="5"  onchange="saveGlobalSettings()" oninput="this.onchange();">
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-6 control-label">Client Monitoring</label>
-																<div class="col-md-6">
-																	<select id="load_clients" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
-																		<option value="Include">Include</option>
-																		<option value="Do Not Include">Do Not Include</option>
-                                    								</select>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-6 control-label">Group Properties</label>
-																<div class="col-md-6">
-																	<select id="load_group_properties" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
-																		<option value="Include">Include</option>
-																		<option value="Do Not Include">Do Not Include</option>
-																	</select>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-6 control-label">AirMatch - All RF Events</label>
-																<div class="col-md-6">
-																	<select id="load_airmatch_events" class="custom-select" data-title="Include" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
-																		<option value="Include">Include</option>
-																		<option value="Do Not Include">Do Not Include</option>
-																	</select>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-6 control-label">QR Code Colour</label>
-																<div class="col-md-6">
-																	<div id="color-picker-wrapper">
-																		<input type="color" value="#FF8300" id="color_picker" onchange="saveGlobalSettings()" oninput="this.onchange();">
-																	</div>
-																</div>
-															</div>
-														</div>
-														<div class="form-group">
-															<div class="row">
-																<label class="col-md-6 control-label">QR Code Logo</label>
-																<div class="col-md-6">
-																	<input  type="text" placeholder="Custom Image URL" class="form-control" id="qr_logo"  onchange="saveGlobalSettings()" oninput="this.onchange();">
-																</div>
-															</div>
-														</div>
-													</form>
-												</div>
-											</div>
-										</form>
-									</div>
-								</div>
-							</div>
-						</div>
+						
+						
                     </div>
 					</div>
 				</div>
@@ -378,6 +376,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 									<div class="col-md-12">
 										<div class="card-header">
 												<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+
 											</div>
 										<div class="card-body" id="errorBody"></div>
 									</div>
@@ -390,8 +390,8 @@ Copyright Aaron Scott (WiFi Downunder) 2022
         
         <footer class="footer">
             <div class="container">
-           		<a data-toggle="modal" data-target="#ErrorModal" href="#pablo" id="ErrorModalLink"></a>	
-            	<a data-toggle="modal" data-target="#AccountModal" href="#pablo" id="AccountModalLink"></a>
+           		<a data-toggle="modal" data-target="#ErrorModal"  id="ErrorModalLink"></a>	
+            	<a data-toggle="modal" data-target="#AccountModal"  id="AccountModalLink"></a>
                 <nav>
                 	<ul class="footer-menu" id="api-footer"></ul>
                     <p class="copyright text-center">
@@ -447,6 +447,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 <script src="assets/js/demo.js"></script>
 <script>
     $(document).ready(function() {
+		openIndexedDB();
         demo.checkFullPageBackgroundImage();
 		
 		var color_picker = document.getElementById("color_picker");
@@ -594,7 +595,7 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		} else {
 			loadClients = JSON.parse(loadClients)
 		}
-		document.getElementById("load_clients").value = loadClients ? "Include" : "Do Not Include";
+		document.getElementById("load_clients").checked = loadClients;
 		
 		var loadGroupProperties = localStorage.getItem('load_group_properties');
 		if (loadGroupProperties === null || loadGroupProperties === "") {
@@ -602,7 +603,15 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		} else {
 			loadGroupProperties = JSON.parse(loadGroupProperties)
 		}
-		document.getElementById("load_group_properties").value = loadGroupProperties ? "Include" : "Do Not Include";
+		document.getElementById("load_group_properties").checked = loadGroupProperties;
+		
+		var loadGatewayDetails = localStorage.getItem('load_gateway_details');
+		if (loadGatewayDetails === null || loadGatewayDetails === "") {
+			loadGatewayDetails = false;
+		} else {
+			loadGatewayDetails = JSON.parse(loadGatewayDetails)
+		}
+		document.getElementById("load_gateway_details").checked = loadGatewayDetails;
 		
 		var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
 		if (loadAirMatchEvents === null || loadAirMatchEvents === "") {
@@ -610,7 +619,15 @@ Copyright Aaron Scott (WiFi Downunder) 2022
 		} else {
 			loadAirMatchEvents = JSON.parse(loadAirMatchEvents)
 		}
-		document.getElementById("load_airmatch_events").value = loadAirMatchEvents ? "Include" : "Do Not Include";
+		document.getElementById("load_airmatch_events").checked = loadAirMatchEvents;
+		
+		var loadVCConfig = localStorage.getItem('load_vc_config');
+		if (loadVCConfig === null || loadVCConfig === "") {
+			loadVCConfig = true;
+		} else {
+			loadVCConfig = JSON.parse(loadVCConfig)
+		}
+		document.getElementById("load_vc_config").checked = loadVCConfig;
         
         var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
@@ -619,9 +636,9 @@ Copyright Aaron Scott (WiFi Downunder) 2022
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js?v=221023"></script>
-<script src="assets/js/proxy.js"></script>
-<script src="assets/js/hydra-main.js"></script>
-<script src="assets/js/hydra.js"></script>
+<script src="assets/js/main.js?v=230326"></script>
+<script src="assets/js/proxy.js?v=230325"></script>
+<script src="assets/js/hydra-main.js?v=230326"></script>
+<script src="assets/js/hydra.js?v=221024"></script>
 
 </html>

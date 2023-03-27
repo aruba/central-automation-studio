@@ -37,7 +37,7 @@ Aaron Scott (WiFi Downunder) 2022
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/central-style.css" rel="stylesheet" />
+    <link href="assets/css/cas.css" rel="stylesheet" />
 	<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 </head>
 
@@ -116,7 +116,7 @@ Aaron Scott (WiFi Downunder) 2022
 						<!-- End Run Now Card -->
                     </div>
                     <!-- Last Run Card -->
-                     <div class="row">	
+                    <div class="row">	
 						<div class="col-md-12">
 							<div class="card">
 								<div class="card-header">
@@ -216,7 +216,7 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
                     <div class="row">
 						<div class="col-md-12">
-							<div class="card ">
+							<div class="card " style="height:450px;">
 								<div class="card-header ">
 									<h4 class="card-title">Channel Usage</h4>
 									<p class="card-category">6GHz (Primary Channel)</p>
@@ -229,7 +229,7 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 					<div class="row">
 						<div class="col-md-12">
-							<div class="card ">
+							<div class="card " style="height:450px;">
 								<div class="card-header ">
 									<h4 class="card-title">Channel Usage</h4>
 									<p class="card-category">5GHz (Primary Channel)</p>
@@ -242,7 +242,7 @@ Aaron Scott (WiFi Downunder) 2022
 					</div>
 					<div class="row">
 						<div class="col-md-4">
-                    		<div class="card ">
+                    		<div class="card " style="height:500px;">
 								<div class="card-header ">
 									<h4 class="card-title">Channel Usage</h4>
 									<p class="card-category">2.4GHz</p>
@@ -253,7 +253,7 @@ Aaron Scott (WiFi Downunder) 2022
 							</div>
 						</div>
 						<div class="col-md-8">
-                    		<div class="card ">
+                    		<div class="card " style="height:500px;">
 								<div class="card-header ">
 									<h4 class="card-title">EIRP Usage (dBm)</h4>
 									<p class="card-category">Tri-Band</p>
@@ -408,6 +408,8 @@ Aaron Scott (WiFi Downunder) 2022
 							<div class="col-md-12">
 								<div class="card-header">
 										<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+
 									</div>
 								<div class="card-body" id="errorBody"></div>
 							</div>
@@ -561,6 +563,8 @@ Aaron Scott (WiFi Downunder) 2022
 <script src="assets/js/plugins/ip-address.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
+		openIndexedDB();
+		
     	var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
 			
@@ -700,10 +704,10 @@ Aaron Scott (WiFi Downunder) 2022
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js?v=221023"></script>
-<script src="assets/js/proxy.js"></script>
-<script src="assets/js/hydra.js"></script>
-<script src="assets/js/airmatch.js"></script>
+<script src="assets/js/main.js?v=230326"></script>
+<script src="assets/js/proxy.js?v=230325"></script>
+<script src="assets/js/hydra.js?v=221024"></script>
+<script src="assets/js/airmatch.js?v=221024"></script>
 
 
 </html>

@@ -1,11 +1,13 @@
 /*
 Central Automation v1.13
 Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2022
+Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var keys = [];
 var failedAuth = false;
+
+var licenseNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Build Subscription Table
@@ -13,6 +15,7 @@ var failedAuth = false;
 
 function getLicensingData() {
 	keys = [];
+	licenseNotification = showNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
 
 	// Get overview stats
 	var settings = {
@@ -178,6 +181,8 @@ function getLicensingData() {
 			.DataTable()
 			.rows()
 			.draw();
+
+		licenseNotification.close();
 
 		$('[data-toggle="tooltip"]').tooltip();
 	});

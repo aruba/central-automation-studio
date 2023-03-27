@@ -670,6 +670,9 @@ function uploadMPSKCSV() {
 			delimiter: ',',
 			header: true,
 			complete: processMPSKCSV,
+			transformHeader: function(h) {
+				return h.trim();
+			},
 		},
 		before: function(file, inputElem) {
 			showNotification('ca-cpu', 'Processing CSV File...', 'bottom', 'center', 'info');
