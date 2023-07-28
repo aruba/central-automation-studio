@@ -13,9 +13,9 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.0
+Central Automation v1.x
 Updated: 1.6.0
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
 <!DOCTYPE html>
@@ -31,11 +31,11 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=230726" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -50,7 +50,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: MSP Workflows </a>
+							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: MSP Workflows </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -89,7 +89,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 						<div class="row">
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#APModal" >
+									<a data-toggle="modal" data-target="#APModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -110,7 +110,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#SwitchModal" >
+									<a data-toggle="modal" data-target="#SwitchModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -131,12 +131,12 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GatewayModal" >
+									<a data-toggle="modal" data-target="#GatewayModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-content-delivery text-warning" id="gateway_icon"></i>
+														<i class="central-icon ca-gateway text-warning" id="gateway_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -152,7 +152,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GroupModal" >
+									<a data-toggle="modal" data-target="#GroupModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -173,7 +173,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 							</div>
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#CustomerModal" >
+									<a data-toggle="modal" data-target="#CustomerModal">
 										<div class="card-body ">
 											<div class="row">
 												<div class="col-4">
@@ -395,6 +395,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Access Points</h4>
+										<a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 									<div class="card-body">
 										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -434,6 +435,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Switches</h4>
+										<a class="refresh-link" onclick="refreshSwitchData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 									<div class="card-body">
 										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -473,6 +475,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Gateways</h4>
+										<a class="refresh-link" onclick="refreshGatewayData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 									<div class="card-body">
 										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -574,7 +577,6 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
-
 									</div>
 									<div class="card-body" id="errorBody"></div>
 								</div>
@@ -701,9 +703,9 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal"  id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#CustomerSelectionModal"  id="CustomerModalLink"></a>
-						<a data-toggle="modal" data-target="#AddCustomerModal"  id="AddCustomerModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#CustomerSelectionModal" id="CustomerModalLink"></a>
+						<a data-toggle="modal" data-target="#AddCustomerModal" id="AddCustomerModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -864,7 +866,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 		 });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=230326"></script>
+	<script src="assets/js/main.js?v=230726"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra.js"></script>
+	<script src="assets/js/hydra.js?v=230524"></script>
 </html>

@@ -11,6 +11,8 @@ var deviceInfo = {};
 var aaaInfo = {};
 var apBSSIDs = {};
 
+var bssidNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -63,13 +65,15 @@ function loadDevicesTable(checked) {
 		.DataTable()
 		.rows()
 		.remove();
+
+	var table = $('#device-table').DataTable();
 	for (const [key, value] of Object.entries(deviceInfo)) {
 		var device = value;
 		//console.log(device);
 		// Build Status dot
-		var status = '<i class="fa fa-circle text-danger"></i>';
+		var status = '<i class="fa-solid fa-circle text-danger"></i>';
 		if (device['status'] == 'Up') {
-			status = '<i class="fa fa-circle text-success"></i>';
+			status = '<i class="fa-solid fa-circle text-success"></i>';
 		}
 
 		// Build Uptime String
@@ -96,13 +100,13 @@ function loadDevicesTable(checked) {
 		}
 
 		// Add AP to table
-		var table = $('#device-table').DataTable();
 		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], uptimeString, tshootBtns]);
 	}
 	$('#device-table')
 		.DataTable()
 		.rows()
 		.draw();
+	table.columns.adjust().draw();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -430,7 +434,7 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 				startString = '   ';
 				var startLocation = memoryLine.indexOf(startString) + startString.length;
 				var lastMemoryValue = parseInt(memoryLine.substring(startLocation).trim());
-				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
+				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa-solid fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
 				else $('#hardwareIssues').append('<li>Memory Usage: <strong>' + lastMemoryValue + '%</strong></li>');
 
 				// Ethernet status
@@ -491,8 +495,8 @@ function addPowerInfoForLabel(powerInformationBlock, powerLabel) {
 	var endLocation = powerInformationBlock.indexOf('\n', startLocation);
 	var powerData = powerInformationBlock.substring(labelFinishLocation, endLocation).trim();
 	if (powerLabel === 'Current Operational State') {
-		if (!powerData.includes('No restrictions')) $('#powerIssues').append('<li>' + powerLabel + ': <i class="fa fa-circle text-warning"></i><strong> ' + powerData + '</strong></li>');
-		else $('#powerIssues').append('<li>' + powerLabel + ': <i class="fa fa-circle text-success"></i><strong> ' + powerData + '</strong></li>');
+		if (!powerData.includes('No restrictions')) $('#powerIssues').append('<li>' + powerLabel + ': <i class="fa-solid fa-circle text-warning"></i><strong> ' + powerData + '</strong></li>');
+		else $('#powerIssues').append('<li>' + powerLabel + ': <i class="fa-solid fa-circle text-success"></i><strong> ' + powerData + '</strong></li>');
 	} else {
 		$('#powerIssues').append('<li>' + powerLabel + ': <strong>' + powerData + '</strong></li>');
 	}
@@ -898,7 +902,7 @@ function checkDebugTech(session_id, deviceSerial) {
 				startString = '   ';
 				var startLocation = memoryLine.indexOf(startString) + startString.length;
 				var lastMemoryValue = parseInt(memoryLine.substring(startLocation).trim());
-				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
+				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa-solid fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
 				else $('#hardwareIssues').append('<li>Memory Usage: <strong>' + lastMemoryValue + '%</strong></li>');
 
 				// Ethernet status
@@ -958,7 +962,7 @@ function checkDebugTech(session_id, deviceSerial) {
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function refreshBSSIDs() {
-	showNotification('ca-wifi', 'Obtaining BSSIDs...', 'bottom', 'center', 'info');
+	bssidNotification = showLongNotification('ca-wifi', 'Obtaining BSSIDs...', 'bottom', 'center', 'info');
 	$.when(getBSSIDData(0)).then(function() {
 		// build BSSID to AP mapping
 		var rawBSSIDs = getBSSIDs();
@@ -971,8 +975,10 @@ function refreshBSSIDs() {
 				});
 			});
 		});
-		console.log(apBSSIDs);
-		showNotification('ca-wifi', 'Obtained BSSIDs', 'bottom', 'center', 'success');
+		if (bssidNotification) {
+			bssidNotification.update({ message: 'Obtained BSSIDs', type: 'success' });
+			setTimeout(bssidNotification.close, 1000);
+		}
 	});
 }
 

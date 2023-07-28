@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7.5
 Updated: 1.8.2
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 const innerPoolType = 'INNER_IP_POOL_TYPE';
@@ -27,7 +27,8 @@ var allocationsNotification;
 function loadCurrentPageAP() {
 	poolsPromise = new $.Deferred();
 	configPromise = new $.Deferred();
-	$.when(getPoolConfig(), getIPPools()).then(function() {
+	$.when(getPoolConfig()).then(function() {
+		// , getIPPools()
 		getIPAllocations();
 	});
 	$('[data-toggle="tooltip"]').tooltip();
@@ -36,6 +37,9 @@ function loadCurrentPageAP() {
 function getPoolConfig() {
 	configNotification = showNotification('ca-hierarchy-55', 'Getting Pool Configurations...', 'bottom', 'center', 'info');
 	config = {};
+	pools = {};
+	systemPools = [];
+	dhcpPools = [];
 
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -68,8 +72,16 @@ function getPoolConfig() {
 		$.each(response['address_pool'], function() {
 			var poolname = this['pool_id'].toString();
 			config[poolname] = this;
+
+			pools[poolname] = this;
+
+			if (this['pool_type'] === innerPoolType) {
+				systemPools.push(this);
+			} else if (this['pool_type'] === dhcpPoolType) {
+				dhcpPools.push(this);
+			}
 		});
-		//console.log(config);
+		console.log(config);
 		configNotification.close();
 		configPromise.resolve();
 	});
@@ -108,6 +120,7 @@ function getIPPools() {
 			apiErrorCount++;
 			return;
 		}
+		console.log(commandResults);
 		var response = JSON.parse(commandResults.responseBody);
 
 		$.each(response['pools'], function() {
@@ -139,7 +152,7 @@ function getIPAllocations() {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/ipmsapi/v1/allocation',
+			url: localStorage.getItem('base_url') + '/ipms/v1/debug/db/allocation?cid=bdb7b953a1ed41d4bf34ec828c3d0a3d&pool_id=200000',
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -157,10 +170,10 @@ function getIPAllocations() {
 			apiErrorCount++;
 			return;
 		}
+		console.log(commandResults);
 		var response = JSON.parse(commandResults.responseBody);
-
 		var allocations = response['device_allocations'];
-		console.log(allocations);
+
 		$.each(allocations, function() {
 			if (this['pool_type'] === innerPoolType) {
 				systemInfo.push(this);
@@ -174,6 +187,11 @@ function getIPAllocations() {
 
 		allocationsNotification.close();
 	});
+
+	loadSystemTables();
+	loadDHCPTables();
+
+	allocationsNotification.close();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -189,7 +207,7 @@ function loadSystemTables() {
 		var apiURL = localStorage.getItem('base_url');
 		var centralURL = centralURLs[0][apiURL] + '/frontend/#IPMS/SYSTEMIPPOOL?nc=global';
 
-		var progress = Math.round((this['used_to_total'][0] / this['used_to_total'][1]) * 100);
+		var progress = 0; //Math.round((this['used_to_total'][0] / this['used_to_total'][1]) * 100);
 
 		var progressTheme = 'progress-bar-success';
 		if (progress > 70 && progress < 90) progressTheme = 'progress-bar-warning';
@@ -197,11 +215,11 @@ function loadSystemTables() {
 
 		var progressBar = '<div class="progress"><div class="progress-bar ' + progressTheme + '" role="progressbar" aria-valuenow="' + progress + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + progress + '%;"><span class="progress-percentage" >' + progress + '% Allocated</span></div></div>';
 
-		var poolName = config[this['name']].pool_name;
+		var poolName = this.pool_name;
 
 		// Add pool to table
 		var table = $('#system-pool-table').DataTable();
-		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + poolName + '</strong></a>', this['pool_config']['11']['sip'] + ' - ' + this['pool_config']['11']['endip'], progressBar]);
+		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + poolName + '</strong></a>', this['ip_range'][0]['start_ip'] + ' - ' + this['ip_range'][0]['end_ip'], progressBar]);
 	});
 	$('#system-pool-table')
 		.DataTable()
@@ -248,7 +266,7 @@ function loadDHCPTables() {
 		var apiURL = localStorage.getItem('base_url');
 		var centralURL = centralURLs[0][apiURL] + '/frontend/#IPMS/SHAREDDHCPPOOL?nc=global';
 
-		var progress = Math.round((this['used_to_total'][0] / this['used_to_total'][1]) * 100);
+		var progress = 0; //Math.round((this['used_to_total'][0] / this['used_to_total'][1]) * 100);
 
 		var progressTheme = 'progress-bar-success';
 		if (progress > 70 && progress < 90) progressTheme = 'progress-bar-warning';
@@ -256,11 +274,11 @@ function loadDHCPTables() {
 
 		var progressBar = '<div class="progress"><div class="progress-bar ' + progressTheme + '" role="progressbar" aria-valuenow="' + progress + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + progress + '%;"><span class="progress-percentage" >' + progress + '% Allocated</span></div></div>';
 
-		var poolName = config[this['name']].pool_name;
+		var poolName = this.pool_name;
 
 		// Add pool to table
 		var table = $('#dhcp-pool-table').DataTable();
-		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + poolName + '</strong></a>', this['pool_config']['11']['sip'] + ' - ' + this['pool_config']['11']['endip'], config[this['name']].max_clients, progressBar]);
+		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + poolName + '</strong></a>', this['ip_range'][0]['start_ip'] + ' - ' + this['ip_range'][0]['end_ip'], this.max_clients, progressBar]);
 	});
 	$('#dhcp-pool-table')
 		.DataTable()

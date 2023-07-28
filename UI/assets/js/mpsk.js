@@ -1,7 +1,7 @@
 /*
 Central Automation v1.12
 Updated: 
-Aaron Scott (WiFi Downunder) 2022
+Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var configGroups = [];
@@ -19,6 +19,8 @@ var essidPrefix = 'essid ';
 var mpskConfigPrefix = 'mpsk-local ';
 var userRolePrefix = 'wlan access-rule ';
 var mpskPoolPrefix = 'wlan mpsk-local ';
+
+var groupConfigNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -151,7 +153,7 @@ function getGroupConfig() {
 			wlans = {};
 			userRoles = [];
 			mpskPools = {};
-			showNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
+			groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 
 			// Grab config for Group in Central
 			var settings = {
@@ -182,7 +184,6 @@ function getGroupConfig() {
 				}
 				var response = JSON.parse(commandResults.responseBody);
 
-				showNotification('ca-folder-settings', 'Retrieved ' + currentGroup + ' WLAN Configs... Processing...', 'bottom', 'center', 'info');
 				// save the group config for modifications
 				groupConfigs[currentGroup] = response;
 
@@ -191,7 +192,10 @@ function getGroupConfig() {
 				getRolesFromConfig(response, currentGroup);
 				getMPSKPoolsFromConfig(response, currentGroup);
 
-				showNotification('ca-folder-settings', currentGroup + ' WLAN config processed', 'bottom', 'center', 'success');
+				if (groupConfigNotification) {
+					groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
+					setTimeout(groupConfigNotification.close, 1000);
+				}
 			});
 		});
 	}
@@ -409,10 +413,10 @@ function loadMPSKTable() {
 		// Add row to table
 		var mpskRow = mpskPool[i].trim().split(' ');
 		// 1 = Name, 2 = passphrase, 3 = Role
-		var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit MPSK" onclick="editMPSK(\'' + i + '\')"><i class="fa-regular fa-pencil"></i></a> ';
-		actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Remove MPSK" onclick="removeMPSK(\'' + i + '\')"><i class="fa-regular fa-trash-can"></i></a> ';
+		var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit MPSK" onclick="editMPSK(\'' + i + '\')"><i class="fa-solid fa-pencil"></i></a> ';
+		actionBtns += '<a class="btn btn-link btn-danger" data-toggle="tooltip" data-placement="top" title="Remove MPSK" onclick="removeMPSK(\'' + i + '\')"><i class="fa-solid fa-trash-can"></i></a> ';
 		if (mpskRow[2] !== '********') {
-			actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Generate QR Code" onclick="prepForQR(\'' + mpskRow[1] + "','" + mpskRow[2] + '\')"><i class="fa-regular fa-qrcode"></i></a>';
+			actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Generate QR Code" onclick="prepForQR(\'' + mpskRow[1] + "','" + mpskRow[2] + '\')"><i class="fa-solid fa-qrcode"></i></a>';
 		}
 		table.row.add([i, mpskRow[1], mpskRow[2], mpskRow[3], actionBtns]);
 	}

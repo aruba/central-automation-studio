@@ -1,7 +1,7 @@
 /*
 Central Automation v1.5
 Updated: 1.26
-Aaron Scott (WiFi Downunder) 2022
+Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var configGroups = [];
@@ -16,6 +16,8 @@ var wlanPrefix = 'wlan ssid-profile ';
 
 var selectedDevices = {};
 var deviceInfo = {};
+
+var groupConfigNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -309,7 +311,7 @@ function getWLANs() {
 		groupCounter = 0;
 		groupConfigs = {};
 		wlans = [];
-		showNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
+		groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 
 		// Grab config for each Group in Central - need to add in API call delay to not hit api/sec limit
 		var apiDelay = 0;
@@ -397,11 +399,11 @@ function getWLANConfigForGroup(group) {
 				if (rfBand !== 'All' && !rfBand6) rfBand += 'GHz';
 
 				// Action Buttons
-				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-regular fa-pencil"></i></a> ';
+				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-solid fa-pencil"></i></a> ';
 				if (wlans[i]['config'].indexOf('disable') != -1) {
-					actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-regular fa-wifi"></i></a>';
+					actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-solid fa-wifi"></i></a>';
 				} else {
-					actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-regular fa-wifi"></i></a>';
+					actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-solid fa-wifi"></i></a>';
 				}
 
 				// Add row to table
@@ -412,7 +414,10 @@ function getWLANConfigForGroup(group) {
 				.rows()
 				.draw();
 
-			showNotification('ca-folder-settings', 'Retrieved Group WLAN Configs...', 'bottom', 'center', 'success');
+			if (groupConfigNotification) {
+				groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
+				setTimeout(groupConfigNotification.close, 1000);
+			}
 			$('[data-toggle="tooltip"]').tooltip();
 		}
 	});
@@ -1046,9 +1051,9 @@ function loadDevicesTable(checked) {
 		if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')" checked>';
 
 		// Build Status dot
-		var status = '<i class="fa fa-circle text-danger"></i>';
+		var status = '<i class="fa-solid fa-circle text-danger"></i>';
 		if (device['status'] == 'Up') {
-			status = '<i class="fa fa-circle text-success"></i>';
+			status = '<i class="fa-solid fa-circle text-success"></i>';
 		}
 
 		// Add AP to table

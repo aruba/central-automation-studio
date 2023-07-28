@@ -1,13 +1,40 @@
 /*
 Central Automation v1.13
-Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2023
+Updated: 1.28.1
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var keys = [];
+var subscribedDevices = [];
+var inventoryPromise;
 var failedAuth = false;
 
 var licenseNotification;
+
+var subscriptionCounts = {};
+
+var licenseMapping = {
+	advanced_ap: 'Advanced AP',
+	foundation_ap: 'Foundation AP',
+	advance_7005: 'Advance-Base-7005',
+	advance_70xx: 'Advanced-70xx/90xx',
+	advance_72xx: 'Advanced-72xx/92xx',
+	advance_90xx_sec: 'Advanced with Security',
+	foundation_switch_6100: 'Foundation-Switch-61XX/25XX/41XX/8-12p',
+	foundation_switch_6200: 'Foundation-Switch-62XX/29xx',
+	foundation_switch_6300: 'Foundation-Switch-63xx/38xx',
+	foundation_switch_6400: 'Foundation-Switch-64xx/54xx',
+	foundation_switch_8400: 'Foundation-Switch-8xxx',
+	foundation_7005: 'Foundation-Base-70XX',
+	foundation_70xx: 'Foundation-70xx/90xx',
+	foundation_72xx: 'Foundation-72xx/92xx',
+	foundation_wlan_gw: 'Foundation-WLAN-Gateway',
+	vgw_2g: 'VGW-2G',
+	vgw_4g: 'VGW-4G',
+	vgw_500m: 'VGW-500M',
+	device_profiling: 'Device-Insight',
+	analytics: 'Analytics',
+};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Build Subscription Table
@@ -15,7 +42,8 @@ var licenseNotification;
 
 function getLicensingData() {
 	keys = [];
-	licenseNotification = showNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
+	subscriptionCounts = {};
+	licenseNotification = showLongNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
 
 	// Get overview stats
 	var settings = {
@@ -58,6 +86,10 @@ function getLicensingData() {
 				});
 			}
 		} else if (response.total) {
+			for (const [key, value] of Object.entries(response['license_usage_by_services'])) {
+				subscriptionCounts[licenseMapping[key]] = { used: value, count: 0 };
+			}
+
 			failedAuth = false;
 			if (document.getElementById('total_count')) {
 				document.getElementById('total_count').innerHTML = response.total;
@@ -158,23 +190,31 @@ function getLicensingData() {
 		$.each(response.subscriptions, function() {
 			// Add row to table
 			keys.push(this);
-			var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa fa-circle text-danger"></i></span>';
+			var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa-solid fa-circle text-danger"></i></span>';
 			if (this.status === 'OK') {
 				var today = moment();
 				var endDate = moment(this.end_date);
-				if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 30) {
-					status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 30 days"><i class="fa fa-circle text-warning"></i></span>';
+				if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 90) {
+					status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 90 days"><i class="fa-solid fa-circle text-warning"></i></span>';
 					showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> expiring soon...', 'bottom', 'center', 'warning');
 				} else {
-					status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa fa-circle text-success"></i></span>';
+					status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa-solid fa-circle text-success"></i></span>';
+				}
+
+				// update the subscriptionCounts
+				var sub = subscriptionCounts[this.license_type];
+				if (sub) {
+					if (!sub['count']) sub['count'] = 0;
+					sub['count'] = sub['count'] + this.quantity;
+					subscriptionCounts[this.license_type] = sub;
 				}
 			}
 
 			var subType = this.subscription_type;
 			if (subType === 'EVAL') subType = 'Evaluation';
 			else if (subType === 'NONE') subType = 'Paid';
-
-			table.row.add(['<strong>' + this.subscription_key + '</strong>', subType, status, this.license_type, this.quantity, '<span style="display:none;">' + this.start_date + '</span>' + moment(this.start_date).format('L'), '<span style="display:none;">' + this.end_date + '</span>' + moment(this.end_date).format('L')]);
+			var actionBtns = '<button class="btn-warning btn-action" onclick="loadDeviceTable(\'' + this.subscription_key + '\')">Devices</button> ';
+			table.row.add(['<strong>' + this.subscription_key + '</strong>', subType, status, this.license_type, this.quantity, '<span style="display:none;">' + this.start_date + '</span>' + moment(this.start_date).format('L'), '<span style="display:none;">' + this.end_date + '</span>' + moment(this.end_date).format('L'), actionBtns]);
 		});
 
 		$('#subscription-table')
@@ -182,15 +222,37 @@ function getLicensingData() {
 			.rows()
 			.draw();
 
-		licenseNotification.close();
+		// Update the Used table
+		$('#used-table')
+			.DataTable()
+			.rows()
+			.remove();
+		var table = $('#used-table').DataTable();
+		for (const [key, value] of Object.entries(subscriptionCounts)) {
+			if (value['count'] > 0) table.row.add(['<strong>' + key + '</strong>', value['used'], value['count'] - value['used'], value['count']]);
+		}
+		$('#used-table')
+			.DataTable()
+			.rows()
+			.draw();
+
+		if (licenseNotification) {
+			licenseNotification.update({ message: 'Subscription keys retrieved', type: 'success' });
+			setTimeout(licenseNotification.close, 1000);
+		}
 
 		$('[data-toggle="tooltip"]').tooltip();
+
+		inventoryPromise = new $.Deferred();
+		$.when(updateInventory()).then(function() {
+			loadMonitoringData();
+		});
 	});
 }
 
-/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	Download Action
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+/*  --------------------------------
+	Download Actions
+--------------------------------- */
 
 function downloadSubscriptionKeys() {
 	csvData = buildCSVData();
@@ -208,6 +270,27 @@ function downloadSubscriptionKeys() {
 	var filter = table.search();
 	if (filter !== '') csvLink.setAttribute('download', 'subscriptionKeys-' + filter.replace(/ /g, '_') + '.csv');
 	else csvLink.setAttribute('download', 'subscriptionKeys.csv');
+
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+function downloadSubscribedDevices() {
+	csvData = buildDeviceCSVData();
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	var table = $('#device-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', 'subscriptedDevices-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', 'subscriptedDevices.csv');
 
 	csvLink.click();
 	window.URL.revokeObjectURL(csvLink);
@@ -241,4 +324,87 @@ function buildCSVData() {
 	});
 
 	return csvDataBuild;
+}
+
+function buildDeviceCSVData() {
+	//CSV header
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var typeKey = 'DEVICE TYPE';
+	var skuKey = 'PART NUMBER';
+	var modelKey = 'MODEL';
+	var statusKey = 'STATUS';
+	var ipKey = 'IP ADDRESS';
+	var nameKey = 'DEVICE NAME';
+	var groupKey = 'GROUP';
+	var siteKey = 'SITE';
+	var licenseKey = 'LICENSE';
+
+	var csvDataBuild = [];
+
+	var table = $('#device-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var device = subscribedDevices[this];
+		console.log(device.serial);
+		// Find monitoring data if there is any
+		var monitoringInfo = findDeviceInMonitoring(device.serial);
+		if (monitoringInfo) {
+			var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
+			var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
+
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+		} else {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+		}
+	});
+
+	return csvDataBuild;
+}
+
+/* 
+//	Load Subscribed Device Table Action
+*/
+function loadDeviceTable(selectedKey) {
+	// Empty the table
+	$('#device-table')
+		.DataTable()
+		.rows()
+		.remove();
+
+	// build table data
+	var deviceList = getFullInventory();
+	subscribedDevices = [];
+
+	var table = $('#device-table').DataTable();
+	$.each(deviceList, function() {
+		if (this.subscription_key === selectedKey) {
+			var monitoringInfo = findDeviceInMonitoring(this.serial);
+
+			// Add row to table
+			if (monitoringInfo) {
+				var status = '<i class="fa-solid fa-circle text-danger"></i>';
+				if (monitoringInfo.status == 'Up') {
+					status = '<i class="fa-solid fa-circle text-success"></i>';
+				}
+				subscribedDevices.push(this);
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '']);
+			} else {
+				var status = '<i class="fa-solid fa-circle text-muted"></i>';
+				subscribedDevices.push(this);
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '']);
+			}
+		}
+	});
+
+	$('#device-table')
+		.DataTable()
+		.rows()
+		.draw();
+
+	document.getElementById('subscribed-device-title').innerHTML = 'Subscribed Devices using Key: <strong>' + selectedKey + '</strong>';
+
+	$('#DeviceModalLink').trigger('click');
 }

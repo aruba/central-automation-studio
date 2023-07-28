@@ -11,6 +11,11 @@ Coded by Creative Tim
 =========================================================
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
+<!--
+Central Automation v1.x
+Updated: 1.30
+Aaron Scott (WiFi Downunder) 2021-2023
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -25,7 +30,7 @@ The above copyright notice and this permission notice shall be included in all c
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+	<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
@@ -33,7 +38,7 @@ The above copyright notice and this permission notice shall be included in all c
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=230726" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -79,7 +84,7 @@ The above copyright notice and this permission notice shall be included in all c
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.28</h1>
+                    <h1>Central Automation Studio v1.31</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -131,12 +136,15 @@ The above copyright notice and this permission notice shall be included in all c
                                     <li>
                                         <a href="#user-role-row">User Role Deployment</a>
                                     </li>
-									<li>
-										<a href="#mpsk-local-row">MSPK-Local Deployment</a>
-									</li>
                                     <li>
                                         <a href="#auth-server-row">Authentication Server Deployment</a>
                                     </li>
+									<li>
+										<a href="#mpsk-local-row">MSPK-Local Deployment</a>
+									</li>
+									<li>
+										<a href="#mpsk-row">Named MPSK Deployment</a>
+									</li>
                                     <li>
                                         <a href="#switch-row">Switch Deployment</a>
                                     </li>
@@ -154,6 +162,9 @@ The above copyright notice and this permission notice shall be included in all c
 										<a href="#clientmatch-row">ClientMatch</a>
 									</li>
 									<li>
+										<a href="#kms-row">Key Management Service</a>
+									</li>
+									<li>
 										<a href="#inventory-row">Device Inventory</a>
 									</li>
 									<li>
@@ -163,9 +174,18 @@ The above copyright notice and this permission notice shall be included in all c
                                         <a href="#migration-row">Migration</a>
                                     </li>
 									<li>&nbsp;</li>
-                                    <li>
-                                        <a href="#monitoring-row">Monitoring Features</a>
-                                    </li>
+									<li>
+										<a href="#monitoring-row">Monitoring Features</a>
+									</li>
+									<li>
+										<a href="#mesh-row"> Mesh Monitoring</a>
+									</li>
+									<li>
+										<a href="#vrf-row">VisualRF</a>
+									</li>
+									<li>
+										<a href="#event-row">Event Dashboard</a>
+									</li>
 									<li>&nbsp;</li>
                                     <li>
                                         <a href="#experimental-row">Experimental Features</a>
@@ -222,13 +242,7 @@ The above copyright notice and this permission notice shall be included in all c
 									The WebUI uses Javascript to make API calls to the API Proxy Server. The API Proxy Server converts those Javascript requests into Python API calls and makes the call to Aruba Central, returning any data back to the WebUI for processing in Javascript.
 								</p>
 								<p>
-									Multiple API Proxy Servers exist for speed and redundancy. The API Proxy Server used depends on the Central instance being communicated with:
-									<ul>
-										<li> APAC-based Central Cluster = https://api.wifidownunder.com (Hosted in Sydney - Azure Australia East)</li>
-										<li> US-based Central Cluster = https://api-usw.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
-										<li> EU-based Central Cluster = https://api-euw.wifidownunder.com (Hosted in Amsterdam - Azure Europe West)</li>
-									</ul>
-									API Proxy Server Accessibility is available in the footer of each page
+									The API Proxy Server is bundled in with this Docker container. API Proxy Server Accessibility is available in the footer of each page
 									<div class="img-container">
 										<img src="assets/img/proxy-status.png" alt="...">
 									</div>
@@ -387,6 +401,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> AP Rebooting</li>
 										<li> IPAM Monitoring</li>
 										<li> RAPIDS</li>
+										<li> Mesh Monitoring</li>
 									</ul>
 									<h2>Experimental Features</h2>
 									These are the tiles for features that are "in the works" and not fully fleshed out:
@@ -424,6 +439,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> LICENSE</li>
 										<li> GROUP</li>
 										<li> SITE</li>
+										<li> LABELS</li>
 										<li> ZONE</li>
 										<li> RF PROFILE</li>
 										<li> RADIO 0 MODE</li>
@@ -444,6 +460,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li>If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway)</li>
 										<li>If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV</li>
 										<li>If the SITE is missing, the device will be skipped when assigning devices to a Site</li>
+										<li>If the LABELS is missing, the device will be skipped when assigning labels to a device</li>
 										<li>If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone / SSID to an Access Point</li>
 										<li>If the ZONE is equal to "*", the device will be set to no zone or all SSIDs when assigning an AP Zone / SSID to an Access Point</li>
 										<li>If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
@@ -501,6 +518,11 @@ The above copyright notice and this permission notice shall be included in all c
 									If the SITE is missing for a device (or all devices) in the CSV, the device will not be assigned a device. The device will be listed in the Log for the task.
 									For site assignment to work, the device needs to have contacted Aruba Central - <i>you can not assign a site to a newly added device before it has contacted Aruba Central.</i>
                                 </p>
+								<h4>Assign Labels to Devices</h4>
+								<p>
+									Assigns devices to each of the Labels in the CSV. Multiple labels are supported - each label needs to be separated by a colon ":".
+									If the LABELS are missing for a device (or all devices) in the CSV, the device will not be assigned a device. 
+								</p>
                                 <h4>Rename Devices</h4>
                                 <p>
                                 	Uses the DEVICE NAME column in the CSV file to rename devices in Aruba Central.
@@ -937,35 +959,6 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>									
                                 </p>
                             </div>
-							<div class="tim-row" id="mpsk-local-row">
-								<h2 class="text-center">MPSK-Local Deployment</h2>
-								<div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-password-1 text-warning" id="mpsk_icon"></i>
-								</div>
-								<legend></legend>
-								<p>
-									The <a href="deployment-mpsk.html">MPSK-Local Deployment</a> workflows support the creation and modification of MPSK-Local passphrases. QR Code generation is available when passphrases are created or modified 
-								</p>
-								<div class="img-container">
-										<img src="assets/img/mpsk-local.png" alt="MPSK-Local">
-										<p>Managing MPSK-Local Passphrases</p>
-								</div>
-								<p>	
-									This feature includes:
-									<ul>
-										<li> New MPSK creation</li>
-										<li> Modifying of existing MPSK passphrases</li>
-										<li> Removing of existing MPSK passphrases</li>
-										<li> Generating QR Code for simple connection using the MPSK (only available for "Known MPSKs")</li>
-										<li> Bulk upload of MPSKs using CSV</li>
-									</ul>
-									Notes:
-									<ul>
-										<li> Modifying an MPSK in an MPSK Pool will update that passphrase for all WLAN/SSIDs that use that MPSK Pool in the selected Group.</li> 
-										<li> Removing an MPSK from a pool will remove it for all WLANs/SSIDs using that MPSK Pool in the selected Group.</li>
-										<li> "Known MPSK" is an MPSK that is either created or edited in Central Automation Studio. The configuration from Central does not provide the MPSK - these unknown MPSKs are shown as "********".</li>
-								</p>
-							</div>
                             <div class="tim-row" id="auth-server-row">
                                 <h2 class="text-center">Authentication Server Deployment</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1004,6 +997,61 @@ The above copyright notice and this permission notice shall be included in all c
 									</ul>									
                                 </p>
                             </div>
+							<div class="tim-row" id="mpsk-local-row">
+								<h2 class="text-center">MPSK-Local Deployment</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-password-1 text-warning" id="mpsk_icon"></i>
+								</div>
+								<legend></legend>
+								<p>
+									The <a href="deployment-mpsk.html">MPSK-Local Deployment</a> workflows support the creation and modification of MPSK-Local passphrases. QR Code generation is available when passphrases are created or modified 
+								</p>
+								<div class="img-container">
+										<img src="assets/img/mpsk-local.png" alt="MPSK-Local">
+										<p>Managing MPSK-Local Passphrases</p>
+								</div>
+								<p>	
+									This feature includes:
+									<ul>
+										<li> New MPSK creation</li>
+										<li> Modifying of existing MPSK passphrases</li>
+										<li> Removing of existing MPSK passphrases</li>
+										<li> Generating QR Code for simple connection using the MPSK (only available for "Known MPSKs")</li>
+										<li> Bulk upload of MPSKs using CSV</li>
+									</ul>
+									Notes:
+									<ul>
+										<li> Modifying an MPSK in an MPSK Pool will update that passphrase for all WLAN/SSIDs that use that MPSK Pool in the selected Group.</li> 
+										<li> Removing an MPSK from a pool will remove it for all WLANs/SSIDs using that MPSK Pool in the selected Group.</li>
+										<li> "Known MPSK" is an MPSK that is either created or edited in Central Automation Studio. The configuration from Central does not provide the MPSK - these unknown MPSKs are shown as "********".</li>
+									</ul>
+								</p>
+							</div>
+							<div class="tim-row" id="mpsk-row">
+								<h2 class="text-center">Named MPSK Deployment</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-cloud-auth text-warning" id="named_mpsk_icon"></i>
+								</div>
+								<legend></legend>
+								<p>
+									The <a href="deployment-cda-mpsk.html">Named MPSK Deployment</a> workflows support the creation and modification of Named MPSK passphrases. QR Code generation is available for each Named MPSK 
+								</p>
+								<div class="img-container">
+										<img src="assets/img/mpsk-named.png" alt="Named MPSK">
+										<p>Managing Named MPSK Passphrases</p>
+								</div>
+								<p>	
+									This feature includes:
+									<ul>
+										<li> New MPSK creation</li>
+										<li> Viewing of all MPSK passphrases per SSID
+										<li> Regenerating of existing MPSK passphrases</li>
+										<li> Removing of existing MPSK passphrases</li>
+										<li> Generating QR Code for simple connection using the MPSK</li>
+										<li> Bulk upload/download of MPSKs using CSV</li>
+									</ul>
+								</p>
+							</div>
                             <div class="tim-row" id="switch-row">
                                 <h2 class="text-center">Switch Deployment</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1025,7 +1073,7 @@ The above copyright notice and this permission notice shall be included in all c
                             <div class="tim-row" id="gateway-row">
 								<h2 class="text-center">Gateway Deployment</h2>
 								<div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-window-code text-warning" id="gateway_icon"></i>
+									<i class="central-icon ca-gateway text-warning" id="gateway_icon"></i>
 								</div>
 								<legend></legend>
 								<p>
@@ -1038,6 +1086,7 @@ The above copyright notice and this permission notice shall be included in all c
 										<li>"no" commands are acceptable, but are subject to the same limitations as with the CLI (eg, it's not possible to delete config that's in use/referenced)</li>
 										<li>In order to go back one step you have to enter an exclamation mark - ! (just as if we were pasting the whole confing via ssh).</li>
 									</ul>
+									The Effective and Committed configurations for the selected Group / Gateway is available via the two buttons on the WebUI.
 								</p>
 							</div>
 							<div class="tim-row" id="country-row">
@@ -1065,7 +1114,7 @@ The above copyright notice and this permission notice shall be included in all c
                             <div class="tim-row" id="airmatch-row">
                                 <h2 class="text-center">AirMatch</h2>
                                 <div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-hotspot text-warning" id="workflow_airmatch_icon"></i>
+									<i class="central-icon ca-airmatch text-warning" id="workflow_airmatch_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>					
@@ -1080,11 +1129,12 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Channel Usage (Primary Channel usage)</li>
 										<li> EIRP Distribution</li>
 										<li> AirMatch Events</li>
-										<li> AirMatch History</li>
+										<li> Radar and Noise Events</li>
 										<li> Static Radios</li>
+										<li> RF Neighbours</li>
 									</ul>
 								</p>
-								<p> Run Now Modes:
+								<p> <strong>Run Now Modes:</strong>
 									<ul>
 										<li> On-Demand - Full AirMatch solution generation</li>
 										<li> Incremental - Runs for all the APs for the tenant but it freezes solution for the APs which already have solution generated</li>
@@ -1092,6 +1142,21 @@ The above copyright notice and this permission notice shall be included in all c
 										<li> Opmode Update - Full + opmode update</li>
 										<li> New APs Only - Runs only for APs without solution generated</li>
 									</ul>
+								</p>
+								<p>
+									<strong>AirMatch Optimization Visualization and details</strong> are available by clicking on either "View Optimization Details" button or on a row in the optimization table 
+									<div class="img-container">
+										<img src="assets/img/AM-Channels.jpg" alt="Optimization Details">
+										<p>Channel Plan</p>
+									</div>
+									To view the visual representation of the AirMatch optimization, select the building and floor from the Floorplan section. The various support visualization options are:
+									<ul>
+										<li> Channels - Each AP is colour coded for the channel from the optimization. 6GHz channels are coloured by UNII band</li>
+										<li> EIRP - Each AP is colour coded per the power band. Exact EIRP is in the label per AP</li>
+										<li> Path Loss - Each AP is colour coded per RF Partition. Mousing over each AP will display the pathloss to other APs. If a specific channel is chosen from the options only APs on the same channel will display the path loss</li>
+										<li> UNII Frequency Band - Each AP is colour coded by UNII band</li>
+									</ul>
+									Details of the AirMatch optimization are listed in a table below the visual representation.
 								<p>
 									<div class="img-container">
 										<img src="assets/img/static.png" alt="Static Radios">
@@ -1143,6 +1208,22 @@ The above copyright notice and this permission notice shall be included in all c
 									</div>
 								</p>
                             </div>
+							<div class="tim-row" id="kms-row">
+								<h2 class="text-center">Key Management Service</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-kms text-warning" id="kms_icon"></i>
+								</div>
+								<legend></legend>
+								<p>					
+									The <a href="monitoring-kms.html">Key Management Service</a> page for AOS10 Deployments provides the ability to verify key synchronisation between APs. The page allows for per client visibility of:
+									<ul>
+										<li> KMS Client Cloud record</li>
+										<li> APs to which the clients keys have been synced</li>
+										<li> Floorplan view of the APs with synced keys</li>
+										<li> Per AP KMS troubleshooting information</li>
+									</ul>
+								</p>
+							</div>
                             <div class="tim-row" id="inventory-row">
                                 <h2 class="text-center">Device Inventory</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1178,10 +1259,13 @@ The above copyright notice and this permission notice shall be included in all c
 									The <a href="monitoring-licensing.html">License Monitoring</a> provides the ability to see the current state of all the subscription keys, as well as export the subscription key information to a CSV containing the filtered results in the Subscription Keys table. 
 									Status Key:
 									<ul>
-										<li class="nobull"> <i class="fa fa-circle text-success"></i> - Valid Subscription Key</li>
-										<li class="nobull"> <i class="fa fa-circle text-warning"></i> - Expiring within the next 30 days </li>
-										<li class="nobull"> <i class="fa fa-circle text-danger"></i> - Expired Subscription Key</li>
+										<li class="nobull"> <i class="fa-solid fa-circle text-success"></i> - Valid Subscription Key</li>
+										<li class="nobull"> <i class="fa-solid fa-circle text-warning"></i> - Expiring within the next 30 days </li>
+										<li class="nobull"> <i class="fa-solid fa-circle text-danger"></i> - Expired Subscription Key</li>
 									</ul>
+								</p>
+								<p>
+									Subscriptions Used Details are available by clicking on the Total, Available or Subscribed tiles
 								</p>
 								<p>
 									Central Licenses are now also checked during normal background monitoring for any upcoming license expiry (within the next 30 days). A notification will be posted if any are found.
@@ -1215,10 +1299,12 @@ The above copyright notice and this permission notice shall be included in all c
 									<p>Client Statistics</p>
 								</div>
 								
+								<br  /><br  />
 								<h2>Access Point Statistics</h2>
 								The <a href="monitoring-aps.html">Access Point Statistics</a> page is also accessible from the bottom of the Access Points table. The following statistics for APs are supported:
 								<ul>
 									<li> AP Models</li>
+									<li> Tables for Wi-Fi Radios, BLE Beacons and BSSIDs</li>
 									<li> Overview stats for Memory Utilization, CPU Usage, 2.4/5/6Ghz radios that are down </li>
 									<li> 10 APs with the most Clients</li>
 									<li> 10 APs with the lowest Uptime (with a Troubleshooting action button - processing the "show ap debug system-status" and providing easy access to crash logs)</li>
@@ -1231,6 +1317,7 @@ The above copyright notice and this permission notice shall be included in all c
 									<p>AP Statistics</p>
 								</div>
 								The Global list of BSSIDs is also available for viewing, filtering and downloading as a CSV.
+								<br  /><br  />
 								
 								<h2>AP Reboot</h2>
 								The <a href="monitoring-reboot.html">AP Reboot</a> page is also accessible from the bottom of the  Access Points table. The following is supported:
@@ -1246,9 +1333,11 @@ The above copyright notice and this permission notice shall be included in all c
 									<img src="assets/img/reboot.png" alt="Tiles">
 									<p>AP Reboot</p>
 								</div>
+								<br  /><br  />
 								
 								<h2>IPAM Monitoring</h2>
 								The <a href="monitoring-ipam.html">IP Address Management Monitoring</a> provides the ability to see which IP addresses (Inner IP Pools and Shared DHCP Pools) are assigned to Microbranch APs.
+								<br  /><br  />
 								
 								<h2>RAPIDS</h2>
 								The <a href="monitoring-rapids.html">RAPIDS</a> page provides the ability to view and export APs detected by RAPIDS. Filtering and search of the detected APs is supported, along with exporting the displayed APs in CSV format. Additional information fields are available in the CSV.
@@ -1256,8 +1345,118 @@ The above copyright notice and this permission notice shall be included in all c
 									<img src="assets/img/rapids.png" alt="Rapids">
 									<p>RAPIDS Overview</p>
 								</div>
+								<div class="tim-row" id="mesh-row">
+								<h2 class="text-center">Mesh Monitoring</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-network-connection text-warning" id="workflow_mesh"></i>
+								</div>
+								The <a href="monitoring-mesh.html">Mesh</a> page provides the ability to view mesh topologies. The Portal APs are displayed a table, with the ability display the topology of the mesh cluster formed from the selected portal.
+								<div class="img-container">
+									<img src="assets/img/mesh.png" alt="Mesh">
+									<p>Mesh Topology</p>
+								</div>
+								The topology view supports multiple labels and overlays on the topology to provide enhanced troubleshooting. The following overlays/labels are supported for each end of the mesh mesh links:
+								<ul>
+									<li> Channel: Channel used for the mesh link </li>
+									<li> Connected clients: this is across all radios on the AP</li>
+									<li> Data Rate: Tx / Rx data rates </li>
+									<li> Flags: the flags displayed are described below (and available via the info tooltip next to the dropdown) </li>
+									<li> SNR: Links are coloured according to the SNR values from the point </li>
+									<li> Stability: Uptime of the link, as well as number of Association failures</li>
+								</ul>
+								Additional details:
+								<ul>
+									<li> Focus Mode: click on an AP in the topology to reduce labels and details to links from the selected AP</li>
+									<li> Missing Data: APs are coloured gray if data is unavailable (AP not connected to Central, but mesh link is up), or Central Automation Studio is awaiting data from AP</li>
+								</ul>
+								Flags: <strong>R</strong> = Recovery-mode; <strong>S</strong> = Sub-threshold link; <strong>D</strong> = Reselection backoff; <strong>F</strong> = Auth-failure; <strong>H</strong> = High Throughput; <strong>V</strong> = Very High Throughput, <strong>E</strong> = High efficient, <strong>L</strong> = Legacy allowed; <strong>K</strong> = Connected; <strong>U</strong> = Upgrading; <strong>G</strong> = Descendant-upgrading; <strong>Z</strong> = Config pending; <strong>Y</strong> = Assoc-resp/Auth pending; <strong>a</strong> = SAE Accepted; <strong>b</strong> = SAE Denylisted-neighbour; <strong>e</strong> = SAE Enabled; <strong>u</strong> = portal-unreachable; <strong>o</strong> = opensystem; <strong>m</strong> = Mobility Enabled
 								
-						
+								<div class="tim-row" id="vrf-row">
+								<h2 class="text-center">VisualRF</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-map-pin text-warning" id="workflow_vrf"></i>
+								</div>
+								The <a href="monitoring-vrf.html">VisualRF</a> page provides the ability to view details on Floorplans.
+								<div class="img-container">
+									<img src="assets/img/vrf.png" alt="VisualRF - CAS Style">
+									<p>APs & Client Location</p>
+								</div>
+								The VisualRF floorplan supports the following visualizations:
+								<ul>
+									<li> AP Health: Health of every AP on the floor - determined by: </li>
+									<ul>
+										<li>Down: AP Offline</li>
+										<li>Poor: Memory Utilization > 90% or CPU Utilization > 70% or Uptime < 1hr</li>
+										<li>Good: AP Online and no poor indications</li>
+									</ul>
+									<li> Channel: Show the channels being used by the APs</li>
+									<ul>
+										<li>Band: Will show only the channels for the selected band. APs will be colour coded based on the channel</li>
+										<li>Channel: Only colour code the APs that match the selected channel</li>
+									</ul>
+									<li> Clients: Show Clients on the floorplan </li>
+									<ul>
+										<li>Band: Will show only the clients for the selected band</li>
+										<li>Client Type: Only clients with the selected Client OS</li>
+										<li>Include Unassociated Clients: Hide/Show unassociated clients on the floorplan</li>
+										<li>Show Client Labels: Hide/Show labels for each client
+									</ul>
+								</ul>
+								Additional details:
+								<ul>
+									<li>Click on a client and if the client has a reported RSSI of its connection in Central, it will be displayed via a coloured line to the associated AP</li>
+									<li>Click on an AP (when a band as been selected) and all clients associated to that AP will be shown via a coloured line (based on RSSI)<li>If a client is reported to be at the exact same location as an AP, then client is moved to a location closely surrounding the AP to improve visibility of the clients</li>
+									<li>Floorplans are automatically converted to Greyscale - to improve legibility. This can be prevented by selecting the "Colour Floorplan" option</li>
+								</ul>
+							</div>
+							<div class="tim-row" id="event-row">
+							<h2 class="text-center">Event Dashboard</h2>
+							<div class="icon-massive text-center icon-warning">
+								<i class="central-icon ca-event-confirm text-warning" id="workflow_event_dashboard"></i>
+							</div>
+								<p>The <a href="event-dashboard.html">Event Dashboard</a> page provides the timely data needed to monitor event Wi-Fi.</p>
+								<div class="img-container">
+									<img src="assets/img/event.png" alt="Event Dashboard">
+									<p>Event Dashboard</p>
+								</div>
+								<p> The Event Dashboard displays:
+									<ul>
+										<li> Overview status of the network</li>
+										<li> WLAN specific Client Counts and Bandwidth</li>
+										<li> Infrastructure Status</li>
+										<li> Top 5 Application Usage</li>
+										<li> Top 5 Clients by Usage</li>
+										<li> Breakdown of 802.11 support</li>
+										<li> Band Split of WLAN devices</li>
+									</ul>
+									The Event Dashboard data is updated on a different refresh timer (default = 5 minutes) to the rest of Central Automation Studio. Settings for the Event dashboard are available from the "Dashboard" menu item.
+								</p>
+								<p>
+									There are 3 different refreshes of data available on the Event Dashboard:
+									<ul>
+										<li> Click of the refresh button - simple refresh to update (also automatically run on the Event Dashboard refresh timer):</li> 
+										<ul> 
+											<li>Client Count and Bandwidth for the selected WLAN</li>
+											<li>Infrastructure Status (APs, Switches, Gateways)</li>
+											<li>AppRF and Top Client graphs</li>
+										</ul>
+										<li> Shift + Click of the refresh button - Refreshes (also automatically run based on the normal Central Automation Studio refresh timer):</li>
+										<ul> 
+											<li>Client details - updates the 802.11 Mix and Band Split graphs</li>
+											<li>Site data and Group data - Updates overview tiles </li>
+										</ul>
+										<li> Option/Alt + Click of the refresh button:</li>
+										<ul>
+											<li>Full data fresh the same as used in the rest of Central Automation Studio - a forced full refresh</li>
+										</ul>
+									</ul>
+								</p>
+								<p>
+									Disabling the different monitoring sections in the Dashboard settings will prevent data being collected for those sections (saving API calls). The disabled sections will not show in the Dashboard.
+								</p>
+								<p> 
+									The time range of displayed data can be selected by the Time Filter in the top right of the menu bar. <i>Note: Top Applications data can only be displayed for 3hrs and higher. Choosing a shorter time filter will still display the data for the last 3hrs.</i>
+								</p>
                             </div>
                             <div class="tim-row" id="experimental-row">
                                 <h2 class="text-center">Experimental Features</h2>
@@ -1433,6 +1632,86 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.31 (2023/07/26) - <i>"Unlocking Doors"</i></h4>
+									<ul>
+										<li> New <a href="#kms-row">Key Management Service</a> Visibility and Troubleshooting page</li>
+										<li> New <a href="#mpsk-row">Named MPSK</a> page for managing MPSKs in CloudAuth</li>
+										<li> New <a href="troubleshooting-switching.html">Switch Troubleshooting</a> page for simple troubleshooting of switches. Initial tools available per switch are:</li>
+										<ul>
+											<li>Switch overview information</li>
+											<li>Port list - with tools for PoE Bounce, Interface Bounce and Cable Test</li>
+										</ul>
+										<li> Added Wi-Fi Radios and BLE Beacon tables to the AP Statistics page
+										<li> Updated Mesh SNR thresholds</li>
+										<li> Fix for ClientMatch Steering History displaying wrong AP Name</li> 
+									</ul>
+									<h4>Version 1.30.1 (2023/06/16)</h4>
+									<ul>
+										<li> Added ability to view the ClientMatch Station Record for a client (including the Virtual Beacon Report) on the <a href="#clientmatch-row">ClientMatch page</a> - an Action button on the Recent Steering History table</li>
+										<li> Initial Central 2.5.7 support</li>
+										<ul>
+											<li>Support for device list for a subscription key in License Monitoring</li>
+											<li>Support for displaying subscription key assigned to a device in Device Inventory </li>
+										</ul>
+										<li> Updated look for Pie charts</li>
+										<li> Minor UI consistency updates between pages</li>
+										<li> Added keyboard shortcut of Shift + R to trigger refresh of monitoring data </li>
+									</ul>
+									<h4>Version 1.30 (2023/05/25) - <i>"Where's that AP"</i></h4>
+									<ul>
+										<li> <a href="#mesh-row">Mesh Topology Visualisation</a> has been introduced</li>
+										<li> <a href="#vrf-row">VisualRF</a> support has been introduced</li>
+										<li> <a href="#airmatch-row">AirMatch</a> visualization improvements</li>
+										<ul>
+											<li> Support for more than 100 APs per floor</li>
+											<li> Improved Floorplan selection UI</li>
+											<li> HiDPI support - they just look better now!</li>
+											<li> Support for multiple Campuses</li>
+										</ul>
+										<li> Added the ability to download an AirMatch optimisation as a CSV</li>
+										<li> Minor improvements in the Event Dashboard</li>
+										<li> Improved progress bars for data collection from APIs</li>
+										<li> Added ability to refresh APs, Switches and Gateways individually from the device list tables</li>
+										<li> Initial support for <strong>Central-OnPrem</strong> (only available in Docker deployments)</li>
+										<li> New icons for Gateways, Controllers and AirMatch</li>
+									</ul>
+									<h4>Version 1.29.2 (2023/05/10)</h4>
+									<ul>
+										<li> Support for bulk label assignment using <a href="#csv-row">CSV</a> based workflows</li>
+									</ul>
+									<h4>Version 1.29.1 (2023/05/09)</h4>
+									<ul>
+										<li> Visualize APs affected by radar events on the <a href="#airmatch-row">AirMatch</a> page</li>
+									</ul>
+									<h4>Version 1.29 (2023/05/05) - <i>"Atmosphere '23"</i></h4>
+									<ul>
+										<li> New <a href="#airmatch-row">AirMatch</a>optimisation visualisation </li>
+										<li> New <a href="#event-row">Event Dashboard</a> </li>
+										<li> Fixes for Switch pages not loading correctly </li>
+									</ul>
+									<h4>Version 1.28.5 (2023/04/23)</h4>
+									<ul>
+										<li> Fix for rebooting devices in the AP Rebooting page </li>
+										<li> Moved APs to first tab in the AP Rebooting page </li>
+										<li> Down radios on AP Statistics page no longer lists radios on APs that are offline </li>
+									</ul>
+									<h4>Version 1.28.4 (2023/04/19)</h4>
+									<ul>
+										<li> <a href="#airmatch-row">AirMatch</a> optimizations now include the RF Domain and RF Partition as well as additional sorting capabilities</li>
+										<li> <a href="#airmatch-row">AirMatch</a> page now allows the RF Neighbours for each AP to be displayed</li>
+									</ul>
+									<h4>Version 1.28.3 (2023/04/16)</h4>
+									<ul>
+										<li> Improved notifications</li>
+									</ul>
+									<h4>Version 1.28.2 (2023/04/05)</h4>
+									<ul>
+										<li> Improved support for uptime in device tables (now supports Switches and Gateways)</li>
+									</ul>
+									<h4>Version 1.28.1 (2023/03/30)</h4>
+									<ul>
+										<li> Subscriptions Used Details are available by clicking on the Total, Available or Subscribed tiles on the <a href="#license-row">License Monitoring</a> page</li>
+									</ul>
 									<h4>Version 1.28 (2023/03/25) - <i>"Carmen Sandiego"</i></h4>
 									<ul>	
 										<li> Added support for Per AP <a href="#country-row">Country Code</a> setting</li>

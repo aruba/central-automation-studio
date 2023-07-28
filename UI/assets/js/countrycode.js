@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7
 Updated: 1.28
-© Aaron Scott (WiFi Downunder) 2023
+© Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var selectedGroups = {};
@@ -628,9 +628,9 @@ function loadDevicesTable(checked) {
 			if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')" checked>';
 
 			// Build Status dot
-			var status = '<i class="fa fa-circle text-danger"></i>';
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (device['status'] == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 
 			// Add VC Cluster to table

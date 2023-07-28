@@ -20,7 +20,7 @@ function getVisitorPortals() {
 		visitorPortals = {};
 		var portals = document.getElementById('portalselector');
 		portals.options.length = 0;
-		portalNotification = showNotification('ca-user-frame-33', 'Obtaining Visitor portals...', 'bottom', 'center', 'info');
+		portalNotification = showLongNotification('ca-user-frame-33', 'Obtaining Visitor portals...', 'bottom', 'center', 'info');
 
 		getPortals(0);
 	});
@@ -80,14 +80,20 @@ function getPortals(offset) {
 				if ($('#portalselector').length != 0) {
 					$('#portalselector').selectpicker('refresh');
 				}
-			} else if (offset == 0) {
-				showNotification('ca-user-frame-33', 'There are no visitor portals', 'bottom', 'center', 'danger');
 			}
 
 			if (offset + apiLimit < response.total) getPortals(offset + apiLimit);
-			else {
+			else if (Object.keys(visitorPortals).length == 0) {
+				if (portalNotification) {
+					portalNotification.update({ message: 'There are no visitor portals', type: 'danger' });
+					setTimeout(portalNotification.close, 1000);
+				}
+			} else {
 				saveDataToDB('monitoring_portals', JSON.stringify(visitorPortals));
-				portalNotification.close();
+				if (portalNotification) {
+					portalNotification.update({ message: 'Visitor portals retrieved', type: 'success' });
+					setTimeout(portalNotification.close, 1000);
+				}
 			}
 
 			$('[data-toggle="tooltip"]').tooltip();
@@ -101,11 +107,13 @@ function getVisitors(offset) {
 		.rows()
 		.remove();
 
+	visitors = [];
+
 	var table = $('#visitor-table').DataTable();
 
 	var select = document.getElementById('portalselector');
 	var currentPortal = visitorPortals[select.value];
-	visitorNotification = showNotification('ca-multiple-11', 'Obtaining visitors for portal: ' + currentPortal.name, 'bottom', 'center', 'info');
+	visitorNotification = showLongNotification('ca-multiple-11', 'Obtaining visitors for portal: ' + currentPortal.name, 'bottom', 'center', 'info');
 
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -151,9 +159,9 @@ function getVisitors(offset) {
 			failedAuth = false;
 			$.each(response.visitors, function() {
 				// Build Status dot
-				var status = '<i class="fa fa-circle text-neutral"></i>';
+				var status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				if (this['status'] == 'Active') {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 
 				var user = this['user'];
@@ -169,19 +177,23 @@ function getVisitors(offset) {
 				}
 
 				// Action Buttons
-				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Delete Account" onclick="deleteAccount(\'' + this['id'] + '\')"><i class="fa-regular fa-trash-can"></i></a> ';
+				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Delete Account" onclick="deleteAccount(\'' + this['id'] + '\')"><i class="fa-solid fa-trash-can"></i></a> ';
 
 				// Add AP to table
 				table.row.add([this['id'], '<strong>' + this['name'] + '</strong>', this['company_name'], status, this['is_enabled'] ? 'Enabled' : 'Disabled', email, phone, expires, actionBtns]);
 			});
 
-			if (response.visitors.length == 0 && offset == 0) {
-				showNotification('ca-multiple-11', 'There are no visitors for the selected portal', 'bottom', 'center', 'warning');
-			}
-
 			if (offset + apiLimit < response.total) getVisitors(offset + apiLimit);
-			else {
-				visitorNotification.close();
+			else if (response.visitors.length == 0 && offset == 0) {
+				if (visitorNotification) {
+					visitorNotification.update({ message: 'There are no visitors for the selected portal', type: 'warning' });
+					setTimeout(visitorNotification.close, 1000);
+				}
+			} else {
+				if (visitorNotification) {
+					visitorNotification.update({ message: 'Visitors for ' + currentPortal.name + ' retrieved', type: 'success' });
+					setTimeout(visitorNotification.close, 1000);
+				}
 			}
 			$('#visitor-table')
 				.DataTable()

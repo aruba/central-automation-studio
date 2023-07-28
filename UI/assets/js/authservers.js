@@ -1,7 +1,7 @@
 /*
 Central Automation v1.3
 Updated: 1.8.2
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var configGroups = [];
@@ -12,6 +12,8 @@ var groupCounter = 0;
 var updateCounter = 0;
 var errorCounter = 0;
 var authServerPrefix = 'wlan auth-server ';
+
+var groupConfigNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -48,6 +50,7 @@ Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 
 function getAuthServers() {
 	$.when(tokenRefresh()).then(function() {
+		groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 		$.when(getGroupData(0)).then(function() {
 			// Clearing old data
 			$('#server-table')
@@ -57,7 +60,6 @@ function getAuthServers() {
 			groupCounter = 0;
 			groupConfigs = {};
 			authServers = [];
-			showNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 
 			// Grab config for each Group in Central
 			$.each(configGroups, function() {
@@ -107,6 +109,11 @@ function getAuthServers() {
 							.DataTable()
 							.rows()
 							.draw();
+
+						if (groupConfigNotification) {
+							groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
+							setTimeout(groupConfigNotification.close, 1000);
+						}
 					}
 					$('[data-toggle="tooltip"]').tooltip();
 				});

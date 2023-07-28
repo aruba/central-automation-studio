@@ -1,7 +1,7 @@
 /*
 Central Automation v1.20
 Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var totalAPs = [];
@@ -32,7 +32,7 @@ function loadCurrentPageAP() {
 
 function getRapidsData() {
 	$.when(tokenRefresh()).then(function() {
-		rapidNotification = showNotification('ca-rapids', 'Obtaining RAPIDS information...', 'bottom', 'center', 'info');
+		rapidNotification = showLongNotification('ca-rapids', 'Obtaining RAPIDS information...', 'bottom', 'center', 'info');
 
 		totalAPs = [];
 		document.getElementById('total_count').innerHTML = '0';
@@ -79,7 +79,10 @@ function getRapidsData() {
 
 		$.when(getRogues(0), getInterfering(0), getSuspect(0), getNeighbours(0), getContained(0)).then(function() {
 			loadTable();
-			rapidNotification.close();
+			if (rapidNotification) {
+				rapidNotification.update({ message: 'RAPIDS information retrieved', type: 'success' });
+				setTimeout(rapidNotification.close, 1000);
+			}
 		});
 	});
 }

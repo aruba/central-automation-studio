@@ -1,7 +1,7 @@
 /*
 Central Automation v1.10
-Updated: v1.11
-Copyright Aaron Scott (WiFi Downunder) 2023
+Updated: v1.31
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var deviceList = [];
@@ -42,27 +42,27 @@ function loadTable() {
 		if (monitoringInfo) {
 			if (document.getElementById('emptyGroupCheckbox').checked) {
 				if (monitoringInfo.group_name === '') {
-					var status = '<i class="fa fa-circle text-danger"></i>';
+					var status = '<i class="fa-solid fa-circle text-danger"></i>';
 					if (monitoringInfo.status == 'Up') {
-						status = '<i class="fa fa-circle text-success"></i>';
+						status = '<i class="fa-solid fa-circle text-success"></i>';
 					}
 
 					deviceDisplay.push(this);
-					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
+					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '']);
 				}
 			} else {
-				var status = '<i class="fa fa-circle text-danger"></i>';
+				var status = '<i class="fa-solid fa-circle text-danger"></i>';
 				if (monitoringInfo.status == 'Up') {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 
 				deviceDisplay.push(this);
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '']);
 			}
 		} else {
 			deviceDisplay.push(this);
-			var status = '<i class="fa fa-circle text-muted"></i>';
-			table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
+			var status = '<i class="fa-solid fa-circle text-muted"></i>';
+			table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '']);
 		}
 	});
 
@@ -220,6 +220,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 	var groupKey = 'GROUP';
 	var siteKey = 'SITE';
 	var licenseKey = 'LICENSE';
+	var subscriptionKey = 'SUBSCRIPTION KEY';
 
 	var csvDataBuild = [];
 
@@ -241,7 +242,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
 			var duration = moment.duration(uptime * 1000);
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: duration.humanize(), [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: duration.humanize(), [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '' });
 		} else {
 			var groupToUse = '';
 			if (selectedGroup) groupToUse = selectedGroup;
@@ -249,7 +250,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 			var siteToUse = '';
 			if (selectedSite) siteToUse = selectedSite;
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '' });
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '' });
 		}
 	});
 

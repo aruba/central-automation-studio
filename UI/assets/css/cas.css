@@ -1,6 +1,6 @@
-/*
+  /*
 Central Automation v1
-Updated: 1.9.2
+Updated: 1.30
 Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
@@ -212,6 +212,10 @@ Generated using nucleoapp.com
 -------------------------*/
 .alert {
   z-index: 1100 !important; 
+}
+
+.alert-default {
+    background-color: #9A9A9A;
 }
 
 /*------------------------
@@ -754,6 +758,78 @@ Generated using nucleoapp.com
   content: "\ea8b";
 }
 
+.ca-new-construction::before {
+  content: "\ea8c";
+}
+
+.ca-floors::before {
+  content: "\ea8d";
+}
+
+.ca-event-confirm::before {
+  content: "\ea8e";
+}
+
+.ca-map-pin::before {
+  content: "\ea8f";
+}
+
+.ca-tags-stack::before {
+  content: "\ea90";
+}
+
+.ca-client-icon::before {
+  content: "\ea91";
+}
+
+.ca-ap-icon::before {
+  content: "\ea92";
+}
+
+.ca-gateway::before {
+  content: "\ea93";
+}
+
+.ca-controller::before {
+  content: "\ea94";
+}
+
+.ca-airmatch::before {
+  content: "\ea95";
+}
+
+.ca-kms::before {
+  content: "\ea96";
+}
+
+.ca-laptop-91::before {
+  content: "\ea97";
+}
+
+.ca-mesh::before {
+  content: "\ea98";
+}
+
+.ca-key::before {
+  content: "\ea99";
+}
+
+.ca-cloud-auth::before {
+  content: "\ea9a";
+}
+
+.ca-link::before {
+  content: "\ea9b";
+}
+
+.ca-plug-2::before {
+  content: "\ea9d";
+}
+
+.ca-bluetooth::before {
+  content: "\ea9e";
+}
+
 /*------------------------
 	Extra Styling
 -------------------------*/
@@ -788,13 +864,14 @@ Generated using nucleoapp.com
 .fa-fw {
   width: 60px;
   text-align: center;
-  font-size: 16px;
+  font-size: 14px;
 }
+
 
 .fa-fw-pointer {
   width: 60px;
   text-align: center;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -1124,6 +1201,11 @@ input[type=search]::-webkit-search-cancel-button {
 	text-align: right;
 }
 
+.form-group notice {
+  padding-top: 8px;
+  text-align: center;
+}
+
 .form-group label.system {
 	padding-top: 18px;
 	text-align: right;
@@ -1269,43 +1351,6 @@ fieldset[disabled] .btn-element.active {
     border-top-color: #01A982;
 }
 
-
-@media (prefers-color-scheme: dark) {
-  .section-header {
-    padding: 20px 20px 0;
-    border-bottom: none !important;
-    color: #FFF;
-    font-weight: 400;
-  }
-  
-  .card {
-      border-radius: 8px;
-      background-color: #1D1D1D;
-      margin-bottom: 30px;
-      box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
-  }
-  
-  .clickable-row td{
-	border-top:none;
-  }
-  
-  td.cellDivider {
-	border-left: 1px solid #444 !important;
-  }
-
-  th.cellDivider {
-	  border-left: 1px solid #444 !important;
-  }
-  
-  .table>tbody>tr:hover {
-      background-color: #212121
-  }
-  
-  .modal-content {
-      background-color: #1D1D1D;
-  }
-}
-
 .rightVert {
   border-right: 1px solid lightgrey;
 }
@@ -1395,3 +1440,111 @@ pre {
 .proxy-status nav>ul a:not(.btn):focus {
     color: #797979;
 }
+
+.filter-row {
+  padding-bottom: 30px;
+}
+
+.filter-label h5{
+  margin-top: 17px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.btn-action {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  background-color: transparent;
+  border-width: 1px;
+  border-radius: 30px !important;
+  padding: 3px;
+  color: #FFA534;
+}
+
+#canvasStack {
+  position:relative;
+  margin-left: 10px;
+}
+#canvasStack > canvas {
+  position:absolute;
+  left:0;
+  top:0;
+}
+
+.leftborder {
+    border-left: 1px solid #ddd !important;
+}
+
+.legend.airmatch {
+  padding-left: 20px;
+  font-size: 14px;
+}
+
+.pad-10 {
+  margin-top:10px;
+}
+
+.pad-16 {
+  margin-top:16px;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .section-header {
+    padding: 20px 20px 0;
+    border-bottom: none !important;
+    color: #FFF;
+    font-weight: 400;
+  }
+  
+  .card {
+      border-radius: 8px;
+      background-color: #1D1D1D;
+      margin-bottom: 30px;
+      box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+  }
+  
+  .clickable-row td{
+	border-top:none;
+  }
+  
+  td.cellDivider {
+	border-left: 1px solid #444 !important;
+  }
+
+  th.cellDivider {
+	  border-left: 1px solid #444 !important;
+  }
+  
+  .table>tbody>tr:hover {
+      background-color: #212121
+  }
+  
+  .modal-content {
+      background-color: #1D1D1D;
+  }
+  
+  .proxy-status {
+      background-color: rgba(0, 0, 0, 0);
+      width: 100%;
+  }
+  
+  .proxy-status nav>ul a:not(.btn) {
+      color: #f2f2f2;
+      display: block;
+      margin-bottom: 3px;
+  }
+  
+  .proxy-status nav>ul a:not(.btn):hover,
+  .proxy-status nav>ul a:not(.btn):focus {
+      color: #d4d4d4;
+  }
+  
+  .ct-label {
+      fill: rgba(252, 252, 252, 0.6);
+      color: rgba(252, 252, 252, 0.6);
+      font-size: 1.3rem;
+      line-height: 1;
+  }
+}
+

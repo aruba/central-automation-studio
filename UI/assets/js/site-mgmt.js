@@ -57,10 +57,10 @@ function loadSitesTable(checked) {
 		var site = this;
 		var capestate = '';
 		if (site['cape_state'] === 'good') {
-			capestate += '<i class="fa fa-circle text-success"></i>';
+			capestate += '<i class="fa-solid fa-circle text-success"></i>';
 			capestate += ' No User Experience Issues';
 		} else if (site['cape_state']) {
-			capestate += '<i class="fa fa-circle text-danger"></i> ';
+			capestate += '<i class="fa-solid fa-circle text-danger"></i> ';
 			capestate = titleCase(noUnderscore(site['cape_state_dscr'][0]));
 		}
 		if (site['cape_url']) {
@@ -69,86 +69,86 @@ function loadSitesTable(checked) {
 
 		var aiinsights = '';
 		if (site['insight_hi'] != 0) {
-			aiinsights += '<i class="fa fa-circle text-danger"></i>';
+			aiinsights += '<i class="fa-solid fa-circle text-danger"></i>';
 		}
 		if (site['insight_mi'] != 0) {
-			aiinsights += '<i class="fa fa-circle text-warning"></i>';
+			aiinsights += '<i class="fa-solid fa-circle text-warning"></i>';
 		}
 		if (site['insight_lo'] != 0) {
-			aiinsights += '<i class="fa fa-circle text-minor"></i>';
+			aiinsights += '<i class="fa-solid fa-circle text-minor"></i>';
 		}
 		if (aiinsights === '') {
-			aiinsights = '<i class="fa fa-circle text-neutral"></i>';
+			aiinsights = '<i class="fa-solid fa-circle text-neutral"></i>';
 		}
 
-		var status = '<i class="fa fa-circle text-success"></i>';
+		var status = '<i class="fa-solid fa-circle text-success"></i>';
 		var healthReason = '';
 		if (site['wan_uplinks_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateway with WAN links down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wan_tunnels_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateway with VPN Tunnels down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wlan_cpu_high'] > 1) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'APs with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wlan_cpu_high'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'AP with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wired_cpu_high'] > 1) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Switches with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wired_cpu_high'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Switch with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['branch_cpu_high'] > 1) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateways with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['branch_cpu_high'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateway with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wlan_device_status_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'One or more APs are down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['wired_device_status_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'One or more switches are down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (site['device_high_noise_6ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High noise on 6GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (site['device_high_noise_5ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High noise on 5GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (site['device_high_noise_2_4ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High noise on 2.4GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (site['device_high_ch_6ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High channel utilization on 6GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (site['device_high_ch_5ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High channel utilization on 5GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (site['device_high_ch_2_4ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High channel utilization on 2.4GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (site['device_high_mem'] > 0) {
-			status = '<i class="fa fa-circle text-minor"></i>';
+			status = '<i class="fa-solid fa-circle text-minor"></i>';
 			healthReason = 'Devices with high memory utilization';
 			if (siteIssues > 3) siteIssues = 3;
 		}

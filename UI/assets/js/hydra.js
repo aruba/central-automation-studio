@@ -1,10 +1,12 @@
 /*
 Central Automation v1.6.0
 Updated: 1.8.2
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var centralCredentials = [];
+
+var cop_url = 'https://apigw-';
 
 /*  ----------------------------------------------------------------------------------
 		Hydra functions
@@ -36,22 +38,6 @@ function getbaseURLforClientID(client_id) {
 	}
 	return baseURL;
 }
-
-/*function getCentralURLforClientID(client_id) {
-	baseURL = '';
-
-	var centralName;
-
-	loadCentralVCredentials();
-	for (i = 0; i < centralCredentials.length; i++) {
-		if (centralCredentials[i].client_id === client_id) {
-			apiURL = centralCredentials[i].base_url;
-			console.log(apiURL);
-			baseURL = centralURLs[0][apiURL];
-		}
-	}
-	return baseURL;
-}*/
 
 function getAccessTokenforClientID(client_id) {
 	accessToken = '';
@@ -209,7 +195,7 @@ function loadAccountDetails() {
 
 	loadCentralVCredentials();
 	$.each(centralCredentials, function() {
-		var btnString = '<a href="#" class="btn btn-link btn-warning edit"><i class="fa fa-edit"></i></a><a href="#" class="btn btn-link btn-danger remove"><i class="fa fa-times"></i></a>';
+		var btnString = '<a href="#" class="btn btn-link btn-warning edit"><i class="fa-solid fa-edit"></i></a><a href="#" class="btn btn-link btn-danger remove"><i class="fa-solid fa-trash-can"></i></a>';
 
 		var table = $('#hydra-table').DataTable();
 		if (showSecrets) {

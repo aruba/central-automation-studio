@@ -1,6 +1,6 @@
 /*
 Central Automation v1.10
-Updated: 1.28
+Updated: 1.30
 Used to verify API proxy accessibility and to update the UI Footer
 Copyright Aaron Scott (WiFi Downunder) 2023
 */
@@ -9,9 +9,16 @@ var api_url = 'Replace with API URL';
 var reachableProxies = [];
 var proxyNotification;
 
-/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		API Proxy Functions
-	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+/* -------------------------------------
+	Private vs Public version Check
+-------------------------------------- */
+function isPublicInstall() {
+	return false;
+}
+
+/*  ------------------------------------
+	API Proxy Functions
+-------------------------------------- */
 
 // Added: 1.8.3
 function getAPIURL() {
@@ -30,7 +37,7 @@ function checkReachability(reachablePromise) {
 
 	$('#api-footer').empty();
 	$('#api-footer').append('<li><a href="javascript:checkReachability();">API Proxy Accessibility</a></li>');
-	$('#api-footer').append('<li><a href="'+api_url+'" target="_blank" id="api-proxy-link"><i id="api-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy</a></li>');
+	$('#api-footer').append('<li><a href="' + api_url + '" target="_blank" id="api-proxy-link"><i id="api-proxy" class="fa fa-circle text-neutral"></i> Local API Proxy</a></li>');
 
 	$.each(testingOrder, function() {
 		var settings = {

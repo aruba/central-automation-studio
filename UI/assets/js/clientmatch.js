@@ -1,7 +1,7 @@
 /*
 Central Automation v1.8.0
 Updated: 1.17
-Aaron Scott (WiFi Downunder) 2022
+Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var clientList = [];
@@ -33,6 +33,12 @@ function findAPForRadio(radiomac) {
 	});
 
 	return foundDevice;
+}
+
+function findAPForBSSID(bssidMac) {
+	var radioMac = bssidMac.slice(0, -1) + '0';
+	console.log(radioMac);
+	return findAPForRadio(radioMac);
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -323,13 +329,13 @@ function getUnsteerableClients() {
 							foundDevice = true;
 							var status = '';
 							if (!this['health']) {
-								status = '<i class="fa fa-circle text-neutral"></i>';
+								status = '<i class="fa-solid fa-circle text-neutral"></i>';
 							} else if (this['health'] < 50) {
-								status = '<i class="fa fa-circle text-danger"></i>';
+								status = '<i class="fa-solid fa-circle text-danger"></i>';
 							} else if (this['health'] < 70) {
-								status = '<i class="fa fa-circle text-warning"></i>';
+								status = '<i class="fa-solid fa-circle text-warning"></i>';
 							} else {
-								status = '<i class="fa fa-circle text-success"></i>';
+								status = '<i class="fa-solid fa-circle text-success"></i>';
 							}
 							// Generate clean data for table
 							var site = '';
@@ -355,7 +361,7 @@ function getUnsteerableClients() {
 							var apiURL = localStorage.getItem('base_url');
 							var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
 
-							var steerBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Make Steerable" onclick="steerClient(\'' + this['macaddr'] + '\')"><i class="fas fa-directions"></i></a>';
+							var steerBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Make Steerable" onclick="steerClient(\'' + this['macaddr'] + '\')"><i class="fa-solid  fa-directions"></i></a>';
 
 							// Add row to table
 							var table = $('#unsteerable-table').DataTable();
@@ -364,7 +370,7 @@ function getUnsteerableClients() {
 					});
 					if (!foundDevice) {
 						// device not in monitoring - need to add row anyway.
-						var status = '<i class="fa fa-circle text-neutral"></i>';
+						var status = '<i class="fa-solid fa-circle text-neutral"></i>';
 
 						// Generate clean data for table
 						var site = '';
@@ -379,7 +385,7 @@ function getUnsteerableClients() {
 						var apiURL = localStorage.getItem('base_url');
 						var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + processedMac + '?ccma=' + processedMac + '&cdcn=' + client_name_url + '&nc=client';
 
-						var steerBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Make Steerable" onclick="steerClient(\'' + processedMac + '\')"><i class="fas fa-directions"></i></a>';
+						var steerBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Make Steerable" onclick="steerClient(\'' + processedMac + '\')"><i class="fa-solid  fa-directions"></i></a>';
 
 						// Add row to table
 						var table = $('#unsteerable-table').DataTable();
@@ -553,6 +559,7 @@ function getSteerHistory() {
 					var toRadio = steerString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
 					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					toAP = findAPForRadio(toRadioClean);
+					console.log(toAP);
 					var toBand = '';
 					var toChannel = '';
 					for (var i = 0, len = toAP.radios.length; i < len; i++) {
@@ -566,16 +573,18 @@ function getSteerHistory() {
 					// Make AP Name as a link to Central
 					var apName = encodeURI(toAP['name']);
 					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
-					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
+					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
 
 					var destRadio = steerString.match(/DstRadio=\((.+?)\)/)[1].split(', ');
 					var destRadioClean = destRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					destAP = findAPForRadio(destRadioClean);
 					destStatus = titleCase(steerString.match(/DstAcceptable=(.+?),/)[1]);
 					var destBand = '';
+					var destChannel = '';
 					if (destAP && destAP.radios) {
 						for (var i = 0, len = destAP.radios.length; i < len; i++) {
 							if (destAP.radios[i]['macaddr'] === destRadioClean) {
+								destChannel = destAP.radios[i].channel;
 								if (destAP.radios[i].band == 3) destBand = '6GHz';
 								else if (destAP.radios[i].band == 0) destBand = '2.4GHz';
 								else destBand = '5GHz';
@@ -585,7 +594,8 @@ function getSteerHistory() {
 
 					var dstName = destRadioClean;
 					if (destAP) dstName = destAP.name;
-					var destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + dstName + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
+					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + destAP['serial'] + '?casn=' + destAP['serial'] + '&cdcn=' + dstName + '&nc=access_point';
+					var destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>Channel: ' + destChannel + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + dstName + '</strong></a>' + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
 
 					roamTime = steerString.match(/RoamTime=(.*)/)[1];
 					roamTime = roamTime.replace('s', '');
@@ -595,9 +605,13 @@ function getSteerHistory() {
 					var apiURL = localStorage.getItem('base_url');
 					var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + macaddr + '?ccma=' + macaddr + '&cdcn=' + client_name_url + '&nc=client';
 
+					// Create link to get station record
+					var actionBtns = '';
+					actionBtns += '<button class="btn-warning btn-action" onclick="getStationRecord(\'' + cleanMACAddress(macaddr) + '\')">Station Record</button> ';
+
 					// Add row to table
 					var table = $('#history-table').DataTable();
-					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime]);
+					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime, actionBtns]);
 				}
 			});
 		}
@@ -608,6 +622,107 @@ function getSteerHistory() {
 			.draw();
 		$('[data-toggle="tooltip"]').tooltip();
 		historyNotification.close();
+	});
+}
+
+function getStationRecord(clientMac) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/cm-api/station/v1/' + localStorage.getItem('central_id') + '/' + clientMac,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/station/v1/<CENTRAL-ID>/<CLIENT-MAC>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		var results = response.result;
+		console.log(results);
+		// Load UI elements
+		document.getElementById('recordTitle').innerHTML = 'Station Record: <strong>' + clientMac + '</strong>';
+		$('#RecordModalLink').trigger('click');
+
+		// Get details for client and AP links to Central
+		var apiURL = localStorage.getItem('base_url');
+		var centralBaseURL = centralURLs[0][apiURL];
+		if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+
+		$('#generalRecord').empty();
+		var clientDevice = findDeviceInMonitoringForMAC(clientMac);
+		if (clientDevice) {
+			client_name_url = encodeURI(clientDevice['name']);
+			var clientURL = centralBaseURL + '/frontend/#/CLIENTDETAIL/' + clientDevice['macaddr'] + '?ccma=' + clientDevice['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
+			$('#generalRecord').append('<li>Client Name: <strong>' + '<a href="' + clientURL + '" target="_blank"><strong>' + clientDevice['name'] + '</strong></a>' + '</strong></li>');
+			$('#generalRecord').append('<li>Client OS: <strong>' + clientDevice['os_type'] + '</strong></li>');
+			$('#generalRecord').append('<li>&nbsp;</li>');
+		} else {
+			$('#generalRecord').append('<li>Client Name: <strong>' + clientMac + '</strong></li>');
+			$('#generalRecord').append('<li>Client OS: <strong>' + results.match(/deviceType=(.*)assocBssid/m)[1].trim() + '</strong></li>');
+			$('#generalRecord').append('<li>&nbsp;</li>');
+		}
+
+		var associatedRadio = results.match(/assocBssid=(\S*)\s/m)[1];
+		associatedRadio = associatedRadio.replace(/(..)/g, '$1:').slice(0, -1);
+		var associatedAP = findAPForBSSID(associatedRadio);
+
+		// Make AP Name as a link to Central
+		var name = encodeURI(associatedAP['name']);
+		var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + associatedAP['serial'] + '?casn=' + associatedAP['serial'] + '&cdcn=' + name + '&nc=access_point';
+		$('#generalRecord').append('<li>Associated AP: <strong>' + '<a href="' + centralURL + '" target="_blank"><strong>' + associatedAP['name'] + '</strong></a>' + '</strong></li>');
+		$('#generalRecord').append('<li>Associated BSSID: <strong>' + cleanMACAddress(results.match(/assocBssid=(\S*)\s/m)[1]) + '</strong></li>');
+
+		$('#capabilitiesRecord').empty();
+		$('#capabilitiesRecord').append('<li>Supports 5GHz: <strong>' + titleCase(results.match(/is5GCapable=(\S*)\s/m)[1]) + '</strong></li>');
+		$('#capabilitiesRecord').append('<li>Supports 6GHz: <strong>' + titleCase(results.match(/is6GCapable=(\S*)\s/m)[1]) + '</strong></li>');
+		$('#capabilitiesRecord').append('<li>Supports 11v: <strong>' + titleCase(results.match(/is11vCapable=(\S*)\s/m)[1]) + '</strong></li>');
+		$('#capabilitiesRecord').append('<li>Steerable: <strong>' + titleCase(results.match(/isLbSteerable=(\S*)\s/m)[1]) + '</strong></li>');
+		$('#capabilitiesRecord').append('<li>Trusted: <strong>' + titleCase(results.match(/isTrusted=(\S*)\s/m)[1]) + '</strong></li>');
+
+		// clear out any old data
+		$('#record-table')
+			.DataTable()
+			.clear();
+		var table = $('#record-table').DataTable();
+		// process the VBR
+		var vbrTableData = results.match(/VBR:\s((.|\s)*)Last/m)[1].trim();
+
+		var vbrRows = vbrTableData.split('\n');
+		vbrRows.shift();
+		console.log(vbrRows);
+		$.each(vbrRows, function() {
+			console.log(this.toString());
+			var vbrEntry = this.toString().split('\t');
+			console.log(vbrEntry);
+			var vbrRadio = vbrEntry[0].replace(/(..)/g, '$1:').slice(0, -1);
+			var vbrAP = findAPForBSSID(vbrRadio);
+			var vbrName = encodeURI(associatedAP['name']);
+			var vbrCentralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + vbrAP['serial'] + '?casn=' + vbrAP['serial'] + '&cdcn=' + vbrName + '&nc=access_point';
+
+			table.row.add(['<a href="' + vbrCentralURL + '" target="_blank"><strong>' + vbrAP['name'] + '</strong></a>', cleanMACAddress(vbrRadio), vbrEntry[2], vbrEntry[3]]);
+		});
+
+		$('#record-table')
+			.DataTable()
+			.rows()
+			.draw();
+		table.columns.adjust().draw();
 	});
 }
 
@@ -626,6 +741,13 @@ function updateGraphs() {
 		{
 			distributeSeries: true,
 			height: 250,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
 	);
@@ -644,6 +766,13 @@ function updateGraphs() {
 		{
 			distributeSeries: true,
 			height: 250,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
 	);

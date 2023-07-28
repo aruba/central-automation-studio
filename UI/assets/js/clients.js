@@ -241,19 +241,30 @@ function updateClientGraphs() {
 		labelActual = percentageActual + '%';
 		if (percentageActual == 0) labelActual = '';
 
-		Chartist.Pie('#chartMAC', {
-			labels: [labelRandom, labelActual],
-			series: [
-				{
-					meta: 'randomized',
-					value: percentageRandomzied,
-				},
-				{
-					meta: 'actual',
-					value: percentageActual,
-				},
-			],
-		});
+		Chartist.Pie(
+			'#chartMAC',
+			{
+				labels: [labelRandom, labelActual],
+				series: [
+					{
+						meta: 'randomized',
+						value: percentageRandomzied,
+					},
+					{
+						meta: 'actual',
+						value: percentageActual,
+					},
+				],
+			},
+			{
+				donut: true,
+				donutWidth: 30,
+				showLabel: true,
+				chartPadding: 26,
+				labelOffset: 30,
+				labelDirection: 'explode',
+			}
+		);
 
 		$('#chartMAC').on('click', '.ct-slice-pie', function() {
 			$('#selected-client-table')
@@ -267,20 +278,20 @@ function updateClientGraphs() {
 				selectedClients = randomMACClients;
 				document.getElementById('selected-title').innerHTML = 'Clients using a randomized MAC Address';
 			} else {
-				selectedClients = acutalMACClients;
+				selectedClients = actualMACClients;
 				document.getElementById('selected-title').innerHTML = 'Clients using actual MAC Address';
 			}
 
 			$.each(selectedClients, function() {
 				var status = '';
 				if (!this['health']) {
-					status = '<i class="fa fa-circle text-neutral"></i>';
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				} else if (this['health'] < 50) {
-					status = '<i class="fa fa-circle text-danger"></i>';
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
 				} else if (this['health'] < 70) {
-					status = '<i class="fa fa-circle text-warning"></i>';
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
 				} else {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				// Generate clean data for table
 				var site = '';
@@ -325,20 +336,31 @@ function updateClientGraphs() {
 		labelNoK = percentageNoK + '%';
 		if (percentageNoK == 0) labelNoK = '';
 
-		Chartist.Pie('#chart11k', {
-			labels: [labelK, labelNoK],
-			//series: [percentage11k, 100-percentage11k]
-			series: [
-				{
-					meta: '11k',
-					value: percentage11k,
-				},
-				{
-					meta: 'no11k',
-					value: percentageNoK,
-				},
-			],
-		});
+		Chartist.Pie(
+			'#chart11k',
+			{
+				labels: [labelK, labelNoK],
+				//series: [percentage11k, 100-percentage11k]
+				series: [
+					{
+						meta: '11k',
+						value: percentage11k,
+					},
+					{
+						meta: 'no11k',
+						value: percentageNoK,
+					},
+				],
+			},
+			{
+				donut: true,
+				donutWidth: 30,
+				showLabel: true,
+				chartPadding: 26,
+				labelOffset: 30,
+				labelDirection: 'explode',
+			}
+		);
 
 		$('#chart11k').on('click', '.ct-slice-pie', function() {
 			$('#selected-client-table')
@@ -359,13 +381,13 @@ function updateClientGraphs() {
 			$.each(selectedClients, function() {
 				var status = '';
 				if (!this['health']) {
-					status = '<i class="fa fa-circle text-neutral"></i>';
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				} else if (this['health'] < 50) {
-					status = '<i class="fa fa-circle text-danger"></i>';
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
 				} else if (this['health'] < 70) {
-					status = '<i class="fa fa-circle text-warning"></i>';
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
 				} else {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				// Generate clean data for table
 				var site = '';
@@ -411,20 +433,31 @@ function updateClientGraphs() {
 		labelNoV = percentageNoV + '%';
 		if (percentageNoV == 0) labelNoV = '';
 
-		Chartist.Pie('#chart11v', {
-			labels: [labelV, labelNoV],
-			//series: [percentage11v, 100-percentage11v]
-			series: [
-				{
-					meta: '11v',
-					value: percentage11v,
-				},
-				{
-					meta: 'no11v',
-					value: percentageNoV,
-				},
-			],
-		});
+		Chartist.Pie(
+			'#chart11v',
+			{
+				labels: [labelV, labelNoV],
+				//series: [percentage11v, 100-percentage11v]
+				series: [
+					{
+						meta: '11v',
+						value: percentage11v,
+					},
+					{
+						meta: 'no11v',
+						value: percentageNoV,
+					},
+				],
+			},
+			{
+				donut: true,
+				donutWidth: 30,
+				showLabel: true,
+				chartPadding: 26,
+				labelOffset: 30,
+				labelDirection: 'explode',
+			}
+		);
 
 		$('#chart11v').on('click', '.ct-slice-pie', function() {
 			$('#selected-client-table')
@@ -445,13 +478,13 @@ function updateClientGraphs() {
 			$.each(selectedClients, function() {
 				var status = '';
 				if (!this['health']) {
-					status = '<i class="fa fa-circle text-neutral"></i>';
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				} else if (this['health'] < 50) {
-					status = '<i class="fa fa-circle text-danger"></i>';
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
 				} else if (this['health'] < 70) {
-					status = '<i class="fa fa-circle text-warning"></i>';
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
 				} else {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				// Generate clean data for table
 				var site = '';
@@ -497,20 +530,31 @@ function updateClientGraphs() {
 		labelNoR = percentageNoR + '%';
 		if (percentageNoR == 0) labelNoR = '';
 
-		Chartist.Pie('#chart11r', {
-			labels: [labelR, labelNoR],
-			//series: [percentage11r, 100-percentage11r]
-			series: [
-				{
-					meta: '11r',
-					value: percentage11r,
-				},
-				{
-					meta: 'no11r',
-					value: percentageNoR,
-				},
-			],
-		});
+		Chartist.Pie(
+			'#chart11r',
+			{
+				labels: [labelR, labelNoR],
+				//series: [percentage11r, 100-percentage11r]
+				series: [
+					{
+						meta: '11r',
+						value: percentage11r,
+					},
+					{
+						meta: 'no11r',
+						value: percentageNoR,
+					},
+				],
+			},
+			{
+				donut: true,
+				donutWidth: 30,
+				showLabel: true,
+				chartPadding: 26,
+				labelOffset: 30,
+				labelDirection: 'explode',
+			}
+		);
 
 		$('#chart11r').on('click', '.ct-slice-pie', function() {
 			$('#selected-client-table')
@@ -531,13 +575,13 @@ function updateClientGraphs() {
 			$.each(selectedClients, function() {
 				var status = '';
 				if (!this['health']) {
-					status = '<i class="fa fa-circle text-neutral"></i>';
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				} else if (this['health'] < 50) {
-					status = '<i class="fa fa-circle text-danger"></i>';
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
 				} else if (this['health'] < 70) {
-					status = '<i class="fa fa-circle text-warning"></i>';
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
 				} else {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				// Generate clean data for table
 				var site = '';
@@ -586,24 +630,35 @@ function updateClientGraphs() {
 		label2 = percentage2 + '%';
 		if (percentage2 == 0) label2 = '';
 
-		Chartist.Pie('#chartBand', {
-			labels: [label6, label5, label2],
-			//series: [percentageBand, bandLeft]
-			series: [
-				{
-					meta: '6Ghz',
-					value: percentage6,
-				},
-				{
-					meta: '5GHz',
-					value: percentage5,
-				},
-				{
-					meta: '2.4GHz',
-					value: percentage2,
-				},
-			],
-		});
+		Chartist.Pie(
+			'#chartBand',
+			{
+				labels: [label6, label5, label2],
+				//series: [percentageBand, bandLeft]
+				series: [
+					{
+						meta: '6Ghz',
+						value: percentage6,
+					},
+					{
+						meta: '5GHz',
+						value: percentage5,
+					},
+					{
+						meta: '2.4GHz',
+						value: percentage2,
+					},
+				],
+			},
+			{
+				donut: true,
+				donutWidth: 30,
+				showLabel: true,
+				chartPadding: 26,
+				labelOffset: 30,
+				labelDirection: 'explode',
+			}
+		);
 
 		$('#chartBand').on('click', '.ct-slice-pie', function() {
 			$('#selected-client-table')
@@ -627,13 +682,13 @@ function updateClientGraphs() {
 			$.each(selectedClients, function() {
 				var status = '';
 				if (!this['health']) {
-					status = '<i class="fa fa-circle text-neutral"></i>';
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				} else if (this['health'] < 50) {
-					status = '<i class="fa fa-circle text-danger"></i>';
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
 				} else if (this['health'] < 70) {
-					status = '<i class="fa fa-circle text-warning"></i>';
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
 				} else {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				// Generate clean data for table
 				var site = '';
@@ -685,28 +740,39 @@ function updateClientGraphs() {
 		labelAN = percentage11an + '%';
 		if (percentage11an == 0) labelAN = '';
 
-		Chartist.Pie('#chart11', {
-			labels: [labelAX, labelAC, labelGN, labelAN],
-			//series: [percentage11ax, percentage11ac, percentage11gn, percentage11an]
-			series: [
-				{
-					meta: '11ax',
-					value: percentage11ax,
-				},
-				{
-					meta: '11ac',
-					value: percentage11ac,
-				},
-				{
-					meta: '11gn',
-					value: percentage11gn,
-				},
-				{
-					meta: '11an',
-					value: percentage11an,
-				},
-			],
-		});
+		Chartist.Pie(
+			'#chart11',
+			{
+				labels: [labelAX, labelAC, labelGN, labelAN],
+				//series: [percentage11ax, percentage11ac, percentage11gn, percentage11an]
+				series: [
+					{
+						meta: '11ax',
+						value: percentage11ax,
+					},
+					{
+						meta: '11ac',
+						value: percentage11ac,
+					},
+					{
+						meta: '11gn',
+						value: percentage11gn,
+					},
+					{
+						meta: '11an',
+						value: percentage11an,
+					},
+				],
+			},
+			{
+				donut: true,
+				donutWidth: 30,
+				showLabel: true,
+				chartPadding: 26,
+				labelOffset: 30,
+				labelDirection: 'explode',
+			}
+		);
 
 		$('#chart11').on('click', '.ct-slice-pie', function() {
 			$('#selected-client-table')
@@ -733,13 +799,13 @@ function updateClientGraphs() {
 			$.each(selectedClients, function() {
 				var status = '';
 				if (!this['health']) {
-					status = '<i class="fa fa-circle text-neutral"></i>';
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
 				} else if (this['health'] < 50) {
-					status = '<i class="fa fa-circle text-danger"></i>';
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
 				} else if (this['health'] < 70) {
-					status = '<i class="fa fa-circle text-warning"></i>';
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
 				} else {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				// Generate clean data for table
 				var site = '';
@@ -903,13 +969,13 @@ function updateClientGraphs() {
 		$.each(selectedClients, function() {
 			var status = '';
 			if (!this['health']) {
-				status = '<i class="fa fa-circle text-neutral"></i>';
+				status = '<i class="fa-solid fa-circle text-neutral"></i>';
 			} else if (this['health'] < 50) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle text-danger"></i>';
 			} else if (this['health'] < 70) {
-				status = '<i class="fa fa-circle text-warning"></i>';
+				status = '<i class="fa-solid fa-circle text-warning"></i>';
 			} else {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 			// Generate clean data for table
 			var site = '';
@@ -1016,13 +1082,13 @@ function updateClientGraphs() {
 		$.each(selectedClients, function() {
 			var status = '';
 			if (!this['health']) {
-				status = '<i class="fa fa-circle text-neutral"></i>';
+				status = '<i class="fa-solid fa-circle text-neutral"></i>';
 			} else if (this['health'] < 50) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle text-danger"></i>';
 			} else if (this['health'] < 70) {
-				status = '<i class="fa fa-circle text-warning"></i>';
+				status = '<i class="fa-solid fa-circle text-warning"></i>';
 			} else {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 			// Generate clean data for table
 			var site = '';

@@ -32,6 +32,11 @@ var variablesPromise;
 var switchesLoaded = false;
 var groupsLoaded = false;
 
+var stackNotification;
+var variableNotification;
+var templateNotification;
+var processingNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Global functions
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -54,14 +59,20 @@ function getSwitchStacks() {
 		stackCounter = 0;
 		stacks = [];
 		stackSwitches = {};
-		showNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
+		stackNotification = showLongNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
 		$.when(getStacks(0)).then(function() {
-			showNotification('ca-switch-stack', 'Downloaded Switch Stack Information', 'bottom', 'center', 'success');
 			// loop through each stack and get details for each switch in the the stack
-			showNotification('ca-switch-stack', 'Getting Switch Details...', 'bottom', 'center', 'info');
-			$.each(stacks, function() {
-				getStackSwitches(this.id, this.name);
-			});
+			if (stacks.length > 0) {
+				stackNotification.update({ message: 'Getting Stack Switch Details...', type: 'info' });
+				$.each(stacks, function() {
+					getStackSwitches(this.id, this.name);
+				});
+			} else {
+				if (stackNotification) {
+					stackNotification.update({ message: 'No Switch Stacks Found', type: 'warning' });
+					setTimeout(stackNotification.close, 1000);
+				}
+			}
 		});
 	});
 	document.getElementById('addNewVLANBtn').disabled = true;
@@ -107,11 +118,15 @@ function getStacks(offset) {
 			apiErrorCount++;
 			return;
 		}
-		var response = JSON.parse(commandResults.responseBody);
 
-		stacks = stacks.concat(response.stacks);
-		if (offset + apiLimit <= response.total) getStacks(offset + apiLimit);
-		else {
+		//var response = JSON.parse(commandResults.responseBody);
+		if (commandResults.responseBody !== '') {
+			stacks = stacks.concat(commandResults.stacks);
+			if (offset + apiLimit <= commandResults.total) getStacks(offset + apiLimit);
+			else {
+				stacksPromise.resolve();
+			}
+		} else {
 			stacksPromise.resolve();
 		}
 	});
@@ -202,7 +217,13 @@ function getStackSwitches(stack_id, stackName) {
 						.draw();
 
 					stackCounter++;
-					if (stackCounter === stacks.length) showNotification('ca-switch-stack', 'Downloaded Switch Details', 'bottom', 'center', 'success');
+
+					if (stackCounter === stacks.length) {
+						if (stackNotification) {
+							stackNotification.update({ message: 'Obtained Switch Details', type: 'success' });
+							setTimeout(stackNotification.close, 1000);
+						}
+					}
 				}
 			});
 		});
@@ -215,7 +236,7 @@ function getStackSwitches(stack_id, stackName) {
 
 function getSwitchVariables() {
 	switchVariables = {};
-	showNotification('ca-document-copy', 'Getting Switch variables...', 'bottom', 'center', 'info');
+	variableNotification = showLongNotification('ca-document-copy', 'Getting Switch variables...', 'bottom', 'center', 'info');
 	getVariablesForAllDevices(0);
 }
 
@@ -257,8 +278,10 @@ function getVariablesForAllDevices(offset) {
 			// not an empty result - there might be more to get
 			getVariablesForAllDevices(offset + apiGroupLimit);
 		} else {
-			showNotification('ca-document-copy', 'All variables have been downloaded', 'bottom', 'center', 'success');
-
+			if (variableNotification) {
+				variableNotification.update({ message: 'All variables have been downloaded', type: 'success' });
+				setTimeout(variableNotification.close, 1000);
+			}
 			//load switches table
 			loadSwitchesTable();
 		}
@@ -369,7 +392,7 @@ function getTemplateForSwitch(currentSerial) {
 		currentTemplateType = 'ArubaSwitch';
 		//console.log(currentTemplate);
 
-		showNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
+		templateNotification = showLongNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
 
 		var settings = {
 			url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -397,26 +420,37 @@ function getTemplateForSwitch(currentSerial) {
 				apiErrorCount++;
 				return;
 			}
-			var response = JSON.parse(commandResults.responseBody);
-
-			if (response.error_code) {
-				if (response.description.includes('not found as a Template group')) {
-					Swal.fire({
-						title: 'No Template',
-						text: 'This switch (' + currentSerial + ') is no longer in a Template group',
-						icon: 'warning',
-					});
-				} else {
-					Swal.fire({
-						title: 'Template Failure',
-						text: response.description,
-						icon: 'error',
-					});
+			//var response = JSON.parse(commandResults.responseBody);
+			if (commandResults.responseBody !== '') {
+				if (commandResults.error_code) {
+					if (commandResults.description.includes('not found as a Template group')) {
+						Swal.fire({
+							title: 'No Template',
+							text: 'This switch (' + currentSerial + ') is no longer in a Template group',
+							icon: 'warning',
+						});
+					} else {
+						Swal.fire({
+							title: 'Template Failure',
+							text: commandResults.description,
+							icon: 'error',
+						});
+					}
+					return null;
+				} else if (commandResults.responseBody) {
+					// store the template returned.
+					switchTemplate = commandResults.responseBody;
+					if (templateNotification) {
+						templateNotification.update({ message: 'Template has been downloaded', type: 'success' });
+						setTimeout(templateNotification.close, 1000);
+					}
+					templatePromise.resolve();
 				}
-				return null;
-			} else if (response.responseBody) {
-				// store the template returned.
-				switchTemplate = response.responseBody;
+			} else {
+				if (templateNotification) {
+					templateNotification.update({ message: 'Template has been downloaded', type: 'success' });
+					setTimeout(templateNotification.close, 1000);
+				}
 				templatePromise.resolve();
 			}
 		});
@@ -425,7 +459,7 @@ function getTemplateForSwitch(currentSerial) {
 }
 
 function getVLANDetailsFromTemplate(currentSerial) {
-	showNotification('ca-document-copy', 'Processing template...', 'bottom', 'center', 'info');
+	processingNotification = showLongNotification('ca-document-copy', 'Processing template...', 'bottom', 'center', 'info');
 
 	var templateModified = false;
 	var usingVariables = false;
@@ -584,10 +618,14 @@ function getVLANDetailsFromTemplate(currentSerial) {
 		vlanLocation = switchTemplate.indexOf('\nvlan ', vlanLocation + 4);
 	}
 	document.getElementById('addNewVLANBtn').disabled = false;
+	if (processingNotification) {
+		processingNotification.update({ message: 'Processing completed', type: 'success' });
+		setTimeout(processingNotification.close, 1000);
+	}
 }
 
 function processVLANChanges(vlanID) {
-	showNotification('ca-document-copy', 'Processing changes...', 'bottom', 'center', 'info');
+	processingNotification = showLongNotification('ca-document-copy', 'Processing changes...', 'bottom', 'center', 'info');
 
 	var templateModified = false;
 	var usingVariables = false;
@@ -775,7 +813,10 @@ function processVLANChanges(vlanID) {
 		// need to patch variables for switch
 		uploadVariablesForCurrentSwitch(variables);
 	}
-
+	if (processingNotification) {
+		processingNotification.update({ message: 'Processing completed', type: 'success' });
+		setTimeout(processingNotification.close, 1000);
+	}
 	// refresh the VLAN table for the selected switch
 	getSwitchDetails(currentSwitch);
 	/*$.when(getVariablesForSingleDevice(currentSwitch)).then(function() {
@@ -786,7 +827,7 @@ function processVLANChanges(vlanID) {
 function uploadCurrentTemplate() {
 	// Need to write back template to Central
 	console.log('writing template ' + currentTemplate + ' in group ' + currentGroup);
-	showNotification('ca-document-copy', 'Modifying template for device...', 'bottom', 'center', 'warning');
+	processingNotification = showLongNotification('ca-document-copy', 'Modifying template for device...', 'bottom', 'center', 'warning');
 
 	//console.log(templateText)
 	//console.log(btoa(templateText))
@@ -814,16 +855,22 @@ function uploadCurrentTemplate() {
 		}
 		$('#VLANModal').modal('hide');
 		if (response.includes('Success')) {
-			showNotification('ca-document-copy', 'Switch Template Updated', 'bottom', 'center', 'success');
+			if (processingNotification) {
+				processingNotification.update({ message: 'Switch Template Updated', type: 'success' });
+				setTimeout(processingNotification.close, 1000);
+			}
 			// Update table with modified vlan port data
 		} else {
-			showNotification('ca-document-copy', 'Switch Template Update Failed', 'bottom', 'center', 'error');
+			if (processingNotification) {
+				processingNotification.update({ message: 'Switch Template Update Failed', type: 'error' });
+				setTimeout(processingNotification.close, 1000);
+			}
 		}
 	});
 }
 
 function uploadVariablesForCurrentSwitch(variables) {
-	showNotification('ca-card-update', 'Updating Variables...', 'bottom', 'center', 'warning');
+	processingNotification = showLongNotification('ca-card-update', 'Updating Variables...', 'bottom', 'center', 'warning');
 
 	// Add mandatory variables
 	var switchVars = switchVariables[currentSwitch];
@@ -854,14 +901,20 @@ function uploadVariablesForCurrentSwitch(variables) {
 		}
 		$('#VLANModal').modal('hide');
 		if (response.includes('Success')) {
-			showNotification('ca-card-update', 'VLAN Variables Updated', 'bottom', 'center', 'success');
+			if (processingNotification) {
+				processingNotification.update({ message: 'VLAN Variables Updated', type: 'success' });
+				setTimeout(processingNotification.close, 1000);
+			}
 			// Update table with modified vlan port data
 			// refresh the VLAN table for the selected switch
 			$.when(getVariablesForSingleDevice(currentSwitch)).then(function() {
 				getVLANDetailsFromTemplate(currentSwitch);
 			});
 		} else {
-			showNotification('ca-card-update', 'VLAN Variables Update Failed', 'bottom', 'center', 'error');
+			if (processingNotification) {
+				processingNotification.update({ message: 'VLAN Variables Update Failed', type: 'error' });
+				setTimeout(processingNotification.close, 1000);
+			}
 		}
 	});
 }
@@ -1166,16 +1219,16 @@ function loadSwitchesTable() {
 			var device = this;
 			// is a template switch
 			if (device['status'] != 'Up') downSwitchCount++;
-			var status = '<i class="fa fa-circle text-danger"></i>';
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (device['status'] == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 
-			var checkBtn = '<button class="btn btn-round btn-sm btn-info" onclick="checkTemplateVariable(\'' + device['serial'] + '\')">Verify</button>';
+			var actionBtn = '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="checkTemplateVariable(\'' + device['serial'] + '\')">Verify</button>';
 
 			// Add row to table
 			var table = $('#template-switch-table').DataTable();
-			table.row.add(['<strong>' + device['name'] + '</strong>', status, device['ip_address'], device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr'], checkBtn]);
+			table.row.add(['<strong>' + device['name'] + '</strong>', status, device['ip_address'], device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr'], actionBtn]);
 		}
 	});
 	$('#template-switch-table')
@@ -1402,7 +1455,7 @@ function checkTemplateVariable(currentSerial) {
 		var currentTemplate = data[currentSerial]['template_name'];
 		//console.log(currentTemplate);
 
-		showNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
+		templateNotification = showLongNotification('ca-document-copy', 'Getting template for device...', 'bottom', 'center', 'info');
 
 		var settings = {
 			url: getAPIURL() + '/tools/getCommandwHeaders',

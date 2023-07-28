@@ -1,11 +1,13 @@
 /*
 Central Automation v1.6.0
-Updated: 1.22
+Updated: 1.30
 Copyright Aaron Scott (WiFi Downunder) 2023
 */
 
 var hydraMonitoringData = {};
 var authNotification;
+
+var cop_url = 'https://apigw-';
 
 /*  ----------------------------------------------------------------------------------
 		Utility functions
@@ -203,7 +205,7 @@ function tokenRefreshForAccount(clientID) {
 
 function getDashboardData() {
 	// Try and refresh the token
-	showNotification('ca-api', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'info');
+	showNotification('ca-api', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'primary');
 
 	// Refresh card data
 	var account_details = localStorage.getItem('account_details');
@@ -281,24 +283,24 @@ function loadHydraTable() {
 		// Process Clients
 		var clientString = '';
 		if (hydraMonitoringData[k]['wirelessClientsUp']) {
-			clientString += '<i class="central-icon ca-laptop-1 fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wirelessClientsUp'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wirelessClientsUp'] + ' </strong></i>';
 		} else {
-			clientString += '<i class="central-icon ca-laptop-1 fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw text-success"><strong> 0 </strong></i>';
 		}
 		if (hydraMonitoringData[k]['wirelessClientsDown']) {
-			clientString += '<i class="central-icon ca-laptop-1 fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wirelessClientsDown'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wirelessClientsDown'] + ' </strong></i>';
 		} else {
-			clientString += '<i class="central-icon ca-laptop-1 fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw"><strong> 0 </strong></i>';
 		}
 		if (hydraMonitoringData[k]['wiredClientsUp']) {
-			clientString += '<i class="central-icon ca-computer-monitor fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wiredClientsUp'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wiredClientsUp'] + ' </strong></i>';
 		} else {
-			clientString += '<i class="central-icon ca-computer-monitor fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw"><strong> 0 </strong></i>';
 		}
 		if (hydraMonitoringData[k]['wiredClientsDown']) {
-			clientString += '<i class="central-icon ca-computer-monitor fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wiredClientsDown'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wiredClientsDown'] + ' </strong></i>';
 		} else {
-			clientString += '<i class="central-icon ca-computer-monitor fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw"><strong> 0 </strong></i>';
 		}
 
 		// Process APs
@@ -308,10 +310,10 @@ function loadHydraTable() {
 		if (hydraMonitoringData[k]['apsDown']) apsDown = hydraMonitoringData[k]['apsDown'];
 
 		var apString = '';
-		if (apsUp > 0) apString += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + apsUp + ' </strong></i>';
-		else apString += '<i class="fa fa-arrow-up fa-fw"> ' + apsUp + ' </i>';
-		if (apsDown > 0) apString += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + apsDown + ' </strong></i>';
-		else apString += '<i class="fa fa-arrow-down fa-fw"> ' + apsDown + ' </i>';
+		if (apsUp > 0) apString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + apsUp + ' </strong></i>';
+		else apString += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + apsUp + ' </i>';
+		if (apsDown > 0) apString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + apsDown + ' </strong></i>';
+		else apString += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + apsDown + ' </i>';
 
 		// Process Switches
 		var switchesUp = 0;
@@ -320,10 +322,10 @@ function loadHydraTable() {
 		if (hydraMonitoringData[k]['switchesDown']) switchesDown = hydraMonitoringData[k]['switchesDown'];
 
 		var switchesString = '';
-		if (switchesUp > 0) switchesString += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + switchesUp + ' </strong></i>';
-		else switchesString += '<i class="fa fa-arrow-up fa-fw"> ' + switchesUp + ' </i>';
-		if (switchesDown > 0) switchesString += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + switchesDown + ' </strong></i>';
-		else switchesString += '<i class="fa fa-arrow-down fa-fw"> ' + switchesDown + ' </i>';
+		if (switchesUp > 0) switchesString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + switchesUp + ' </strong></i>';
+		else switchesString += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + switchesUp + ' </i>';
+		if (switchesDown > 0) switchesString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + switchesDown + ' </strong></i>';
+		else switchesString += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + switchesDown + ' </i>';
 
 		// Process Gateways
 		var gatewaysUp = 0;
@@ -332,10 +334,10 @@ function loadHydraTable() {
 		if (hydraMonitoringData[k]['gatewaysDown']) gatewaysDown = hydraMonitoringData[k]['gatewaysDown'];
 
 		var gatewayString = '';
-		if (gatewaysUp > 0) gatewayString += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + gatewaysUp + ' </strong></i>';
-		else gatewayString += '<i class="fa fa-arrow-up fa-fw"> ' + gatewaysUp + ' </i>';
-		if (gatewaysDown > 0) gatewayString += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + gatewaysDown + ' </strong></i>';
-		else gatewayString += '<i class="fa fa-arrow-down fa-fw"> ' + gatewaysDown + ' </i>';
+		if (gatewaysUp > 0) gatewayString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + gatewaysUp + ' </strong></i>';
+		else gatewayString += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + gatewaysUp + ' </i>';
+		if (gatewaysDown > 0) gatewayString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + gatewaysDown + ' </strong></i>';
+		else gatewayString += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + gatewaysDown + ' </i>';
 
 		// Process sites
 		var siteDanger = 0;
@@ -344,10 +346,10 @@ function loadHydraTable() {
 		var siteOK = hydraMonitoringData[k]['sites'].length;
 		$.each(hydraMonitoringData[k]['sites'], function() {
 			siteIssues = 4;
-			var status = '<i class="fa fa-circle text-success"></i>';
+			var status = '<i class="fa-solid fa-circle fa-fw text-success"></i>';
 			var healthReason = '';
 			if (this['wan_uplinks_down'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'Gateway with WAN links down';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -355,7 +357,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wan_tunnels_down'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'Gateway with VPN Tunnels down';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -363,7 +365,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wlan_cpu_high'] > 1) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'APs with high CPU usage';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -371,7 +373,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wlan_cpu_high'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'AP with high CPU usage';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -379,7 +381,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wired_cpu_high'] > 1) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle text-danger"></i>';
 				healthReason = 'Switches with high CPU usage';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -387,7 +389,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wired_cpu_high'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'Switch with high CPU usage';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -395,7 +397,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['branch_cpu_high'] > 1) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'Gateways with high CPU usage';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -403,7 +405,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['branch_cpu_high'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'Gateway with high CPU usage';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -411,7 +413,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wlan_device_status_down'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'One or more APs are down';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -419,7 +421,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['wired_device_status_down'] > 0) {
-				status = '<i class="fa fa-circle text-danger"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-danger"></i>';
 				healthReason = 'One or more switches are down';
 				if (siteIssues > 1) {
 					siteIssues = 1;
@@ -427,7 +429,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['device_high_noise_5ghz'] > 0) {
-				status = '<i class="fa fa-circle text-warning"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-warning"></i>';
 				healthReason = 'High noise on 5GHz';
 				if (siteIssues > 2) {
 					siteIssues = 2;
@@ -435,7 +437,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['device_high_noise_2_4ghz'] > 0) {
-				status = '<i class="fa fa-circle text-warning"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-warning"></i>';
 				healthReason = 'High noise on 2.4GHz';
 				if (siteIssues > 2) {
 					siteIssues = 2;
@@ -443,7 +445,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['device_high_ch_5ghz'] > 0) {
-				status = '<i class="fa fa-circle text-warning"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-warning"></i>';
 				healthReason = 'High channel utilization on 5GHz';
 				if (siteIssues > 2) {
 					siteIssues = 2;
@@ -451,7 +453,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['device_high_ch_2_4ghz'] > 0) {
-				status = '<i class="fa fa-circle text-warning"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-warning"></i>';
 				healthReason = 'High channel utilization on 2.4GHz';
 				if (siteIssues > 2) {
 					siteIssues = 2;
@@ -459,7 +461,7 @@ function loadHydraTable() {
 					siteOK--;
 				}
 			} else if (this['device_high_mem'] > 0) {
-				status = '<i class="fa fa-circle text-minor"></i>';
+				status = '<i class="fa-solid fa-circle fa-fw text-minor"></i>';
 				healthReason = 'Devices with high memory utilization';
 				if (siteIssues > 3) {
 					siteIssues = 3;
@@ -469,12 +471,12 @@ function loadHydraTable() {
 			}
 		});
 		var siteString = '';
-		if (siteOK > 0) siteString += '<i class="fa fa-circle fa-fw-pointer text-success"><strong> ' + siteOK + ' </strong></i>';
-		if (siteDanger > 0) siteString += '<i class="fa fa-circle fa-fw-pointer text-danger"><strong> ' + siteDanger + ' </strong></i>';
-		if (siteWarning > 0) siteString += '<i class="fa fa-circle fa-fw-pointer text-warning"><strong> ' + siteWarning + ' </strong></i>';
-		if (siteMinor > 0) siteString += '<i class="fa fa-circle fa-fw-pointer text-minor"><strong> ' + siteMinor + ' </strong></i>';
+		if (siteOK > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-success"><strong> ' + siteOK + ' </strong></i>';
+		if (siteDanger > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-danger"><strong> ' + siteDanger + ' </strong></i>';
+		if (siteWarning > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-warning"><strong> ' + siteWarning + ' </strong></i>';
+		if (siteMinor > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-minor"><strong> ' + siteMinor + ' </strong></i>';
 
-		var checkBtn = '<button class="btn btn-round btn-sm btn-outline btn-info" onclick="loadIndividualAccount(\'' + k + '\',1)">Go To Account<i class="fa fa-arrow-right text-default"><strong></button>';
+		var checkBtn = '<button class="btn btn-round btn-sm btn-outline btn-info" onclick="loadIndividualAccount(\'' + k + '\',1)">Go To Account <i class="fa-solid  fa-arrow-right text-default"><strong></button>';
 
 		var table = $('#account-table').DataTable();
 		table.row.add(['<strong>' + getNameforClientID(k) + '</strong>', clientString, apString, switchesString, gatewayString, siteString, checkBtn]);
@@ -488,10 +490,21 @@ function loadHydraTable() {
 function loadIndividualAccount(client_id, hydra) {
 	// get account details and save them out
 	var account = getAccountforClientID(client_id);
+
+	// If COP account - write the base_url with the COP address
+	var baseURL = account.base_url;
+	if (baseURL === getAPIGateway('Central On-Prem')) {
+		console.log('Setting COP address');
+		baseURL = cop_url + account.cop_address;
+		localStorage.setItem('is_cop', '1');
+	} else {
+		localStorage.removeItem('is_cop');
+	}
+
 	localStorage.setItem('central_id', account.central_id);
 	localStorage.setItem('client_id', account.client_id);
 	localStorage.setItem('client_secret', account.client_secret);
-	localStorage.setItem('base_url', account.base_url);
+	localStorage.setItem('base_url', baseURL);
 	localStorage.setItem('refresh_token', account.refresh_token);
 	localStorage.setItem('access_token', account.access_token);
 
@@ -808,6 +821,11 @@ function getSwitchOverviewForAccount(clientID) {
 }
 
 function getGatewayOverviewForAccount(clientID) {
+	var account = getAccountforClientID(clientID);
+	requestURL = '/monitoring/v1/gateways?status=Up&calculate_total=true';
+	if (account.base_url === getAPIGateway('Central On-Prem')) {
+		requestURL = '/monitoring/v2/mobility_controllers?status=Up&calculate_total=true';
+	}
 	// Get Up AP Count for account
 	var settingsUp = {
 		url: getAPIURL() + '/tools/getCommand',
@@ -817,7 +835,7 @@ function getGatewayOverviewForAccount(clientID) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v1/gateways?status=Up&calculate_total=true',
+			url: getbaseURLforClientID(clientID) + requestURL,
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
@@ -845,6 +863,10 @@ function getGatewayOverviewForAccount(clientID) {
 	});
 
 	// Get Down AP Count for account
+	requestURL = '/monitoring/v1/gateways?status=Down&calculate_total=true';
+	if (account.base_url === getAPIGateway('Central On-Prem')) {
+		requestURL = '/monitoring/v2/mobility_controllers?status=Down&calculate_total=true';
+	}
 	var settingsDown = {
 		url: getAPIURL() + '/tools/getCommand',
 		method: 'POST',
@@ -853,7 +875,7 @@ function getGatewayOverviewForAccount(clientID) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: getbaseURLforClientID(clientID) + '/monitoring/v1/gateways?status=Down&calculate_total=true',
+			url: getbaseURLforClientID(clientID) + requestURL,
 			access_token: getAccessTokenforClientID(clientID),
 		}),
 	};
@@ -894,87 +916,87 @@ function showSitesForAccount(accountName) {
 
 		var capestate = '';
 		if (this['cape_state'] === 'good') {
-			capestate += '<i class="fa fa-circle text-success"></i>';
+			capestate += '<i class="fa-solid fa-circle text-success"></i>';
 			capestate += ' No User Experience Issues';
 		} else if (this['cape_state']) {
-			capestate += '<i class="fa fa-circle text-danger"></i> ';
+			capestate += '<i class="fa-solid fa-circle text-danger"></i> ';
 			capestate = titleCase(noUnderscore(this['cape_state_dscr'][0]));
 		}
 
 		var aiinsights = '';
 		if (this['insight_hi'] != 0) {
-			aiinsights += '<i class="fa fa-circle text-danger"></i>';
+			aiinsights += '<i class="fa-solid fa-circle text-danger"></i>';
 		}
 		if (this['insight_mi'] != 0) {
-			aiinsights += '<i class="fa fa-circle text-warning"></i>';
+			aiinsights += '<i class="fa-solid fa-circle text-warning"></i>';
 		}
 		if (this['insight_lo'] != 0) {
-			aiinsights += '<i class="fa fa-circle text-minor"></i>';
+			aiinsights += '<i class="fa-solid fa-circle text-minor"></i>';
 		}
 		if (aiinsights === '') {
-			aiinsights = '<i class="fa fa-circle text-neutral"></i>';
+			aiinsights = '<i class="fa-solid fa-circle text-neutral"></i>';
 		}
 
-		var status = '<i class="fa fa-circle text-success"></i>';
+		var status = '<i class="fa-solid fa-circle text-success"></i>';
 		var healthReason = '';
 		if (this['wan_uplinks_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateway with WAN links down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wan_tunnels_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateway with VPN Tunnels down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wlan_cpu_high'] > 1) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'APs with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wlan_cpu_high'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'AP with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wired_cpu_high'] > 1) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Switches with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wired_cpu_high'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Switch with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['branch_cpu_high'] > 1) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateways with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['branch_cpu_high'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'Gateway with high CPU usage';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wlan_device_status_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'One or more APs are down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['wired_device_status_down'] > 0) {
-			status = '<i class="fa fa-circle text-danger"></i>';
+			status = '<i class="fa-solid fa-circle text-danger"></i>';
 			healthReason = 'One or more switches are down';
 			if (siteIssues > 1) siteIssues = 1;
 		} else if (this['device_high_noise_5ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High noise on 5GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (this['device_high_noise_2_4ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High noise on 2.4GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (this['device_high_ch_5ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High channel utilization on 5GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (this['device_high_ch_2_4ghz'] > 0) {
-			status = '<i class="fa fa-circle text-warning"></i>';
+			status = '<i class="fa-solid fa-circle text-warning"></i>';
 			healthReason = 'High channel utilization on 2.4GHz';
 			if (siteIssues > 2) siteIssues = 2;
 		} else if (this['device_high_mem'] > 0) {
-			status = '<i class="fa fa-circle text-minor"></i>';
+			status = '<i class="fa-solid fa-circle text-minor"></i>';
 			healthReason = 'Devices with high memory utilization';
 			if (siteIssues > 3) siteIssues = 3;
 		}

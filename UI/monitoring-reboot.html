@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.7
 Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
 <!DOCTYPE html>
@@ -32,11 +32,11 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/2741cb5579.js" crossorigin="anonymous"></script>
+		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=230726" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -51,7 +51,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Reboot </a>
+							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Reboot </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -91,23 +91,23 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 								<div class="nav-container">
 									<ul class="nav nav-icons justify-content-center" role="tablist">
 										<li class="nav-item show active">
-											<a class="nav-link" id="cluster-tab" href="#cluster-logo" role="tab" data-toggle="tab">
-												<i class="central-icon ca-networking"></i>
-												<br />
-												Virtual Controllers
-											</a>
-										</li>
-										<li class="nav-item">
 											<a class="nav-link" id="device-tab" href="#device-logo" role="tab" data-toggle="tab">
 												<i class="central-icon ca-router"></i>
 												<br />
 												APs
 											</a>
 										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="cluster-tab" href="#cluster-logo" role="tab" data-toggle="tab">
+												<i class="central-icon ca-networking"></i>
+												<br />
+												Virtual Controllers
+											</a>
+										</li>
 									</ul>
 								</div>
 								<div class="tab-content">
-									<div class="tab-pane fade show active" id="cluster-logo" aria-labelledby="cluster-tab">
+									<div class="tab-pane" id="cluster-logo" aria-labelledby="cluster-tab">
 										<!-- Cluster Card -->
 										<div class="card">
 											<div class="card-header">
@@ -139,11 +139,12 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 										</div>
 										<!-- End Cluster Card -->
 									</div>
-									<div class="tab-pane" id="device-logo" aria-labelledby="device-tab">
+									<div class="tab-pane fade show active" id="device-logo" aria-labelledby="device-tab">
 										<!-- APs Card -->
 										<div class="card">
 											<div class="card-header">
 												<h4 class="card-title">Access Points</h4>
+												<a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
 											</div>
 											<div class="card-body">
 												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -187,7 +188,6 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
-
 									</div>
 									<div class="card-body" id="errorBody"></div>
 								</div>
@@ -198,7 +198,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
-						<a data-toggle="modal" data-target="#ErrorModal"  id="ErrorModalLink"></a>
+						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -283,7 +283,7 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 				var selectAllCheckbox = this.checked;
 				$.each(rows, function() {
 					var data = table.row(this).data();
-					updateSelectedDevices(data[3]);
+					updateSelectedDevices(data[4]);
 				})
 			});
 
@@ -343,8 +343,8 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=230326"></script>
+	<script src="assets/js/main.js?v=230726"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra.js"></script>
-	<script src="assets/js/reboot.js"></script>
+	<script src="assets/js/hydra.js?v=230524"></script>
+	<script src="assets/js/reboot.js?v=230423"></script>
 </html>

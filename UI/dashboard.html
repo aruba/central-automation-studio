@@ -18,8 +18,8 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.0
-Updated: 1.28
+Central Automation v1.x
+Updated: 1.30
 Aaron Scott (WiFi Downunder) 2023
 -->
 
@@ -36,11 +36,11 @@ Aaron Scott (WiFi Downunder) 2023
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+	<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=230726" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -55,7 +55,7 @@ Aaron Scott (WiFi Downunder) 2023
                     	<div class="icon-big text-center icon-warning">
 							<i class="central-icon ca-api text-warning"></i>
 						</div>
-                        <a class="navbar-brand" href="dashboard.html" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio</a>
+                        <a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio</a>
                     </div>
                     <div class="collapse navbar-collapse justify-content-end">
                     	<ul class="nav navbar-nav">
@@ -157,14 +157,14 @@ Aaron Scott (WiFi Downunder) 2023
                                 </a>
                             </div>
                         </div>
-                        <div class="col-lg-2 col-sm-6">
+                        <div class="col-lg-2 col-sm-6" id='gateway_stats'>
                             <div class="card card-stats">
                                 <a data-toggle="modal" data-target="#GatewayModal">
                                 <div class="card-body ">
                                     <div class="row">
                                         <div class="col-4">
                                             <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-content-delivery text-warning" id="gateway_icon"></i>
+                                                <i class="central-icon ca-gateway text-warning" id="gateway_icon"></i>
                                             </div>
                                         </div>
                                         <div class="col-8">
@@ -178,6 +178,27 @@ Aaron Scott (WiFi Downunder) 2023
                                 </a>
                             </div>
                         </div>
+						<div class="col-lg-2 col-sm-6" id='controller_stats' hidden>
+							<div class="card card-stats">
+								<a data-toggle="modal" data-target="#ControllerModal">
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-4">
+											<div class="icon-big text-center icon-warning">
+												<i class="central-icon ca-controller text-warning" id="controller_icon"></i>
+											</div>
+										</div>
+										<div class="col-8">
+											<div class="numbers">
+												<p class="card-category">Controllers</p>
+												<h4 class="card-title" id="controller_count">-</h4>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
                         <div class="col-lg-2 col-sm-6">
                             <div class="card card-stats">
                             	<a data-toggle="modal" data-target="#SiteModal">
@@ -298,7 +319,7 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="deployment-group.html">
 								<div class="card-header ">
 									<h4 class="card-title"> AP Group Configuration</h4>
-									<p class="card-category">Modify wireless configuration<p>
+									<p class="card-category">Modify & Deploy<p>
 								</div>
                                 <div class="card-body ">
                                     <div class="row">
@@ -319,7 +340,7 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="deployment-wlan.html">
 								<div class="card-header ">
 									<h4 class="card-title">WLANs</h4>
-									<p class="card-category">Modify and Deploy WLANs<p>
+									<p class="card-category">Modify & Deploy<p>
 								</div>
                                 <div class="card-body ">
                                     <div class="row">
@@ -340,7 +361,7 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="deployment-user-roles.html">
 								<div class="card-header ">
 									<h4 class="card-title">User Roles</h4>
-									<p class="card-category">Modify and Deploy User Roles<p>
+									<p class="card-category">Modify & Deploy<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
@@ -355,6 +376,27 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End User Role Page -->
+						<!-- Auth Server Page -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="deployment-auth-servers.html">
+								<div class="card-header ">
+									<h4 class="card-title">Authentication Servers</h4>
+									<p class="card-category">Modify & Deploy<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-password text-warning" id="auth_server_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+							</a>
+							</div>
+						</div>
+						<!-- End Auth Server Page -->
 						<!-- MPSK Page -->
 						<div class="col-sm-3">
 							<div class="card  card-tasks">
@@ -376,27 +418,28 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End MPSK Page -->
-						<!-- Auth Server Page -->
+						<!-- CDA MPSK Page -->
 						<div class="col-sm-3">
 							<div class="card  card-tasks">
-								<a href="deployment-auth-servers.html">
+								<a href="deployment-cda-mpsk.html">
 								<div class="card-header ">
-									<h4 class="card-title">Authentication Servers</h4>
-									<p class="card-category">Modify and Deploy Authentication Servers<p>
+									<h4 class="card-title">Named MPSK</h4>
+									<p class="card-category">Modify CloudAuth MPSKs<p>
 								</div>
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <div class="icon-very-big text-center icon-warning">
-                                                <i class="central-icon ca-password text-warning" id="auth_server_icon"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-cloud-auth text-warning" id="cda_mpsk_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
 							</a>
 							</div>
 						</div>
-						<!-- End Auth Server Page -->
+						<!-- End MPSK Page -->
+						
 						<!-- Switch Stack Page -->
 						<div class="col-sm-3">
 							<div class="card  card-tasks">
@@ -419,18 +462,18 @@ Aaron Scott (WiFi Downunder) 2023
 						</div>
 						<!-- End Switch Stack Page -->
 						<!-- Gateway Config Page -->
-						<div class="col-sm-3">
+						<div class="col-sm-3" id='gateway_card'>
 							<div class="card  card-tasks">
 								<a href="deployment-gateway.html">
 								<div class="card-header ">
 									<h4 class="card-title">Gateways</h4>
-									<p class="card-category">Modify Gateway configuration<p>
+									<p class="card-category">View & Modify<p>
 								</div>
                                 <div class="card-body ">
                                     <div class="row">
                                         <div class="col-12">
                                             <div class="icon-very-big text-center icon-warning">
-                                                <i class="central-icon ca-window-code text-warning" id="workflow_gateway_icon"></i>
+                                                <i class="central-icon ca-gateway text-warning" id="workflow_gateway_icon"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -464,18 +507,18 @@ Aaron Scott (WiFi Downunder) 2023
 					<div class="row"><h4 class="section-header">Central Services</h4></div>
 					<div class="row">
 						<!-- AirMatch Page -->
-						<div class="col-sm-3">
+						<div class="col-sm-3" id="airmatch_card">
 							<div class="card  card-tasks">
 								<a href="deployment-airmatch.html">
 								<div class="card-header ">
 									<h4 class="card-title">AirMatch</h4>
-									<p class="card-category">AirMatch Statistics<p>
+									<p class="card-category">Statistics & Control<p>
 								</div>
                                 <div class="card-body ">
                                     <div class="row">
                                         <div class="col-12">
                                             <div class="icon-very-big text-center icon-warning">
-                                                <i class="central-icon ca-hotspot text-warning" id="workflow_airmatch_icon"></i>
+                                                <i class="central-icon ca-airmatch text-warning" id="workflow_airmatch_icon"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -485,12 +528,12 @@ Aaron Scott (WiFi Downunder) 2023
 						</div>
 						<!-- End Airmatch Page -->
 						<!-- ClientMatch Page -->
-						<div class="col-sm-3">
+						<div class="col-sm-3" id="clientmatch_card">
 							<div class="card  card-tasks">
 								<a href="deployment-clientmatch.html">
 								<div class="card-header ">
 									<h4 class="card-title">ClientMatch</h4>
-									<p class="card-category">ClientMatch Controls<p>
+									<p class="card-category">Statistics & Control<p>
 								</div>
                                 <div class="card-body ">
                                     <div class="row">
@@ -505,13 +548,34 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End ClientMatch Page -->
+						<!-- KMS Page -->
+						<div class="col-sm-3" id="kms_card">
+							<div class="card  card-tasks">
+								<a href="monitoring-kms.html">
+								<div class="card-header ">
+									<h4 class="card-title">Key Management Service</h4>
+									<p class="card-category">Troubleshooting & Visibility<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-kms text-warning" id="workflow_kms_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End ClientMatch Page -->
 						<!-- Device Inventory Page -->
 						<div class="col-sm-3">
 							<div class="card  card-tasks">
 								<a href="deployment-inventory.html">
 								<div class="card-header ">
 									<h4 class="card-title">Device Inventory</h4>
-									<p class="card-category">View and Download from the Device Inventory<p>
+									<p class="card-category">View & Download<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
@@ -532,7 +596,7 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="monitoring-licensing.html">
 								<div class="card-header ">
 									<h4 class="card-title">License Monitoring</h4>
-									<p class="card-category">View and Download Subscription Keys<p>
+									<p class="card-category">View & Download<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
@@ -561,7 +625,7 @@ Aaron Scott (WiFi Downunder) 2023
 									<div class="row">
 										<div class="col-12">
 											<div class="icon-very-big text-center icon-warning">
-												<i class="central-icon ca-chart-pie-36 text-warning" id="workflow_clients_icon"></i>
+												<i class="central-icon ca-laptop-91 text-warning" id="workflow_clients_icon"></i>
 											</div>
 										</div>
 									</div>
@@ -610,7 +674,7 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- IPAM Page -->
-						<div class="col-sm-3">
+						<div class="col-sm-3" id="ipam_card">
 							<div class="card card-tasks">
 								<a href="monitoring-ipam.html">
 								<div class="card-header ">
@@ -642,6 +706,66 @@ Aaron Scott (WiFi Downunder) 2023
 										<div class="col-12">
 											<div class="icon-very-big text-center icon-warning">
 												<i class="central-icon ca-rapids text-warning" id="workflow_rapids_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+							</a>
+							</div>
+						</div>
+						<!-- Mesh Page -->
+						<div class="col-sm-3">
+							<div class="card card-tasks">
+								<a href="monitoring-mesh.html">
+								<div class="card-header ">
+									<h4 class="card-title">Mesh</h4>
+									<p class="card-category">Monitor Mesh APs<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-mesh text-warning" id="workflow_mesh_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+							</a>
+							</div>
+						</div>
+						<!-- VisualRF Page -->
+						<div class="col-sm-3">
+							<div class="card card-tasks">
+								<a href="monitoring-vrf.html">
+								<div class="card-header ">
+									<h4 class="card-title">VisualRF</h4>
+									<p class="card-category">Monitoring using Floorplans<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-map-pin text-warning" id="workflow_vrf_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+							</a>
+							</div>
+						</div>
+						<!-- Event Dashboard Page -->
+						<div class="col-sm-3">
+							<div class="card card-tasks">
+								<a href="event-dashboard.html">
+								<div class="card-header ">
+									<h4 class="card-title">Event Dashboard</h4>
+									<p class="card-category">Dashboard for Event Wi-Fi Networks<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-event-confirm text-warning" id="workflow_event"></i>
 											</div>
 										</div>
 									</div>
@@ -684,7 +808,7 @@ Aaron Scott (WiFi Downunder) 2023
                                     <div class="row">
                                         <div class="col-12">
                                             <div class="icon-very-big text-center icon-warning">
-                                                <i class="central-icon ca-chemistry text-warning" id="experiment_switch_icon"></i>
+                                                <i class="central-icon ca-document-copy text-warning" id="experiment_switch_icon"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -699,13 +823,34 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="troubleshooting-ap.html">
 								<div class="card-header ">
 									<h4 class="card-title">AP Troubleshooting</h4>
-									<p class="card-category">Simple access to troubleshooting<p>
+									<p class="card-category">Automated Troubleshooting<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
 										<div class="col-12">
 											<div class="icon-very-big text-center icon-warning">
 												<i class="central-icon ca-settings text-warning" id="ap_troubleshooting_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
+						<!-- Troubleshooting Tasks -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="troubleshooting-switching.html">
+								<div class="card-header ">
+									<h4 class="card-title">Switch Troubleshooting</h4>
+									<p class="card-category">Simple Troubleshooting<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-plug-2 text-warning" id="switch_troubleshooting_icon"></i>
 											</div>
 										</div>
 									</div>
@@ -727,27 +872,6 @@ Aaron Scott (WiFi Downunder) 2023
 										<div class="col-12">
 											<div class="icon-very-big text-center icon-warning">
 												<i class="central-icon ca-stack text-warning" id="ap_bulk_icon"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-								</a>
-							</div>
-						</div>
-						<!-- End Troubleshooting Tasks -->
-						<!-- MPSK Local PAN Tasks -->
-						<div class="col-sm-3" hidden>
-							<div class="card  card-tasks">
-								<a href="deployment-pan.html">
-								<div class="card-header ">
-									<h4 class="card-title">Personal Area Network</h4>
-									<p class="card-category">MPSK Local based PAN<p>
-								</div>
-								<div class="card-body ">
-									<div class="row">
-										<div class="col-12">
-											<div class="icon-very-big text-center icon-warning">
-												<i class="central-icon ca-gathering-restrictions text-warning" id="pan_icon"></i>
 											</div>
 										</div>
 									</div>
@@ -874,8 +998,8 @@ Aaron Scott (WiFi Downunder) 2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Access Points</h4>
-									</div>
+									<h4 class="card-title">Access Points</h4><a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
+								</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -921,7 +1045,7 @@ Aaron Scott (WiFi Downunder) 2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Switches</h4>
+										<h4 class="card-title">Switches</h4><a class="refresh-link" onclick="refreshSwitchData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -938,6 +1062,7 @@ Aaron Scott (WiFi Downunder) 2023
 													<th>Site</th>
 													<th>Group</th>
 													<th>MAC Address</th>
+													<th>Uptime</th>
 												</thead>
 												<tbody>
 												</tbody>
@@ -958,7 +1083,7 @@ Aaron Scott (WiFi Downunder) 2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Gateways</h4>
+										<h4 class="card-title">Gateways</h4><a class="refresh-link" onclick="refreshGatewayData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -976,6 +1101,7 @@ Aaron Scott (WiFi Downunder) 2023
 													<th>Site</th>
 													<th>Group</th>
 													<th>MAC Address</th>
+													<th>Uptime</th>
 													<th>Uplinks</th>
 													<th>Tunnels</th>
 													<th>Reboot Reason</th>
@@ -983,7 +1109,46 @@ Aaron Scott (WiFi Downunder) 2023
 												<tbody>
 												</tbody>
 											</table>
-
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!--  End Modal -->
+			<!-- Controller Modal -->
+			<div class="modal fade modal-mini modal-primary" id="ControllerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="row">
+							<div class="col-md-12">
+								<div class="card-header">
+										<h4 class="card-title">Controllers</h4><a class="refresh-link" onclick="refreshControllerData()"><i class="central-icon ca-reload"></i></a>
+									</div>
+								<div class="card-body">
+									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+										<div class="fresh-datatables">
+											<table id="controller-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+												<thead>
+													<th>Name</th>
+													<th>Status</th>
+													<th>Status Text</th>
+													<th>IP Address</th>
+													<th>Model</th>
+													<th>Serial</th>
+													<th>Firmware</th>
+													<th>Site</th>
+													<th>Group</th>
+													<th>MAC Address</th>
+													<th>Uptime</th>
+													<th>Role</th>
+													<th>Reboot Reason</th>
+												</thead>
+												<tbody>
+												</tbody>
+											</table>
 										</div>
 									</div>
 								</div>
@@ -1294,7 +1459,7 @@ Aaron Scott (WiFi Downunder) 2023
 		
     	var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {		
-			showMSPCard(false);        
+			showMSPCard(false);    
 			isMSP();
 
 			$(".clickable-row").click(function() {
@@ -1361,6 +1526,19 @@ Aaron Scott (WiFi Downunder) 2023
 					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
+				
+				$('#controller-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Controllers",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
 			} else {
 				$('#gateway-table').DataTable({
 					"pagingType": "simple_numbers",
@@ -1372,6 +1550,19 @@ Aaron Scott (WiFi Downunder) 2023
 						searchPlaceholder: "Search Gateways",
 					},
 					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,11,12], "visible": false }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+				
+				$('#controller-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Controllers",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 			}
@@ -1419,6 +1610,9 @@ Aaron Scott (WiFi Downunder) 2023
 				$('#UniversalModalLink').trigger('click');
 				$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
 			}, false);
+			
+			// Check if using COP
+			checkUIForCOP();
 		
 			// Check if we need to get the latest data - or can we just load it from localStorage
 			var refreshrate = localStorage.getItem('refresh_rate');
@@ -1461,9 +1655,9 @@ Aaron Scott (WiFi Downunder) 2023
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js?v=230326"></script>
+<script src="assets/js/main.js?v=230726"></script>
 <script src="assets/js/proxy.js?v=230325"></script>
-<script src="assets/js/hydra.js"></script>
+<script src="assets/js/hydra.js?v=230524"></script>
 
 
 

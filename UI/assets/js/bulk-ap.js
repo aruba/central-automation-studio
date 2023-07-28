@@ -66,9 +66,9 @@ function loadGroupInventory() {
 			// Add row to table
 			var table = $('#inventory-table').DataTable();
 			if (monitoringInfo && monitoringInfo.group_name === document.getElementById('groupselector').value) {
-				var status = '<i class="fa fa-circle text-danger"></i>';
+				var status = '<i class="fa-solid fa-circle text-danger"></i>';
 				if (monitoringInfo.status == 'Up') {
-					status = '<i class="fa fa-circle text-success"></i>';
+					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
 				table.row.add([monitoringInfo.name ? '<strong>' + monitoringInfo.name + '</strong>' : '<strong>' + this.macaddr.toLowerCase() + '</strong>', this.serial, this.macaddr, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '']);
 

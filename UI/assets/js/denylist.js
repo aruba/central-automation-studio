@@ -1,7 +1,7 @@
 /*
 Central Automation v1.8
 Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2022
+Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var deviceIDs = [];
@@ -109,7 +109,7 @@ function getDenyList() {
 						var vcURL = centralURLs[0][apiURL] + '/frontend/#/AP/LIST?casn=' + ap['serial'] + '&cdcn=' + swarmName + '&nc=virtual_controller';
 						var apURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + apName + '&nc=access_point';
 
-						var removeBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Remove from Deny List" onclick="removeClient(\'' + macaddress + "', '" + response['device_id'] + '\')"><i class="fas fa-trash-alt"></i></a>';
+						var removeBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Remove from Deny List" onclick="removeClient(\'' + macaddress + "', '" + response['device_id'] + '\')"><i class="fa-solid  fa-trash-alt"></i></a>';
 
 						// Add allocation to table
 						var table = $('#denylist-table').DataTable();

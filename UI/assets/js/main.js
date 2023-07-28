@@ -1,6 +1,6 @@
 /*
 Central Automation v1.x
-Last Updated 1.28
+Last Updated 1.30
 Aaron Scott (WiFi Downunder) 2023
 */
 
@@ -20,7 +20,7 @@ var centralURLs = [
 		'https://apigw-eucentral2.central.arubanetworks.com': 'https://app-eucentral2.central.arubanetworks.com',
 		'https://apigw-eucentral3.central.arubanetworks.com': 'https://app-eucentral3.central.arubanetworks.com',
 		'https://apigw-uaenorth1.central.arubanetworks.com': 'https://app-uaenorth1.central.arubanetworks.com',
-		//COP: 'COP',
+		COP: 'COP',
 	},
 ];
 
@@ -44,7 +44,7 @@ var centralClusters = [
 		'Canada-1': 'https://apigw-ca.central.arubanetworks.com',
 		'CN-North': 'https://apigw.central.arubanetworks.com.cn',
 		'UAE-North': 'https://apigw-uaenorth1.central.arubanetworks.com',
-		//'Central On-Prem': 'COP',
+		'Central On-Prem': 'COP',
 	},
 ];
 
@@ -64,7 +64,7 @@ var clusterNames = [
 		'https://apigw-ca.central.arubanetworks.com': 'Canada-1',
 		'https://apigw.central.arubanetworks.com.cn': 'CN-North',
 		'https://apigw-uaenorth1.central.arubanetworks.com': 'UAE-North',
-		//COP: 'Central On-Prem',
+		COP: 'Central On-Prem',
 	},
 ];
 
@@ -99,7 +99,10 @@ var antennas = {
 
 const ConfigType = { All: 0, IP: 1, Antenna: 2 };
 
+// COP Specific variables
 var cop_url = 'https://apigw-';
+var cop_central_url = 'https://central-';
+
 var reachableProxies = [];
 
 var forcedTokenRefresh = true;
@@ -123,6 +126,7 @@ var rebootCounter = 0;
 var checkedCounter = 0;
 var updateVariablesCounter = 0;
 var visitorCounter = 0;
+var labelCounter = 0;
 
 var authPromise;
 var inventoryPromise;
@@ -130,6 +134,7 @@ var monitoringPromise;
 var apPromise;
 var switchPromise;
 var gatewayPromise;
+var controllerPromise;
 var groupPromise;
 var swarmPromise;
 var customerPromise;
@@ -151,6 +156,9 @@ var gateways = [];
 var gatewayInventory = [];
 var gatewayInventoryCount = 0;
 var needGatewayDetails = false;
+var controllers = [];
+var controllerInventory = [];
+var controllerInventoryCount = 0;
 var deviceType = '';
 var sites = [];
 var siteCreationCount = 0;
@@ -159,8 +167,10 @@ var groupTemplateInfo = [];
 var downAPCount = 0;
 var downSwitchCount = 0;
 var downGatewayCount = 0;
+var downControllerCount = 0;
 var siteIssues = 0;
 var swarms = [];
+var labels = [];
 
 var mspAPs = [];
 var mspAPMonitoring = [];
@@ -193,6 +203,7 @@ var devicesToReboot = [];
 var needAntennaConfig = [];
 
 const apiLimit = 1000;
+const apiAPLimit = 500;
 const apiGLCPLimit = 100;
 const apiSiteLimit = 1000;
 const apiGroupLimit = 20;
@@ -221,6 +232,7 @@ var manualCustomer = '';
 var existingPassphrase = '';
 var wlanConfig = {};
 
+var apiLimitNotification;
 var authNotification;
 var csvNotification;
 var apNotification;
@@ -232,6 +244,7 @@ var wirelessNotification;
 var wiredNotification;
 var vcNotification;
 var inventoryNotification;
+var expiryNotification;
 
 var renameNotification;
 var zoneNotification;
@@ -246,6 +259,7 @@ var configNotification;
 var ipNotification;
 var visitorNotification;
 var siteNotification;
+var labelNotification;
 
 var indexedDB;
 var dbRequest;
@@ -266,8 +280,18 @@ function getClusterName(url) {
 }
 
 function populateCentralClusters() {
+	$('#clusterselector').append($('<option>', { value: '', text: 'Public Clusters', style: 'color: #cccccc;', disabled: true }));
 	for (let k in centralClusters[0]) {
-		$('#clusterselector').append($('<option>', { value: centralClusters[0][k], text: k }));
+		if (isPublicInstall() && centralClusters[0][k] === 'COP') {
+			// Skip adding the COP value on the public release
+		} else if (centralClusters[0][k] === 'COP') {
+			// other wise add it with a separator
+			$('#clusterselector').append($('<option>', { value: '', text: '─────────', style: 'color: #cccccc;', disabled: true }));
+			$('#clusterselector').append($('<option>', { value: '', text: 'Private Clusters', style: 'color: #cccccc;', disabled: true }));
+			$('#clusterselector').append($('<option>', { value: centralClusters[0][k], text: k }));
+		} else {
+			$('#clusterselector').append($('<option>', { value: centralClusters[0][k], text: k }));
+		}
 	}
 }
 
@@ -277,6 +301,39 @@ function isCOPSelected() {
 		document.getElementById('cop_address_row').hidden = false;
 	} else {
 		document.getElementById('cop_address_row').hidden = true;
+	}
+}
+
+function checkUIForCOP() {
+	// Check if using COP
+	// Hide non-COP supported features e.g. AOS10 only pieces
+	var isCOP = localStorage.getItem('is_cop');
+	if (isCOP) {
+		var x = document.getElementById('airmatch_card');
+		if (x) x.hidden = true;
+		x = document.getElementById('clientmatch_card');
+		if (x) x.hidden = true;
+		x = document.getElementById('ipam_card');
+		if (x) x.hidden = true;
+		x = document.getElementById('gateway_card');
+		if (x) x.hidden = true;
+		x = document.getElementById('gateway_stats');
+		if (x) x.hidden = true;
+		x = document.getElementById('controller_stats');
+		if (x) x.hidden = false;
+	} else {
+		var x = document.getElementById('airmatch_card');
+		if (x) x.hidden = false;
+		x = document.getElementById('clientmatch_card');
+		if (x) x.hidden = false;
+		x = document.getElementById('ipam_card');
+		if (x) x.hidden = false;
+		x = document.getElementById('gateway_card');
+		if (x) x.hidden = false;
+		x = document.getElementById('gateway_stats');
+		if (x) x.hidden = false;
+		x = document.getElementById('controller_stats');
+		if (x) x.hidden = true;
 	}
 }
 
@@ -291,11 +348,12 @@ function openIndexedDB() {
 		console.log('IndexedDB could not be found in this browser.');
 	}
 
-	dbRequest = indexedDB.open('Central-Automation-Studio-DB', 1);
+	dbRequest = indexedDB.open('Central-Automation-Studio-DB', 2);
 
 	dbRequest.onerror = function(event) {
 		console.error('An error occurred with IndexedDB');
 		console.error(event);
+		console.error('Database error: ${event.target.errorCode}');
 	};
 
 	dbRequest.onupgradeneeded = function() {
@@ -319,7 +377,7 @@ function saveDataToDB(indexKey, data) {
 }
 
 // Updated 1.12.4
-function onFinishSetup() {
+/*function onFinishSetup() {
 	console.log('onFinishSetup in Main deprecated');
 	// Save all supplied addresses and details
 	var base_url = document.getElementById('clusterselector').value;
@@ -350,7 +408,7 @@ function onFinishSetup() {
 	updateAccountDetails(cluster);
 	console.log(base_url);
 	tokenRefresh();
-}
+}*/
 
 function loadMonitoringData(refreshrate) {
 	// Check if we need to get the latest data - or can we just load it from localStorage
@@ -373,6 +431,7 @@ function loadMonitoringData(refreshrate) {
 			downAPCount = 0;
 			downSwitchCount = 0;
 			downGatewayCount = 0;
+			downControllerCount = 0;
 			siteIssues = 4;
 			var clientLoadCount = 0;
 
@@ -401,6 +460,12 @@ function loadMonitoringData(refreshrate) {
 								loadGatewayUI(this);
 							});
 							updateGatewayUI();
+						} else if (this.key === 'monitoring_controllers') {
+							controllers = JSON.parse(this.data);
+							$.each(controllers, function() {
+								loadControllerUI(this);
+							});
+							updateControllerUI();
 						} else if (this.key === 'monitoring_sites') {
 							sites = JSON.parse(this.data);
 							$.each(sites, function() {
@@ -522,7 +587,27 @@ function showNotification(icon, message, from, align, color) {
 		},
 		{
 			type: color,
-			timer: 300,
+			delay: 5000,
+			placement: {
+				from: from,
+				align: align,
+			},
+			allow_dismiss: false,
+		}
+	);
+}
+
+function showLongNotification(icon, message, from, align, color) {
+	// Valid Colors: danger, warning, success, info, primary
+	var iconString = 'central-icon ' + icon;
+	return $.notify(
+		{
+			icon: iconString,
+			message: message,
+		},
+		{
+			type: color,
+			delay: 30000,
 			placement: {
 				from: from,
 				align: align,
@@ -549,6 +634,26 @@ function showProgressNotification(icon, message, from, align, color) {
 			},
 			showProgressbar: true,
 			allow_dismiss: false,
+			delay: 0,
+		}
+	);
+}
+
+function showPermanentNotification(icon, message, from, align, color, url) {
+	// Valid Colors: danger, warning, success, info, primary
+	var iconString = 'central-icon ' + icon;
+	return $.notify(
+		{
+			icon: iconString,
+			message: message,
+		},
+		{
+			type: color,
+			placement: {
+				from: from,
+				align: align,
+			},
+			allow_dismiss: true,
 			delay: 0,
 		}
 	);
@@ -634,7 +739,7 @@ function loadCSVFile(clickedRow) {
 			showNotification('ca-c-warning', err.message, 'bottom', 'center', 'danger');
 		},
 		complete: function() {
-			csvNotification.close();
+			if (csvNotification) csvNotification.close();
 			if (clickedRow === 'mgmt-group') {
 				$('#AddGroupModalLink').trigger('click');
 			} else if (clickedRow === 'mgmt-group-clone') {
@@ -682,6 +787,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Moving devices to sites...');
 				currentWorkflow = '';
 				moveDevicesToSite();
+			} else if (clickedRow === 'assignlabel') {
+				logStart('Assigning lables to devices...');
+				currentWorkflow = '';
+				assignLabelsToDevices();
 			} else if (clickedRow === 'renametemplate') {
 				logStart('Renaming devices...');
 				currentWorkflow = '';
@@ -1007,7 +1116,7 @@ function generateCSVForSite(clickedRow) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function tokenRefresh() {
-	authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
+	authNotification = showLongNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/auth/refreshwHeaders',
 		method: 'POST',
@@ -1026,8 +1135,6 @@ function tokenRefresh() {
 
 	return $.ajax(settings)
 		.done(function(commandResults, statusText, jqXHR) {
-			authNotification.close();
-
 			if (commandResults.hasOwnProperty('headers')) {
 				updateAPILimits(JSON.parse(commandResults.headers));
 			}
@@ -1067,7 +1174,10 @@ function tokenRefresh() {
 						}
 					});
 				} else {
-					showNotification('ca-padlock', 'Authentication Tokens Updated', 'bottom', 'center', 'success');
+					if (authNotification) {
+						authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+						setTimeout(authNotification.close, 1000);
+					}
 				}
 			}
 		})
@@ -1106,7 +1216,6 @@ function authRefresh(refreshPromise) {
 
 	$.ajax(settings).done(function(commandResults, statusText, jqXHR) {
 		//console.log(commandResults)
-		authNotification.close();
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -1128,8 +1237,10 @@ function authRefresh(refreshPromise) {
 			cluster['refresh_token'] = response.refresh_token;
 			cluster['access_token'] = response.access_token;
 			updateAccountDetails(cluster);
-
-			showNotification('ca-padlock', 'Authentication Tokens Updated', 'bottom', 'center', 'success');
+			if (authNotification) {
+				authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+				setTimeout(authNotification.close, 1000);
+			}
 		}
 		refreshPromise.resolve();
 	});
@@ -1140,10 +1251,20 @@ function updateAPILimits(headers) {
 	if (headers['X-RateLimit-Limit-day']) {
 		var usage = parseInt(headers['X-RateLimit-Limit-day']) - parseInt(headers['X-RateLimit-Remaining-day']);
 		$('#titleText').attr('data-original-title', 'Daily API Usage: ' + usage.toString() + ' / ' + headers['X-RateLimit-Limit-day']);
-		if (parseInt(headers['X-RateLimit-Remaining-day']) == 0) showNotification('ca-api', 'Daily API limit reached', 'top', 'center', 'danger');
+		if (parseInt(headers['X-RateLimit-Remaining-day']) == 0) {
+			if (!apiLimitNotification) {
+				apiLimitNotification = showLongNotification('ca-api', 'Daily API limit reached', 'top', 'center', 'danger');
+				setTimeout(clearAPINotification, 5000);
+			}
+		}
 	} else {
 		$('#titleText').attr('data-original-title', '');
 	}
+}
+
+function clearAPINotification() {
+	apiLimitNotification.close();
+	apiLimitNotification = null;
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1170,6 +1291,10 @@ function loadCurrentPageGateway() {
 	// override on visible page - used as a notification
 }
 
+function loadCurrentPageController() {
+	// override on visible page - used as a notification
+}
+
 function loadCurrentPageSite() {
 	// override on visible page - used as a notification
 }
@@ -1185,6 +1310,19 @@ function loadCurrentPageSwarm() {
 function loadCurrentPageVisitors() {
 	// override on visible page - used as a notification
 }
+
+function goToDashboard(event) {
+	if (event.metaKey && event.altKey) {
+		navigator.clipboard.writeText(localStorage.getItem('access_token'));
+		showNotification('ca-document-copy', 'Access Token for account copied to clipboard', 'top', 'center', 'success');
+	} else location.href = 'dashboard.html';
+}
+
+document.onkeyup = function(e) {
+	if (e.shiftKey && e.which == 82) {
+		getMonitoringData();
+	}
+};
 
 // Updated: 1.6.0
 function getMonitoringData() {
@@ -1202,6 +1340,33 @@ function getMonitoringData() {
 	updateMonitoringWithClients(loadClients);
 }
 
+function getNonInfrastructureData() {
+	apiMessage = false;
+	showNotification('ca-dashboard', 'Updating Monitoring Data...', 'bottom', 'center', 'primary');
+	authPromise = new $.Deferred();
+	$.when(authRefresh(authPromise)).then(function() {
+		// Empty clients array
+		clients = [];
+		wiredClients = [];
+		wirelessClients = [];
+		if (document.getElementById('client_count')) document.getElementById('client_count').innerHTML = '0';
+		$('#client-table')
+			.DataTable()
+			.rows()
+			.remove();
+
+		downAPCount = 0;
+		downSwitchCount = 0;
+		downGatewayCount = 0;
+		siteIssues = 4;
+
+		getWirelessClientData(0);
+		getWiredClientData(0);
+		setTimeout(getSiteData, 200, 0);
+		setTimeout(updateGroupData, 4000);
+	});
+}
+
 function updateMonitoringWithClients(needClients) {
 	apiMessage = false;
 
@@ -1215,7 +1380,7 @@ function updateMonitoringWithClients(needClients) {
 	}
 
 	// Try and refresh the token
-	showNotification('ca-dashboard', 'Updating Monitoring Data...', 'bottom', 'center', 'info');
+	showNotification('ca-dashboard', 'Updating Monitoring Data...', 'bottom', 'center', 'primary');
 	authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/auth/refreshwHeaders',
@@ -1237,7 +1402,6 @@ function updateMonitoringWithClients(needClients) {
 		.done(function(commandResults, statusText, jqXHR) {
 			//console.log(commandResults);
 
-			authNotification.close();
 			var response = JSON.parse(commandResults.responseBody);
 			if (commandResults.hasOwnProperty('headers')) {
 				updateAPILimits(JSON.parse(commandResults.headers));
@@ -1264,7 +1428,10 @@ function updateMonitoringWithClients(needClients) {
 				cluster['access_token'] = response.access_token;
 				updateAccountDetails(cluster);
 
-				showNotification('ca-padlock', 'Authentication Tokens Updated', 'bottom', 'center', 'success');
+				if (authNotification) {
+					authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+					setTimeout(authNotification.close, 1000);
+				}
 
 				// Empty universal search table
 				$('#universal-table')
@@ -1285,28 +1452,42 @@ function updateMonitoringWithClients(needClients) {
 				downAPCount = 0;
 				downSwitchCount = 0;
 				downGatewayCount = 0;
+				downControllerCount = 0;
 				siteIssues = 4;
 
-				// Are we including Detailed Gateway Information in the monitoring data calls?
-				needGatewayDetails = localStorage.getItem('load_gateway_details');
-				if (needGatewayDetails === null || needGatewayDetails === '') {
-					needGatewayDetails = true;
-				} else {
-					needGatewayDetails = JSON.parse(needGatewayDetails);
+				var isCOP = localStorage.getItem('is_cop');
+				if (!isCOP) {
+					// Are we including Detailed Gateway Information in the monitoring data calls?
+					needGatewayDetails = localStorage.getItem('load_gateway_details');
+					if (needGatewayDetails === null || needGatewayDetails === '') {
+						needGatewayDetails = true;
+					} else {
+						needGatewayDetails = JSON.parse(needGatewayDetails);
+					}
+					console.log('Gateway Details: ' + needGatewayDetails);
 				}
-				console.log('Gateway Details: ' + needGatewayDetails);
 
 				// Refresh card data
 				licenseNotification = showNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
 				setTimeout(getLicensingStats, 1000); // As to not go over the 7 calls/sec speed limit();
-				apNotification = showNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
+
+				apNotification = showProgressNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
 				getAPData(0, needClients);
-				switchNotification = showNotification('ca-switch-stack', 'Obtaining Switches...', 'bottom', 'center', 'info');
+
+				switchNotification = showProgressNotification('ca-switch-stack', 'Obtaining Switches...', 'bottom', 'center', 'info');
 				getSwitchData(0, needClients);
-				gatewayNotification = showNotification('ca-content-delivery', 'Obtaining Gateways...', 'bottom', 'center', 'info');
-				getGatewayData(0);
-				siteNotification = showNotification('ca-world-pin', 'Obtaining Sites...', 'bottom', 'center', 'info');
+
+				if (!isCOP) {
+					gatewayNotification = showProgressNotification('ca-gateway', 'Obtaining Gateways...', 'bottom', 'center', 'info');
+					getGatewayData(0);
+				} else {
+					gatewayNotification = showProgressNotification('ca-controller', 'Obtaining Controllers...', 'bottom', 'center', 'info');
+					getControllerData(0);
+				}
+
+				siteNotification = showProgressNotification('ca-world-pin', 'Obtaining Sites...', 'bottom', 'center', 'info');
 				getSiteData(0);
+
 				setTimeout(updateGroupData, 4000);
 				setTimeout(updateSwarmData, 4000);
 
@@ -1342,7 +1523,7 @@ function getLicensingStats() {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
-		licenseNotification.close();
+		if (licenseNotification) licenseNotification.close();
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -1359,26 +1540,34 @@ function getLicensingStats() {
 
 		if (response) {
 			if (response.expiring) {
-				showNotification('ca-license-key', 'A Subscription Key expiring soon...', 'bottom', 'center', 'warning');
+				if (expiryNotification == null) {
+					expiryNotification = showLongNotification('ca-license-key', 'A Subscription Key expiring soon...', 'top', 'center', 'warning', '/monitoring-licensing.html');
+					setTimeout(clearExpiryNotification, 20000);
+				}
 			}
 		}
 	});
 }
 
+function clearExpiryNotification() {
+	expiryNotification.close();
+	expiryNotification = null;
+}
+
 // Clients
 // Updated: 1.6.0
 function loadClientsUI(client) {
-	var status = '<i class="fa fa-circle text-neutral"></i>';
+	var status = '<i class="fa-solid fa-circle text-neutral"></i>';
 	if (!client['health'] && client['failure_stage'] !== '' && client['failure_stage'] !== 'NA') {
-		status = '<span data-toggle="tooltip" data-placement="right" title="Failed To Connect: ' + client['failure_reason'] + ' at ' + client['failure_stage'] + '"><i class="fa fa-circle text-danger"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" title="Failed To Connect: ' + client['failure_reason'] + ' at ' + client['failure_stage'] + '"><i class="fa-solid fa-circle text-danger"></i></span>';
 	} else if (!client['health']) {
-		status = '<i class="fa fa-circle text-neutral"></i>';
+		status = '<i class="fa-solid fa-circle text-neutral"></i>';
 	} else if (client['health'] < 50) {
-		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + client['health'] + '"><i class="fa fa-circle text-danger"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + client['health'] + '"><i class="fa-solid fa-circle text-danger"></i></span>';
 	} else if (client['health'] < 70) {
-		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + client['health'] + '"><i class="fa fa-circle text-warning"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + client['health'] + '"><i class="fa-solid fa-circle text-warning"></i></span>';
 	} else {
-		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + client['health'] + '"><i class="fa fa-circle text-success"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + client['health'] + '"><i class="fa-solid fa-circle text-success"></i></span>';
 	}
 	// Generate clean data for table
 	var site = '';
@@ -1402,7 +1591,9 @@ function loadClientsUI(client) {
 	// Make link to Central
 	client_name_url = encodeURI(client_name);
 	var apiURL = localStorage.getItem('base_url');
-	var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + client['macaddr'] + '?ccma=' + client['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
+	var centralBaseURL = centralURLs[0][apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url); //manually build the COP address
+	var clientURL = centralBaseURL + '/frontend/#/CLIENTDETAIL/' + client['macaddr'] + '?ccma=' + client['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
 
 	// Add row to table
 	var table = $('#client-table').DataTable();
@@ -1443,7 +1634,11 @@ function updateClientUI() {
 }
 
 function getWirelessClientData(offset) {
-	if (offset == 0) wirelessNotification = showNotification('ca-laptop-1', 'Obtaining wireless clients...', 'bottom', 'center', 'info');
+	//console.log('Getting Client block:' + offset);
+	if (offset == 0) {
+		wirelessNotification = showProgressNotification('ca-laptop-1', 'Obtaining wireless clients...', 'bottom', 'center', 'info');
+		wirelessClients = [];
+	}
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -1459,6 +1654,7 @@ function getWirelessClientData(offset) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		//console.log('Processing Client block:' + offset);
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -1481,7 +1677,9 @@ function getWirelessClientData(offset) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('client_icon')).addClass('text-warning');
 			$(document.getElementById('client_icon')).removeClass('text-primary');
@@ -1494,18 +1692,23 @@ function getWirelessClientData(offset) {
 				loadClientsUI(this);
 			});
 
-			if (offset + apiLimit < response.total) getWirelessClientData(offset + apiLimit);
-			else {
+			offset += apiLimit;
+			if (offset < response.total) {
+				var wirelessProgress = (offset / response.total) * 100;
+				wirelessNotification.update({ progress: wirelessProgress });
+				getWirelessClientData(offset);
+			} else {
+				wirelessNotification.update({ progress: 100 });
 				updateClientUI();
 				saveDataToDB('monitoring_wirelessClients', JSON.stringify(wirelessClients));
-				wirelessNotification.close();
+				if (wirelessNotification) wirelessNotification.close();
 			}
 		}
 	});
 }
 
 function getWiredClientData(offset) {
-	if (offset == 0) wiredNotification = showNotification('ca-computer-monitor', 'Obtaining wired clients...', 'bottom', 'center', 'info');
+	if (offset == 0) wiredNotification = showProgressNotification('ca-computer-monitor', 'Obtaining wired clients...', 'bottom', 'center', 'info');
 
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -1545,7 +1748,9 @@ function getWiredClientData(offset) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('client_icon')).addClass('text-warning');
 			$(document.getElementById('client_icon')).removeClass('text-success');
@@ -1559,11 +1764,16 @@ function getWiredClientData(offset) {
 				loadClientsUI(this);
 			});
 
-			if (offset + apiLimit < response.total) getWiredClientData(offset + apiLimit);
-			else {
+			offset += apiLimit;
+			if (offset < response.total) {
+				var wiredProgress = (offset / response.total) * 100;
+				wiredNotification.update({ progress: wiredProgress });
+				getWiredClientData(offset);
+			} else {
+				wiredNotification.update({ progress: 100 });
 				updateClientUI();
 				saveDataToDB('monitoring_wiredClients', JSON.stringify(wiredClients));
-				wiredNotification.close();
+				if (wiredNotification) wiredNotification.close();
 			}
 		}
 	});
@@ -1582,10 +1792,14 @@ function getWiredClients() {
 function loadAPUI(ap) {
 	//console.log(ap);
 	var memoryUsage = (((ap['mem_total'] - ap['mem_free']) / ap['mem_total']) * 100).toFixed(0).toString();
-	if (ap['status'] != 'Up') downAPCount++;
-	var status = '<i class="fa fa-circle text-danger"></i>';
+
+	var status = '<i class="fa-solid fa-circle text-danger"></i>';
+	var deviceUp = true;
 	if (ap['status'] == 'Up') {
-		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+	} else {
+		downAPCount++;
+		deviceUp = false;
 	}
 	var ip_address = ap['ip_address'];
 	if (!ip_address) ip_address = '';
@@ -1596,10 +1810,12 @@ function loadAPUI(ap) {
 	// Make AP Name as a link to Central
 	var name = encodeURI(ap['name']);
 	var apiURL = localStorage.getItem('base_url');
-	var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+	var centralBaseURL = centralURLs[0][apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+	var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 	// Add row to table
 	var table = $('#ap-table').DataTable();
-	table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['client_count'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], duration.humanize()]);
+	table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['client_count'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], deviceUp ? duration.humanize() : '-']);
 
 	var universalTable = $('#universal-table').DataTable();
 	universalTable.row.add(['AP', '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ip_address, ap['macaddr'], ap['site'], ap['group_name'], '', '', ap['model'], ap['serial'], ap['firmware_version']]);
@@ -1632,6 +1848,8 @@ function updateAPUI() {
 }
 
 function getAPData(offset, needClients) {
+	if (offset == 0) apPromise = new $.Deferred();
+	//console.log('Asking for AP block: ' + offset);
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -1646,6 +1864,7 @@ function getAPData(offset, needClients) {
 	};
 
 	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		//console.log('processing AP block: ' + offset);
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -1670,7 +1889,9 @@ function getAPData(offset, needClients) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('ap_icon')).addClass('text-warning');
 			$(document.getElementById('ap_icon')).removeClass('text-success');
@@ -1692,23 +1913,34 @@ function getAPData(offset, needClients) {
 				loadAPUI(this);
 			});
 
-			if (offset + apiLimit < response.total) getAPData(offset + apiLimit, needClients);
-			else {
+			offset += apiLimit;
+			if (offset < response.total) {
+				if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = offset.toString();
+				var apProgress = (offset / response.total) * 100;
+				apNotification.update({ progress: apProgress });
+				getAPData(offset, needClients);
+			} else {
+				if (apNotification) apNotification.update({ progress: 100 });
 				updateAPUI();
 				saveDataToDB('monitoring_aps', JSON.stringify(aps));
 				if (apNotification) apNotification.close();
 
 				// Grab wireless client data after grabbing APs (so we can match AP Serials to AP Names)
 				if (needClients) getWirelessClientData(0);
+				else apPromise.resolve();
 			}
 		}
 	});
+	return apPromise.promise();
 }
 
-function refreshAPs() {
-	$.when(tokenRefresh()).then(function() {
-		apNotification = showNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
-		getAPData(0, true);
+function refreshAPData() {
+	apiMessage = false;
+	apNotification = showProgressNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
+	authPromise = new $.Deferred();
+	$.when(authRefresh(authPromise)).then(function() {
+		if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '0';
+		getAPData(0, false);
 	});
 }
 
@@ -1770,7 +2002,9 @@ function getBSSIDData(offset) {
 		if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			saveDataToDB('monitoring_bssids', JSON.stringify([]));
 		} else {
@@ -1780,7 +2014,8 @@ function getBSSIDData(offset) {
 
 			bssids = bssids.concat(response.aps);
 
-			if (offset + apiLimit < response.total) getBSSIDData(offset + apiLimit);
+			offset += apiLimit;
+			if (offset < response.total) getBSSIDData(offset);
 			else {
 				bssidPromise.resolve();
 				saveDataToDB('monitoring_bssids', JSON.stringify(bssids));
@@ -1797,21 +2032,30 @@ function getBSSIDs() {
 // Switches
 // Updated: 1.6.0
 function loadSwitchUI(device) {
+	//console.log(device);
 	var memoryUsage = (((device['mem_total'] - device['mem_free']) / device['mem_total']) * 100).toFixed(0).toString();
-	if (device['status'] != 'Up') downSwitchCount++;
-	var status = '<i class="fa fa-circle text-danger"></i>';
+	var status = '<i class="fa-solid fa-circle text-danger"></i>';
+	var deviceUp = true;
 	if (device['status'] == 'Up') {
-		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+	} else {
+		downSwitchCount++;
+		deviceUp = false;
 	}
+
+	var uptime = device['uptime'] ? device['uptime'] : 0;
+	var duration = moment.duration(uptime * 1000);
 
 	// Make link to Central
 	name = encodeURI(device['name']);
 	var apiURL = localStorage.getItem('base_url');
-	var clientURL = centralURLs[0][apiURL] + '/frontend/#/SWITCHDETAILS/' + device['serial'] + '?cssn=' + device['serial'] + '&cdcn=' + name + '&nc=device';
+	var centralBaseURL = centralURLs[0][apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+	var clientURL = centralBaseURL + '/frontend/#/SWITCHDETAILS/' + device['serial'] + '?cssn=' + device['serial'] + '&cdcn=' + name + '&nc=device';
 
 	// Add row to table
 	var table = $('#switch-table').DataTable();
-	table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['status'], device['ip_address'], device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr']]);
+	table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['status'], device['ip_address'], device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr'], deviceUp ? duration.humanize() : '-']);
 
 	var universalTable = $('#universal-table').DataTable();
 	universalTable.row.add(['Switch', '<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['ip_address'], device['macaddr'], device['site'], device['group_name'], '', '', device['model'], device['serial'], device['firmware_version']]);
@@ -1843,6 +2087,8 @@ function updateSwitchUI() {
 }
 
 function getSwitchData(offset, needClients) {
+	if (offset == 0) switchPromise = new $.Deferred();
+
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -1882,7 +2128,9 @@ function getSwitchData(offset, needClients) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('switch_icon')).addClass('text-warning');
 			$(document.getElementById('switch_icon')).removeClass('text-danger');
@@ -1911,15 +2159,33 @@ function getSwitchData(offset, needClients) {
 				loadSwitchUI(this);
 			});
 
-			if (offset + apiLimit < response.total) getSwitchData(offset + apiLimit, needClients);
-			else {
+			offset += apiLimit;
+			if (offset < response.total) {
+				if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = offset.toString();
+				var switchProgress = (offset / response.total) * 100;
+				switchNotification.update({ progress: switchProgress });
+				getSwitchData(offset, needClients);
+			} else {
+				if (switchNotification) switchNotification.update({ progress: 100 });
 				updateSwitchUI();
 				saveDataToDB('monitoring_switches', JSON.stringify(switches));
-				switchNotification.close();
+				if (switchNotification) switchNotification.close();
 				// Grab wired client data after grabbing switches (so we can match switch Serials to AP Names)
 				if (needClients) getWiredClientData(0);
+				else switchPromise.resolve();
 			}
 		}
+	});
+	return switchPromise.promise();
+}
+
+function refreshSwitchData() {
+	apiMessage = false;
+	switchNotification = showProgressNotification('ca-switch-stack', 'Obtaining Switches...', 'bottom', 'center', 'info');
+	authPromise = new $.Deferred();
+	$.when(authRefresh(authPromise)).then(function() {
+		if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '0';
+		getSwitchData(0, false);
 	});
 }
 
@@ -1952,40 +2218,49 @@ function getSwitchesForGroup(group) {
 // Gateways
 // Updated: 1.22.0
 function loadGatewayUI(device) {
+	//console.log(device);
 	var memoryUsage = (((device['mem_total'] - device['mem_free']) / device['mem_total']) * 100).toFixed(0).toString();
 
-	if (device['status'] != 'Up') downGatewayCount++;
-	var status = '<i class="fa fa-circle text-danger"></i>';
+	var status = '<i class="fa-solid fa-circle text-danger"></i>';
+	var deviceUp = true;
 	if (device['status'] == 'Up') {
-		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+	} else {
+		downGatewayCount++;
+		deviceUp = false;
 	}
+
+	var uptime = device['uptime'] ? device['uptime'] : 0;
+	var duration = moment.duration(uptime * 1000);
 
 	var uplinkStatus = '';
 	if (device['uplinks_metric']) {
 		var uplinks = device['uplinks_metric'];
-		if (uplinks['up'] > 0) uplinkStatus += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + uplinks['up'] + ' </strong></i>';
-		else uplinkStatus += '<i class="fa fa-arrow-up fa-fw"> ' + uplinks['up'] + ' </i>';
-		if (uplinks['down'] > 0) uplinkStatus += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + uplinks['down'] + ' </strong></i>';
-		else uplinkStatus += '<i class="fa fa-arrow-down fa-fw"> ' + uplinks['down'] + ' </i>';
+		if (uplinks['up'] > 0) uplinkStatus += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + uplinks['up'] + ' </strong></i>';
+		else uplinkStatus += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + uplinks['up'] + ' </i>';
+		if (uplinks['down'] > 0) uplinkStatus += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + uplinks['down'] + ' </strong></i>';
+		else uplinkStatus += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + uplinks['down'] + ' </i>';
 	}
 
 	var tunnelsStatus = '';
 	if (device['tunnels_metric']) {
 		var tunnels = device['tunnels_metric'];
-		if (tunnels['up'] > 0) tunnelsStatus += '<i class="fa fa-arrow-up fa-fw text-success"><strong> ' + tunnels['up'] + ' </strong></i>';
-		else tunnelsStatus += '<i class="fa fa-arrow-up fa-fw"> ' + tunnels['up'] + ' </i>';
-		if (tunnels['down'] > 0) tunnelsStatus += '<i class="fa fa-arrow-down fa-fw text-danger"><strong> ' + tunnels['down'] + ' </strong></i>';
-		else tunnelsStatus += '<i class="fa fa-arrow-down fa-fw"> ' + tunnels['down'] + ' </i>';
+		if (tunnels['up'] > 0) tunnelsStatus += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + tunnels['up'] + ' </strong></i>';
+		else tunnelsStatus += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + tunnels['up'] + ' </i>';
+		if (tunnels['down'] > 0) tunnelsStatus += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + tunnels['down'] + ' </strong></i>';
+		else tunnelsStatus += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + tunnels['down'] + ' </i>';
 	}
 
 	// Make link to Central
 	name = encodeURI(device['name']);
 	var apiURL = localStorage.getItem('base_url');
-	var clientURL = centralURLs[0][apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + device['serial'] + '?csg=' + device['serial'] + '&cdcn=' + name + '&nc=gateway';
+	var centralBaseURL = centralURLs[0][apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+	var clientURL = centralBaseURL + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + device['serial'] + '?csg=' + device['serial'] + '&cdcn=' + name + '&nc=gateway';
 
 	// Add row to table
 	var table = $('#gateway-table').DataTable();
-	table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['status'], device['ip_address'], device['public_ip'] ? device['public_ip'] : '', device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr'], uplinkStatus, tunnelsStatus, device['reboot_reason']]);
+	table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['status'], device['ip_address'], device['public_ip'] ? device['public_ip'] : '', device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr'], deviceUp ? duration.humanize() : '-', uplinkStatus, tunnelsStatus, device['reboot_reason']]);
 
 	var universalTable = $('#universal-table').DataTable();
 	universalTable.row.add(['Gateway', '<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['ip_address'], device['macaddr'], device['site'], device['group_name'], '', '', device['model'], device['serial'], device['firmware_version']]);
@@ -2016,6 +2291,7 @@ function updateGatewayUI() {
 }
 
 function getGatewayData(offset) {
+	if (offset == 0) gatewayPromise = new $.Deferred();
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -2055,7 +2331,9 @@ function getGatewayData(offset) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-primary');
@@ -2080,18 +2358,26 @@ function getGatewayData(offset) {
 					loadGatewayUI(this);
 				});
 			}
-
-			if (offset + apiLimit < response.total) getGatewayData(offset + apiLimit);
-			else {
-				if (needGatewayDetails && response.total > 0) getGatewayDetails(0);
-				else {
+			offset += apiLimit;
+			if (offset < response.total) {
+				if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = offset.toString();
+				var gwProgress = (offset / response.total) * 100;
+				gatewayNotification.update({ progress: gwProgress });
+				getGatewayData(offset);
+			} else {
+				if (needGatewayDetails && response.total > 0) {
+					setTimeout(getGatewayDetails, 500, 0);
+				} else {
+					if (gatewayNotification) gatewayNotification.update({ progress: 100 });
 					updateGatewayUI();
 					saveDataToDB('monitoring_gateways', JSON.stringify(gateways));
-					gatewayNotification.close();
+					if (gatewayNotification) gatewayNotification.close();
+					if (gatewayPromise) gatewayPromise.resolve();
 				}
 			}
 		}
 	});
+	return gatewayPromise.promise();
 }
 
 function getGatewayDetails(gatewayIndex) {
@@ -2126,24 +2412,47 @@ function getGatewayDetails(gatewayIndex) {
 		//console.log(response);
 		gateways[gatewayIndex] = response;
 		gatewayIndex++;
-		if (gatewayIndex < gateways.length) getGatewayDetails(gatewayIndex);
-		// get the next gateway's detailed info
-		else {
+		if (gatewayIndex < gateways.length) {
+			var gwProgress = (gatewayIndex / gateways.length) * 100;
+			gatewayNotification.update({ progress: gwProgress });
+			getGatewayDetails(gatewayIndex);
+			// get the next gateway's detailed info
+		} else {
+			gatewayNotification.update({ progress: 100 });
 			$.each(gateways, function() {
 				loadGatewayUI(this);
 			});
 			updateGatewayUI();
 			saveDataToDB('monitoring_gateways', JSON.stringify(gateways));
-			gatewayNotification.close();
+			if (gatewayNotification) gatewayNotification.close();
+			if (gatewayPromise) gatewayPromise.resolve();
 		}
 	});
+}
+
+function refreshGatewayData() {
+	apiMessage = false;
+	gatewayNotification = showProgressNotification('ca-gateway', 'Obtaining Gateways...', 'bottom', 'center', 'info');
+	authPromise = new $.Deferred();
+	$.when(authRefresh(authPromise)).then(function() {
+		if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '0';
+		$('#gateway-table')
+			.DataTable()
+			.rows()
+			.remove();
+
+		getGatewayData(0);
+	});
+}
+
+function disableGatewayDetails() {
+	needGatewayDetails = false;
 }
 
 function getGateways() {
 	return gateways;
 }
 
-// Added in 1.15
 function getGatewaysForSite(site) {
 	var siteGateways = [];
 	$.each(gateways, function() {
@@ -2164,6 +2473,246 @@ function getGatewaysForGroup(group) {
 	return groupGateways;
 }
 
+// Controllers
+// Added: 1.30
+function loadControllerUI(device) {
+	console.log(device);
+	var memoryUsage = '0';
+	if (device['mem_total'] > 0) {
+		memoryUsage = (((device['mem_total'] - device['mem_free']) / device['mem_total']) * 100).toFixed(0).toString();
+	}
+
+	var status = '<i class="fa-solid fa-circle text-danger"></i>';
+	var deviceUp = true;
+	if (device['status'] == 'Up') {
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+	} else {
+		downControllerCount++;
+		deviceUp = false;
+	}
+
+	var uptime = device['uptime'] ? device['uptime'] : 0;
+	var duration = moment.duration(uptime * 1000);
+
+	// Make link to Central
+	name = encodeURI(device['name']);
+	var apiURL = localStorage.getItem('base_url');
+	var centralBaseURL = centralURLs[0][apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+	var clientURL = centralBaseURL + '/frontend/#/CONTROLLERDETAIL/OVERVIEW/' + device['serial'] + '?csg=' + device['serial'] + '&cdcn=' + name + '&nc=controller';
+
+	// Add row to table
+	var table = $('#controller-table').DataTable();
+	table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['status'], device['ip_address'], device['model'], device['serial'], device['firmware_version'], device['site'], device['group_name'], device['macaddr'], deviceUp ? duration.humanize() : '-', device['role'], device['reboot_reason']]);
+
+	var universalTable = $('#universal-table').DataTable();
+	universalTable.row.add(['Controller', '<a href="' + clientURL + '" target="_blank"><strong>' + device['name'] + '</strong></a>', status, device['ip_address'], device['macaddr'], device['site'], device['group_name'], '', '', device['model'], device['serial'], device['firmware_version']]);
+}
+
+function updateControllerUI() {
+	// Force reload of table data
+	$('#controller-table')
+		.DataTable()
+		.rows()
+		.draw();
+	$('#universal-table')
+		.DataTable()
+		.rows()
+		.draw();
+
+	if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '' + controllers.length + '';
+	$(document.getElementById('controller_icon')).removeClass('text-warning');
+	if (downControllerCount > 0) {
+		$(document.getElementById('controller_icon')).addClass('text-danger');
+		$(document.getElementById('controller_icon')).removeClass('text-success');
+	} else {
+		$(document.getElementById('controller_icon')).removeClass('text-danger');
+		$(document.getElementById('controller_icon')).addClass('text-success');
+	}
+	// call to current showing page
+	loadCurrentPageController();
+}
+
+function getControllerData(offset) {
+	if (offset == 0) controllerPromise = new $.Deferred();
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v2/mobility_controllers?calculate_total=true&limit=' + apiLimit + '&offset=' + offset,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/mobility_controllers)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		//console.log(response);
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+			$(document.getElementById('controller_icon')).addClass('text-warning');
+			$(document.getElementById('controller_icon')).removeClass('text-primary');
+			$(document.getElementById('controller_icon')).removeClass('text-success');
+			$(document.getElementById('controller_icon')).removeClass('text-danger');
+			if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '-';
+		} else if (response.hasOwnProperty('message')) {
+			if (!apiMessage) {
+				apiMessage = true;
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
+			}
+			$(document.getElementById('controller_icon')).addClass('text-warning');
+			$(document.getElementById('controller_icon')).removeClass('text-primary');
+			$(document.getElementById('controller_icon')).removeClass('text-success');
+			$(document.getElementById('controller_icon')).removeClass('text-danger');
+			saveDataToDB('monitoring_controllers', JSON.stringify([]));
+		} else {
+			if (offset == 0) {
+				downControllerCount = 0;
+				controllers = [];
+				$('#controller-table')
+					.DataTable()
+					.rows()
+					.remove();
+			}
+
+			controllers = controllers.concat(response.mcs);
+
+			// Only load the controller table with info if we are not getting the detailed info
+			if (!needGatewayDetails) {
+				$.each(response.mcs, function() {
+					loadControllerUI(this);
+				});
+			}
+
+			offset += apiLimit;
+			if (offset < response.total) {
+				if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = offset.toString();
+				var gwProgress = (offset / response.total) * 100;
+				gatewayNotification.update({ progress: gwProgress });
+				getControllerData(offset);
+			} else {
+				if (needGatewayDetails && response.total > 0) {
+					setTimeout(getControllerDetails, 500, 0);
+				} else {
+					gatewayNotification.update({ progress: 100 });
+					updateControllerUI();
+					saveDataToDB('monitoring_controllers', JSON.stringify(controllers));
+					if (gatewayNotification) gatewayNotification.close();
+					if (controllerPromise) controllerPromise.resolve();
+				}
+			}
+		}
+	});
+	return controllerPromise.promise();
+}
+
+function getControllerDetails(controllerIndex) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v2/mobility_controllers/' + controllers[controllerIndex].serial + '?stats_metric=true',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/mobility_controllers/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		//console.log(response);
+		controllers[controllerIndex] = response;
+		controllerIndex++;
+		if (controllerIndex < controllers.length) {
+			var gwProgress = (controllerIndex / controllers.length) * 100;
+			gatewayNotification.update({ progress: gwProgress });
+			getControllerDetails(controllerIndex);
+			// get the next gateway's detailed info
+		} else {
+			gatewayNotification.update({ progress: 100 });
+			$.each(controllers, function() {
+				loadControllerUI(this);
+			});
+			updateControllerUI();
+			saveDataToDB('monitoring_controllers', JSON.stringify(controllers));
+			if (gatewayNotification) gatewayNotification.close();
+			if (controllerPromise) controllerPromise.resolve();
+		}
+	});
+}
+
+function refreshControllerData() {
+	apiMessage = false;
+	gatewayNotification = showProgressNotification('ca-controller', 'Obtaining Controllers...', 'bottom', 'center', 'info');
+	authPromise = new $.Deferred();
+	$.when(authRefresh(authPromise)).then(function() {
+		if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '0';
+		$('#controller-table')
+			.DataTable()
+			.rows()
+			.remove();
+
+		getControllerData(0);
+	});
+}
+
+function getControllers() {
+	return controllers;
+}
+
+function getControllersForSite(site) {
+	var siteControllers = [];
+	$.each(controllers, function() {
+		if (this['site'] === site) siteControllers.push(this);
+	});
+	return siteControllers;
+}
+
+function getControllersForSiteID(siteID) {
+	return getControllersForSite(getNameforSiteId(siteID));
+}
+
+function getControllersForGroup(group) {
+	var groupControllers = [];
+	$.each(controllers, function() {
+		if (this['group_name'] === group) groupControllers.push(this);
+	});
+	return groupControllers;
+}
+
 // Sites
 // Updated: 1.6.0
 function loadSiteUI(site) {
@@ -2172,10 +2721,10 @@ function loadSiteUI(site) {
 
 	var capestate = '';
 	if (site['cape_state'] === 'good') {
-		capestate += '<i class="fa fa-circle text-success"></i>';
+		capestate += '<i class="fa-solid fa-circle text-success"></i>';
 		capestate += ' No User Experience Issues';
 	} else if (site['cape_state']) {
-		capestate += '<i class="fa fa-circle text-danger"></i> ';
+		capestate += '<i class="fa-solid fa-circle text-danger"></i> ';
 		capestate = titleCase(noUnderscore(site['cape_state_dscr'][0]));
 	}
 	if (site['cape_url']) {
@@ -2184,86 +2733,86 @@ function loadSiteUI(site) {
 
 	var aiinsights = '';
 	if (site['insight_hi'] != 0) {
-		aiinsights += '<i class="fa fa-circle text-danger"></i>';
+		aiinsights += '<i class="fa-solid fa-circle text-danger"></i>';
 	}
 	if (site['insight_mi'] != 0) {
-		aiinsights += '<i class="fa fa-circle text-warning"></i>';
+		aiinsights += '<i class="fa-solid fa-circle text-warning"></i>';
 	}
 	if (site['insight_lo'] != 0) {
-		aiinsights += '<i class="fa fa-circle text-minor"></i>';
+		aiinsights += '<i class="fa-solid fa-circle text-minor"></i>';
 	}
 	if (aiinsights === '') {
-		aiinsights = '<i class="fa fa-circle text-neutral"></i>';
+		aiinsights = '<i class="fa-solid fa-circle text-neutral"></i>';
 	}
 
-	var status = '<i class="fa fa-circle text-success"></i>';
+	var status = '<i class="fa-solid fa-circle text-success"></i>';
 	var healthReason = '';
 	if (site['wan_uplinks_down'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'Gateway with WAN links down';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wan_tunnels_down'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'Gateway with VPN Tunnels down';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wlan_cpu_high'] > 1) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'APs with high CPU usage';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wlan_cpu_high'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'AP with high CPU usage';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wired_cpu_high'] > 1) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'Switches with high CPU usage';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wired_cpu_high'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'Switch with high CPU usage';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['branch_cpu_high'] > 1) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'Gateways with high CPU usage';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['branch_cpu_high'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'Gateway with high CPU usage';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wlan_device_status_down'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'One or more APs are down';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['wired_device_status_down'] > 0) {
-		status = '<i class="fa fa-circle text-danger"></i>';
+		status = '<i class="fa-solid fa-circle text-danger"></i>';
 		healthReason = 'One or more switches are down';
 		if (siteIssues > 1) siteIssues = 1;
 	} else if (site['device_high_noise_6ghz'] > 0) {
-		status = '<i class="fa fa-circle text-warning"></i>';
+		status = '<i class="fa-solid fa-circle text-warning"></i>';
 		healthReason = 'High noise on 6GHz';
 		if (siteIssues > 2) siteIssues = 2;
 	} else if (site['device_high_noise_5ghz'] > 0) {
-		status = '<i class="fa fa-circle text-warning"></i>';
+		status = '<i class="fa-solid fa-circle text-warning"></i>';
 		healthReason = 'High noise on 5GHz';
 		if (siteIssues > 2) siteIssues = 2;
 	} else if (site['device_high_noise_2_4ghz'] > 0) {
-		status = '<i class="fa fa-circle text-warning"></i>';
+		status = '<i class="fa-solid fa-circle text-warning"></i>';
 		healthReason = 'High noise on 2.4GHz';
 		if (siteIssues > 2) siteIssues = 2;
 	} else if (site['device_high_ch_6ghz'] > 0) {
-		status = '<i class="fa fa-circle text-warning"></i>';
+		status = '<i class="fa-solid fa-circle text-warning"></i>';
 		healthReason = 'High channel utilization on 6GHz';
 		if (siteIssues > 2) siteIssues = 2;
 	} else if (site['device_high_ch_5ghz'] > 0) {
-		status = '<i class="fa fa-circle text-warning"></i>';
+		status = '<i class="fa-solid fa-circle text-warning"></i>';
 		healthReason = 'High channel utilization on 5GHz';
 		if (siteIssues > 2) siteIssues = 2;
 	} else if (site['device_high_ch_2_4ghz'] > 0) {
-		status = '<i class="fa fa-circle text-warning"></i>';
+		status = '<i class="fa-solid fa-circle text-warning"></i>';
 		healthReason = 'High channel utilization on 2.4GHz';
 		if (siteIssues > 2) siteIssues = 2;
 	} else if (site['device_high_mem'] > 0) {
-		status = '<i class="fa fa-circle text-minor"></i>';
+		status = '<i class="fa-solid fa-circle text-minor"></i>';
 		healthReason = 'Devices with high memory utilization';
 		if (siteIssues > 3) siteIssues = 3;
 	}
@@ -2271,8 +2820,10 @@ function loadSiteUI(site) {
 	// Make link to Central
 	var name = encodeURI(site['name']);
 	var apiURL = localStorage.getItem('base_url');
-	var clientURL = centralURLs[0][apiURL] + '/frontend/#/SITEHEALTH?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
-	var aiURL = centralURLs[0][apiURL] + '/frontend/#/SITE_INSIGHTS?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
+	var centralBaseURL = centralURLs[0][apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+	var clientURL = centralBaseURL + '/frontend/#/SITEHEALTH?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
+	var aiURL = centralBaseURL + '/frontend/#/SITE_INSIGHTS?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
 
 	table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + site['name'] + '</strong></a>', status, site['device_up'], site['device_down'], site['connected_count'], capestate, '<a href="' + aiURL + '" target="_blank">' + aiinsights + '</a>', healthReason]);
 }
@@ -2372,7 +2923,9 @@ function getSiteData(offset) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('site_icon')).addClass('text-warning');
 			$(document.getElementById('site_icon')).removeClass('text-primary');
@@ -2398,12 +2951,16 @@ function getSiteData(offset) {
 				loadSiteUI(this);
 			});
 
-			if (offset + apiSiteLimit < response.total) {
-				getSiteData(offset + apiSiteLimit);
+			offset += apiSiteLimit;
+			if (offset < response.total) {
+				var siteProgress = (offset / response.total) * 100;
+				if (siteNotification) siteNotification.update({ progress: siteProgress });
+				getSiteData(offset);
 			} else {
+				if (siteNotification) siteNotification.update({ progress: 100 });
 				updateSiteUI();
 				saveDataToDB('monitoring_sites', JSON.stringify(sites));
-				siteNotification.close();
+				if (siteNotification) siteNotification.close();
 			}
 		}
 	});
@@ -2551,7 +3108,9 @@ function getGroupData(offset) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('group_icon')).addClass('text-warning');
 			$(document.getElementById('group_icon')).removeClass('text-primary');
@@ -2572,8 +3131,9 @@ function getGroupData(offset) {
 				if (select) select.options.length = 0;
 			}
 
-			if (offset + apiGroupLimit < response.total) {
-				getGroupData(offset + apiGroupLimit);
+			offset += apiGroupLimit;
+			if (offset < response.total) {
+				getGroupData(offset);
 				getGroupTemplateInfo(response.data, false);
 			} else {
 				getGroupTemplateInfo(response.data, true);
@@ -2596,14 +3156,14 @@ function getGroups() {
 
 // Updated: 1.5.0
 function getGroupTemplateInfo(currentGroups, last) {
-	// ******************************************************************************************************************************************************************************* //
+	// ****************************************************************************************************************************************************** //
 	// remove any groups with a comma in the name... due to API issue.
 	var newGroups = [];
 	$.each(currentGroups, function() {
 		if (!this[0].includes(',')) newGroups.push(this);
 	});
 	currentGroups = newGroups;
-	// ******************************************************************************************************************************************************************************* //
+	// ***************************************************************************************************************************************************** //
 
 	// Combine groups into a single escaped comma separated list
 	var groupList = currentGroups.join('%2C');
@@ -2651,12 +3211,14 @@ function getGroupTemplateInfo(currentGroups, last) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('group_icon')).addClass('text-warning');
 			$(document.getElementById('group_icon')).removeClass('text-primary');
 			saveDataToDB('monitoring_groups', JSON.stringify([]));
-			groupNotification.close();
+			if (groupNotification) groupNotification.close();
 		} else {
 			// Sort Groups before loading into tables or dropdowns
 			groups = groups.concat(response.data);
@@ -2681,7 +3243,7 @@ function getGroupTemplateInfo(currentGroups, last) {
 				if (last) {
 					updateGroupUI();
 					saveDataToDB('monitoring_groups', JSON.stringify(groups));
-					groupNotification.close();
+					if (groupNotification) groupNotification.close();
 					groupPromise.resolve();
 				}
 			}
@@ -2731,7 +3293,9 @@ function getGroupProperties(groupList, last) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			$(document.getElementById('group_icon')).addClass('text-warning');
 			$(document.getElementById('group_icon')).removeClass('text-primary');
@@ -2758,7 +3322,7 @@ function getGroupProperties(groupList, last) {
 			if (last) {
 				updateGroupUI();
 				saveDataToDB('monitoring_groups', JSON.stringify(groups));
-				groupNotification.close();
+				if (groupNotification) groupNotification.close();
 				groupPromise.resolve();
 			}
 		}
@@ -2779,7 +3343,7 @@ function compareGroups(a, b) {
 function loadSwarmUI(swarm) {
 	if ($('#groupselector')) {
 		// Add site to the dropdown selector
-		console.log(swarm);
+		//console.log(swarm);
 		$('#groupselector').append($('<option>', { value: swarm['swarm_id'], text: swarm['group_name'] + ' > ' + swarm['name'] }));
 		if ($('#groupselector').length != 0) {
 			$('#groupselector').selectpicker('refresh');
@@ -2832,7 +3396,9 @@ function getSwarmData(offset) {
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
 				apiMessage = true;
-				showNotification('ca-api', response.message, 'top', 'center', 'danger');
+				var level = 'danger';
+				if (response.message.includes('API rate limit exceeded')) level = 'warning';
+				showNotification('ca-api', response.message, 'top', 'center', level);
 			}
 			saveDataToDB('monitoring_swarms', JSON.stringify([]));
 		} else {
@@ -2841,12 +3407,13 @@ function getSwarmData(offset) {
 			}
 			swarms = swarms.concat(response.swarms);
 
-			if (offset + apiLimit < response.total) getSwarmData(offset + apiLimit);
+			offset += apiLimit;
+			if (offset < response.total) getSwarmData(offset);
 			else {
 				loadCurrentPageSwarm();
 				saveDataToDB('monitoring_swarms', JSON.stringify(swarms));
 				swarmPromise.resolve();
-				vcNotification.close();
+				if (vcNotification) vcNotification.close();
 			}
 		}
 	});
@@ -2928,7 +3495,7 @@ function downloadDeviceInventory() {
 		//csvLink.setAttribute('Inventory', 'inventory.csv');
 		csvLink.click();
 		window.URL.revokeObjectURL(csvLink);
-		csvNotification.close();
+		if (csvNotification) csvNotification.close();
 	});
 }
 function updateInventory() {
@@ -2936,15 +3503,17 @@ function updateInventory() {
 		Grab all inventories 
 		after complete trigger promise
 	*/
-	inventoryNotification = showNotification('ca-stock-2', 'Obtaining device inventory...', 'bottom', 'center', 'info');
+	inventoryNotification = showLongNotification('ca-stock-2', 'Obtaining device inventory...', 'bottom', 'center', 'info');
 	// Get the device inventories (IAP, Switch, Gateway) to determine device type
 	apPromise = new $.Deferred();
 	switchPromise = new $.Deferred();
 	gatewayPromise = new $.Deferred();
 	$.when(getAPInventory(0), getSwitchInventory(0), getGatewayInventory(0)).then(function() {
 		//console.log('Got ALL Inventories');
-		inventoryNotification.close();
-		showNotification('ca-stock-2', 'Device Inventory updated', 'bottom', 'center', 'success');
+		if (inventoryNotification) {
+			inventoryNotification.update({ message: 'Device Inventory updated', type: 'success' });
+			setTimeout(inventoryNotification.close, 1000);
+		}
 		inventoryPromise.resolve();
 	});
 	return inventoryPromise.promise();
@@ -3003,7 +3572,9 @@ function getAPInventory(offset) {
 				apInventoryCount = response.total;
 			}
 			apInventory = apInventory.concat(response.devices);
-			if (offset + apiLimit < response.total) getAPInventory(offset + apiLimit); // if there are still objects to get
+
+			offset += apiLimit;
+			if (offset < response.total) getAPInventory(offset); // if there are still objects to get
 			//console.log(response.devices);
 		}
 	});
@@ -3065,7 +3636,9 @@ function getSwitchInventory(offset) {
 				switchInventoryCount = response.total;
 			}
 			switchInventory = switchInventory.concat(response.devices);
-			if (offset + apiLimit < response.total) getSwitchInventory(offset + apiLimit); // if there are still objects to get
+
+			offset += apiLimit;
+			if (offset < response.total) getSwitchInventory(offset); // if there are still objects to get
 		}
 	});
 
@@ -3126,7 +3699,9 @@ function getGatewayInventory(offset) {
 				gatewayInventoryCount = response.total;
 			}
 			gatewayInventory = gatewayInventory.concat(response.devices);
-			if (offset + apiLimit < response.total) getGatewayInventory(offset + apiLimit); // if there are still objects to get
+
+			offset += apiLimit;
+			if (offset < response.total) getGatewayInventory(offset); // if there are still objects to get
 			//console.log(apInventory)
 		}
 	});
@@ -3305,16 +3880,26 @@ function findDeviceInMonitoringForMAC(currentMAC) {
 		return the device if found, along with storing the device type
 	*/
 	var found = false;
-	// Check APs
+	// Check Clients
 	deviceType = '';
 	var foundDevice = null;
-	$.each(aps, function() {
-		if (this['macaddr'] === currentMAC) {
+	$.each(clients, function() {
+		if (cleanMACAddress(this['macaddr']) === cleanMACAddress(currentMAC)) {
 			foundDevice = this;
-			deviceType = 'IAP';
 			return false; // break  out of the for loop
 		}
 	});
+
+	// Check APs
+	if (!foundDevice) {
+		$.each(aps, function() {
+			if (this['macaddr'] === currentMAC) {
+				foundDevice = this;
+				deviceType = 'IAP';
+				return false; // break  out of the for loop
+			}
+		});
+	}
 
 	// Check Switches
 	if (!foundDevice) {
@@ -3640,7 +4225,7 @@ function checkForLicensingCompletion() {
 	licenseNotification.update({ progress: licenseProgress });
 
 	if (licenseCounter == csvData.length) {
-		licenseNotification.close();
+		if (licenseNotification) licenseNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -3861,7 +4446,7 @@ function checkForUnlicensingCompletion() {
 	licenseNotification.update({ progress: licenseProgress });
 
 	if (licenseCounter == csvDataCount) {
-		licenseNotification.close();
+		if (licenseNotification) licenseNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -4064,7 +4649,7 @@ function moveDevicesToGroup() {
 				moveNotification.update({ progress: moveProgress });
 
 				if (moveCounter == devicesToMove) {
-					moveNotification.close();
+					if (moveNotification) moveNotification.close();
 					if (currentWorkflow === '') {
 						if (apiErrorCount != 0) {
 							showLog();
@@ -4158,7 +4743,7 @@ function createSiteFromCSV() {
 			showNotification('ca-c-warning', err.message, 'bottom', 'center', 'danger');
 		},
 		complete: function() {
-			csvNotification.close();
+			if (csvNotification) csvNotification.close();
 			siteCreationCount = 0;
 			apiErrorCount = 0;
 			siteNotification = showProgressNotification('ca-pin-add-2', 'Creating Sites...', 'bottom', 'center', 'info');
@@ -4237,7 +4822,7 @@ function createSiteFromCSV() {
 					siteNotification.update({ progress: siteProgress });
 
 					if (siteCreationCount >= csvData.length) {
-						siteNotification.close();
+						if (siteNotification) siteNotification.close();
 						if (apiErrorCount != 0) {
 							showLog();
 							Swal.fire({
@@ -4463,7 +5048,7 @@ function checkForSiteMoveCompletion() {
 	moveNotification.update({ progress: moveProgress });
 
 	if (moveCounter == csvData.length) {
-		moveNotification.close();
+		if (moveNotification) moveNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -4563,6 +5148,180 @@ function moveDevicesToSite() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Label functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function getLabelIDforLabel(label) {
+	var labelID = -1;
+	$.each(labels, function() {
+		if (this['label_name'] === label) {
+			labelID = this['label_id'];
+			return false;
+		}
+	});
+	return labelID;
+}
+
+function getLabels(offset) {
+	if (offset == 0) {
+		var labelPromise = new $.Deferred();
+		labels = [];
+	}
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/central/v1/labels?offset=' + offset + '&limit=' + apiLimit,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/central/v1/labels)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		labels = labels.concat(response.labels);
+		offset += apiLimit;
+		if (offset < response.total) {
+			getLabels(offset);
+		} else {
+			labelPromise.resolve();
+		}
+	});
+	return labelPromise.promise();
+}
+
+function assignLabelsToDevices() {
+	/*  
+		get labels from label data
+		group the devices per label
+		assign label to list of devices
+	*/
+	var labelSuccessCount = 0;
+	var labelFailedCount = 0;
+	var labelTotalCount = 0;
+	inventoryPromise = new $.Deferred();
+	$.when(updateInventory()).then(function() {
+		labelNotification = showProgressNotification('ca-tags-stack', 'Assigning devices to labels...', 'bottom', 'center', 'info');
+		labelCounter = 0;
+		// Get all the Labels
+		$.when(getLabels(0)).then(function() {
+			// Build lists of devices for each label in the CSV
+			var labelDevices = {};
+			$.each(csvData, function() {
+				// support case of multiple labels per device
+				var currentLabels = this['LABELS'].split(':');
+				var currentSerial = this['SERIAL'].trim();
+				$.each(currentLabels, function() {
+					var currentLabel = this.trim();
+					if (currentLabel !== '') {
+						// break up into label based sets of IAP, Switch, Gateway device types
+						if (!labelDevices[currentLabel]) labelDevices[currentLabel] = {};
+						var foundDevice = findDeviceInInventory(currentSerial);
+						if (foundDevice) {
+							var currentDevices = labelDevices[currentLabel];
+							if (!currentDevices[deviceType]) currentDevices[deviceType] = [];
+							var currentDeviceType = currentDevices[deviceType];
+							currentDeviceType.push(currentSerial);
+							labelTotalCount++;
+							currentDevices[deviceType] = currentDeviceType;
+							labelDevices[currentLabel] = currentDevices;
+						}
+					}
+				});
+			});
+
+			// Update the labels
+			for (const [key, value] of Object.entries(labelDevices)) {
+				// Build data JSON
+				var labelID = getLabelIDforLabel(key);
+				if (labelID == -1) {
+					logError('The label "' + key + '" does not exist in Central');
+				} else {
+					var labelDeviceTypes = value;
+					for (const [key, value] of Object.entries(labelDeviceTypes)) {
+						var labelData = {};
+						labelData['label_id'] = labelID;
+						labelData['device_ids'] = value;
+						labelData['device_type'] = key;
+
+						var settings = {
+							url: getAPIURL() + '/tools/postCommand',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/central/v2/labels/associations',
+								access_token: localStorage.getItem('access_token'),
+								data: JSON.stringify(labelData),
+							}),
+						};
+
+						$.ajax(settings).done(function(response, textStatus, jqXHR) {
+							if (response.hasOwnProperty('status')) {
+								if (response.status === '503') {
+									apiErrorCount++;
+									logError('Central Server Error (503): ' + response.reason + ' (/central/v2/labels/associations)');
+								}
+							}
+
+							$.each(response['failed'], function() {
+								if (this['reason'] !== 'LABEL_ERR_LABEL_ID_ALREADY_ASSOCIATED') {
+									logError('Device with Serial Number "' + this['device_id'] + '" failed to be assigned the requested Label');
+									labelFailedCount++;
+								} else {
+									labelSuccessCount++;
+								}
+							});
+							$.each(response['success'], function() {
+								logInformation('Device with Serial Number "' + this['device_id'] + '" was assigned the requested Label');
+								labelSuccessCount++;
+							});
+							var labelProgress = ((labelFailedCount + labelSuccessCount) / labelTotalCount) * 100;
+							labelNotification.update({ progress: labelProgress });
+
+							if (labelFailedCount + labelSuccessCount >= labelTotalCount) {
+								labelNotification.close();
+								if (labelFailedCount > 0) {
+									showLog();
+									Swal.fire({
+										title: 'Labelling Failure',
+										text: 'Some or all devices failed to be assigned labels',
+										icon: 'error',
+									});
+								} else {
+									Swal.fire({
+										title: 'Labelling Success',
+										text: 'All devices were assigned the requested labels',
+										icon: 'success',
+									});
+								}
+							}
+						});
+					}
+				}
+			}
+		});
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Renaming functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function checkForRenameCompletion() {
@@ -4570,7 +5329,7 @@ function checkForRenameCompletion() {
 	renameNotification.update({ progress: renameProgress });
 
 	if (renameCounter == csvData.length) {
-		renameNotification.close();
+		if (renameNotification) renameNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -5416,7 +6175,7 @@ function checkForZoneCompletion() {
 	zoneNotification.update({ progress: zoneProgress });
 
 	if (zoneCounter == csvData.length) {
-		zoneNotification.close();
+		if (zoneNotification) zoneNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -5578,7 +6337,7 @@ function checkForRFCompletion() {
 	profileNotification.update({ progress: profileProgress });
 
 	if (rfCounter == csvData.length) {
-		profileProgress.close();
+		if (profileProgress) profileProgress.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -5734,7 +6493,7 @@ function checkForRadioModeCompletion() {
 	radioNotification.update({ progress: radioProgress });
 
 	if (radioModeCounter >= csvData.length) {
-		radioNotification.close();
+		if (radioNotification) radioNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -6088,7 +6847,7 @@ function checkForAntennaCompletion() {
 
 	if (antennaCounter >= csvData.length) {
 		if ($('#AntennaConfigModal')) $('#AntennaConfigModal').modal('hide');
-		antennaNotification.close();
+		if (antennaNotification) antennaNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -6128,7 +6887,7 @@ function setAntennaGain() {
 	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
 		antennaNotification = showProgressNotification('ca-antenna', 'Setting Antenna Gains...', 'bottom', 'center', 'info');
-		if (csvData.length == 0) showNotification('ca-router', 'No external antenna APs available', 'bottom', 'center', 'warning');
+		if (csvData.length == 0) antennaNotification.update({ message: 'No external antenna APs available', type: 'warning' });
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
@@ -6365,9 +7124,9 @@ function testAntennaGain() {
 					var table = $('#ap-antenna-table').DataTable();
 
 					var memoryUsage = (((ap['mem_total'] - ap['mem_free']) / ap['mem_total']) * 100).toFixed(0).toString();
-					var status = '<i class="fa fa-circle text-danger"></i>';
+					var status = '<i class="fa-solid fa-circle text-danger"></i>';
 					if (ap['status'] == 'Up') {
-						status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
+						status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
 					}
 					var ip_address = ap['ip_address'];
 					if (!ip_address) ip_address = '';
@@ -6388,7 +7147,7 @@ function testAntennaGain() {
 					antennaCounter++;
 					var antennaProgress = (antennaCounter / siteAPs.length) * 100;
 					antennaNotification.update({ progress: antennaProgress });
-					if (antennaCounter >= siteAPs.length) antennaNotification.close();
+					if (antennaCounter >= siteAPs.length && antennaNotification) antennaNotification.close();
 				}
 			});
 
@@ -6397,14 +7156,13 @@ function testAntennaGain() {
 			antennaCounter++;
 			var antennaProgress = (antennaCounter / siteAPs.length) * 100;
 			antennaNotification.update({ progress: antennaProgress });
-			if (antennaCounter >= siteAPs.length) antennaNotification.close();
+			if (antennaCounter >= siteAPs.length && antennaNotification) antennaNotification.close();
 		}
 	});
 	if (externalAPs != 0) {
 		$('#APAntennaConfigModalLink').trigger('click');
 	} else {
-		antennaNotification.close();
-		showNotification('ca-antenna', 'No external antenna APs found at ' + selectedSite, 'bottom', 'center', 'danger');
+		antennaNotification.update({ type: 'danger', message: 'No external antenna APs found at ' + selectedSite });
 	}
 }
 
@@ -6439,7 +7197,7 @@ function checkForRadioCompletion() {
 	radioNotification.update({ progress: radioProgress });
 
 	if (radioCounter == csvData.length) {
-		radioNotification.close();
+		if (radioNotification) radioNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -7396,7 +8154,7 @@ function getMSPAPData(offset) {
 				$(document.getElementById('ap_icon')).removeClass('text-warning');
 				$(document.getElementById('ap_icon')).removeClass('text-danger');
 				$(document.getElementById('ap_icon')).addClass('text-success');
-				apNotification.close();
+				if (apNotification) apNotification.close();
 			}
 		}
 	});
@@ -7414,13 +8172,13 @@ function loadMSPAPUI() {
 
 		var monitoringInfo = findDeviceInMSPMonitoring(this['serial']);
 		if (monitoringInfo) {
-			var status = '<i class="fa fa-circle text-danger"></i>';
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (monitoringInfo.status == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
 		} else {
-			var status = '<i class="fa fa-circle text-muted"></i>';
+			var status = '<i class="fa-solid fa-circle text-muted"></i>';
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, '', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
 		}
 	});
@@ -7540,7 +8298,7 @@ function getMSPSwitchData(offset) {
 				$(document.getElementById('switch_icon')).removeClass('text-warning');
 				$(document.getElementById('switch_icon')).removeClass('text-danger');
 				$(document.getElementById('switch_icon')).addClass('text-success');
-				switchNotification.close();
+				if (switchNotification) switchNotification.close();
 			}
 		}
 	});
@@ -7558,13 +8316,13 @@ function loadMSPSwitchUI() {
 
 		var monitoringInfo = findDeviceInMSPMonitoring(this['serial']);
 		if (monitoringInfo) {
-			var status = '<i class="fa fa-circle text-danger"></i>';
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (monitoringInfo.status == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
 		} else {
-			var status = '<i class="fa fa-circle text-muted"></i>';
+			var status = '<i class="fa-solid fa-circle text-muted"></i>';
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, '', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
 		}
 	});
@@ -7665,7 +8423,7 @@ function getMSPGatewayData(offset) {
 		} else {
 			if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '' + response.total + '';
 			if (offset === 0) {
-				gatewayNotification = showNotification('ca-content-delivery', 'Obtaining Gateways...', 'bottom', 'center', 'info');
+				gatewayNotification = showNotification('ca-gateway', 'Obtaining Gateways...', 'bottom', 'center', 'info');
 				mspGateways = [];
 				mspGatewayMonitoring = [];
 				mspGatewayCount = response.total;
@@ -7685,7 +8443,7 @@ function getMSPGatewayData(offset) {
 				$(document.getElementById('gateway_icon')).removeClass('text-warning');
 				$(document.getElementById('gateway_icon')).removeClass('text-danger');
 				$(document.getElementById('gateway_icon')).addClass('text-success');
-				gatewayNotification.close();
+				if (gatewayNotification) gatewayNotification.close();
 			}
 		}
 	});
@@ -7703,13 +8461,13 @@ function loadMSPGatewayUI() {
 
 		var monitoringInfo = findDeviceInMSPMonitoring(this['serial']);
 		if (monitoringInfo) {
-			var status = '<i class="fa fa-circle text-danger"></i>';
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (monitoringInfo.status == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '']);
 		} else {
-			var status = '<i class="fa fa-circle text-muted"></i>';
+			var status = '<i class="fa-solid fa-circle text-muted"></i>';
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, '', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '']);
 		}
 	});
@@ -8504,9 +9262,9 @@ function showLayerOne() {
 								var outErrors = this['out_errors'];
 								if (!Number.isInteger(outErrors)) outErrors = '';
 
-								var status = '<i class="fa fa-circle text-danger"></i>';
+								var status = '<i class="fa-solid fa-circle text-danger"></i>';
 								if (this['status'] == 'Up') {
-									status = '<i class="fa fa-circle text-success"></i>';
+									status = '<i class="fa-solid fa-circle text-success"></i>';
 								}
 
 								var table = $('#layerone-table').DataTable();
@@ -8836,7 +9594,7 @@ function rebootSingleDevice(device) {
 
 			// check if finished
 			if (rebootedDevices + rebootErrors + skippedDevices == csvData.length) {
-				rebootNotification.close();
+				if (rebootNotification) rebootNotification.close();
 				if (rebootErrors > 0) {
 					showLog();
 					Swal.fire({
@@ -8928,7 +9686,7 @@ function checkConfigSync(device, configType, reboot) {
 			checkedCounter++;
 			var checkedProgress = ((checkedCounter + skippedDevices) / csvData.length) * 100;
 			configNotification.update({ progress: checkedProgress });
-			if (checkedProgress > 99) configNotification.close();
+			if (checkedProgress > 99 && configNotification) configNotification.close();
 		}
 	}
 }
@@ -9019,7 +9777,7 @@ function checkAntennaConfigResult(session_id, deviceSerial, reboot) {
 					checkedCounter++;
 					var checkedProgress = ((checkedCounter + skippedDevices) / csvData.length) * 100;
 					configNotification.update({ progress: checkedProgress });
-					if (checkedProgress > 99) configNotification.close();
+					if (checkedProgress > 99 && configNotification) configNotification.close();
 
 					if (reboot) {
 						// Add device to list of devices to reboot
@@ -9144,9 +9902,9 @@ function checkStaticIPConfigResult(session_id, deviceSerial, reboot) {
 
 								// Build strings
 								var memoryUsage = (((ap['mem_total'] - ap['mem_free']) / ap['mem_total']) * 100).toFixed(0).toString();
-								var status = '<i class="fa fa-circle text-danger"></i>';
+								var status = '<i class="fa-solid fa-circle text-danger"></i>';
 								if (ap['status'] == 'Up') {
-									status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa fa-circle text-success"></i></span>';
+									status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
 								}
 								var active_ip_address = ap['ip_address'];
 								if (!active_ip_address) active_ip_address = '';
@@ -9219,7 +9977,7 @@ function checkForStaticIPCompletion() {
 	var checkedProgress = ((checkedCounter + skippedDevices) / csvData.length) * 100;
 	configNotification.update({ progress: checkedProgress });
 	if (checkedProgress > 99) {
-		configNotification.close();
+		if (configNotification) configNotification.close();
 		var table = $('#ap-static-table').DataTable();
 		var icon = 'warning';
 		if (!table.data().count()) {
@@ -9239,7 +9997,7 @@ function checkForStaticIPConfigCompletion() {
 	ipNotification.update({ progress: ipProgress });
 
 	if (ipCounter >= csvData.length) {
-		ipNotification.close();
+		if (ipNotification) ipNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -9451,7 +10209,7 @@ function checkForVisitorCompletion() {
 	var visitorProgress = (visitorCounter / csvData.length) * 100;
 	visitorNotification.update({ progress: visitorProgress });
 	if (visitorCounter >= csvData.length) {
-		visitorNotification.close();
+		if (visitorNotification) visitorNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();

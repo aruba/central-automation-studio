@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7.5
 Updated: 1.14.
-Aaron Scott (WiFi Downunder) 2022
+Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var groupDeviceList = {};
@@ -13,7 +13,7 @@ var updateNotification;
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function loadCurrentPageGateway() {
-	showNotification('ca-content-delivery', 'Retrieved all Gateways', 'bottom', 'center', 'success');
+	showNotification('ca-gateway', 'Retrieved all Gateways', 'bottom', 'center', 'success');
 	buildGroupDeviceList();
 }
 
@@ -188,7 +188,7 @@ function applyCLICommands() {
 	var newConfig = document.getElementById('gatewayConfig').value;
 	var currentConfig = newConfig.split('\n');
 
-	updateNotification = showNotification('ca-window-code', 'Updating Gateway Config...', 'bottom', 'center', 'info');
+	updateNotification = showLongNotification('ca-window-code', 'Updating Gateway Config...', 'bottom', 'center', 'info');
 
 	// need to push config back to Central.
 	var settings = {
@@ -207,8 +207,6 @@ function applyCLICommands() {
 	//console.log(JSON.stringify({ cli_cmds: currentConfig }));
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
-		//console.log(response);
-		updateNotification.close();
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				logError('Central Server Error (503): ' + response.reason + ' (/caasapi/v1/exec/cmd)');
@@ -217,12 +215,18 @@ function applyCLICommands() {
 		}
 		var result = response['_global_result'];
 		if (result['status_str'] === 'Success') {
-			showNotification('ca-window-code', 'Gateway config for ' + selectedText + ' was successfully updated', 'bottom', 'center', 'success');
+			if (updateNotification) {
+				updateNotification.update({ type: 'success', message: 'Gateway config for ' + selectedText + ' was successfully updated' });
+				setTimeout(updateNotification.close, 2000);
+			}
 			getConfigforSelected();
 		} else {
 			logError('Config for ' + selectedText + ' failed to be applied: ' + result['status_str']);
 			showLog();
-			showNotification('ca-window-code', 'Gateway config for ' + selectedText + ' failed', 'bottom', 'center', 'warning');
+			if (updateNotification) {
+				updateNotification.update({ type: 'warning', message: 'Gateway config for ' + selectedText + ' failed' });
+				setTimeout(updateNotification.close, 2000);
+			}
 		}
 	});
 }

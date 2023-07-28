@@ -1,7 +1,7 @@
 /*
 Central Automation v1.15
 Updated: 
-© Aaron Scott (WiFi Downunder) 2022
+© Aaron Scott (WiFi Downunder) 2021-2023
 */
 
 var allGroups = [];
@@ -17,12 +17,21 @@ var runningTotal = 0;
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function loadCurrentPageGroup() {
-	groupInfo = JSON.parse(localStorage.getItem('firmware_groups'));
-	if (groupInfo) {
-		loadFirmwareTable(false);
-	} else {
-		getFirmwareCompliance();
-	}
+	const transaction = db.transaction('general', 'readonly');
+	const store = transaction.objectStore('general');
+
+	const firmwareQuery = store.get('firmware_groups');
+	firmwareQuery.onsuccess = function() {
+		if (firmwareQuery.result && firmwareQuery.result.data) {
+			groupInfo = JSON.parse(firmwareQuery.result.data);
+			if (groupInfo) {
+				loadFirmwareTable(false);
+			}
+		} else {
+			getFirmwareCompliance();
+		}
+	};
+
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
@@ -635,11 +644,7 @@ function loadFirmwareTable(checked) {
 		.DataTable()
 		.rows()
 		.draw();
-	try {
-		localStorage.setItem('firmware_groups', JSON.stringify(groupInfo));
-	} catch (e) {
-		console.log('Browser Storage Full. Not able to cache Firmware information');
-	}
+	saveDataToDB('firmware_groups', JSON.stringify(groupInfo));
 }
 
 function checkFirmwareUpdateDone() {

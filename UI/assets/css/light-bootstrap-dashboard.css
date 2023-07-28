@@ -3988,7 +3988,8 @@ fieldset[disabled] .form-control {
     font-weight: 400;
     margin: 5px 0px;
     font-size: 18px;
-    color: #888888;
+    color: #888888 !important;
+    cursor: pointer;
 }
 
 .navbar .navbar-brand:hover {
@@ -4141,7 +4142,7 @@ fieldset[disabled] .form-control {
 
 .navbar-transparent .navbar-brand,
 [class*="navbar-ct"] .navbar-brand {
-    color: #FFFFFF;
+    color: #FFFFFF !important;
     margin-left: 10px;
     opacity: 0.9;
     filter: alpha(opacity=90);
@@ -5853,7 +5854,7 @@ fieldset[disabled] .form-control {
 
 .card-plain {
     background-color: transparent;
-    box-shadow: none;
+    box-shadow: none !important;
     border-radius: 0;
 }
 
@@ -13693,7 +13694,7 @@ select.selectpicker {
   
   .dropdown-menu .dropdown-item {
     padding: 8px 16px;
-    color: #999999;
+    color: #999999 !important;
   }
   
   .dropdown-menu .dropdown-item:hover,

@@ -198,9 +198,9 @@ function loadDevicesTable(checked) {
 		if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedDevices(\'' + key + '\')" checked>';
 
 		// Build Status dot
-		var status = '<i class="fa fa-circle text-danger"></i>';
+		var status = '<i class="fa-solid fa-circle text-danger"></i>';
 		if (device['status'] == 'Up') {
-			status = '<i class="fa fa-circle text-success"></i>';
+			status = '<i class="fa-solid fa-circle text-success"></i>';
 		}
 
 		// Add VC Cluster to table
@@ -232,51 +232,20 @@ function rebootSelectedDevices() {
 function confirmedDeviceReboot() {
 	var rebootedDevices = 0;
 	var rebootErrors = 0;
-	for (const [key, value] of Object.entries(selectedDevices)) {
-		var settings = {
-			url: getAPIURL() + '/tools/postCommand',
-			method: 'POST',
-			timeout: 0,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			data: JSON.stringify({
-				url: localStorage.getItem('base_url') + '/device_management/v1/device/' + key + '/action/reboot',
-				access_token: localStorage.getItem('access_token'),
-			}),
-		};
 
-		$.ajax(settings).done(function(response) {
-			//console.log('Device Reboot response: ' + JSON.stringify(response));
-			if (response.hasOwnProperty('status')) {
-				if (response.status === '503') {
-					logError('Central Server Error (503): ' + response.reason + ' (/device_management/v1/device/<SERIAL>/action/reboot)');
-					return;
-				}
-			}
-			if (response['state'] && response['state'].toLowerCase() === 'success') {
-				rebootedDevices++;
-			} else {
-				rebootErrors++;
-				if (response['description']) logError(response['description']);
-			}
+	var serialKey = 'SERIAL';
+	var csvDataBuild = [];
 
-			// check if finished
-			if (rebootedDevices + rebootErrors == Object.keys(selectedDevices).length) {
-				if (rebootErrors > 0) {
-					Swal.fire({
-						title: 'Reboot Failure',
-						text: 'Some or all devices failed to be rebooted',
-						icon: 'error',
-					});
-				} else {
-					Swal.fire({
-						title: 'Reboot Success',
-						text: 'All devices were rebooted',
-						icon: 'success',
-					});
-				}
-			}
-		});
-	}
+	// For each of the APs needing to be rebooted (stored in 'devicesToReboot')
+	// Rebuild the CSV only having selected APs
+	var deviceSerials = Object.keys(selectedDevices);
+	$.each(deviceSerials, function() {
+		csvDataBuild.push({ [serialKey]: this });
+	});
+
+	var csvDataBlob = {};
+	csvDataBlob['data'] = csvDataBuild;
+	processCSV(csvDataBlob);
+
+	setTimeout(rebootDevices, 1000);
 }

@@ -74,11 +74,16 @@ function getStacks(offset) {
 			apiErrorCount++;
 			return;
 		}
-		var response = JSON.parse(commandResults.responseBody);
 
-		stacks = stacks.concat(response.stacks);
-		if (offset + apiLimit <= response.total) getStacks(offset + apiLimit);
-		else {
+		if (commandResults.responseBody !== '') {
+			var response = JSON.parse(commandResults.responseBody);
+
+			stacks = stacks.concat(response.stacks);
+			if (offset + apiLimit <= response.total) getStacks(offset + apiLimit);
+			else {
+				stacksPromise.resolve();
+			}
+		} else {
 			stacksPromise.resolve();
 		}
 	});
@@ -252,9 +257,9 @@ function loadSwitchesTable() {
 			var device = this;
 			// is a template switch
 			if (device['status'] != 'Up') downSwitchCount++;
-			var status = '<i class="fa fa-circle text-danger"></i>';
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (device['status'] == 'Up') {
-				status = '<i class="fa fa-circle text-success"></i>';
+				status = '<i class="fa-solid fa-circle text-success"></i>';
 			}
 
 			var checkBtn = '<button class="btn btn-round btn-sm btn-info" onclick="checkTemplateVariable(\'' + device['serial'] + '\')">Verify</button>';
@@ -413,10 +418,11 @@ function checkTemplateVariable(currentSerial) {
 				apiErrorCount++;
 				return;
 			}
-			var response = JSON.parse(commandResults.responseBody);
+			console.log(commandResults);
+			//var response = JSON.parse(commandResults.responseBody);
 
-			if (response.error_code) {
-				if (response.description.includes('not found as a Template group')) {
+			if (commandResults.error_code) {
+				if (commandResults.description.includes('not found as a Template group')) {
 					Swal.fire({
 						title: 'No Template',
 						text: 'This switch (' + currentSerial + ') is no longer in a Template group',
@@ -425,12 +431,12 @@ function checkTemplateVariable(currentSerial) {
 				} else {
 					Swal.fire({
 						title: 'Template Failure',
-						text: response.description,
+						text: commandResults.description,
 						icon: 'error',
 					});
 				}
-			} else if (response.responseBody) {
-				var templateVariables = findVariablesInTemplate(response.responseBody);
+			} else if (commandResults.responseBody) {
+				var templateVariables = findVariablesInTemplate(commandResults.responseBody);
 				var currentVariableKeys = Object.keys(currentVariables);
 				var missingVariables = [];
 				var extraVariables = [];
