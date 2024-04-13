@@ -8,34 +8,6 @@ var deviceList = [];
 var filteredList = [];
 var rfProfiles = {};
 
-var antennas = {
-	'AP-ANT-1W': { two: 3.8, five: 5.8 },
-	'AP-ANT-19': { two: 3, five: 6 },
-	'AP-ANT-20W': { two: 2, five: 2 },
-	'AP-ANT-13B': { two: 2.2, five: 4 },
-	'AP-ANT-16': { two: 3.9, five: 4.7 },
-	'AP-ANT-40': { two: 4, five: 5 },
-	'AP-ANT-25A': { two: 5, five: 5 },
-	'AP-ANT-35A': { two: 5, five: 5 },
-	'AP-ANT-45': { two: 4.5, five: 5.5 },
-	'AP-ANT-28': { two: 7.5, five: 7.5 },
-	'AP-ANT-38': { two: 7.5, five: 7.5 },
-	'AP-ANT-48': { two: 8.5, five: 8.5 },
-	'AP-ANT-32': { two: 2, five: 4 },
-	'AP-ANT-22': { two: 2, five: 4 },
-	'ANT-3X3-D100': { two: 5, five: 5 },
-	'ANT-3X3-D608': { two: 7.5, five: 7.5 },
-	'ANT-3X3-2005': { two: 5 },
-	'ANT-3X3-5005': { five: 5 },
-	'ANT-3X3-5010': { five: 10 },
-	'ANT-3X3-5712': { five: 11.5 },
-	'ANT-2X2-2005': { two: 5 },
-	'ANT-2X2-5005': { five: 5 },
-	'ANT-2X2-2314': { two: 14 },
-	'ANT-2X2-5314': { five: 14 },
-	'ANT-2X2-5010': { five: 10 },
-	'ANT-2X2-2714': { two: 14 },
-};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Build Inventory Table
@@ -44,7 +16,6 @@ var antennas = {
 function loadCurrentPageAP() {
 	loadAntennas();
 
-	inventoryPromise = new $.Deferred();
 	$.when(updateInventory()).then(function() {
 		deviceList = getFullInventory();
 	});
@@ -173,6 +144,10 @@ function openAntennaBulkConfig() {
 	$('#BulkAntennaConfigModalLink').trigger('click');
 }
 
+function openPOEBulkConfig() {
+	$('#BulkPOEConfigModalLink').trigger('click');
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Antenna Action 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -240,6 +215,41 @@ function applyProfileBulkChanges() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	POE Action 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function updatePOEOpt() {
+	var select = document.getElementById('groupselector');
+	manualGroup = select.value;
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'This will configure the POE Optimization for all APs shown in the table',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, do it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			applyPOEBulkChanges();
+		}
+	});
+}
+
+function applyPOEBulkChanges() {
+	logStart('Configuring devices for POE Optimization...');
+	// Build CSV with selected group name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(manualGroup, 'poe');
+
+	processCSV(csvDataBlob);
+	// Move devices to the selected Group
+	setPOEOptimization();
+	
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Build CSV with any required changes (group or site action)
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -251,11 +261,11 @@ function buildCSVData(selectedGroup, mode) {
 	var antenna1Key = 'RADIO 1 GAIN';
 	var antenna2Key = 'RADIO 2 GAIN';
 	var rfProfileKey = 'RF PROFILE';
+	var poeOptKey = 'POE OPT';
 
 	var csvDataBuild = [];
 
 	var table = $('#inventory-table').DataTable();
-	console.log(table.rows({ filter: 'applied' }));
 	var filteredRows = table.rows({ filter: 'applied' });
 
 	// For each row in the filtered set
@@ -268,6 +278,8 @@ function buildCSVData(selectedGroup, mode) {
 			}
 		} else if (mode === 'rfprofile') {
 			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [rfProfileKey]: document.getElementById('radioSelector').value });
+		} else if (mode === 'poe') {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [poeOptKey]: document.getElementById('poeopt').checked });
 		}
 	});
 

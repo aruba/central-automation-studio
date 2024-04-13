@@ -162,14 +162,17 @@ function getLicensingData() {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
 		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/licensing/v1/subscriptions/stats)');
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/platform/licensing/v1/subscriptions)');
 			apiErrorCount++;
 			return;
 		} else if (commandResults.hasOwnProperty('status') && commandResults.status === '401') {
 			// Access Token expired - get a new one and try again.
 			authPromise = new $.Deferred();
 			$.when(authRefresh(authPromise)).then(function() {
-				getLicensingData();
+				if (!failedAuth) {
+					failedAuth = true;
+					getLicensingData();
+				}
 			});
 			return;
 		} else if (commandResults.hasOwnProperty('error_code')) {
@@ -243,7 +246,6 @@ function getLicensingData() {
 
 		$('[data-toggle="tooltip"]').tooltip();
 
-		inventoryPromise = new $.Deferred();
 		$.when(updateInventory()).then(function() {
 			loadMonitoringData();
 		});

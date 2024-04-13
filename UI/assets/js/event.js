@@ -117,6 +117,7 @@ function getDashboardData() {
 		if (dashboardTop) {
 			getAppRFStats();
 			getTopClients();
+			getTopAPs();
 		}
 		/*
 		var nowData = dashboardData[updateTimestamp] ? dashboardData[updateTimestamp] : {};
@@ -267,6 +268,88 @@ function getTopClients() {
 			{
 				labels: clientLabels,
 				series: [clientSeriesTx, clientSeriesRx],
+			},
+			{
+				stackBars: true,
+				axisX: {
+					showGrid: false,
+				},
+
+				axisY: {
+					onlyInteger: true,
+				},
+				height: '300px',
+				plugins: [Chartist.plugins.tooltip()],
+			}
+		).on('draw', function(data) {
+			if (data.type === 'bar') {
+				data.element.attr({
+					style: 'stroke-width: 30px',
+				});
+			}
+		});
+	});
+}
+
+/*---------------------------------------------------------------------
+	Top APs API Functions
+---------------------------------------------------------------------*/
+function getTopAPs() {
+	// filter the data for the timescale
+	var select = document.getElementById('timescalePicker');
+	var timescale = select.value;
+
+	var now = new Date();
+	// convert timescale from minutes to seconds (*60)
+	// convert timestamp from ms to s (/1000)
+	var fromTime = Math.floor(now.getTime() / 1000 - timescale * 60);
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v2/aps/bandwidth_usage/topn?from_timestamp=' + fromTime,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/aps/bandwidth_usage/topn)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		var topAPs = response['aps'];
+		var apLabels = [];
+		var apSeriesTx = [];
+		var apSeriesRx = [];
+		$.each(topAPs, function() {
+			var totalThroughput = this.tx_data_bytes + this.rx_data_bytes;
+			var labelString = this.name + '\n(' + Math.floor(totalThroughput / 1024 / 1024 / 1024) + 'GB)';
+			var txAmount = this.tx_data_bytes / 1024 / 1024 / 1024;
+			var rxAmount = this.rx_data_bytes / 1024 / 1024 / 1024;
+			apLabels.push(this.name);
+			apSeriesTx.push({ meta: labelString, value: txAmount.toFixed(2) });
+			apSeriesRx.push({ meta: labelString, value: rxAmount.toFixed(2) });
+		});
+
+		new Chartist.Bar(
+			'#chartAPs',
+			{
+				labels: apLabels,
+				series: [apSeriesTx, apSeriesRx],
 			},
 			{
 				stackBars: true,
@@ -590,7 +673,7 @@ function processAPs() {
 					if (upAPs[currentSerial]) delete upAPs[currentSerial];
 					var name = encodeURI(this['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
+					var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
 
 					eventTime = new Date(updateTimestamp);
 
@@ -614,7 +697,7 @@ function processAPs() {
 					console.log('New Up AP ' + this['name']);
 					var name = encodeURI(this['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
+					var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
 
 					eventTime = new Date(updateTimestamp);
 
@@ -653,7 +736,7 @@ function processSwitches() {
 					if (upSwitches[currentSerial]) delete upSwitches[currentSerial];
 					var name = encodeURI(this['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[0][apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
+					var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
 
 					eventTime = new Date(updateTimestamp);
 
@@ -677,7 +760,7 @@ function processSwitches() {
 					console.log('New Up Switch ' + this['name']);
 					var name = encodeURI(this['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[0][apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
+					var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
 
 					eventTime = new Date(updateTimestamp);
 
@@ -718,7 +801,7 @@ function processGateways() {
 					console.log('New Down Gateway ' + this['name']);
 					var name = encodeURI(this['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[0][apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + this['serial'] + '?csg=' + this['serial'] + '&cdcn=' + name + '&nc=gateway';
+					var centralURL = centralURLs[apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + this['serial'] + '?csg=' + this['serial'] + '&cdcn=' + name + '&nc=gateway';
 
 					eventTime = new Date(updateTimestamp);
 
@@ -742,7 +825,7 @@ function processGateways() {
 					console.log('New Up Gateway ' + this['name']);
 					var name = encodeURI(this['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[0][apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + this['serial'] + '?csg=' + this['serial'] + '&cdcn=' + name + '&nc=gateway';
+					var centralURL = centralURLs[apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + this['serial'] + '?csg=' + this['serial'] + '&cdcn=' + name + '&nc=gateway';
 
 					eventTime = new Date(updateTimestamp);
 
@@ -851,6 +934,7 @@ function changeTimescale() {
 	//updateDHCPTable();
 	//reselectRow();
 	loadGraphs();
+	getTopAPs();
 	getTopClients();
 	getAppRFStats();
 }
@@ -1197,23 +1281,47 @@ function showSettingsModal() {
 
 function saveDashboardSettings() {
 	localStorage.setItem('dashboard_interval', $('#dashboard_interval').val());
+	localStorage.setItem('dashboard_overview', document.getElementById('dashboard_overview').checked);
 	localStorage.setItem('dashboard_wlan', document.getElementById('dashboard_wlan').checked);
 	localStorage.setItem('dashboard_infra', document.getElementById('dashboard_infra').checked);
 	localStorage.setItem('dashboard_top', document.getElementById('dashboard_top').checked);
+	localStorage.setItem('dashboard_condensed', document.getElementById('dashboard_condensed').checked);
 	updateVisibleCards();
 
 	getDashboardData();
 }
 
 function updateVisibleCards() {
+	if (document.getElementById('dashboard_overview').checked) {
+		document.getElementById('overview-cards').hidden = false;
+	} else {
+		document.getElementById('overview-cards').hidden = true;
+	}
+	
+	if (document.getElementById('dashboard_condensed').checked) {
+		document.getElementById('top-aps-card').classList.remove('col-md-6');
+		document.getElementById('top-aps-card').classList.add('col-md-4');
+		document.getElementById('top-clients-card').classList.remove('col-md-6');
+		document.getElementById('top-clients-card').classList.add('col-md-4');
+		document.getElementById('top-apps-card').classList.remove('col-md-6');
+		document.getElementById('top-apps-card').classList.add('col-md-4');	
+	} else {
+		document.getElementById('top-aps-card').classList.remove('col-md-4');
+		document.getElementById('top-aps-card').classList.add('col-md-6');
+		document.getElementById('top-clients-card').classList.remove('col-md-4');
+		document.getElementById('top-clients-card').classList.add('col-md-6');
+		document.getElementById('top-apps-card').classList.remove('col-md-4');
+		document.getElementById('top-apps-card').classList.add('col-md-6');	
+	}
+	
 	if (document.getElementById('dashboard_wlan').checked) {
 		dashboardWLAN = true;
-		document.getElementById('client-card').hidden = false;
+		document.getElementById('wlan-md').hidden = false;
 		document.getElementById('mix-card').hidden = false;
 		document.getElementById('band-card').hidden = false;
 	} else {
 		dashboardWLAN = false;
-		document.getElementById('client-card').hidden = true;
+		document.getElementById('wlan-md').hidden = true;
 		document.getElementById('mix-card').hidden = true;
 		document.getElementById('band-card').hidden = true;
 	}
@@ -1238,10 +1346,12 @@ function updateVisibleCards() {
 
 	if (document.getElementById('dashboard_top').checked) {
 		dashboardTop = true;
+		document.getElementById('top-aps-card').hidden = false;
 		document.getElementById('top-clients-card').hidden = false;
 		document.getElementById('top-apps-card').hidden = false;
 	} else {
 		dashboardTop = false;
+		document.getElementById('top-aps-card').hidden = true;
 		document.getElementById('top-clients-card').hidden = true;
 		document.getElementById('top-apps-card').hidden = true;
 	}

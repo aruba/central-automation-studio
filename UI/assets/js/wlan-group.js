@@ -16,6 +16,8 @@ var wlanPrefix = 'wlan ssid-profile ';
 var groupsLoaded = false;
 var swarmsLoaded = false;
 
+var configNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -61,7 +63,7 @@ function getConfigforGroup() {
 		notificationString = wlanGroupName.substring(wlanGroupName.indexOf(' > ') + 3);
 	}
 
-	showNotification('ca-folder-settings', 'Getting "' + notificationString + '" WLAN Config...', 'bottom', 'center', 'info');
+	configNotification = showNotification('ca-folder-settings', 'Getting "' + notificationString + '" WLAN Config...', 'bottom', 'center', 'info');
 
 	//configGroups = getGroups();
 	groupCounter = 0;
@@ -99,13 +101,17 @@ function getConfigforGroup() {
 		// save the group config for modifications
 		groupConfigs[wlanGroup] = response;
 
-		showNotification('ca-folder-settings', 'Retrieved "' + notificationString + '" WLAN Config', 'bottom', 'center', 'success');
+		if (configNotification) {
+			configNotification.update({ type: 'success', message: 'Retrieved "' + notificationString + '" WLAN Config' });
+			setTimeout(configNotification.close, 2000);
+		}
 
 		if (groupConfigs[wlanGroup].hasOwnProperty('error_code')) {
 			document.getElementById('wlanConfig').value = '';
 		} else {
 			document.getElementById('wlanConfig').value = groupConfigs[wlanGroup].join('\n');
 		}
+		checkForAWConfig();
 	});
 	$('[data-toggle="tooltip"]').tooltip();
 }
@@ -130,7 +136,7 @@ function updateFullWLAN() {
 	var newConfig = document.getElementById('wlanConfig').value;
 	var currentConfig = newConfig.split('\n');
 
-	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	configNotification = showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
 
 	// need to push config back to Central.
 	var settings = {
@@ -154,40 +160,62 @@ function updateFullWLAN() {
 				return;
 			}
 		}
-		if (response.reason && response.reason == 'Bad Gateway') {
-			Swal.fire({
-				title: 'API Issue',
-				text: 'There is an issue communicating with the API Gateway',
-				icon: 'warning',
-			});
-		} else if (response.code && response.code == 429) {
-			console.log('errorCode');
-			logError('WLAN config was not applied to ' + configType + ': ' + notificationString);
-			Swal.fire({
-				title: 'API Limit Reached',
-				text: 'You have reached your daily API limit. No more API calls will succeed today.',
-				icon: 'warning',
-			});
-		} else if (response.description) {
-			logError(response.description);
-			errorCounter++;
-		} else if (response !== '' + currentGroup) {
-			logError('WLAN change was not applied to ' + configType + ': "' + notificationString + '"');
-			errorCounter++;
-		}
-		if (errorCounter != 0) {
-			showLog();
-			Swal.fire({
-				title: 'WLAN Configuration',
-				text: 'The WLAN configuration failed to be deployed for the selected ' + configType,
-				icon: 'error',
-			});
-		} else {
-			Swal.fire({
-				title: 'WLAN Configuration',
-				text: 'WLAN was deployed to the "' + notificationString + '" ' + configType,
-				icon: 'success',
-			});
+		if (response.hasOwnProperty('error')) {
+			if (response.error === 'invalid_token') {
+				// Access Token expired - get a new one and try again.
+				var authPromise = new $.Deferred();
+				$.when(authRefresh(authPromise)).then(function() {
+					if (!failedAuth) {
+						failedAuth = true;
+						updateFullWLAN();
+					}
+				});
+			}
+		} else if (response) {
+			failedAuth = false;
+			if (response.reason && response.reason == 'Bad Gateway') {
+				Swal.fire({
+					title: 'API Issue',
+					text: 'There is an issue communicating with the API Gateway',
+					icon: 'warning',
+				});
+			} else if (response.code && response.code == 429) {
+				console.log('errorCode');
+				logError('WLAN config was not applied to ' + configType + ': ' + notificationString);
+				Swal.fire({
+					title: 'API Limit Reached',
+					text: 'You have reached your daily API limit. No more API calls will succeed today.',
+					icon: 'warning',
+				});
+			} else if (response.description) {
+				logError(response.description);
+				errorCounter++;
+			} else if (response !== '' + currentGroup) {
+				logError('WLAN change was not applied to ' + configType + ': "' + notificationString + '"');
+				errorCounter++;
+			}
+			if (errorCounter != 0) {
+				showLog();
+				Swal.fire({
+					title: 'WLAN Configuration',
+					text: 'The WLAN configuration failed to be deployed for the selected ' + configType,
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'WLAN Configuration',
+					text: 'WLAN was deployed to the "' + notificationString + '" ' + configType,
+					icon: 'success',
+				}).then(result => {
+					if (result.isConfirmed) {
+						// refresh the config from Central
+						getConfigforGroup();
+					}
+				});
+			}
+			if (configNotification) {
+				setTimeout(configNotification.close, 1000);
+			}
 		}
 	});
 }
@@ -232,6 +260,52 @@ function loadCurrentPageSwarm() {
 		}
 		swarmsLoaded = true;
 	}
+}
+
+
+/*
+	Config Shortcuts Functions
+*/
+function checkForAWConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('ams-ip')) {
+		document.getElementById('clearAWCheckbox').disabled = false;
+		document.getElementById('clearAWCheckbox').checked = false;
+	} else {
+		document.getElementById('clearAWCheckbox').disabled = true;
+		document.getElementById('clearAWCheckbox').checked = false;
+	}
+}
+
+function clearAWConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (document.getElementById('clearAWCheckbox').checked) {
+		if (!newConfig.includes('clean-airwave-configuration')) newConfig += '\nclean-airwave-configuration';
+	} else {
+		if (newConfig.includes('clean-airwave-configuration')) newConfig = newConfig.replace('\nclean-airwave-configuration', '');
+	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
+}
+
+function checkForAutoDRTConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('auto-drt-upgrade-under-central-mgmt-disable')) {
+		document.getElementById('clearAutoDRTCheckbox').checked = false;
+	} else {
+		document.getElementById('clearAutoDRTCheckbox').checked = false;
+	}
+}
+
+function clearAutoDRTConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (document.getElementById('clearAutoDRTCheckbox').checked) {
+		if (!newConfig.includes('auto-drt-upgrade-under-central-mgmt-disable')) newConfig += '\nauto-drt-upgrade-under-central-mgmt-disable';
+	} else {
+		if (newConfig.includes('auto-drt-upgrade-under-central-mgmt-disable')) newConfig = newConfig.replace('\nauto-drt-upgrade-under-central-mgmt-disable', '');
+	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
 }
 
 /*

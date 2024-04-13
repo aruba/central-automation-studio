@@ -1,7 +1,7 @@
 /*
 Central Automation v1.4.4
-Updated: 1.6.0
-� Aaron Scott (WiFi Downunder) 2022
+Updated: 1.36.0
+� Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var centralURLs = [
@@ -11,38 +11,49 @@ var centralURLs = [
 		'https://internal-apigw.central.arubanetworks.com': 'https://internal-ui.central.arubanetworks.com',
 		'https://app1-apigw.central.arubanetworks.com': 'https://app.central.arubanetworks.com',
 		'https://apigw-prod2.central.arubanetworks.com': 'https://app-prod2-ui.central.arubanetworks.com',
+		'https://apigw-us-east-1.central.arubanetworks.com': 'https://app-us-east-1.central.arubanetworks.com',
 		'https://apigw-uswest4.central.arubanetworks.com': 'https://app-uswest4.central.arubanetworks.com',
-		'https://apigw-ca.central.arubanetworks.com': 'app-ca.central.arubanetworks.com',
+		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'https://cmcsa1.aruba.b4b.comcast.net',
+		'https://apigw-ca.central.arubanetworks.com': 'https://app-ca.central.arubanetworks.com',
+		'https://apigw.central.arubanetworks.com.cn': 'https://app.central.arubanetworks.com.cn',
 		'https://apigw-apaceast.central.arubanetworks.com': 'https://app-apaceast.central.arubanetworks.com',
 		'https://eu-apigw.central.arubanetworks.com': 'https://app2-eu.central.arubanetworks.com',
 		'https://apigw-eucentral2.central.arubanetworks.com': 'https://app-eucentral2.central.arubanetworks.com',
 		'https://apigw-eucentral3.central.arubanetworks.com': 'https://app-eucentral3.central.arubanetworks.com',
-		//"https://apigw-": "https://"
+		'https://apigw-uaenorth1.central.arubanetworks.com': 'https://app-uaenorth1.central.arubanetworks.com',
 	},
 ];
 
-var centralClusters = [
-	{
-		Internal: 'https://internal-apigw.central.arubanetworks.com',
-		'US-1': 'https://app1-apigw.central.arubanetworks.com',
-		'US-2': 'https://apigw-prod2.central.arubanetworks.com',
-		'US-WEST-4': 'https://apigw-uswest4.central.arubanetworks.com',
-		'APAC-1': 'https://api-ap.central.arubanetworks.com',
-		'APAC-EAST1': 'https://apigw-apaceast.central.arubanetworks.com',
-		'APAC-SOUTH1': 'https://apigw-apacsouth.central.arubanetworks.com',
-		'EU-1': 'https://eu-apigw.central.arubanetworks.com',
-		'EU-2': 'https://apigw-eucentral2.central.arubanetworks.com',
-		'EU-3': 'https://apigw-eucentral3.central.arubanetworks.com',
-		'Canada-1': 'https://apigw-ca.central.arubanetworks.com',
-		//"Central On-Prem": "https://apigw-"
-	},
-];
+function getCentralURLs() {
+	return centralURLs;
+}
 
-var clusterNames = [
+var centralClusters = 
 	{
-		'https://internal-apigw.central.arubanetworks.com': 'Internal',
+		'US-1': {url: 'https://app1-apigw.central.arubanetworks.com', type: 'Public'},
+		'US-2': {url: 'https://apigw-prod2.central.arubanetworks.com', type: 'Public'},
+		'US-EAST-1': {url: 'https://apigw-us-east-1.central.arubanetworks.com', type: 'Public'},
+		'US-WEST-4': {url: 'https://apigw-uswest4.central.arubanetworks.com', type: 'Public'},
+		'APAC-1': {url: 'https://api-ap.central.arubanetworks.com', type: 'Public'},
+		'APAC-EAST1': {url: 'https://apigw-apaceast.central.arubanetworks.com', type: 'Public'},
+		'APAC-SOUTH1': {url: 'https://apigw-apacsouth.central.arubanetworks.com', type: 'Public'},
+		'EU-1': {url: 'https://eu-apigw.central.arubanetworks.com', type: 'Public'},
+		'EU-2': {url: 'https://apigw-eucentral2.central.arubanetworks.com', type: 'Public'},
+		'EU-3': {url: 'https://apigw-eucentral3.central.arubanetworks.com', type: 'Public'},
+		'Canada-1': {url: 'https://apigw-ca.central.arubanetworks.com', type: 'Public'},
+		'CN-North': {url: 'https://apigw.central.arubanetworks.com.cn', type: 'Public'},
+		'UAE-North': {url: 'https://apigw-uaenorth1.central.arubanetworks.com', type: 'Public'},
+		'Internal': {url: 'https://internal-apigw.central.arubanetworks.com', type: 'Private'},
+		'CMCSA1': {url: 'https://apigw-cmcsa1api.aruba.b4b.comcast.net', type: 'Private'},
+		'STGTHDNAAS':{url: 'https://apigw-stgthdnaas.central.arubanetworks.com', type: 'Private'},
+		'Central On-Prem': {url: 'COP', type: 'Private'},
+	};
+
+var clusterNames = 
+	{
 		'https://app1-apigw.central.arubanetworks.com': 'US-1',
 		'https://apigw-prod2.central.arubanetworks.com': 'US-2',
+		'https://apigw-us-east-1.central.arubanetworks.com': 'US-EAST-1',
 		'https://apigw-uswest4.central.arubanetworks.com': 'US-WEST4',
 		'https://api-ap.central.arubanetworks.com': 'APAC-1',
 		'https://apigw-apaceast.central.arubanetworks.com': 'APAC-EAST1',
@@ -51,9 +62,13 @@ var clusterNames = [
 		'https://apigw-eucentral2.central.arubanetworks.com': 'EU-2',
 		'https://apigw-eucentral3.central.arubanetworks.com': 'EU-3',
 		'https://apigw-ca.central.arubanetworks.com': 'Canada-1',
-		//"https://apigw-": "Central On-Prem"
-	},
-];
+		'https://apigw.central.arubanetworks.com.cn': 'CN-North',
+		'https://apigw-uaenorth1.central.arubanetworks.com': 'UAE-North',
+		'https://internal-apigw.central.arubanetworks.com': 'Internal',
+		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'CMCSA1',
+		'https://apigw-stgthdnaas.central.arubanetworks.com':'STGTHDNAAS',
+		COP: 'Central On-Prem',
+	};
 
 var api_url = 'https://api.wifidownunder.com';
 var $SCRIPT_ROOT = '{{ request.script_root|tojson|safe }}';
@@ -104,9 +119,21 @@ var adminUserPrefix = 'hash-mgmt-user admin password ';
 var wlanPrefix = 'wlan ssid-profile ';
 var authServerPrefix = 'wlan auth-server ';
 
+var groupNotification;
+var wlanNotification;
+var templateNotification;
+var siteNotification;
+var labelNotification;
+var wlanNotification;
+var authNotification;
+var dstAuthNotification;
+
+
 var configGroups = [];
 
 var csvLicense;
+
+var testCounter = 0;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	 	Utility functions
@@ -155,9 +182,9 @@ function generateCSVForDevices(devices) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function populateCentralClusters() {
-	for (let k in centralClusters[0]) {
-		$('#clusterselector').append($('<option>', { value: centralClusters[0][k], text: k }));
-		$('#destination_clusterselector').append($('<option>', { value: centralClusters[0][k], text: k }));
+	for (let k in centralClusters) {
+		$('#clusterselector').append($('<option>', { value: centralClusters[k].url, text: k }));
+		$('#destination_clusterselector').append($('<option>', { value: centralClusters[k].url, text: k }));
 	}
 }
 
@@ -181,6 +208,8 @@ function onFinishSetup() {
 	localStorage.setItem('destination_secret', $('#destination_secret').val());
 	localStorage.setItem('destination_cppm', $('#destination_cppm').val());
 
+	testCounter = 0;
+	
 	sourceTokenRefresh();
 	destinationTokenRefresh();
 }
@@ -191,7 +220,7 @@ function onFinishSetup() {
 
 // Refresh the Auth token and Access token for the source
 function sourceTokenRefresh() {
-	showNotification('ca-padlock', 'Authenticating with Source Central...', 'bottom', 'center', 'info');
+	authNotification = showLongNotification('ca-padlock', 'Authenticating with Source Central...', 'bottom', 'center', 'info');
 	var settings = {
 		url: api_url + '/auth/refresh',
 		method: 'POST',
@@ -212,7 +241,10 @@ function sourceTokenRefresh() {
 		.done(function(response) {
 			//console.log(response);
 			if (response.hasOwnProperty('error')) {
-				showNotification('ca-padlock', 'Authenticated with Source Central Failed: ' + response.error_description, 'bottom', 'center', 'danger');
+				if (authNotification) {
+					authNotification.update({ type: 'danger', message: 'Authenticated with Source Central Failed: ' + response.error_description });
+					setTimeout(authNotification.close, 1000);
+				}
 			} else {
 				localStorage.setItem('refresh_token', response.refresh_token);
 				localStorage.setItem('access_token', response.access_token);
@@ -227,7 +259,12 @@ function sourceTokenRefresh() {
 				if (page.includes('settings')) {
 					document.getElementById('refresh_token').value = response.refresh_token;
 					document.getElementById('access_token').value = response.access_token;
-					showNotification('ca-padlock', 'Authenticated with Source Central Successful', 'bottom', 'center', 'success');
+					testCounter++;
+					checkTestCounter();
+				}
+				if (authNotification) {
+					authNotification.update({ type: 'success', message: 'Authenticated with Source Central Successful' });
+					setTimeout(authNotification.close, 1000);
 				}
 			}
 		})
@@ -242,11 +279,13 @@ function sourceTokenRefresh() {
 			} else {
 				// something weird is happening
 			}
+			checkTestCounter();
+			if (authNotification) authNotification.close();
 		});
 }
 
 function destinationTokenRefresh() {
-	showNotification('ca-padlock', 'Authenticating with Destination Central...', 'bottom', 'center', 'info');
+	dstAuthNotification = showLongNotification('ca-padlock', 'Authenticating with Destination Central...', 'bottom', 'center', 'info');
 	var settings = {
 		url: api_url + '/auth/refresh',
 		method: 'POST',
@@ -267,7 +306,10 @@ function destinationTokenRefresh() {
 		.done(function(response) {
 			//console.log(response);
 			if (response.hasOwnProperty('error')) {
-				showNotification('ca-padlock', 'Authenticated with Destination Central Failed: ' + response.error_description, 'bottom', 'center', 'danger');
+				if (dstAuthNotification) {
+					dstAuthNotification.update({ type: 'danger', message: 'Authenticated with Destination Central Failed: ' + response.error_description });
+					setTimeout(dstAuthNotification.close, 1000);
+				}
 			} else {
 				localStorage.setItem('destination_refresh_token', response.refresh_token);
 				localStorage.setItem('destination_access_token', response.access_token);
@@ -276,7 +318,12 @@ function destinationTokenRefresh() {
 				if (page.includes('settings')) {
 					document.getElementById('destination_refresh_token').value = response.refresh_token;
 					document.getElementById('destination_access_token').value = response.access_token;
-					showNotification('ca-padlock', 'Authenticated with Destination Central Successful', 'bottom', 'center', 'success');
+					if (dstAuthNotification) {
+						dstAuthNotification.update({ type: 'success', message: 'Authenticated with Destination Central Successful' });
+						setTimeout(dstAuthNotification.close, 1000);
+					}
+					testCounter++;
+					checkTestCounter();
 				}
 			}
 		})
@@ -291,7 +338,19 @@ function destinationTokenRefresh() {
 			} else {
 				// something weird is happening
 			}
+			dstAuthNotification.close();
+			checkTestCounter();
 		});
+}
+
+function checkTestCounter() {
+	if (testCounter == 2) {
+		setTimeout(goToMigrationPage, 1500);
+	}
+}
+
+function goToMigrationPage() {
+	window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'migration.html';
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -368,7 +427,6 @@ function migrateSelectedOptions() {
 		// Migrate Sites
 		if (document.getElementById('siteDeviceCheckbox').checked && document.getElementById('siteCheckbox').checked) {
 			$.when(migrateSites()).then(function() {
-				inventoryPromise = new $.Deferred();
 				getGroupInformation();
 				$.when(updateInventory()).then(function() {
 					assignDevicesToSites();
@@ -381,7 +439,6 @@ function migrateSelectedOptions() {
 		}
 
 		if (document.getElementById('siteDeviceCheckbox').checked) {
-			inventoryPromise = new $.Deferred();
 			getGroupInformation();
 			$.when(updateInventory()).then(function() {
 				assignDevicesToSites();
@@ -402,7 +459,6 @@ function migrateSelectedOptions() {
 				// can now move on with auto licensing disabled.
 
 				// Grab full group details and device inventory - since its used by config migrations
-				inventoryPromise = new $.Deferred();
 				getGroupInformation();
 				$.when(updateInventory()).then(function() {
 					// unassign licenses from devices in source account
@@ -420,7 +476,6 @@ function migrateSelectedOptions() {
 		} else if (document.getElementById('groupCheckbox').checked || document.getElementById('uiConfigCheckbox').checked || document.getElementById('templateConfigCheckbox').checked || document.getElementById('templateVariableCheckbox').checked) {
 			// No device migration, so no need to touch the licensing at all.
 			// Grab full group details and device inventory - since its used by config migrations
-			inventoryPromise = new $.Deferred();
 			getGroupInformation();
 			$.when(updateInventory()).then(function() {
 				coreMigration();
@@ -532,7 +587,7 @@ function checkSelectionCount() {
 }
 
 function getGroupInformation() {
-	showNotification('ca-folder-settings', 'Getting Existing Group Details...', 'bottom', 'center', 'info');
+	groupNotification = showLongNotification('ca-folder-settings', 'Getting Existing Group Details...', 'bottom', 'center', 'info');
 
 	// get selected Groups
 	var select = document.getElementById('groupselector');
@@ -584,10 +639,14 @@ function getDevicesInGroups(groups) {
 			// if it is a UI group - Ignore due to no APIs to migrate switch UI groups
 		}
 	});
+	if (groupNotification) {
+		groupNotification.update({ type: 'success', message: 'Existing Group Details Obtained.' });
+		setTimeout(groupNotification.close, 1000);
+	}
 }
 
 function migrateGroups() {
-	showNotification('ca-folder-settings', 'Migrating Groups...', 'bottom', 'center', 'info');
+	groupNotification = showLongNotification('ca-folder-settings', 'Migrating Groups...', 'bottom', 'center', 'info');
 
 	// Now have the group details.
 	// Time to create the groups on the destination account with the default password
@@ -640,9 +699,15 @@ function migrateGroups() {
 					groupPromise.resolve();
 					if (groupErrorCounter > 0) {
 						showLog();
-						showNotification('ca-folder-settings', groupErrorCounter + ' groups were not migrated to the Destination Central', 'bottom', 'center', 'warning');
+						if (groupNotification) {
+							groupNotification.update({ type: 'warning', message: groupErrorCounter + ' groups were not migrated to the Destination Central' });
+							setTimeout(groupNotification.close, 1000);
+						}
 					} else {
-						showNotification('ca-folder-settings', groupDetails.length + ' Groups migrated to the Destination Central', 'bottom', 'center', 'success');
+						if (groupNotification) {
+							groupNotification.update({ type: 'success', message: groupDetails.length + ' groups migrated to the Destination Central' });
+							setTimeout(groupNotification.close, 1000);
+						}
 					}
 				}
 			});
@@ -684,7 +749,7 @@ function prepareWLAN() {
 	$.when(sourceTokenRefresh()).then(function() {
 		getGroupInformation();
 
-		showNotification('ca-wifi', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
+		wlanNotification = showLongNotification('ca-wifi', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 		$('#MigrationModalLink').trigger('click');
 		// Grab config for each Group in Central
 		$.each(groupDetails, function() {
@@ -720,6 +785,10 @@ function prepareWLAN() {
 							// show that psks have be obtained
 							// show that Auth servers need to be updated with shared secrets
 							console.log('Finished this processing WLANs');
+							if (wlanNotification) {
+								wlanNotification.update({ type: 'success', message: 'Finished this processing WLANs' });
+								setTimeout(wlanNotification.close, 1000);
+							}
 							document.getElementById('pskCheckbox').checked = true;
 							document.getElementById('confirmBtn').disabled = false;
 							document.getElementById('psk_loading').style.display = 'none';
@@ -1814,7 +1883,8 @@ function assigningDevicesCheckbox() {
 }
 
 function migrateSites() {
-	showNotification('ca-world-pin', 'Migrating Existing Sites...', 'bottom', 'center', 'info');
+	
+	siteNotification = showLongNotification('ca-world-pin', 'Migrating Existing Sites...', 'bottom', 'center', 'info');
 	siteCounter = 0;
 	sitesPromise = new $.Deferred();
 	migrateSiteDetails(0);
@@ -1880,9 +1950,15 @@ function migrateSiteDetails(offset) {
 				if (siteCounter == siteTotal) {
 					if (errorCounter != 0) {
 						showLog();
-						showNotification('ca-world-pin', 'Some Sites failed to migrate to the Destination Central', 'bottom', 'center', 'warning');
+						if (siteNotification) {
+							siteNotification.update({ type: 'warning', message: 'Some Sites failed to migrate to the Destination Central' });
+							setTimeout(siteNotification.close, 1000);
+						}
 					} else if (siteCounter == siteTotal) {
-						showNotification('ca-world-pin', siteTotal + ' Sites were migrated to the Destination Central', 'bottom', 'center', 'success');
+						if (siteNotification) {
+							siteNotification.update({ type: 'success', message: siteTotal + ' Sites were migrated to the Destination Central' });
+							setTimeout(siteNotification.close, 1000);
+						}
 					}
 				}
 			});
@@ -1897,7 +1973,7 @@ function migrateSiteDetails(offset) {
 }
 
 function assignDevicesToSites() {
-	showNotification('ca-world-pin', 'Assigning Devices to Sites...', 'bottom', 'center', 'info');
+	siteNotification = showLongNotification('ca-world-pin', 'Assigning Devices to Sites...', 'bottom', 'center', 'info');
 
 	// get destination sites (need site_id for each site)
 	destinationSitesPromise = new $.Deferred();
@@ -1949,6 +2025,9 @@ function getDestinationSites(offset) {
 				text: 'There are no Sites in the destination account. You need to migrate them over.',
 				icon: 'warning',
 			});
+			if (siteNotification) {
+				setTimeout(siteNotification.close, 1000);
+			}
 		}
 		if (offset + apiSiteLimit <= response.total) {
 			getDestinationSites(offset + apiSiteLimit);
@@ -1991,8 +2070,8 @@ function moveDevicesToSite(devices, site, type) {
 			});
 			showLog();
 		} else {
-			if (type === 'IAP') showNotification('ca-world-pin', devices.length + " APs assigned to Site '" + site.site_name + "' successfully", 'bottom', 'center', 'success');
-			if (type === 'SWITCH') showNotification('ca-world-pin', devices.length + " Switches assigned to Site '" + site.site_name + "' successfully", 'bottom', 'center', 'success');
+			if (type === 'IAP') siteNotification.update({ type: 'success', message:  devices.length + " APs assigned to Site '" + site.site_name + "' successfully" });
+			if (type === 'SWITCH') siteNotification.update({ type: 'success', message:  devices.length + " Switches assigned to Site '" + site.site_name + "' successfully" });
 		}
 	});
 }
@@ -2002,7 +2081,7 @@ function moveDevicesToSite(devices, site, type) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function migrateLabels() {
-	showNotification('ca-tag-cut', 'Migrating Existing Labels...', 'bottom', 'center', 'info');
+	labelNotification = showLongNotification('ca-tag-cut', 'Migrating Existing Labels...', 'bottom', 'center', 'info');
 	labelCounter = 0;
 	migrateLabelDetails(0);
 }
@@ -2059,9 +2138,15 @@ function migrateLabelDetails(offset) {
 					}
 					if (errorCounter != 0) {
 						showLog();
-						showNotification('ca-tag-cut', 'Some Labels failed to migrate to the Destination Central', 'bottom', 'center', 'warning');
+						if (labelNotification) {
+							labelNotification.update({ type: 'warning', message: 'Some Labels failed to migrate to the Destination Central' });
+							setTimeout(labelNotification.close, 1000);
+						}
 					} else if (labelCounter == labelTotal) {
-						showNotification('ca-tag-cut', 'Labels were migrated to the Destination Central', 'bottom', 'center', 'success');
+						if (labelNotification) {
+							labelNotification.update({ type: 'warning', message: 'Labels were migrated to the Destination Central' });
+							setTimeout(labelNotification.close, 1000);
+						}
 					}
 				});
 			} else {

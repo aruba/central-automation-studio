@@ -205,7 +205,7 @@ function loadSystemTables() {
 		.remove();
 	$.each(systemPools, function() {
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#IPMS/SYSTEMIPPOOL?nc=global';
+		var centralURL = centralURLs[apiURL] + '/frontend/#IPMS/SYSTEMIPPOOL?nc=global';
 
 		var progress = 0; //Math.round((this['used_to_total'][0] / this['used_to_total'][1]) * 100);
 
@@ -238,8 +238,8 @@ function loadSystemTables() {
 		// Make AP Name as a link to Central
 		name = encodeURI(name);
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
-		var poolURL = centralURLs[0][apiURL] + '/frontend/#IPMS/SYSTEMIPPOOL?nc=global';
+		var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
+		var poolURL = centralURLs[apiURL] + '/frontend/#IPMS/SYSTEMIPPOOL?nc=global';
 
 		var poolName = config[this['pool_id']].pool_name;
 
@@ -264,7 +264,7 @@ function loadDHCPTables() {
 		.remove();
 	$.each(dhcpPools, function() {
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#IPMS/SHAREDDHCPPOOL?nc=global';
+		var centralURL = centralURLs[apiURL] + '/frontend/#IPMS/SHAREDDHCPPOOL?nc=global';
 
 		var progress = 0; //Math.round((this['used_to_total'][0] / this['used_to_total'][1]) * 100);
 
@@ -300,8 +300,8 @@ function loadDHCPTables() {
 		// Make AP Name as a link to Central
 		name = encodeURI(name);
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
-		var poolURL = centralURLs[0][apiURL] + '/frontend/#IPMS/SHAREDDHCPPOOL?nc=global';
+		var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
+		var poolURL = centralURLs[apiURL] + '/frontend/#IPMS/SHAREDDHCPPOOL?nc=global';
 
 		var poolName = config[this['pool_id']].pool_name;
 

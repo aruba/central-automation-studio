@@ -8,11 +8,12 @@ var portals = [];
 var errorCounter = 0;
 var meshTopologyData = {};
 var currentPortal = '';
-const ratio = window.devicePixelRatio;
 
 var apLocations = [];
 var currentAP = null;
 var requiredHeight = [[], [], []];
+
+var meshNotifications = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Override functions
@@ -106,7 +107,7 @@ function getPortalAPs() {
 			// Make AP Name as a link to Central
 			var name = encodeURI(ap['name']);
 			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 
 			var tshootBtns = '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="getMeshTopology(\'' + ap.serial + '\')">Topology</button> ';
 			// Add row to table
@@ -160,13 +161,29 @@ function getMeshLinks(deviceSerial) {
 				return;
 			}
 		}
-		//console.log(response);
+		
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+			if (response.error === 'invalid_token') {
+				// Access Token expired - get a new one and try again.
+				var authPromise = new $.Deferred();
+				$.when(authRefresh(authPromise)).then(function() {
+					if (!failedAuth) {
+						failedAuth = true;
+						getMeshLinks(deviceSerial);
+					}
+				});
+			}
 		} else if (response.status === 'QUEUED') {
-			showNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			failedAuth = false;
+			var printedMessage = response.message;
+			if (printedMessage.includes('Successfully queued troubleshooting commands for session')) {
+				var selectedAP = findDeviceInMonitoring(response.serial);
+				printedMessage = 'Obtaining Mesh topology information for '+selectedAP.name;
+			}	
+			meshNotifications[response.serial] = showPermanentNotification('ca-ap-icon', printedMessage, 'bottom', 'center', 'info');
 			setTimeout(checkMeshLinkResult, 5000, response.session_id, response.serial);
 		} else {
+			failedAuth = false;
 			if (response.description) {
 				showNotification('ca-window-code', response.description, 'bottom', 'center', 'danger');
 			}
@@ -205,15 +222,27 @@ function checkMeshLinkResult(session_id, deviceSerial) {
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
+			var currentNotification = meshNotifications[response.serial];
+			var selectedAP = findDeviceInMonitoring(response.serial);
+			
 			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
-				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
+				currentNotification.update({ type: 'info', message: "response.message.replace(' Please try after sometime', '.')" });
 				setTimeout(checkMeshLinkResult, 10000, session_id, response.serial);
 			} else if (response.status === 'COMPLETED') {
 				var results = decodeURI(response.output);
-				processMeshLinks(results, response.serial);
+				if (results.includes('No response was received')) {
+					currentNotification.update({ type: 'danger', message: 'Central did not recieve a response from the AP ('+response.serial+')' });
+				} else {
+					currentNotification.update({ type: 'success', message: 'Obtained Mesh topology information for '+selectedAP.name });
+					processMeshLinks(results, response.serial);
+					setTimeout(currentNotification.close, 1000);
+					delete meshNotifications[response.serial];
+				}
 			} else {
 				if (response.description) {
-					showNotification('ca-window-code', response.description, 'bottom', 'center', 'danger');
+					currentNotification({ type: 'danger', message: response.description});
+					setTimeout(currentNotification.close, 1000);
+					delete meshNotifications[response.serial];
 				}
 			}
 		}
@@ -226,7 +255,6 @@ function checkMeshLinkResult(session_id, deviceSerial) {
 
 function processMeshLinks(meshLinkString, serial) {
 	var lines = meshLinkString.split('\n');
-
 	// Find the header row...
 	var headerIndex = -1;
 	for (var i = 0; i < lines.length; i++) {
@@ -248,6 +276,7 @@ function processMeshLinks(meshLinkString, serial) {
 
 	// Get column names for indexes
 	var columnHeaders = {};
+	
 	var headerString = lines[headerIndex];
 	for (var i = 0; i < columnIndexes.length; i++) {
 		var header = '';

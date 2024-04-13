@@ -15,6 +15,7 @@ var clientNotification;
 var visualRFNotification;
 var kmsNotification;
 
+var vrfSupported = false;
 var vrfBuildings = [];
 var vrfFloors = [];
 var vrfAPs = [];
@@ -31,13 +32,8 @@ var currentAP = null;
 var currentFloor;
 var storedAP;
 var found;
-const vrfLimit = 100;
-const units = 'METERS';
 
 var apImage;
-const ratio = window.devicePixelRatio;
-
-const apColors = ['#23CCEF', '#FB404B', '#FFA534', '#9368E9', '#87CB16', '#1D62F0', '#5E5E5E', '#DD4B39', '#35465c', '#e52d27', '#55acee', '#cc2127', '#1769ff', '#6188e2', '#a748ca', '#ca489f', '#48ca9a', '#95e851', '#f2f536', '#b0b0b0', '#3414b5', '#1498b5', '#b55714', '#e3e3e3', '#851919', '#196385', '#88fceb', '#cafc88'];
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
@@ -118,7 +114,7 @@ function loadCurrentPageClient() {
 		// Make link to Central
 		client_name_url = encodeURI(client_name);
 		var apiURL = localStorage.getItem('base_url');
-		var centralBaseURL = centralURLs[0][apiURL];
+		var centralBaseURL = centralURLs[apiURL];
 		if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url); //manually build the COP address
 		var clientURL = centralBaseURL + '/frontend/#/CLIENTDETAIL/' + client['macaddr'] + '?ccma=' + client['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
 
@@ -127,6 +123,9 @@ function loadCurrentPageClient() {
 			actionBtns += '<button class="btn-warning btn-action" onclick="getClientRecord(\'' + client_mac + '\')">Cloud Record</button> ';
 			actionBtns += '<button class="btn-warning btn-action" onclick="getSyncedAPsForClient(\'' + client_mac + '\')">Synced APs</button> ';
 			//actionBtns += '<button class="btn-warning btn-action" onclick="getRoamingForClient(\'' + client_mac + '\')">Roaming History</button> ';
+		} else {
+			actionBtns += '<button class="btn-warning btn-action" onclick="getClientRecord(\'' + client_mac + '\')">Cloud Record</button> ';
+			actionBtns += '<button class="btn-warning btn-action" onclick="getSyncedAPsForClient(\'' + client_mac + '\')">Synced APs</button> ';
 		}
 
 		// Add row to table
@@ -197,7 +196,7 @@ function getClientRecord(clientMac) {
 					// Make AP Name as a link to Central
 					var name = encodeURI(originAP['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralBaseURL = centralURLs[0][apiURL];
+					var centralBaseURL = centralURLs[apiURL];
 					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
 					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + originAP['serial'] + '?casn=' + originAP['serial'] + '&cdcn=' + name + '&nc=access_point';
 					$('#userDetails').append('<li>Origin AP: <a href="' + centralURL + '" target="_blank"><strong>' + originAP['name'] + '</strong></a></li>');
@@ -225,7 +224,117 @@ function getClientRecord(clientMac) {
 					// Make AP Name as a link to Central
 					var name = encodeURI(originAP['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralBaseURL = centralURLs[0][apiURL];
+					var centralBaseURL = centralURLs[apiURL];
+					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + originAP['serial'] + '?casn=' + originAP['serial'] + '&cdcn=' + name + '&nc=access_point';
+					$('#userDetails').append('<li>Origin AP: <a href="' + centralURL + '" target="_blank"><strong>' + originAP['name'] + '</strong></a></li>');
+				}
+
+				$('#keyDetails').append('<li>Key Type: <strong>' + keyCache['opmode'] + '</strong></li>');
+				$('#keyDetails').append('<li>Expiry Time: <strong>' + keyCache['expiry_time'] + '</strong></li>');
+				$('#keyDetails').append('<li>Idle Timeout: <strong>' + keyCache['idle_timeout'] + '</strong></li>');
+				$('#keyDetails').append('<li>Reauth Interval: <strong>' + keyCache['reauth_interval'] + '</strong></li>');
+				$('#keyDetails').append('<li>Accounting Interval: <strong>' + keyCache['acct_interval'] + '</strong></li>');
+				$('#keyDetails').append('<li>Roam Cache TTL: <strong>' + keyCache['roamcache TTL'] + '</strong></li>');
+				var timestamp = Date.parse(keyCache['timestamp']);
+				$('#keyDetails').append('<li>Timestamp: <strong>' + moment(timestamp).format('LT') + '</strong></li>');
+			}
+
+			$('#ClientRecordModalLink').trigger('click');
+
+			var x = document.getElementById('syncedAPCard');
+			if (x && currentClientMac !== clientMac) {
+				x.hidden = true;
+			}
+		}
+	});
+}
+
+function getRoamCacheClientRecord(clientMac) {
+	clientNotification = showNotification('ca-laptop-1', 'Retrieving Roam Cache Cloud Record...', 'bottom', 'center', 'info');
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/keymgmt/v1/roamcache/' + clientMac,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/keymgmt/v1/roamcache/<CLIENT-MAC>)');
+			apiErrorCount++;
+			if (apNotification) apNotification.close();
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			if (apNotification) apNotification.close();
+			apiErrorCount++;
+			return;
+		}
+
+		var response = JSON.parse(commandResults.responseBody);
+		if (response.status) showNotification('ca-laptop-1', response.status, 'bottom', 'center', 'warning');
+		else {
+			if (clientNotification) {
+				clientNotification.update({ type: 'success', message: 'Cloud Roam Cache Record retrieved' });
+				setTimeout(clientNotification.close, 1000);
+			}
+			// process the response
+			$('#userDetails').empty();
+			$('#keyDetails').empty();
+			console.log(response)
+			if (response['11r/OKC KEYCACHE ']) {
+				// 11r keycache entry - note the stupid extra space on the key!!
+				var keyCache = response['11r/OKC KEYCACHE '];
+				$('#userDetails').append('<li>Name: <strong>' + keyCache['name'] + '</strong></li>');
+				$('#userDetails').append('<li>Mac Address: <strong>' + keyCache['clientmac'] + '</strong></li>');
+				$('#userDetails').append('<li>ESSID: <strong>' + keyCache['essid'] + '</strong></li>');
+				$('#userDetails').append('<li>User Role: <strong>' + keyCache['role'] + '</strong></li>');
+				$('#userDetails').append('<li>VLAN: <strong>' + keyCache['vlan'] + '</strong></li>');
+
+				var originAP = findAPForMAC(keyCache['origin_apmac']);
+				if (originAP) {
+					// Make AP Name as a link to Central
+					var name = encodeURI(originAP['name']);
+					var apiURL = localStorage.getItem('base_url');
+					var centralBaseURL = centralURLs[apiURL];
+					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + originAP['serial'] + '?casn=' + originAP['serial'] + '&cdcn=' + name + '&nc=access_point';
+					$('#userDetails').append('<li>Origin AP: <a href="' + centralURL + '" target="_blank"><strong>' + originAP['name'] + '</strong></a></li>');
+				}
+
+				$('#keyDetails').append('<li>Key Type: <strong>' + keyCache['keytype'] + '</strong></li>');
+				$('#keyDetails').append('<li>R0 Name: <strong>' + keyCache['R0name'] + '</strong></li>');
+				$('#keyDetails').append('<li>MDID: <strong>' + keyCache['MDID'] + '</strong></li>');
+				$('#keyDetails').append('<li>Reauth Interval: <strong>' + keyCache['reauth_interval'] + '</strong></li>');
+				$('#keyDetails').append('<li>Accounting Interval: <strong>' + keyCache['acct_interval'] + '</strong></li>');
+				$('#keyDetails').append('<li>Key Cache TTL: <strong>' + keyCache['keycache TTL'] + '</strong></li>');
+				var timestamp = Date.parse(keyCache['timestamp']);
+				$('#keyDetails').append('<li>Timestamp: <strong>' + moment(timestamp).format('LT') + '</strong></li>');
+			} else if (response['NON 11r ']) {
+				// Non 11r entry - note the stupid extra space on the key!!
+				var keyCache = response['NON 11r '];
+				$('#userDetails').append('<li>Name: <strong>' + keyCache['name'] + '</strong></li>');
+				$('#userDetails').append('<li>Mac Address: <strong>' + keyCache['clientmac'] + '</strong></li>');
+				$('#userDetails').append('<li>ESSID: <strong>' + keyCache['essid'] + '</strong></li>');
+				$('#userDetails').append('<li>User Role: <strong>' + keyCache['role'] + '</strong></li>');
+				$('#userDetails').append('<li>VLAN: <strong>' + keyCache['vlan'] + '</strong></li>');
+
+				var originAP = findAPForMAC(keyCache['origin_apmac']);
+				if (originAP) {
+					// Make AP Name as a link to Central
+					var name = encodeURI(originAP['name']);
+					var apiURL = localStorage.getItem('base_url');
+					var centralBaseURL = centralURLs[apiURL];
 					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
 					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + originAP['serial'] + '?casn=' + originAP['serial'] + '&cdcn=' + name + '&nc=access_point';
 					$('#userDetails').append('<li>Origin AP: <a href="' + centralURL + '" target="_blank"><strong>' + originAP['name'] + '</strong></a></li>');
@@ -255,7 +364,7 @@ function getSyncedAPsForClient(clientMac) {
 	apNotification = showNotification('ca-wifi', 'Retrieving Synced APs...', 'bottom', 'center', 'info');
 	currentClientMac = clientMac;
 	document.getElementById('syncAPTitle').innerHTML = 'Keys Synced to APs for: <strong>' + clientMac + '</strong>';
-	document.getElementById('syncAPPlanTitle').innerHTML = 'Keys Synced to APs for: <strong>' + clientMac + '</strong>';
+	if (document.getElementById('syncAPPlanTitle')) document.getElementById('syncAPPlanTitle').innerHTML = 'Keys Synced to APs for: <strong>' + clientMac + '</strong>';
 
 	// clear out any old data
 	$('#synced-ap-table')
@@ -323,13 +432,17 @@ function getSyncedAPsForClient(clientMac) {
 				var ip_address = ap['ip_address'];
 				if (!ip_address) ip_address = '';
 
-				var uptime = ap['uptime'] ? ap['uptime'] : 0;
-				var duration = moment.duration(uptime * 1000);
+				// Build Uptime String
+				var uptimeString = '-';
+				if (ap['uptime'] > 0) {
+					var uptime = moment.duration(ap['uptime'] * 1000);
+					uptimeString = uptime.humanize();
+				}
 
 				// Make AP Name as a link to Central
 				var name = encodeURI(ap['name']);
 				var apiURL = localStorage.getItem('base_url');
-				var centralBaseURL = centralURLs[0][apiURL];
+				var centralBaseURL = centralURLs[apiURL];
 				if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
 				var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 
@@ -338,7 +451,7 @@ function getSyncedAPsForClient(clientMac) {
 
 				// Add row to table
 				var table = $('#synced-ap-table').DataTable();
-				table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['client_count'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], deviceUp ? duration.humanize() : '-', actionBtns]);
+				table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['client_count'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], '<span title="' + ap['uptime'] + '"</span>'+uptimeString, actionBtns]);
 
 				$('[data-toggle="tooltip"]').tooltip();
 
@@ -629,7 +742,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 }
 
 function getRoamingForClient(clientMac) {
-	clientNotification = showNotification('ca-laptop-1', 'Retrieving Raoming History...', 'bottom', 'center', 'info');
+	clientNotification = showNotification('ca-laptop-1', 'Retrieving Roaming History...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -686,7 +799,7 @@ function getRoamingForClient(clientMac) {
 					// Make AP Name as a link to Central
 					var name = encodeURI(originAP['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralBaseURL = centralURLs[0][apiURL];
+					var centralBaseURL = centralURLs[apiURL];
 					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
 					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + originAP['serial'] + '?casn=' + originAP['serial'] + '&cdcn=' + name + '&nc=access_point';
 					$('#userDetails').append('<li>Origin AP: <a href="' + centralURL + '" target="_blank"><strong>' + originAP['name'] + '</strong></a></li>');
@@ -714,7 +827,7 @@ function getRoamingForClient(clientMac) {
 					// Make AP Name as a link to Central
 					var name = encodeURI(originAP['name']);
 					var apiURL = localStorage.getItem('base_url');
-					var centralBaseURL = centralURLs[0][apiURL];
+					var centralBaseURL = centralURLs[apiURL];
 					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
 					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + originAP['serial'] + '?casn=' + originAP['serial'] + '&cdcn=' + name + '&nc=access_point';
 					$('#userDetails').append('<li>Origin AP: <a href="' + centralURL + '" target="_blank"><strong>' + originAP['name'] + '</strong></a></li>');
@@ -744,7 +857,11 @@ function getRoamingForClient(clientMac) {
 	VisualRF functions
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function showSyncedAPFloorplan() {
-	$('#SyncAPPlanModalLink').trigger('click');
+	if (vrfSupported) {
+		$('#SyncAPPlanModalLink').trigger('click');
+	} else {
+		showNotification('ca-new-construction', 'No Floorplans were found in Central', 'bottom', 'center', 'info');
+	}
 }
 
 function showClientRecord() {
@@ -789,6 +906,17 @@ function getCampus(repeat) {
 				// Grab the building list for the individual campus
 				getBuildings(0, this['campus_id']);
 			});
+			vrfSupported = true;
+		} else if (response['campus_count'] == 0) {
+			if (visualRFNotification) {
+				visualRFNotification.update({ message: 'No Campus Information was retrieved', type: 'warning' });
+				setTimeout(visualRFNotification.close, 3000);
+			}
+		} else if (repeat){
+			if (visualRFNotification) {
+				visualRFNotification.update({ message: 'Unable to Retrieve Campus Information', type: 'danger' });
+				setTimeout(visualRFNotification.close, 3000);
+			}
 		} else {
 			getCampus(true);
 		}
@@ -804,7 +932,7 @@ function getBuildings(offset, campusId) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/campus/' + campusId + '?offset=' + offset + '&limit=' + vrfLimit,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/campus/' + campusId + '?offset=' + offset + '&limit=' + apiVRFLimit,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -824,7 +952,7 @@ function getBuildings(offset, campusId) {
 		}
 		var response = JSON.parse(commandResults.responseBody);
 		vrfBuildings = vrfBuildings.concat(response['buildings']);
-		offset += vrfLimit;
+		offset += apiVRFLimit;
 		if (offset < response['building_count']) getBuildings(offset);
 		else {
 			// maybe save to indexedDB...
@@ -853,7 +981,7 @@ function getFloors(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/building/' + vrfBuildingId + '?offset=' + offset + '&limit=' + vrfLimit + '&units=' + units,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/building/' + vrfBuildingId + '?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -893,7 +1021,7 @@ function getFloors(offset) {
 				resetCanvases();
 			} else {
 				vrfFloors = vrfFloors.concat(response['floors']);
-				offset += vrfLimit;
+				offset += apiVRFLimit;
 				if (offset < response['floor_count']) getFloors(offset);
 				else {
 					// maybe save to indexedDB...
@@ -972,6 +1100,26 @@ function drawFloorplan() {
 		ctx.drawImage(background, 0, 0, normalWidth, normalHeight);
 		ctx.textBaseline = 'middle';
 		ctx.textAlign = 'center';
+		
+		if (!document.getElementById('colourFloorplan').checked) {
+			var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			var dataArray = imageData.data;
+		
+			for (var i = 0; i < dataArray.length; i += 4) {
+				var red = dataArray[i];
+				var green = dataArray[i + 1];
+				var blue = dataArray[i + 2];
+				var alpha = dataArray[i + 3];
+		
+				var gray = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+		
+				dataArray[i] = gray;
+				dataArray[i + 1] = gray;
+				dataArray[i + 2] = gray;
+				dataArray[i + 3] = alpha;
+			}
+			ctx.putImageData(imageData, 0, 0);
+		}
 	};
 
 	needChannelList = true;
@@ -994,7 +1142,7 @@ function loadAPsForFloor(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/floor/' + vrfFloorId + '/access_point_location?offset=' + offset + '&limit=' + vrfLimit + '&units=' + units,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/floor/' + vrfFloorId + '/access_point_location?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -1016,7 +1164,7 @@ function loadAPsForFloor(offset) {
 		currentFloor = response['floor'];
 		vrfAPs = vrfAPs.concat(response['access_points']);
 		//console.log(vrfAPs);
-		offset += vrfLimit;
+		offset += apiVRFLimit;
 		if (offset < response['access_point_count']) {
 			loadAPsForFloor(offset);
 		} else {

@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.x
-Updated: 1.18
+Updated: 1.32
 Copyright Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=230726" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -76,6 +76,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 									<a class="nav-link" onclick="showLog()" href="#">
 										<i class="central-icon ca-research"></i>
 									</a>
+								</li>
+								<li class="nav-item dropdown" id='accountDropdown' hidden>
+									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<i class="nc-icon nc-single-02"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink" id='accountDropdownList'>
+										
+									</div>
 								</li>
 								<li class="nav-item dropdown">
 									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -247,7 +255,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 						<!-- CSV Card -->
 						<div class="row">
 							<div class="col-md-4">
-								<div class="card  card-tasks">
+								<div class="card" style="height:160px;">
 									<div class="card-header ">
 										<h4 class="card-title">CSV Upload</h4>
 										<p class="card-category">Upload CSV data here before selecting a task below...</p>
@@ -268,7 +276,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 								</div>
 							</div>
 							<div class="col-md-4">
-								<div class="card  card-tasks">
+								<div class="card" style="height:160px;">
 									<div class="card-header ">
 										<h4 class="card-title">CSV Sample File</h4>
 										<p class="card-category">Download a sample CSV file below...</p>
@@ -286,10 +294,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="row">
 							<!-- Single Tasks -->
 							<div class="col-md-4">
-								<div class="card  card-tasks">
+								<div class="card">
 									<div class="card-header ">
-										<h4 class="card-title">Individual Tasks</h4>
-										<p class="card-category">Deployment steps using CSV upload</p>
+										<h4 class="card-title">Standard Tasks</h4>
+										<p class="card-category">Standard deployment steps using CSV upload</p>
 										<p></p>
 									</div>
 
@@ -340,18 +348,34 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 													<tr class="clickable-row" data-href="movetosite">
 														<td>
 															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-world-pin"></i>
+																<i class="central-icon ca-pin-add-2"></i>
 															</div>
 														</td>
 														<td>Move Devices To Site</td>
 													</tr>
+													<tr class="clickable-row" data-href="removefromsite">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-pin-remove-2"></i>
+															</div>
+														</td>
+														<td>Remove Devices from Site</td>
+													</tr>
 													<tr class="clickable-row" data-href="assignlabel">
 														<td>
 															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-tags-stack"></i>
+																<i class="central-icon ca-tag-add"></i>
 															</div>
 														</td>
 														<td>Assign Labels to Devices</td>
+													</tr>
+													<tr class="clickable-row" data-href="removelabel">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-tag-remove"></i>
+															</div>
+														</td>
+														<td>Remove Labels from Devices</td>
 													</tr>
 													<tr class="clickable-row" data-href="renametemplate">
 														<td>
@@ -369,13 +393,32 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 														</td>
 														<td>Auto Rename Devices</td>
 													</tr>
+												</tbody>
+											</table>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!-- End Single Tasks -->
+							<div class="col-md-4">
+								<div class="card">
+									<div class="card-header ">
+										<h4 class="card-title">Specialized Tasks</h4>
+										<p class="card-category">Specialized deployment steps using CSV upload</p>
+										<p></p>
+									</div>
+							
+									<div class="card-body ">
+										<div class="table-full-width">
+											<table class="table table-hover">
+												<tbody>
 													<tr class="clickable-row" data-href="setZone">
 														<td>
 															<div class="icon-big text-center icon-warning">
 																<i class="central-icon ca-maximize-area-1"></i>
 															</div>
 														</td>
-														<td>Set AP Zones / SSIDs</td>
+														<td>Set AP Zones (IAP 8.x) / SSIDs (AOS10)</td>
 													</tr>
 													<tr class="clickable-row" data-href="setRFProfile">
 														<td>
@@ -383,7 +426,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 																<i class="central-icon ca-rf-profile"></i>
 															</div>
 														</td>
-														<td>Set RF Profiles (AOS10 Only)</td>
+														<td>Set RF Zone (IAP 8.x) / RF Profiles (AOS10)</td>
 													</tr>
 													<tr class="clickable-row" data-href="setRadioMode">
 														<td>
@@ -392,6 +435,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 															</div>
 														</td>
 														<td>Set Radio Modes</td>
+													</tr>
+													<tr class="clickable-row" data-href="setFlexMode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-compare-items"></i>
+															</div>
+														</td>
+														<td>Set Flexible Dual Band Mode</td>
 													</tr>
 													<tr class="clickable-row" data-href="enable24">
 														<td>
@@ -416,6 +467,22 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 															</div>
 														</td>
 														<td>Set Antenna Gain</td>
+													</tr>
+													<tr class="clickable-row" data-href="setSwarmMode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-networking"></i>
+															</div>
+														</td>
+														<td>Set AP Swarm Mode</td>
+													</tr>
+													<tr class="clickable-row" data-href="installType">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-globe"></i>
+															</div>
+														</td>
+														<td>Set AP Installation Type</td>
 													</tr>
 													<tr class="clickable-row" data-href="staticIP">
 														<td>
@@ -458,7 +525,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							<!-- End Single Tasks -->
 							<!-- Automation Tasks -->
 							<div class="col-md-4">
-								<div class="card  card-tasks">
+								<div class="card">
 									<div class="card-header ">
 										<h4 class="card-title">Automated Tasks</h4>
 										<p class="card-category">Automated deployment using CSV upload</p>
@@ -551,7 +618,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
-										<h4 class="card-title">Connected Clients</h4>
+										<h4 class="card-title">Connected Clients</h4><a class="refresh-link" onclick="refreshClientData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 									<div class="card-body">
 										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -559,6 +626,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 												<table id="client-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Name</th>
+														<th></th>
 														<th>Health</th>
 														<th>MAC Address</th>
 														<th>IP Address</th>
@@ -966,6 +1034,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 								</script>
 								<a href="http://www.wifidownunder.com">WiFi Downunder</a>
 							</p>
+							<p class="copyright text-center" id="cas-version"> </p>
 						</nav>
 					</div>
 				</footer>
@@ -1013,9 +1082,21 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 	<script src="assets/js/plugins/papaparse.min.js"></script>
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
+	<script src="assets/js/plugins/title-numeric.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function() {
+			getCASVersion();
 			openIndexedDB();
+			
+			var pageName = 'CSV Workflows';
+			if  (localStorage.getItem('from_hydra')) {
+				document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
+			} else {
+				document.getElementById('titleText').innerHTML = "Central Automation Studio: "+ '<strong>' + pageName + '</strong>';
+			}
+			// If more than one account build Account list and show menu in top right
+			loadAccountList();
+
 			var reachabilityPromise = new $.Deferred();
 			$.when(checkReachability(reachabilityPromise)).then(function () {
 
@@ -1036,7 +1117,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Clients",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }],
+					columnDefs: [{ type: 'ip-address', targets: 4 }, { type: 'title-string', targets: 1}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 
@@ -1049,7 +1130,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search APs",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 
@@ -1062,7 +1143,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Switches",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 
@@ -1082,7 +1163,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							search: "_INPUT_",
 							searchPlaceholder: "Search Gateways",
 						},
-						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
+						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 					});
 					
@@ -1095,7 +1176,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							search: "_INPUT_",
 							searchPlaceholder: "Search Controllers",
 						},
-						columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }],
+						columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
 						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 					});
 				} else {
@@ -1108,7 +1189,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							search: "_INPUT_",
 							searchPlaceholder: "Search Gateways",
 						},
-						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,11,12], "visible": false }],
+						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,12,13], "visible": false }, { type: 'title-numeric', targets: 11}],
 						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 					});
 					
@@ -1121,7 +1202,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							search: "_INPUT_",
 							searchPlaceholder: "Search Controllers",
 						},
-						columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }],
+						columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }, { type: 'title-numeric', targets: 10}],
 						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 					});
 				}
@@ -1191,11 +1272,17 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					clearInterval(loadIntervalID);
 			  	}
 				}, false);
+				
+				document.onkeyup = function(e) {
+					if (e.ctrlKey && e.which == 82) {
+						getMonitoringData()
+					}
+				};
 			});
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=230726"></script>
+	<script src="assets/js/main.js?v=240411"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
 </html>

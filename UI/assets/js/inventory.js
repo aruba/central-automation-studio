@@ -7,21 +7,49 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 var deviceList = [];
 var deviceDisplay = []; // used to store devices in the unfiltered table (depending on the empty group toggle)
 
+var gotAPs = false;
+var gotSwitches = false;
+var gotGateways = false;
+
+var subscriptionKeys = {};
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Build Inventory Table
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+	
+function getInventoryData() {
+	gotAPs = false;
+	gotSwitches = false;
+	gotGateways = false;
+	updateMonitoringWithClients(false);
+}
 
 function loadCurrentPageAP() {
+	gotAPs = true;
+	loadFullInventory();
+	$('[data-toggle="tooltip"]').tooltip();
+}
+
+function loadCurrentPageSwitch() {
+	gotSwitches = true;
+	loadFullInventory();
+	$('[data-toggle="tooltip"]').tooltip();
+}
+
+function loadCurrentPageGateway() {
+	gotGateways = true;
 	loadFullInventory();
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function loadFullInventory() {
-	inventoryPromise = new $.Deferred();
-	$.when(updateInventory()).then(function() {
-		loadTable();
-	});
+	if (gotAPs && gotSwitches && gotGateways) {
+		$.when(updateInventory(), getLicensingData()).then(function() {
+			loadTable();
+		});
+	}
 }
+	
 
 function loadTable() {
 	// Empty the table
@@ -34,35 +62,47 @@ function loadTable() {
 	deviceList = getFullInventory();
 	deviceDisplay = [];
 
+	var table = $('#inventory-table').DataTable();
 	$.each(deviceList, function() {
 		var monitoringInfo = findDeviceInMonitoring(this.serial);
 
 		// Add row to table
-		var table = $('#inventory-table').DataTable();
+		
 		if (monitoringInfo) {
+			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
+			var duration = moment.duration(uptime * 1000);
+			var uptimeString = '';
+			
+			var clientCount = '';
+			
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
+			if (monitoringInfo.status == 'Up') {
+				status = '<i class="fa-solid fa-circle text-success"></i>';
+				uptimeString = duration.humanize();
+				if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
+				if (monitoringInfo['client_count'] == 0) clientCount = '0';
+			}
+			
+			var publicIP = '';
+			if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
+			else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
+			
+			var labels = '';
+			if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
+			
 			if (document.getElementById('emptyGroupCheckbox').checked) {
 				if (monitoringInfo.group_name === '') {
-					var status = '<i class="fa-solid fa-circle text-danger"></i>';
-					if (monitoringInfo.status == 'Up') {
-						status = '<i class="fa-solid fa-circle text-success"></i>';
-					}
-
 					deviceDisplay.push(this);
-					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '']);
+					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', uptimeString, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', labels, clientCount, monitoringInfo['firmware_version'] ? monitoringInfo['firmware_version']:'', publicIP, this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '']);
 				}
 			} else {
-				var status = '<i class="fa-solid fa-circle text-danger"></i>';
-				if (monitoringInfo.status == 'Up') {
-					status = '<i class="fa-solid fa-circle text-success"></i>';
-				}
-
 				deviceDisplay.push(this);
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '']);
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', uptimeString, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', labels, clientCount, monitoringInfo['firmware_version'] ? monitoringInfo['firmware_version']:'', publicIP, this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '']);
 			}
 		} else {
 			deviceDisplay.push(this);
 			var status = '<i class="fa-solid fa-circle text-muted"></i>';
-			table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '']);
+			table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', '', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '']);
 		}
 	});
 
@@ -70,6 +110,7 @@ function loadTable() {
 		.DataTable()
 		.rows()
 		.draw();
+	table.columns.adjust().draw();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -219,8 +260,13 @@ function buildCSVData(selectedGroup, selectedSite) {
 	var nameKey = 'DEVICE NAME';
 	var groupKey = 'GROUP';
 	var siteKey = 'SITE';
+	var labelKey = 'LABELS';
+	var clientsKey = 'CLIENTS';
+	var firmwareKey = 'FIRMWARE VERSION';
+	var publicIPKey = 'PUBLIC IP';
 	var licenseKey = 'LICENSE';
 	var subscriptionKey = 'SUBSCRIPTION KEY';
+	var expiryKey = 'SUBSCRIPTION EXPIRY';
 
 	var csvDataBuild = [];
 
@@ -230,6 +276,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 	// For each row in the filtered set
 	$.each(filteredRows[0], function() {
 		var device = deviceDisplay[this];
+		
 		// Find monitoring data if there is any
 		var monitoringInfo = findDeviceInMonitoring(device.serial);
 		if (monitoringInfo) {
@@ -241,16 +288,42 @@ function buildCSVData(selectedGroup, selectedSite) {
 
 			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
 			var duration = moment.duration(uptime * 1000);
+			var uptimeString = '';
+		
+			
+			var publicIP = '';
+			if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
+			else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
+			
+			var labels = '';
+			if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
+			
+			var firmwareVersion = '';
+			if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
+			
+			var clientCount = '';
+			
+			if (monitoringInfo['status'] == "Up") {
+				uptimeString = duration.humanize();
+				if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
+				if (monitoringInfo['client_count'] == 0) clientCount = '0';
+			}
+			
+			var keyExpiry = '';
+			if (device['subscription_key']) keyExpiry = moment(subscriptionKeys[device['subscription_key']]['end_date']).format('L');
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: duration.humanize(), [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '' });
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '', [expiryKey]: keyExpiry });
 		} else {
 			var groupToUse = '';
 			if (selectedGroup) groupToUse = selectedGroup;
 
 			var siteToUse = '';
 			if (selectedSite) siteToUse = selectedSite;
+			
+			var keyExpiry = '';
+			if (device['subscription_key']) keyExpiry = moment(subscriptionKeys[device['subscription_key']]['end_date']).format('L');
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '' });
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '', [expiryKey]: keyExpiry });
 		}
 	});
 
@@ -261,10 +334,24 @@ function emptyGroupDisplay() {
 	var table = $('#inventory-table').DataTable();
 	if (document.getElementById('emptyGroupCheckbox').checked) {
 		table
-			.column(9)
+			.column(10)
 			.search('^$', false, true)
 			.draw();
 	} else {
 		table.search('').draw();
 	}
+}
+
+function showColumns() {
+	var table = $('#inventory-table').DataTable();
+	let column = table.column(7);
+	column.visible(!column.visible());
+	column = table.column(12);
+	column.visible(!column.visible());
+	column = table.column(13);
+	column.visible(!column.visible());
+	column = table.column(14);
+	column.visible(!column.visible());
+	column = table.column(18);
+	column.visible(!column.visible());
 }

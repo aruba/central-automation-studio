@@ -394,9 +394,14 @@ function getWLANConfigForGroup(group) {
 				});
 				fastRoaming.sort();
 				mbr = '2.4GHz: ' + mbr2 + 'Mbps / 5GHz: ' + mbr5 + 'Mbps';
-				if (rfBand === '5.0') rfBand = '5';
-				if (rfBand !== 'All' && rfBand6) rfBand += 'GHz/6GHz';
-				if (rfBand !== 'All' && !rfBand6) rfBand += 'GHz';
+				
+				if (rfBand === '2.4') rfBand = '2.4GHz';
+				else if (rfBand === '5.0') rfBand = '5GHz';
+				else if (rfBand === 'none' && rfBand6) rfBand = '6GHz';
+				
+				if (rfBand === 'All') rfBand = '2.4GHz/5GHz';	
+				if (rfBand === '2.4GHz/5GHz' && rfBand6) rfBand = 'All';	
+				if ((rfBand === '2.4GHz' || rfBand === '5GHz') && rfBand6) rfBand += '/6GHz';
 
 				// Action Buttons
 				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-solid fa-pencil"></i></a> ';
@@ -593,6 +598,11 @@ function loadWLANUI(wlanIndex) {
 		});
 	});
 	checkSelectionCount();
+	
+	checkForTxBFConfig();
+	checkForMUMIMOConfig();
+	checkForOFDMAConfig();
+	
 	$('#WLANModalLink').trigger('click');
 }
 
@@ -1089,6 +1099,73 @@ function assignSSIDs() {
 	var csvDataBlob = {};
 	csvDataBlob['data'] = csvDataBuild;
 	processCSV(csvDataBlob);
-
 	setAPZone();
+}
+
+
+/*
+	Config Shortcuts Functions
+*/
+function checkForTxBFConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('he-txbf-disable') || newConfig.includes('vht-txbf-explicit-disable')) {
+		document.getElementById('txbfCheckbox').checked = false;
+	} else {
+		document.getElementById('txbfCheckbox').checked = true;
+	}
+}
+
+function txbfConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (document.getElementById('txbfCheckbox').checked) {
+		if (newConfig.includes('vht-txbf-explicit-disable')) newConfig = newConfig.replace('\nvht-txbf-explicit-disable', '');
+		if (newConfig.includes('he-txbf-disable')) newConfig = newConfig.replace('\nhe-txbf-disable', '');
+	} else {
+		if (!newConfig.includes('vht-txbf-explicit-disable')) newConfig += '\nvht-txbf-explicit-disable';
+		if (!newConfig.includes('he-txbf-disable')) newConfig += '\nhe-txbf-disable';
+	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
+}
+
+function checkForMUMIMOConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('vht-mu-txbf-disable') || newConfig.includes('he-mu-mimo-disable')) {
+		document.getElementById('mumimoCheckbox').checked = false;
+	} else {
+		document.getElementById('mumimoCheckbox').checked = true;
+	}
+}
+
+function mumimoConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (document.getElementById('mumimoCheckbox').checked) {
+		if (newConfig.includes('vht-mu-txbf-disable')) newConfig = newConfig.replace('\nvht-mu-txbf-disable', '');
+		if (newConfig.includes('he-mu-mimo-disable')) newConfig = newConfig.replace('\nhe-mu-mimo-disable', '');
+	} else {
+		if (!newConfig.includes('vht-mu-txbf-disable')) newConfig += '\nvht-mu-txbf-disable';
+		if (!newConfig.includes('he-mu-mimo-disable')) newConfig += '\nhe-mu-mimo-disable';
+	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
+}
+
+function checkForOFDMAConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('he-mu-ofdma-disable')) {
+		document.getElementById('ofdmaCheckbox').checked = false;
+	} else {
+		document.getElementById('ofdmaCheckbox').checked = true;
+	}
+}
+
+function ofdmaConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (document.getElementById('ofdmaCheckbox').checked) {
+		if (newConfig.includes('he-mu-ofdma-disable')) newConfig = newConfig.replace('\nhe-mu-ofdma-disable', '');
+	} else {
+		if (!newConfig.includes('he-mu-ofdma-disable')) newConfig += '\nhe-mu-ofdma-disable';
+	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
 }

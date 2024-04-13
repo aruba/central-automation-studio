@@ -13,7 +13,7 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 <!--
 Central Automation v1.x
-Updated: 1.30
+Updated: 1.34
 Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=230726" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=240308" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -84,7 +84,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.31</h1>
+                    <h1>Central Automation Studio v1.36.7</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -144,6 +144,9 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</li>
 									<li>
 										<a href="#mpsk-row">Named MPSK Deployment</a>
+									</li>
+									<li>
+										<a href="#denylist-row">Denylist Deployment</a>
 									</li>
                                     <li>
                                         <a href="#switch-row">Switch Deployment</a>
@@ -242,7 +245,13 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									The WebUI uses Javascript to make API calls to the API Proxy Server. The API Proxy Server converts those Javascript requests into Python API calls and makes the call to Aruba Central, returning any data back to the WebUI for processing in Javascript.
 								</p>
 								<p>
-									The API Proxy Server is bundled in with this Docker container. API Proxy Server Accessibility is available in the footer of each page
+									Multiple API Proxy Servers exist for speed and redundancy. The API Proxy Server used depends on the Central instance being communicated with:
+									<ul>
+										<li> APAC-based Central Cluster = https://api.wifidownunder.com (Hosted in Sydney - Azure Australia East)</li>
+										<li> US-based Central Cluster = https://api-usw.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
+										<li> EU-based Central Cluster = https://api-euw.wifidownunder.com (Hosted in Amsterdam - Azure Europe West)</li>
+									</ul>
+									API Proxy Server Accessibility is available in the footer of each page
 									<div class="img-container">
 										<img src="assets/img/proxy-status.png" alt="...">
 									</div>
@@ -257,11 +266,12 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<img src="assets/img/navigation.png" alt="...">
 								</div>
 								<p>
-									The above image shows the general navigation bar layout. The Options menu includes
+									The above image shows the general navigation bar layout. The Help/Settings menu includes
 									<ul>
 										<li> Help = This documentation page </li>
 										<li> Settings = Configuration page for accessing the Central API</li>
 									</ul>
+									The Account List will only be shown if more than one account is configured in Settings. It allows for quick changing between accounts.
 								</p>
 								
 							</div>
@@ -279,14 +289,21 @@ Aaron Scott (WiFi Downunder) 2021-2023
 											<li> Basic Settings</li>
 											<ul>
 											<li> <strong>Refresh Interval (minutes)</strong> - How often Central Automation Studio will refresh data when left open</li>
+											<li> <strong>API Data Optimization</strong> - adjusts how much data is gathered from APIs</li>
+											<ul>
+												<li>Full Details - Includes all options listed below</li>
+												<li>Large Scale Deployment - Disables all options listed below</li>
+												<li>Custom - Mix and Match the optional information</li>
+											</ul>
 											</ul>
 											<li> Optional Information</li>
 											<ul>
-											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? ("Do Not Include" improves performance at the loss of client information/statistics). This is enabled by default</li>
-											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? ("Do Not Include" improves performance of large numbers of groups). This is enabled by default</li>
-											<li> <strong>Gateway Details</strong> - Are detailed Gateway properties fetched? ("Do Not Include" improves performance of large numbers of gateways). This is disabled by default</li>
-											<li> <strong>Virtual Controller Config</strong> - Are Virtual Controllers added in the WLAN Group config page? ("Do Not Include" improves performance of large numbers of Virtual Controllers). This is enabled by default</li>
-											<li> <strong>AirMatch - All RF Events</strong> - Are "All" RF events downloaded for AirMatch? ("Do Not Include" improves performance on large networks with lots of RF events - channel changes, radar, noise). This is enabled by default</li>
+											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? Disabling improves performance at the loss of client information/statistics. This is enabled by default</li>
+											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? Disabling improves performance of large numbers of groups. This is enabled by default</li>
+											<li> <strong>Gateway Details</strong> - Are detailed Gateway properties fetched? Disabling improves performance of large numbers of gateways. This is disabled by default</li>
+											<li> <strong>Virtual Controller Config</strong> - Are Virtual Controllers added in the WLAN Group config page? Disabling improves performance of large numbers of Virtual Controllers. This is enabled by default</li>
+											<li> <strong>AirMatch - All RF Events</strong> - Are "All" RF events fetched for AirMatch? Disabling improves performance on large networks with lots of RF events - channel changes, radar, noise. This is enabled by default</li>
+											<li> <strong>AirMatch - Optimization History</strong> - The latest AirMatch optimization, plus the previous 10 are fetched. Disabling,  fetches only the latest optimization, improving performance with very large AOS10 deployments. This is enabled by default</li>
 											</ul>
 											<li> QR Code Settings</li>
 											<ul>
@@ -441,12 +458,16 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li> SITE</li>
 										<li> LABELS</li>
 										<li> ZONE</li>
+										<li> SWARM MODE</li>
 										<li> RF PROFILE</li>
+										<li> RF ZONE</li>
+										<li> INSTALLATION TYPE</li>
 										<li> RADIO 0 MODE</li>
 										<li> RADIO 1 MODE</li>
 										<li> RADIO 2 MODE</li>
 										<li> DUAL 5GHZ MODE</li>
 										<li> SPLIT 5GHZ MODE</li>
+										<li> FLEX DUAL BAND</li>
 										
 										<li> IP ADDRESS</li>
 										<li> SUBNET MASK</li>
@@ -460,13 +481,17 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li>If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway)</li>
 										<li>If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV</li>
 										<li>If the SITE is missing, the device will be skipped when assigning devices to a Site</li>
-										<li>If the LABELS is missing, the device will be skipped when assigning labels to a device</li>
+										<li>If the LABELS is missing, the device will be skipped when assigning/removing labels to/from a device</li>
 										<li>If the ZONE is missing or is equal to "-", the device will be skipped when assigning an AP Zone / SSID to an Access Point</li>
 										<li>If the ZONE is equal to "*", the device will be set to no zone or all SSIDs when assigning an AP Zone / SSID to an Access Point</li>
-										<li>If the RF PROFILE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
+										<li>If the SWARM MODE is missing, the device will be skipped when assigning devices a Swarm Mode</li>
+										<li>If the RF PROFILE or RF ZONE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
+										<li>If the RF PROFILE or RF ZONE is missing or is equal to "-", the device will be skipped when assigning an RF ZONE to an 8.x Instant Access Point</li>
+										<li>If the INSTALLATION TYPE is missing or is equal to "-", the device will be skipped when configuring the installation type of an  Access Point</li>
 										<li>If any of the RADIO 0/1/2 MODE values are missing or is equal to "-", the device will be skipped when assigning a radio mode for that particular radio to an Access Point. RADIO 2 MODE is only applied to supported AP Models (AP-555, AP-635, AP-655)</li>
 										<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
 										<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
+										<li>If the FLEX DUAL BAND value is missing or is equal to "-", the device will be skipped when assigning the flexible dual band mode for that Access Point. <i>Config is only applied to supported AP Models (AP-615, AP-605R)</i></li>
 										<li>Static IP Addresses will only be <strong>set</strong> if all of the required values are provided (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER). If any of the Static IP values (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER) are missing, the device will be skipped when assigning a static IP address for that Access Point</li>
 										<li>Static IP Address information will <strong>updated</strong> (if the Access Point is already configured for a Static IP) using any supplied fields (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER, DOMAIN NAME). Any fields not supplied will be left as previously configured</li>
 										<li><b><i>Skipped devices will be listed in the Log for the task/automation</i></b></li>
@@ -474,7 +499,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</br>
 									Let's look at the tasks and automations one by one:
                                 </p>
-                                <h2>Individual Tasks</h2>
+                                <h2>Standard Tasks</h2>
                                 <h4>Add Devices</h4>
                                 <p>
                                 	Adds all devices from the CSV to Central using the MAC and SERIAL data in the CSV.
@@ -518,10 +543,18 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									If the SITE is missing for a device (or all devices) in the CSV, the device will not be assigned a device. The device will be listed in the Log for the task.
 									For site assignment to work, the device needs to have contacted Aruba Central - <i>you can not assign a site to a newly added device before it has contacted Aruba Central.</i>
                                 </p>
+								<h4>Remove Devices from Site</h4>
+								<p>
+									Removes devices from the currently assigned Site (using the SERIAL column)
+								</p>
 								<h4>Assign Labels to Devices</h4>
 								<p>
-									Assigns devices to each of the Labels in the CSV. Multiple labels are supported - each label needs to be separated by a colon ":".
-									If the LABELS are missing for a device (or all devices) in the CSV, the device will not be assigned a device. 
+									Assigns devices to each of the Labels in the CSV. Multiple labels are supported - each label needs to be separated by a colon ":". Comma separated is also supported if the list of labels is wrapped in quotes. If the LABELS are missing for a device (or all devices) in the CSV, the device will not be assigned a device. 
+								</p>
+								<h4>Remove Labels from Devices</h4>
+								<p>
+									Removed the Labels supplied in the CSV from the corresponding device. Multiple labels are supported - each label needs to be separated by a colon ":".
+									Comma separated is also supported if the list of labels is wrapped in quotes. If the LABELS are missing for a device (or all devices) in the CSV, the device will not have any labels removed. 
 								</p>
                                 <h4>Rename Devices</h4>
                                 <p>
@@ -552,7 +585,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								<p>
 									Devices in template groups are also supported. The default variable name used for the hostname is "_sys_hostname". A custom variable name can be designated in the <a href="settings.html" target="_blank">Settings</a> page - "TEMPLATE HOSTNAME VARIABLE"
                                 </p>
-                                <h4>Set AP Zones / SSIDs</h4>
+								<h2>Specialized Tasks</h2>
+                                <h4>Set AP Zones (IAP) / SSIDs (AOS10)</h4>
 								<p>
 									If using <strong>ArubaOS 8.x</strong>, the SERIAL and ZONE columns in the CSV file are used to set the AP Zone on the corresponding Access Points in Aruba Central.
 									If the ZONE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the AP Zone set.
@@ -561,11 +595,14 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								<p>
 									If using <strong>ArubaOS 10.x</strong>, the ZONE column is used to specify which SSIDs profiles will be advertised by the AP. The ZONE column should be a list of SSID profiles separated by a comma (no spaces). E.g. "SSID1,SSID2,SSID3"
 								</p>
-								<h4>Set RF Profile</h4>
+								<h4>Set RF Zone (IAP) / RF Profiles (AOS10)</h4>
 								<p>
-									Uses the SERIAL and RF PROFILE columns in the CSV file to set the RF Profile on the corresponding <strong>AOS 10</strong> Access Points in Aruba Central.
-									If the RF PROFILE is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the RF Profile set.
-									If the RF Profile name supplied in the CSV is not configured in the Group for which the AP is configured, the "default" RF Profile is assigned.
+									If using <strong>ArubaOS 8.x</strong>, the SERIAL and RF ZONE (or RF PROFILE) columns in the CSV file are used to set the RF Zone on the corresponding Access Points in Aruba Central.
+									If the RF ZONE (or RF PROFILE) is missing, or is equal to "-" for an AP (or all APs) in the CSV, the device will not have the RF Zone set (skipped).
+									If the RF ZONE (or RF PROFILE) is equal to "*" for an AP (or all APs) in the CSV, the device will be set to not have a configured RF Zone.
+								</p>
+								<p>
+									If using <strong>ArubaOS 10.x</strong>, the RF ZONE (or RF PROFILE) column is used to specify which RF profile will be utilised by the AP.
 								</p>
 								<h4>Set Radio Mode</h4>
 								<p>
@@ -590,6 +627,17 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li>Disabled</li>
 									</ul>
 								</p>
+								<h4>Set Flexible Dual Band Mode</h4>
+								<p>
+									Uses the SERIAL and FLEX DUAL BAND columns in the CSV file to set the mode on the corresponding radio on Access Points in Aruba Central.</br>
+									If the FLEX DUAL BAND is missing, or is equal to "-" for a radio on an AP (or all APs) in the CSV, the AP will not have the mode set.</br>
+									The supported values for the FLEX DUAL BAND are: 
+									<ul>
+										<li>5GHz-and-2.4GHz</li>
+										<li>5GHz-and-6GHz</li>
+										<li>2.4GHz-and-6GHz</li>
+									</ul>
+								</p>
 								<h4>Enable 2.4GHz radios</h4>
 								<p>
 									Uses the SERIAL column in the CSV file to enable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
@@ -605,6 +653,24 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<p>Antenna Gain configuration</p>
 									</div>
 									Uses the SERIAL column in the CSV file to configure the selected antenna gain. The antenna gain is set either using the Aruba antenna dropdown selector or manual entry of the antenna gain values, along with the model of the AP for which you want to apply the gain. Additionally, it provides a single click to reboot all configured APs after the antenna gain configuration has synced to each AP.
+								</p>
+								<h4>Set AP Swarm Mode</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified AP swarm mode (from the SWARM MODE column). The valid values are (case-insensitive): 
+									<ul>
+										<li>Cluster</li>
+										<li>Standalone</li>
+										<li>Single-AP</li>
+									</ul>
+								</p>
+								<h4>Set AP Installation Type</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified AP installation type (from the INSTALLATION TYPE column). The valid values are (case-insensitive): 
+									<ul>
+										<li>Default</li>
+										<li>Indoor</li>
+										<li>Outdoor</li>
+									</ul>
 								</p>
 								<h4>Set AP Static IP Address</h4>
 								<p>
@@ -776,6 +842,10 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 								This test uses the APs on the selected site to check if the AP's IP address is statically configured, and if the AP's current IP address matches that static IP. The test provides a single click to reboot all APs where the IPs are not matching.
 								</p>
+								<h4>Reset Topology</h4>
+								<p>
+								This action will trigger a Topology reset for the selected site. Requires user to already be logged into the Central UI to trigger. Rebuilding of the topology by Central can take a few hours.
+								</p>
                             </div>
                             <div class="tim-row" id="msp-row">  
                                 <h2 class="text-center">MSP Workflows</h2>
@@ -906,7 +976,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</p>
                                 <h4>WLAN Configuration</h4>
                                 <p>
-									
                                 	Provides the ability modify the WLAN configuration used by a selected WLAN/SSID, and select which Groups to make the WLAN available in. This makes copying WLAN configuration from one UI Group to another simple.
 									<div class="img-container">
 										<img src="assets/img/wlan-table.png" alt="WLAN-Table">
@@ -916,6 +985,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<img src="assets/img/wlan.png" alt="WLAN">
 										<p>Deploying a WLAN across multiple Groups</p>
 									</div>
+									The Config Shortcuts section enables easy configuration of a number of SSID Profile configurations
                                 </p>
                                 <p>
                                 	<i><strong>Note:</strong> WLAN configuration requires the WLAN Configuration API enabled on to automatically obtain the passphrases (PSK) used on WLANs being migrated. Reach out to your Aruba SE about getting this API enabled.</br>
@@ -1044,11 +1114,29 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									This feature includes:
 									<ul>
 										<li> New MPSK creation</li>
-										<li> Viewing of all MPSK passphrases per SSID
+										<li> Viewing of all MPSK passphrases per SSID</li>
 										<li> Regenerating of existing MPSK passphrases</li>
 										<li> Removing of existing MPSK passphrases</li>
 										<li> Generating QR Code for simple connection using the MPSK</li>
 										<li> Bulk upload/download of MPSKs using CSV</li>
+									</ul>
+								</p>
+							</div>
+							<div class="tim-row" id="denylist-row">
+								<h2 class="text-center">Denylist Deployment</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-l-remove text-warning" id="denylist_icon"></i>
+								</div>
+								<legend></legend>
+								<p>
+									The <a href="deployment-denylist.html">Denylist Deployment</a> workflows support the adding and removing of Client MAC addresses from the Denylist (for a selected group)
+								</p>
+								<p>	
+									This feature includes:
+									<ul>
+										<li> Bulk adding/removing of Client MAC addresses from the denylist</li>
+										<li> Viewing of all denylisted clients per Group </li>
+										<li> Individual removal of denylisted client from the denylist</li>
 									</ul>
 								</p>
 							</div>
@@ -1152,6 +1240,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									To view the visual representation of the AirMatch optimization, select the building and floor from the Floorplan section. The various support visualization options are:
 									<ul>
 										<li> Channels - Each AP is colour coded for the channel from the optimization. 6GHz channels are coloured by UNII band</li>
+										<li> Channel Bandwidth - Each AP is colour coded per the width of the channel in the optimization</li>
 										<li> EIRP - Each AP is colour coded per the power band. Exact EIRP is in the label per AP</li>
 										<li> Path Loss - Each AP is colour coded per RF Partition. Mousing over each AP will display the pathloss to other APs. If a specific channel is chosen from the options only APs on the same channel will display the path loss</li>
 										<li> UNII Frequency Band - Each AP is colour coded by UNII band</li>
@@ -1185,6 +1274,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li> Unsteerable Clients - with the ability to remove the client from the unsteerable list</li>
 										<li> Recent ClientMatch events</li>
 										<li> ClientMatch Statistics Graphs</li>
+										<li> ClientMatch Performance Statistics</li>
 									</ul>
 								</p>
 								<p>
@@ -1199,7 +1289,30 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<img src="assets/img/cm-graphs.png" alt="ClientMatch Statistics">
 										<p>ClientMatch Statistics Graphs</p>
 									</div>
-									The ClientMatch Statistics Graphs display various statistical information about the recent Steering attempts made by ClientMatch
+									The ClientMatch Statistics Graphs display various statistical information about the recent steering attempts made by ClientMatch
+								</p>
+								<p>
+									<div class="img-container">
+										<img src="assets/img/cm-performance.png" alt="ClientMatch Performance Statistics">
+										<p>ClientMatch Performance Statistics</p>
+									</div>
+									The ClientMatch Performance Statistics displays various statistical information about how ClientMatch is performing in relation to client connectivity. These statistics include roam times across the different types of steering being controlled by ClientMatch, as well as the change in client RSSI when a roam is triggered by 802.11v.
+									The Performance Statistics table provides data around the success rates of clients following the ClientMatch steer (per type):
+									<ul>
+										<li>Steer Type</li>
+										<li>Total number of Steers</li>
+										<li>Success percentage of the total number of steers</li>
+										<li>Steers using Deauthentication, with the percentage of those that were successful</li>
+										<li>Steers using 802.11v, with the percentage of those that were successful</li>
+										<li>Count of steers that ended with a Timeout</li>
+										<li>Count of steers that were Rejected by the client</li>
+										<li>Count of steers where the client ended at a different radio</li>
+										<li>Count of steers where the steer was triggered for the wrong source radio</li>
+									</ul>
+									CSV Download of the performance statistics includes some additional statistics not displayed in the table:
+									<ul>
+										<li>Average roam times for successful steers, deauth steers, 802.11v steers, and timeout events</li>
+									</ul>
 								</p>
 								<p> The ClientMatch service control requires the Central Customer ID for your account to be entered in <a href="settings.html">Settings</a>. The Central Customer ID can be found in the account menu in the top right of Central.
 									<div class="img-container">
@@ -1237,7 +1350,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<ul>
 										<li> Download Inventory </li>
 										<ul>
-											<li>Downloading the "Device Inventory" will download a CSV containing the filtered results in the table. The CSV can then be used in the CSV Workflows section</li>
+											<li>Downloading the "Device Inventory" will download a CSV containing the filtered results in the table. The CSV can then be used in the CSV Workflows section. All columns are included in the CSV.</li>
 										</ul>
 										<li> Move to Group</li>
 										<ul>
@@ -1394,6 +1507,19 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li>Band: Will show only the channels for the selected band. APs will be colour coded based on the channel</li>
 										<li>Channel: Only colour code the APs that match the selected channel</li>
 									</ul>
+									<li> Channel Utilization: Show the channel utilization of the Radios in each AP</li>
+									<ul>
+										<li>Band: Will show only the channel utilization for the selected band. APs will be colour coded based on the utilization percentage</li>
+										<li>Channel: Only colour code the APs that match the selected channel</li>
+									</ul>
+									<li> Radar Events: Show the how many times APs have changed channels due to radar events</li>
+									<ul>
+										<li>Time Scale: Which time period to use for event totals per AP</li>
+									</ul>
+									<li> Path Loss Between APs: Show the path loss between a selected AP and its neighbours (requires band selection)</li>
+									<ul>
+										<li>Band: Will show path loss between selected AP and its RF neighbours on the selected band</li>
+									</ul>
 									<li> Clients: Show Clients on the floorplan </li>
 									<ul>
 										<li>Band: Will show only the clients for the selected band</li>
@@ -1424,12 +1550,13 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li> Overview status of the network</li>
 										<li> WLAN specific Client Counts and Bandwidth</li>
 										<li> Infrastructure Status</li>
-										<li> Top 5 Application Usage</li>
+										<li> Top 5 APs by Usage</li>
 										<li> Top 5 Clients by Usage</li>
+										<li> Top 5 Application Usage</li>
 										<li> Breakdown of 802.11 support</li>
 										<li> Band Split of WLAN devices</li>
 									</ul>
-									The Event Dashboard data is updated on a different refresh timer (default = 5 minutes) to the rest of Central Automation Studio. Settings for the Event dashboard are available from the "Dashboard" menu item.
+									The Event Dashboard data is updated on a different refresh timer (default = 5 minutes) to the rest of Central Automation Studio. Settings for the Event dashboard are available from the "Dashboard" menu item. The settings allow for the hiding of different groups of tiles, as well as altering the size of some tiles.
 								</p>
 								<p>
 									There are 3 different refreshes of data available on the Event Dashboard:
@@ -1588,7 +1715,7 @@ ip dns server-address priority 2 %dns2.ip%
 										<li> Clone a Group</li>
 										<li> Bulk configure Firmware Compliance per Group</li>
 											<ul>
-												<li> Currently, APs, AOS-Switch and Gateways are supported. AOS-CX support will come when APIs are available</li>
+												<li> Currently, APs, AOS-Switch, AOS-CX and Gateways are supported</li>
 												<li> Firmware compliance is intelligently configured for the selected groups that have the correct allowed devices on the Group. E.g. AP firmware compliance will not be set on a group that does not include APs</li>
 											</ul>
 										<li> Provides quick link to configure Country Codes for Groups</li>
@@ -1598,6 +1725,9 @@ ip dns server-address priority 2 %dns2.ip%
 								<h2>Site Management</h2>
 								<p>
 									The <strong>Add Sites</strong> provides the quickly add Sites, either manually or using a CSV upload. Sites can be added either using street addresses or Geo-coordinates
+								</p>
+								<p>
+									The <strong>Assign APs to Sites</strong> tile provides the ability to automatically assign the Virtual Controller's Site to all the member APs in the cluster.
 								</p>
 								<p>
 									Bulk deletion of Sites is supported through multi-select in the Sites table
@@ -1632,6 +1762,193 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.36.7 (2024/04/11)</h4>
+									<ul>
+										<li>Added support for import and export of RAPIDS classification rules</li>
+									</ul>
+									<h4>Version 1.36.6 (2024/04/01)</h4>
+									<ul>
+										<li>Added support for US-West5 Central Cluster</li>
+									</ul>
+									<h4>Version 1.36.5 (2024/03/26)</h4>
+									<ul>
+										<li>Fix for API call loop in pages that draw floorplans, if no floorplans were defined in Central</li>
+									</ul>
+									<h4>Version 1.36.4 (2024/03/15)</h4>
+									<ul>
+										<li>Added Config Shortcuts to WLAN Deployment when editing SSIDs</li>
+									</ul>
+									<h4>Version 1.36.3 (2024/03/12)</h4>
+									<ul>
+										<li>Improved cluster selection in Settings</li>
+									</ul>
+									<h4>Version 1.36.2 (2024/03/08)</h4>
+									<ul>
+										<li>Fast Account Switching - if more than one account is configured, an account switching menu now appears in the top <a href="#navigation-row">Navigation</a> bar</li>
+									</ul>
+									<h4>Version 1.36.1 (2024/03/06)</h4>
+									<ul>
+										<li>Account Name now visible in title banner on every page (if more than 1 account is configured)</li>
+										<li>AirMatch page now automatically enters "Large Scale Deployment Mode" when 10,000 APs are part of the account</a></li>
+									</ul>
+									<h4>Version 1.36 (2024/03/04) - "Statistics & Overlay"</h4>
+									<ul>
+										<li>Fix for incorrect Band in WLANs workflow table</li>
+										<li>Added Performance Statistics to <a href="#clientmatch-row">ClientMatch</a></li>
+										<li>Added Channel Bandwidth overlay in <a href="#airmatch-row">AirMatch</a></li>
+										<li>Added Channel Bandwidth overlay in <a href="#vrf-row">VisualRF</a></li>
+									</ul>
+									<h4>Version 1.35.5 (2024/02/12)</h4>
+									<ul>
+										<li>Improvements in CSV based workflows for renaming APs</li>
+										<li>Added Channel Utilization overlay in <a href="#vrf-row">VisualRF</a></li>
+										<li>Code improvements for upcoming features</li>
+									</ul>
+									<h4>Version 1.35.4 (2024/02/11)</h4>
+									<ul>
+										<li>B&W Floorplan support in KMS and AirMatch (Radar View)</li>
+										<li>Support for switch stacks in Physical Layer Information as part of the Site-Based Workflows</li>
+									</ul>
+									<h4>Version 1.35.3 (2024/02/09)</h4>
+									<ul>
+										<li>Added ability to download AirMatch events as a CSV</li>
+										<li>Added connection method (Wireless vs Wired) icon to the Client tables</li>
+										<li>Added Wi-Fi 6E to the Wi-Fi Protocol Chart in the Client Statistics page</li>
+									</ul>
+									<h4>Version 1.35.2 (2024/02/07)</h4>
+									<ul>
+										<li>Improvements to the Event Dashboard</li>
+										<ul>
+											<li>Added graph for Top APs </li>
+											<li>Added the ability to hide/show more tiles</li>
+											<li>Added the ability to alter the size of "Top" tiles to fit all three on the same row</li>
+										</ul>
+									</ul>
+									<h4>Version 1.35.1 (2024/01/17)</h4>
+									<ul>
+										<li>Firmware Compliance now supports AOS-CX Switches</li>
+									</ul>
+									<h4>Version 1.35 (2024/01/05) - "Rogue Effects"</h4>
+									<ul>
+										<li><a href="#monitoring-row">RAPIDS</a> improvements:</li>
+										<ul>
+											<li>Added graph for summary of sites affected by Rogues </li>
+											<li>Added graph for summary of WIDS events across the network</li>
+											<li>Added table for WIDS events</li>
+										</ul>
+									</ul>
+									<h4>Version 1.34.3 (2023/12/22)</h4>
+									<ul>
+										<li> <a href="#msp-row">MSP Workflow</a> page now includes more information in the Inventory Download</li>
+									</ul>
+									<h4>Version 1.34.2 (2023/12/18)</h4>
+									<ul>
+										<li> <a href="#denylist-row">Denylisting page</a> is now available - moved from per-AP to Group based management</li>
+									</ul>
+									<h4>Version 1.34.1 (2023/12/11)</h4>
+									<ul>
+										<li>Fix for possible Gateway table error</li>
+										<li>Fix for AirMatch RF Neighbours on 2.4GHz</li>
+										<li>Improved reliability for obtaining buildings in AirMatch</li>
+									</ul>
+									<h4>Version 1.34 (2023/12/08) - "Scaling Up"</h4>
+									<ul>
+										<li>Added Global Setting for API Data Optimization - easy dropdown to set the Optional Information knobs</li>
+										<li>Added Optional Information knobs for reducing the number of <a href="#airmatch-row">AirMatch</a> optimizations fetched</li>
+										<li>Major <a href="#airmatch-row">AirMatch</a> page improvements for large scale deployments of AOS10</li>
+										<li>Improvements in fetching Pathloss in VisualRF page when using with very large deployments</li>
+										<li>Add support additional Aruba antennas in the Bulk AP, CSV and Site-based Workflows pages</li>
+										<li>Added extra columns to the MSP page AP list (to match the Device Inventory columns)</li>
+									</ul>
+									<h4>Version 1.33.4 (2023/12/02)</h4>
+									<ul>
+										<li>Fix for possible API call loop on VisualRF page</li>
+										<li>Added extra columns to the Device Inventory page - can be hidden by unchecking the Show All Columns checkbox</li>
+									</ul>
+									<h4>Version 1.33.3 (2023/11/28)</h4>
+									<ul>
+										<li>VisualRF page now includes overlays for Radar Events and Path Loss Between APs</li>
+										<li>Fix for AP-Client SNR links in the VisualRF page</li>
+										<li>Added ability to reset a Site topology in the Site-based workflows</li>
+									</ul>
+									<h4>Version 1.33.2 (2023/11/16)</h4>
+									<ul>
+										<li>Improved visual feedback when Client Monitoring is disabled</li>
+										<li>Updated Labels to make clearer which CSV tasks are supported for IAP 8.x and AOS 10</li>
+									</ul>
+									<h4>Version 1.33.1 (2023/11/13)</h4>
+									<ul>
+										<li>Added support for keyboard shortcut for refreshing data in CAS (Control+R)</li>
+										<li>Central Automation Studio now tries to prevent changing of pages during a token refresh - you might see a warning about being sure you want to leave. This is to help ensure tokens are not corrupted by changing pages during a token refresh</li>
+									</ul>
+									<h4>Version 1.33 (2023/11/06) - <i>"Trouble is Brewing"</i></h4>
+									<ul>
+										<li>Added support for setting the Swarm Mode on IAPs via CSV workflows</li>
+										<li>Added Virtual Controller information to the AP Statistics Page (with CSV Download)</li>
+										<li>Add code support for an upcoming feature...</li> 
+										<li>Fix for AOS-CX devices with Interface and PoE bounce in Troubleshooting</li>
+										<li>Added ability to import and export your settings in Central Automation Studio (including Accounts)</li>
+									</ul>
+									<h4>Version 1.32.3 (2023/10/24)</h4>
+									<ul>
+										<li>Added Labels and Public IP of devices into the Device Inventory page (so that it can be used for sorting, filtering, exporting)</li>
+										<li>Extended support for RF Profiles CSV Task to support RF Zones on IAP 8.x </li>
+									</ul>
+									<h4>Version 1.32.2 (2023/10/20)</h4>
+									<ul>
+										<li>Fix for Mesh topology refresh bug</li>
+										<li>Added Bulk AP Configuration support for "ap-poe-power-optimization enable" per AP setting</li>
+									</ul>
+									<h4>Version 1.32.1 (2023/10/13)</h4>
+									<ul>
+										<li>Fix for Client OS and AP model bar charts - now clickable to show the relevant devices</li>
+										<li>Updated UI to better show which tiles are clickable - added Hover state</li>
+									</ul>
+									<h4>Version 1.32 (2023/10/10) - <i>"User Requests"</i></h4>
+									<ul>
+										<li><a href="#csv-row">CSV Workflows</a> page has moved to a 3 column design:</li>
+										<ul>
+											<li>Standard Deployment Tasks - Basic deployment steps used by many users</li>
+											<li>Specialized Deployment Tasks - Deployment steps for more specific use cases</li>
+											<li>Automated Deployment Tasks - Deployment steps linked together for automation</li>
+										</ul>
+										<li>Added ability to Remove Labels using the <a href="#csv-row">CSV Workflows</a></li>
+										<li>Added ability to Remove Devices from Site using the <a href="#csv-row">CSV Workflows</a></li>
+										<li><a href="#monitoring-row">RAPIDS</a> improvements:</li>
+										<ul>
+											<li>Summary tiles are now clickable. Selected summary tile auto filters the table</li>
+											<li>Ability to filter for just Rogues by typing "Rogues" in the search box (separate from Suspected Rogue)</li>
+										</ul>
+										<li>RF Neighbours on <a href="troubleshooting-ap.html">AP Troubleshooting page</a> can now be downloaded as a CSV</li>
+										<li>Auto Assign IAPs (8.x) to the same site as the virtual controller via the <a href="deployment-site-mgmt.html">Site Management page</a></li>
+									</ul>
+									<h4>Version 1.31.5 (2023/10/06)</h4>
+									<ul>
+										<li> Uptime columns now sort correctly</li>
+									</ul>
+									<h4>Version 1.31.4 (2023/09/29)</h4>
+									<ul>
+										<li> Support for loading more than 10,000 clients</li>
+										<li> Licensing devices now happens in smaller blocks (more API calls) to reduce chances of Central API timeouts</li>
+										<li> Improved licensing progress notifications</li>
+										<li> Improved notifications on API errors</li>
+									</ul>
+									<h4>Version 1.31.3 (2023/09/19)</h4>
+									<ul>
+										<li>Flexible Dual Band Configuration now available in the <a href="#csv-row">CSV</a> based workflows for AP-615 and AP-605R</li>
+										<li>AirMatch floorplan views now support grayscale map conversion - improving visualisation</li>
+										<li>Protection for leading and trailing spaces in account creation fields</li>
+										<li>Fix for Pie charts not being clickable</li>
+									</ul>
+									<h4>Version 1.31.2 (2023/08/08)</h4>
+									<ul>
+										<li> Introduced support for "Config Shortcuts" on AP Group Configuration. Initial support is for clearing Airwave configuration from the selected group</li>
+									</ul>
+									<h4>Version 1.31.1 (2023/08/01)</h4>
+									<ul>
+										<li> Support for bulk AP Installation Type configuration (Default, Indoor, Outdoor) using <a href="#csv-row">CSV</a> based workflows</li>
+										<li> Fix for AirMatch AP RF Neighbours table not populating</li>
+									</ul>
 									<h4>Version 1.31 (2023/07/26) - <i>"Unlocking Doors"</i></h4>
 									<ul>
 										<li> New <a href="#kms-row">Key Management Service</a> Visibility and Troubleshooting page</li>
@@ -1668,7 +1985,7 @@ ip dns server-address priority 2 %dns2.ip%
 											<li> HiDPI support - they just look better now!</li>
 											<li> Support for multiple Campuses</li>
 										</ul>
-										<li> Added the ability to download an AirMatch optimisation as a CSV</li>
+										<li> Added the ability to download an AirMatch optimization as a CSV</li>
 										<li> Minor improvements in the Event Dashboard</li>
 										<li> Improved progress bars for data collection from APIs</li>
 										<li> Added ability to refresh APs, Switches and Gateways individually from the device list tables</li>
@@ -1685,7 +2002,7 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 									<h4>Version 1.29 (2023/05/05) - <i>"Atmosphere '23"</i></h4>
 									<ul>
-										<li> New <a href="#airmatch-row">AirMatch</a>optimisation visualisation </li>
+										<li> New <a href="#airmatch-row">AirMatch</a>optimization visualisation </li>
 										<li> New <a href="#event-row">Event Dashboard</a> </li>
 										<li> Fixes for Switch pages not loading correctly </li>
 									</ul>
@@ -1860,7 +2177,7 @@ ip dns server-address priority 2 %dns2.ip%
 										</ul>
 										<li> Improved support for 6GHz APs and Clients (AirMatch, ClientMatch, AP Statistics)</li>
 										<li> Added the ability to see the list of the APs with issues on the AP Statistics page (Clickable tiles)</li>
-										<li> Added setting for not including "All" AirMatch RF Events. This is due to UI performance when there is a large amount of events on the network over time. If the AirMatch page is freezing/stalling then set this to "Do Not Include"</li>
+										<li> Added setting for not including "All" AirMatch RF Events. This is due to UI performance when there is a large amount of events on the network over time. If the AirMatch page is freezing/stalling then uncheck this option</li>
 										<li> Updated Documentation and Icons</li>
 									</ul>
 									<h4>Version 1.16.1 (2022/09/24)</h4>
@@ -2341,8 +2658,6 @@ ip dns server-address priority 2 %dns2.ip%
 <script src="assets/js/core/bootstrap.min.js" type="text/javascript"></script>
 <!--  Plugin for Switches, full documentation here: https://www.jque.re/plugins/version3/bootstrap.switch/ -->
 <script src="assets/js/plugins/bootstrap-switch.js"></script>
-<!--  Google Maps Plugin    -->
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB2Yno10-YTnLjjn_Vtk0V8cdcY5lC4plU"></script>
 <!--  Chartist Plugin  -->
 <script src="assets/js/plugins/chartist.min.js"></script>
 <!--  Notifications Plugin    -->

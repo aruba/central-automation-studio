@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=230726" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -56,7 +56,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
 								<li class="nav-item active ">
-									<a class="nav-link" onclick="getMonitoringData()">
+									<a class="nav-link" onclick="getInventoryData()">
 										<i class="central-icon ca-reload"></i>
 									</a>
 								</li>
@@ -69,6 +69,14 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<a class="nav-link" onclick="showLog()">
 										<i class="central-icon ca-research"></i>
 									</a>
+								</li>
+								<li class="nav-item dropdown" id='accountDropdown' hidden>
+									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<i class="nc-icon nc-single-02"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink" id='accountDropdownList'>
+										
+									</div>
 								</li>
 								<li class="nav-item dropdown">
 									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -99,6 +107,10 @@ Aaron Scott (WiFi Downunder) 2021-2023
 												<input class="form-check-input" type="checkbox" value="" id="emptyGroupCheckbox" onclick="loadTable()" />
 												<span class="form-check-sign"></span>Show Only Devices without a Group
 											</label>
+											<label class="form-check-label">
+												<input class="form-check-input" type="checkbox" value="" id="showLabels" onclick="showColumns()" checked/>
+												<span class="form-check-sign"></span>Show all columns
+											</label>
 										</div>
 										<div class="data-tables">
 											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -112,12 +124,18 @@ Aaron Scott (WiFi Downunder) 2021-2023
 															<th>Model</th>
 															<th>Status</th>
 															<th>Status Text</th>
+															<th>Uptime</th>
 															<th>IP Address</th>
 															<th>Name</th>
 															<th>Group</th>
 															<th>Site</th>
-															<th>Assigned License</th>
+															<th>Label</th>
+															<th>Clients</th>
+															<th>Firmware Version</th>
+															<th>Public IP</th>
+															<th>License</th>
 															<th>Subscription Key</th>
+															<th>Subscription Expiry</th>
 														</thead>
 														<tbody></tbody>
 													</table>
@@ -127,7 +145,10 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<button type="submit" class="btn btn-fill btn-info" name="downloadInventoryBtn" id="downloadInventoryBtn" onclick="downloadDeviceInventory()">Download Inventory</button>
+											<button type="submit" class="btn btn-fill btn-info" name="downloadInventoryBtn" id="downloadInventoryBtn" onclick="downloadDeviceInventory()">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Inventory
+											</button>
 											<button type="submit" class="btn btn-fill btn-warning" name="assignGroupBtn" id="assignGroupBtn" onclick="askToSelectGroup()">Move To Group</button>
 											<button type="submit" class="btn btn-fill btn-warning" name="assignSiteBtn" id="assignSiteBtn" onclick="askToSelectSite()">Move To Site</button>
 											<!--<button type="submit" class="btn btn-fill btn-warning" name="licenseBtn" id="licenseBtn" onclick="askToLicense()">Change Licensing</button>-->
@@ -213,6 +234,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</script>
 								<a href="http://www.wifidownunder.com">WiFi Downunder</a>
 							</p>
+							<p class="copyright text-center" id="cas-version"> </p>
 						</nav>
 					</div>
 				</footer>
@@ -261,9 +283,21 @@ Aaron Scott (WiFi Downunder) 2021-2023
 	<script src="assets/js/plugins/papaparse.min.js"></script>
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
+	<script src="assets/js/plugins/title-numeric.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function() {
-		openIndexedDB();
+			getCASVersion();
+			openIndexedDB();
+			
+			var pageName = 'Device Inventory';
+			if  (localStorage.getItem('from_hydra')) {
+				document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
+			} else {
+				document.getElementById('titleText').innerHTML = "Central Automation Studio: "+ '<strong>' + pageName + '</strong>';
+			}
+			// If more than one account build Account list and show menu in top right
+			loadAccountList();
+			
 			var reachabilityPromise = new $.Deferred();
 		     $.when(checkReachability(reachabilityPromise)).then(function () {
 
@@ -300,14 +334,20 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Inventory",
 					},
-					columnDefs: [{ type: 'ip-address', targets: 7 }, { "targets": 6, "visible": false }]
+					columnDefs: [{ type: 'ip-address', targets: 8 }, { "targets": 6, "visible": false }]
 				});
+				
+				document.onkeyup = function(e) {
+					if (e.ctrlKey && e.which == 82) {
+						getInventoryData()
+					}
+				};
 			});
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=230726"></script>
+	<script src="assets/js/main.js?v=240411"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/inventory.js?v=230118"></script>
+	<script src="assets/js/inventory.js?v=231202"></script>
 </html>

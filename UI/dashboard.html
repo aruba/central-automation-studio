@@ -40,7 +40,7 @@ Aaron Scott (WiFi Downunder) 2023
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=230726" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=240308" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -71,6 +71,14 @@ Aaron Scott (WiFi Downunder) 2023
 								<a class="nav-link" onclick="getMonitoringData()">
 									<i class="central-icon ca-reload"></i>
 								</a>
+							</li>
+							<li class="nav-item dropdown" id='accountDropdown' hidden>
+								<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<i class="nc-icon nc-single-02"></i>
+								</a>
+								<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink" id='accountDropdownList'>
+									
+								</div>
 							</li>
 							<li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -361,7 +369,7 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="deployment-user-roles.html">
 								<div class="card-header ">
 									<h4 class="card-title">User Roles</h4>
-									<p class="card-category">Modify & Deploy<p>
+									<p class="card-category">Modify & Deploy for APs<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
@@ -382,7 +390,7 @@ Aaron Scott (WiFi Downunder) 2023
 								<a href="deployment-auth-servers.html">
 								<div class="card-header ">
 									<h4 class="card-title">Authentication Servers</h4>
-									<p class="card-category">Modify & Deploy<p>
+									<p class="card-category">Modify & Deploy for APs<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
@@ -423,8 +431,8 @@ Aaron Scott (WiFi Downunder) 2023
 							<div class="card  card-tasks">
 								<a href="deployment-cda-mpsk.html">
 								<div class="card-header ">
-									<h4 class="card-title">Named MPSK</h4>
-									<p class="card-category">Modify CloudAuth MPSKs<p>
+									<h4 class="card-title">CloudAuth MPSK</h4>
+									<p class="card-category">Modify CloudAuth Named MPSKs<p>
 								</div>
 								<div class="card-body ">
 									<div class="row">
@@ -439,7 +447,26 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End MPSK Page -->
-						
+						<!-- Denylist Page -->
+						<div class="col-sm-3">
+							<div class="card card-tasks">
+								<a href="deployment-denylist.html">
+								<div class="card-header ">
+									<h4 class="card-title">Denylisting</h4>
+									<p class="card-category">View and Manage Client Denylisting<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-l-remove text-warning" id="workflow_denylist_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+							</a>
+							</div>
+						</div>
 						<!-- Switch Stack Page -->
 						<div class="col-sm-3">
 							<div class="card  card-tasks">
@@ -773,26 +800,6 @@ Aaron Scott (WiFi Downunder) 2023
 							</a>
 							</div>
 						</div>
-						<!-- Denylist Page -->
-						<!-- ><div class="col-sm-3">
-							<div class="card card-tasks">
-								<a href="monitoring-denylist.html">
-								<div class="card-header ">
-									<h4 class="card-title">Denylisting</h4>
-									<p class="card-category">View and Manage Client Denylisting<p>
-								</div>
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <div class="icon-very-big text-center icon-warning">
-                                                <i class="central-icon ca-l-remove text-warning" id="workflow_denylist_icon"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-							</a>
-							</div>
-						</div> -->
 					</div>
 					<div class="row"><h4 class="section-header">Experimental Features</h4></div>
 					<div class="row">
@@ -880,6 +887,27 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End Troubleshooting Tasks -->
+						<!-- MPSK Local PAN Tasks -->
+						<div class="col-sm-3" hidden>
+							<div class="card  card-tasks">
+								<a href="deployment-pan.html">
+								<div class="card-header ">
+									<h4 class="card-title">Personal Area Network</h4>
+									<p class="card-category">MPSK Local based PAN<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-gathering-restrictions text-warning" id="pan_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
 					</div>
 					<div class="row"><h4 class="section-header">Management Tasks</h4></div>
 					<div class="row">
@@ -957,7 +985,7 @@ Aaron Scott (WiFi Downunder) 2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-									<h4 class="card-title">Connected Clients</h4>
+									<h4 class="card-title">Connected Clients</h4><a class="refresh-link" onclick="refreshClientData()"><i class="central-icon ca-reload"></i></a>
 								</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -965,6 +993,7 @@ Aaron Scott (WiFi Downunder) 2023
 											<table id="client-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 												<thead>
 													<th>Name</th>
+													<th></th>
 													<th>Health</th>
 													<th>MAC Address</th>
 													<th>IP Address</th>
@@ -1405,6 +1434,7 @@ Aaron Scott (WiFi Downunder) 2023
 							</script>
 							<a href="http://www.wifidownunder.com">WiFi Downunder</a>
 						</p>
+						<p class="copyright text-center" id="cas-version"> </p>
 					</nav>
 				</div>
 			</footer>
@@ -1453,8 +1483,11 @@ Aaron Scott (WiFi Downunder) 2023
 <script src="assets/js/plugins/papaparse.min.js"></script>
 <!-- Sorting by IP Address plugin for DataTables -->
 <script src="assets/js/plugins/ip-address.js"></script>
+<script src="assets/js/plugins/title-numeric.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
+		getCASVersion();
+		
 		openIndexedDB();
 		
     	var reachabilityPromise = new $.Deferred();
@@ -1477,7 +1510,7 @@ Aaron Scott (WiFi Downunder) 2023
 					search: "_INPUT_",
 					searchPlaceholder: "Search Clients",
 				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }],
+				columnDefs: [{ type: 'ip-address', targets: 4 }, { type: 'title-string', targets: 1}],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 		
@@ -1490,7 +1523,7 @@ Aaron Scott (WiFi Downunder) 2023
 					search: "_INPUT_",
 					searchPlaceholder: "Search APs",
 				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 		
@@ -1503,7 +1536,7 @@ Aaron Scott (WiFi Downunder) 2023
 					search: "_INPUT_",
 					searchPlaceholder: "Search Switches",
 				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 		
@@ -1523,7 +1556,7 @@ Aaron Scott (WiFi Downunder) 2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Gateways",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 				
@@ -1536,7 +1569,7 @@ Aaron Scott (WiFi Downunder) 2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Controllers",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 			} else {
@@ -1549,7 +1582,7 @@ Aaron Scott (WiFi Downunder) 2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Gateways",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,11,12], "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,12,13], "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 				
@@ -1562,7 +1595,7 @@ Aaron Scott (WiFi Downunder) 2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Controllers",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }, { type: 'title-numeric', targets: 10}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 			}
@@ -1632,6 +1665,8 @@ Aaron Scott (WiFi Downunder) 2023
 				document.getElementById('titleText').setAttribute('href', "dashboard.html");
 				document.getElementById('titleText').innerHTML = "Central Automation Studio";
 			}
+			// If more than one account build Account list and show menu in top right
+			loadAccountList();
 			
 			var loadIntervalID;
 				
@@ -1651,14 +1686,25 @@ Aaron Scott (WiFi Downunder) 2023
 				clearInterval(loadIntervalID);
 			  }
 			}, false);
+			
+			window.addEventListener('beforeunload', (event) => {
+				if (isAuthInProgress()) event.returnValue = 'Token Refresh in progress. Leaving this page now could corrupt the tokens';
+			});
+			
+			document.onkeyup = function(e) {
+				if (e.ctrlKey && e.which == 82) {
+					getMonitoringData()
+				}
+			};
+			
     	});
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js?v=230726"></script>
+<script src="assets/js/main.js?v=240411"></script>
 <script src="assets/js/proxy.js?v=230325"></script>
 <script src="assets/js/hydra.js?v=230524"></script>
-
+<script src="assets/js/msp.js?v=231210"></script>
 
 
 </html>

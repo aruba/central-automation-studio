@@ -13,8 +13,8 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.x
-Updated: 1.18
+Central Automation v1.7
+Updated: 
 Copyright Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
@@ -26,6 +26,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32" />
+
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
@@ -44,23 +45,15 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		<div class="wrapper">
 			<div class="main-panel">
 				<!-- Navbar -->
-				<nav class="navbar navbar-expand-lg ">
+				<nav class="navbar navbar-expand-md ">
 					<div class="container-fluid">
 						<div class="navbar-wrapper">
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Visitor Management </a>
+							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Resource Reboot </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
-							<ul class="nav navbar-nav">
-								<form class="navbar-form navbar-left navbar-search-form" id="searchForm" onSubmit="return false;">
-									<div class="input-group">
-										<i class="nc-icon nc-zoom-split"></i>
-										<input type="search" value="" class="form-control" placeholder="Search..." id="universalSearchInput" />
-									</div>
-								</form>
-							</ul>
 							<ul class="navbar-nav">
 								<li class="nav-item active ">
 									<a class="nav-link" onclick="getMonitoringData()" href="#">
@@ -101,107 +94,99 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 				<!-- End Navbar -->
 				<div class="content">
 					<div class="container-fluid">
-						<!-- CSV Card -->
+						<!-- Overview Cards -->
 						<div class="row">
-							<div class="col-md-4">
-								<div class="card h-160">
-									<div class="card-header ">
-										<h4 class="card-title">Visitor Portal</h4>
-										<a class="refresh-link" onclick="getVisitorPortals()"><i class="central-icon ca-reload"></i></a>
-										<p class="card-category">Select a portal to work with below...</p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
 										<div class="row">
-											<div class="col-md-6">
-												<select id="portalselector" class="selectpicker" data-title="Select a Portal..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="loadPortalDetails()"> </select>
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
+												</div>
 											</div>
-										</div>
-										<hr id="portalSeparator" hidden />
-										<div class="row" id="portalDetails" hidden>
-											<div class="card-header">
-												<h4 class="card-title">Portal Details</h4>
-											</div>
-											<div class="col-md-12">
-												<div class="card-body">
-													<ul class="list-inline" id="portalInformation"></ul>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">APs Processed</p>
+													<h4 class="card-title" id="ap_count">-</h4>
 												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<div class="col-md-4">
-								<div class="card h-160">
-									<div class="card-header ">
-										<h4 class="card-title">CSV Upload</h4>
-										<p class="card-category">Upload CSV data here... <a href="/sample-visitor.csv" download>Download Sample CSV</a></p>
-										<p></p>
-									</div>
-
-									<div class="card-body">
-										<form class="form-inline">
-											<div class="form-group">
-												<input type="file" id="files" class="form-control btn btn-fill btn-info" accept=".csv" required />
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-ram-2 text-warning" id="mem_icon"></i>
+												</div>
 											</div>
-										</form>
-										<div id="manualGroupDiv">
-											<p class="card-category text-warning" id="manualGroupParagraph"></p>
-											<p></p>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">Memory Util >75%</p>
+													<h4 class="card-title" id="mem_count">-</h4>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<div class="col-md-4">
-								<div class="card h-160">
-									<div class="card-header ">
-										<h4 class="card-title">Create Visitors</h4>
-										<p class="card-category">Using selected portal and CSV data</p>
-									</div>
-
-									<div class="card-body">
-										<button class="btn btn-fill btn-info" name="createVisitorBtn" id="createVisitorBtn" onclick="uploadVisitors()">Create Visitors</button>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-4">
+												<div class="icon-big text-center icon-warning">
+													<i class="central-icon ca-cpu  text-warning" id="cpu_icon"></i>
+												</div>
+											</div>
+											<div class="col-8">
+												<div class="numbers">
+													<p class="card-category">CPU Util >50%</p>
+													<h4 class="card-title" id="cpu_count">-</h4>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-						<!-- End CSV Cards -->
-						<!-- Visitor Card -->
+						<!-- End Overview Cards -->
 						<div class="row">
 							<div class="col-md-12">
+								<!-- APs Card -->
 								<div class="card">
 									<div class="card-header">
-										<h4 class="card-title">Visitor Accounts</h4>
+										<h4 class="card-title">Access Points Rebooted</h4>
 									</div>
 									<div class="card-body">
-										<div class="card data-tables">
-											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
-												<div class="fresh-datatables">
-													<table id="visitor-table" class="table table-striped table-no-bordered table-hover table-fixed" cellspacing="0" width="100%">
-														<thead>
-															<th>ID</th>
-															<th>Name</th>
-															<th>Company</th>
-															<th>Status</th>
-															<th>Enabled</th>
-															<th>Email</th>
-															<th>Phone</th>
-															<th>Expires</th>
-															<th>Action</th>
-														</thead>
-														<tbody></tbody>
-													</table>
-												</div>
+										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="device-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>Date</th>
+														<th>Name</th>
+														<th>Serial Number</th>
+														<th>MAC Address</th>
+														<th>Reason</th>
+														<th>Group</th>
+														<th>Site</th>
+														<th>Firmware</th>
+													</thead>
+													<tbody></tbody>
+												</table>
 											</div>
 										</div>
 									</div>
 								</div>
+								<!-- End APs Card -->
 							</div>
 						</div>
 					</div>
 				</div>
-
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -219,13 +204,9 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					</div>
 				</div>
 				<!--  End Modal -->
-
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#GroupSelectionModal" id="GroupModalLink"></a>
-						<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
-						<a data-toggle="modal" data-target="#AntennaConfigModal" id="AntennaConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -274,6 +255,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 	<script src="assets/js/plugins/bootstrap-table.js"></script>
 	<!--  DataTable Plugin -->
 	<script src="assets/js/plugins/jquery.dataTables.min.js"></script>
+	<script src="assets/js/plugins/datetime-moment.js"></script>
 	<!--  Full Calendar   -->
 	<script src="assets/js/plugins/fullcalendar.min.js"></script>
 	<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
@@ -289,7 +271,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 			getCASVersion();
 			openIndexedDB();
 			
-			var pageName = 'Visitor Management';
+			var pageName = 'Resource Reboot';
 			if  (localStorage.getItem('from_hydra')) {
 				document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
 			} else {
@@ -299,41 +281,43 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 			loadAccountList();
 			
 			var reachabilityPromise = new $.Deferred();
-			$.when(checkReachability(reachabilityPromise)).then(function () {
+		    $.when(checkReachability(reachabilityPromise)).then(function () {
 
-				var mgd = document.getElementById("manualGroupDiv");
-				mgd.style.display = "none";
-
-				$('#visitor-table').DataTable({
+				$('#device-table').DataTable({
 					"pagingType": "simple_numbers",
 					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					"order": [[ 1, "asc" ]],
+					"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
 					responsive: true,
 					language: {
 						search: "_INPUT_",
-						searchPlaceholder: "Search Visitors",
+						searchPlaceholder: "Search APs",
 					},
-					"columnDefs": [{
-						"targets": [ 0 ],
-						"visible": false,
-						"searchable": false
-					}]
+					'order': [[0, 'asc']],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 
-				getVisitorPortals();
-				
+				var refreshrate = localStorage.getItem('refresh_rate');
+				if (refreshrate === null || refreshrate === "") {
+					refreshrate = "30";
+				}
+				loadDeviceInfo();
+
+				getMonitoringData();
+				setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+
+				//checkDevices();
 				document.onkeyup = function(e) {
 					if (e.ctrlKey && e.which == 82) {
 						getMonitoringData()
 					}
 				};
 			});
+
 		});
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/main.js?v=240411"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/visitor.js"></script>
+	<script src="assets/js/resources.js"></script>
 </html>

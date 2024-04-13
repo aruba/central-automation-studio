@@ -200,6 +200,7 @@ var countryCodes = {
 	Tanzania: { code: 'TZ', label: 'TZ - Tanzania' },
 	Ukraine: { code: 'UA', label: 'UA - Ukraine' },
 	Uganda: { code: 'UG', label: 'UG - Uganda' },
+	'United States': { code: 'US', label: 'US - United States' },
 	Uruguay: { code: 'UY', label: 'UY - Uruguay' },
 	Uzbekistan: { code: 'UZ', label: 'UZ - Uzbekistan' },
 	'Vatican City': { code: 'VA', label: 'VA - Vatican City' },

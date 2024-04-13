@@ -1,5 +1,5 @@
 /*
-Central Automation v1.27
+Central Automation v1.32
 Updated: 
 © Aaron Scott (WiFi Downunder) 2023
 */
@@ -16,6 +16,11 @@ var sitesCounter = 0;
 
 var deleteNotification;
 
+var selectedClusters = {};
+var clusterInfo = {};
+var deviceInfo = {};
+
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -29,6 +34,140 @@ function loadCurrentPageSite() {
 
 	allSites = getSites();
 	loadSitesTable(false);
+}
+
+
+
+function loadCurrentPageAP() {
+	getDevices();
+	$('[data-toggle="tooltip"]').tooltip();
+}
+
+function getDevices() {
+	selectedClusters = {};
+
+	var fullAPList = getAPs();
+	clusterInfo = {};
+	$.each(fullAPList, function() {
+		var swarmID = this['swarm_id'];
+
+		// If this AP is in a swarm/cluster
+		if (swarmID) {
+			// Check if this swarm has been seen before
+			if (!clusterInfo[swarmID]) {
+				clusterInfo[swarmID] = [];
+			}
+
+			// Add serial to the list that matches the swarm_id.
+			var devices = clusterInfo[swarmID];
+			devices.push(this);
+			clusterInfo[swarmID] = devices;
+		}
+
+		// Add the device for the APs list
+		deviceInfo[this['serial']] = this;
+	});
+
+	loadClusterTable(false);
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		Cluster functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function updateSelectedClusters(swarmID) {
+	var rowSelected = document.getElementById(swarmID).checked;
+	if (!rowSelected) document.getElementById('cluster-select-all').checked = false;
+
+	if (selectedClusters[swarmID] && !rowSelected) delete selectedClusters[swarmID];
+	else selectedClusters[swarmID] = swarmID;
+}
+
+function selectAllClusters() {
+	var checkBoxChecked = false;
+	if (Object.keys(selectedClusters).length < Object.keys(clusterInfo).length) {
+		checkBoxChecked = true;
+		for (const [key, value] of Object.entries(clusterInfo)) {
+			if (!selectedClusters[key]) selectedClusters[key] = key;
+		}
+	} else {
+		selectedClusters = {};
+	}
+
+	loadClusterTable(checkBoxChecked);
+}
+
+function loadClusterTable(checked) {
+	$('#cluster-table')
+		.DataTable()
+		.rows()
+		.remove();
+	for (const [key, value] of Object.entries(clusterInfo)) {
+		var deviceList = value;
+		
+		// check for missing site
+		var vcSiteName = deviceList[0]['site'];
+		var missingCount = 0;
+		$.each(deviceList, function() {
+			if (this['site'] !== vcSiteName) missingCount++;
+		});
+		var missingCountString = ''+missingCount;
+		if (missingCount > 0) missingCountString = '<span class=text-danger><strong>'+missingCount+'</strong></span>';
+
+		// Build checkbox using swarm_id as key/id
+		var checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedClusters(\'' + key + '\')">';
+		if (checked) checkBoxString = '<input class="" type="checkbox" id="' + key + '" onclick="updateSelectedClusters(\'' + key + '\')" checked>';
+
+		// Add VC Cluster to table
+		var table = $('#cluster-table').DataTable();
+		table.row.add([key, checkBoxString, '<strong>' + deviceList[0]['swarm_name'] + '</strong>', deviceList.length, deviceList[0]['group_name'], deviceList[0]['site'], deviceList[0]['firmware_version'], missingCountString ]);
+	}
+	$('#cluster-table')
+		.DataTable()
+		.rows()
+		.draw();
+}
+
+function assignAPtoSite() {
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'All APs that are part of the selected Virtual Controllers will be assigned the same Site as the VC',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#23CCEF',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, assign them!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			confirmedSiteAssign();
+		}
+	});
+}
+
+function confirmedSiteAssign() {
+	var serialKey = 'SERIAL';
+	var siteKey = 'SITE';
+	var csvDataBuild = [];
+	
+	for (const [key, value] of Object.entries(selectedClusters)) {
+		// Build CSV based on VC Site
+		var deviceList = clusterInfo[key];
+
+		if (deviceList[0]['site']) {
+			var selectedSite = deviceList[0]['site'];
+			$.each(deviceList, function() {
+				if (this['site'] !== selectedSite) csvDataBuild.push({ [serialKey]: this['serial'], [siteKey]: selectedSite });
+			});
+		}
+	}
+	
+	if (csvDataBuild.length > 0) {
+		var csvDataBlob = {};
+		csvDataBlob['data'] = csvDataBuild;
+		processCSV(csvDataBlob);
+		moveDevicesToSite();
+	} else {
+		showNotification('ca-pins', 'All APs are already assigned the correct site', 'bottom', 'center', 'success');
+	}
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -156,8 +295,8 @@ function loadSitesTable(checked) {
 		// Make link to Central
 		var name = encodeURI(site['name']);
 		var apiURL = localStorage.getItem('base_url');
-		var clientURL = centralURLs[0][apiURL] + '/frontend/#/SITEHEALTH?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
-		var aiURL = centralURLs[0][apiURL] + '/frontend/#/SITE_INSIGHTS?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
+		var clientURL = centralURLs[apiURL] + '/frontend/#/SITEHEALTH?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
+		var aiURL = centralURLs[apiURL] + '/frontend/#/SITE_INSIGHTS?id=' + site['id'] + '&name=' + name + '&cid=2&cn=Site&l=label&nc=site';
 
 		// Build checkbox using Site name
 		var checkBoxString = '<input class="" type="checkbox" id="' + site['id'] + '" onclick="updateSelectedSites(\'' + site['id'] + '\')">';

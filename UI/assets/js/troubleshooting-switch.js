@@ -57,7 +57,7 @@ function loadDevicesTable() {
 		}
 
 		// Add AP to table
-		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['ip_address'], device['serial'], device['macaddr'], device['group_name'], device['site'], uptimeString, tshootBtns]);
+		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['ip_address'], device['serial'], device['macaddr'], device['group_name'], device['site'], '<span title="' + device['uptime'] + '"</span>'+uptimeString, tshootBtns]);
 	});
 	$('#device-table')
 		.DataTable()
@@ -89,7 +89,6 @@ function getSwitchPorts(deviceSerial) {
 		};
 
 		$.ajax(settings).done(function(commandResults, statusText, xhr) {
-			console.log(commandResults);
 			if (commandResults.hasOwnProperty('headers')) {
 				updateAPILimits(JSON.parse(commandResults.headers));
 			}

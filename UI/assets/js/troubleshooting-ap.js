@@ -11,6 +11,9 @@ var deviceInfo = {};
 var aaaInfo = {};
 var apBSSIDs = {};
 
+var currentAP;
+var neighbourTableData = [];
+
 var bssidNotification;
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -99,8 +102,8 @@ function loadDevicesTable(checked) {
 			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugNeighbours(\'' + device.serial + '\')">Neighbours</button> ';
 		}
 
-		// Add AP to table
-		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], uptimeString, tshootBtns]);
+		// Add AP to table		
+		table.row.add(['<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['group_name'], device['site'], device['firmware_version'], '<span title="' + device['uptime'] + '"</span>'+uptimeString, tshootBtns]);
 	}
 	$('#device-table')
 		.DataTable()
@@ -1055,6 +1058,10 @@ function checkDebugNeighbours(session_id, deviceSerial) {
 				setTimeout(checkDebugNeighbours, 10000, session_id, response.serial);
 			} else if (response.status === 'COMPLETED') {
 				$('#BSSIDModalLink').trigger('click');
+				
+				neighbourTableData = [];
+				currentAP = findDeviceInMonitoring(response.serial);
+				
 				$('#bssid-table')
 					.DataTable()
 					.rows()
@@ -1104,11 +1111,14 @@ function checkDebugNeighbours(session_id, deviceSerial) {
 							// Make AP Name as a link to Central
 							var name = encodeURI(ap['name']);
 							var apiURL = localStorage.getItem('base_url');
-							var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+							var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 
 							table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank" data-toggle="tooltip" data-placement="right" title="' + bssid + '"><strong>' + ap['name'] + '</strong></a>', essid, band, channel, snr, txPower, pathLoss, flags]);
+							
+							neighbourTableData.push([ap['name'], essid, band, channel, snr, txPower, pathLoss, flags]);
 						} else {
 							table.row.add([bssid, essid, band, channel, snr, txPower, pathLoss, flags]);
+							neighbourTableData.push([bssid, essid, band, channel, snr, txPower, pathLoss, flags]);
 						}
 					});
 				});
@@ -1124,3 +1134,50 @@ function checkDebugNeighbours(session_id, deviceSerial) {
 		}
 	});
 }
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Download Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function downloadNeighbourTable() {
+	csvData = buildCSVData();
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	var table = $('#bssid-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', currentAP['name']+'-Neighbours-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', currentAP['name']+'-Neighbours.csv');
+	//csvLink.setAttribute('Inventory', 'inventory.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+function buildCSVData() {
+	//CSV header
+	var bssidKey = 'AP/BSSID';
+	var essidKey = 'ESSID';
+	var bandKey = 'BAND';
+	var channelKey = 'CHANNEL';
+	var snrKey = 'SNR';
+	var powerKey = 'TX POWER';
+	var lossKey = 'PATH LOSS';
+	var discoveryKey = 'DISCOVERY';
+
+	var csvDataBuild = [];
+
+	// For each row in the filtered set
+	$.each(neighbourTableData, function() {
+		csvDataBuild.push({ [bssidKey]: this[0], [essidKey]: this[1], [bandKey]: this[2], [channelKey]: this[3], [snrKey]: this[4], [powerKey]: this[5], [lossKey]: this[6], [discoveryKey]: this[7]});
+	});
+
+	return csvDataBuild;
+}
+

@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=230726" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -104,7 +104,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 										<div class="row">
 											<div class="col-md-9 mx-auto"></div>
 											<div class="col-md-3 mx-auto">
-												<button type="submit" class="btn btn-fill btn-warning btn-wd" onclick="addAccount()">Add New Central Account</button>
+												<button type="submit" class="btn btn-fill btn-warning btn-wd" onclick="addAccount()">Add Central Account</button>
 											</div>
 										</div>
 										<div class="row">
@@ -166,7 +166,18 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 												</div>
 											</div>
 										</div>
-										<hr />
+										<div class="row">
+											<div class="col-md-12 mx-auto">
+												<label class="col-md-3 setting-label">API Data Optimization</label>
+												<div class="col-md-3 setting-input">
+												<select id="scaleselector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-blue"  onchange="updateScaleSettings()">
+													<option value="full">Full Details</option>
+													<option value="scale">Large Scale Deployment</option>
+													<option value="custom">Custom (Use settings below)</option>
+												</select>
+												</div>
+											</div>
+										</div>
 										<h4 class="card-subtitle-dark">Optional Information</h4>
 										<div class="row">
 											<div class="col-md-3 mx-auto">
@@ -211,7 +222,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 													</label>
 												</div>
 											</div>
-											<div class="col-md-3 mx-auto"></div>
+											<div class="col-md-3 mx-auto">
+												<div class="form-check">
+													<label class="form-check-label-options">
+														<input class="form-check-input" type="checkbox" value="" id="load_optimization_history" checked="true" onclick="saveGlobalSettings();" />
+														<span class="form-check-sign"></span>AirMatch - Optimization History
+													</label>
+												</div>
+											</div>
 										</div>
 										<hr />
 										<h4 class="card-subtitle-dark">QR Code Settings</h4>
@@ -264,6 +282,43 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 												<label class="col-md-5 format-label">Switch Port Variable</label>
 												<div class="col-md-5 setting-input">
 													<input type="text" placeholder="int{{number}}_name" class="form-control" pattern="^[a-zA-Z0-9_.]*$" id="port_variable_format" onchange="saveGlobalSettings()" oninput="this.onchange();" />
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div class="col-md-12 mx-auto">
+								<div class="card card-register card-plain text-center">
+									<div class="card-header ">
+										<div class="row  justify-content-center">
+											<div class="col-md-12">
+												<div class="header-text">
+													<h2 class="card-title">Export/Import Settings</h2>
+													<h4 class="card-subtitle">Backup Central Automation Studio configuration</h4>
+													<hr />
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="card card-body">
+										<div class="col-md-10 mx-auto">
+											<div class="row">
+												<label class="col-md-5 format-label">Export</label>
+												<div class="col-md-2 setting-input">
+													<button type="submit" class="btn btn-fill btn-default btn-wd" onclick="exportSettings()">Export</button>
+												</div>
+											</div>
+											
+											<div class="row">
+												<label class="col-md-5 format-label">Import</label>
+												<div class="col-md-5 setting-input">
+												<form class="form-inline">
+													<div class="form-group">
+														<input type="file" id="import" class="form-control btn btn-fill btn-info" accept=".json" required />&nbsp;&nbsp;<button type="button" class="btn btn-fill btn-default btn-wd" onclick="importSettings()">Import</button>
+													</div>
+												</form>
 												</div>
 											</div>
 										</div>
@@ -387,6 +442,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							</script>
 							<a href="http://www.wifidownunder.com">WiFi Downunder</a>
 						</p>
+						<p class="copyright text-center" id="cas-version"> </p>
 					</nav>
 				</div>
 			</footer>
@@ -432,198 +488,209 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 	<!-- Light Dashboard DEMO methods, don't include it in your project! -->
 	<script src="assets/js/demo.js"></script>
 	<script>
-		  $(document).ready(function() {
-		openIndexedDB();
-		      demo.checkFullPageBackgroundImage();
+		$(document).ready(function() {
+			getCASVersion();
+			openIndexedDB();
+		    demo.checkFullPageBackgroundImage();
 
-		var color_picker = document.getElementById("color_picker");
-		var color_picker_wrapper = document.getElementById("color-picker-wrapper");
-		color_picker.onchange = function() {
+			var color_picker = document.getElementById("color_picker");
+			var color_picker_wrapper = document.getElementById("color-picker-wrapper");
+			color_picker.onchange = function() {
+				color_picker_wrapper.style.backgroundColor = color_picker.value;
+			}
+			color_picker.addEventListener("input", saveGlobalSettings, false);
+	
+			const input = document.getElementById('hostname_variable');
+			let currentValue = input.value || '';
+			input.addEventListener('input', function inputInputEventHandler(e) {
+				const target = e.target;
+	
+				if (/^[a-zA-Z0-9_.]*$/.test(target.value)) {
+					currentValue = target.value;
+				} else {
+					// Users enter the not supported characters
+					// Restore the value and selection
+					target.value = currentValue;
+					target.setSelectionRange(selection.selectionStart, selection.selectionEnd);
+				}
+			});
+			let selection = {};
+			input.addEventListener('keydown', function (e) {
+				const target = e.target;
+				selection = {
+					selectionStart: target.selectionStart,
+					selectionEnd: target.selectionEnd,
+				};
+			});
+	
+			const portVariable = document.getElementById('port_variable_format');
+			let currentPortValue = portVariable.value || '';
+			portVariable.addEventListener('input', function inputInputEventHandler(e) {
+				const target = e.target;
+	
+				if (/^[a-zA-Z0-9_.]*$/.test(target.value)) {
+					currentPortValue = target.value;
+				} else {
+					// Users enter the not supported characters
+					// Restore the value and selection
+					target.value = currentPortValue;
+					target.setSelectionRange(selection.selectionStart, selection.selectionEnd);
+				}
+			});
+			let portSelection = {};
+			portVariable.addEventListener('keydown', function (e) {
+				const target = e.target;
+				portSelection = {
+					selectionStart: target.selectionStart,
+					selectionEnd: target.selectionEnd,
+				};
+			});
+	
+		      	$('#hydra-table').DataTable({
+				"paging": false,
+				"searching": false,
+				"info": false,
+				"autoWidth": false,
+				columnDefs: [ {
+					targets: [2,3,4,5],
+					render: function (data, type, full, meta) {
+		                      	return "<div class='text-wrap width-150'>" + data + "</div>";
+		              	}
+		          	}]
+			});
+	
+			var table = $('#hydra-table').DataTable();
+	
+		      	// Edit Account record
+		      	table.on('click', '.edit', function() {
+		          	$tr = $(this).closest('tr');
+	
+		          	if ($tr.hasClass('child')) {
+		              	$tr = $tr.prev('.parent');
+		          	}
+	
+		          	var data = table.row($tr).data();
+		          	editAccount(data[2]);
+		          	//alert('You press on Row: ' + data[0] + ' ' + data[1] + ' ' + data[2] + '\'s row.');
+		      	});
+	
+		      	// Delete a record
+		      	table.on('click', '.remove', function(e) {
+		          	$tr = $(this).closest('tr');
+		          	var data = table.row($tr).data();
+		          	deleteAccount(data[2]);
+		      	});
+	
+		      	if (localStorage.getItem('base_url') && !localStorage.getItem('account_details')) {
+				// Old account settings - need to migrate to v1.6
+				upgradeAccountSettings();
+			}
+	
+			var showingSecrets = localStorage.getItem('reveal_secrets');
+			if (showingSecrets != null && showingSecrets != "undefined") {
+				document.getElementById("revealSecrets").checked = JSON.parse(showingSecrets);
+			} else {
+				document.getElementById("revealSecrets").checked = true;
+				localStorage.setItem('reveal_secrets',true);
+			}
+	
+		      	populateCentralClusters();
+			loadAccountDetails();
+	
+			var apNaming = localStorage.getItem('ap_naming_format');
+			if (apNaming != null && apNaming != "undefined") {
+				document.getElementById("ap_naming_format").value = apNaming;
+			}
+	
+			var hostnameVariable = localStorage.getItem('hostname_variable');
+			if (hostnameVariable != null && hostnameVariable != "undefined") {
+				document.getElementById("hostname_variable").value = hostnameVariable;
+			}
+	
+			var portNaming = localStorage.getItem('port_variable_format');
+			if (portNaming != null && portNaming != "undefined") {
+				document.getElementById("port_variable_format").value = portNaming;
+			}
+	
+			var refreshRate = localStorage.getItem('refresh_rate');
+			if (refreshRate != null && refreshRate != "undefined") {
+				document.getElementById("refresh_rate").value = refreshRate;
+			}
+	
+			var qrColor = localStorage.getItem('qr_color');
+			if (qrColor != null && qrColor != "undefined") {
+				document.getElementById("color_picker").value = qrColor;
+			} else {
+				document.getElementById("color_picker").value = "#FF8300";
+			}
 			color_picker_wrapper.style.backgroundColor = color_picker.value;
-		}
-		color_picker.addEventListener("input", saveGlobalSettings, false);
-
-		const input = document.getElementById('hostname_variable');
-		let currentValue = input.value || '';
-		input.addEventListener('input', function inputInputEventHandler(e) {
-			const target = e.target;
-
-			if (/^[a-zA-Z0-9_.]*$/.test(target.value)) {
-				currentValue = target.value;
+	
+			var qrLogo = localStorage.getItem('qr_logo');
+			if (qrLogo != null && qrLogo != "undefined") {
+				document.getElementById("qr_logo").value = qrLogo;
 			} else {
-				// Users enter the not supported characters
-				// Restore the value and selection
-				target.value = currentValue;
-				target.setSelectionRange(selection.selectionStart, selection.selectionEnd);
+				document.getElementById("qr_logo").value = "";
 			}
-		});
-		let selection = {};
-		input.addEventListener('keydown', function (e) {
-			const target = e.target;
-			selection = {
-				selectionStart: target.selectionStart,
-				selectionEnd: target.selectionEnd,
-			};
-		});
-
-		const portVariable = document.getElementById('port_variable_format');
-		let currentPortValue = portVariable.value || '';
-		portVariable.addEventListener('input', function inputInputEventHandler(e) {
-			const target = e.target;
-
-			if (/^[a-zA-Z0-9_.]*$/.test(target.value)) {
-				currentPortValue = target.value;
+	
+			var loadClients = localStorage.getItem('load_clients');
+			if (loadClients === null || loadClients === "") {
+				loadClients = true;
 			} else {
-				// Users enter the not supported characters
-				// Restore the value and selection
-				target.value = currentPortValue;
-				target.setSelectionRange(selection.selectionStart, selection.selectionEnd);
+				loadClients = JSON.parse(loadClients)
 			}
+			document.getElementById("load_clients").checked = loadClients;
+	
+			var loadGroupProperties = localStorage.getItem('load_group_properties');
+			if (loadGroupProperties === null || loadGroupProperties === "") {
+				loadGroupProperties = true;
+			} else {
+				loadGroupProperties = JSON.parse(loadGroupProperties)
+			}
+			document.getElementById("load_group_properties").checked = loadGroupProperties;
+	
+			var loadGatewayDetails = localStorage.getItem('load_gateway_details');
+			if (loadGatewayDetails === null || loadGatewayDetails === "") {
+				loadGatewayDetails = false;
+			} else {
+				loadGatewayDetails = JSON.parse(loadGatewayDetails)
+			}
+			document.getElementById("load_gateway_details").checked = loadGatewayDetails;
+	
+			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
+			if (loadAirMatchEvents === null || loadAirMatchEvents === "") {
+				loadAirMatchEvents = true;
+			} else {
+				loadAirMatchEvents = JSON.parse(loadAirMatchEvents)
+			}
+			document.getElementById("load_airmatch_events").checked = loadAirMatchEvents;
+			
+			var reducedOpt = localStorage.getItem('load_optimization_history');
+			if (reducedOpt === null || reducedOpt === "") {
+				reducedOpt = true;
+			} else {
+				reducedOpt = JSON.parse(reducedOpt)
+			}
+			document.getElementById("load_optimization_history").checked = reducedOpt;
+	
+			var loadVCConfig = localStorage.getItem('load_vc_config');
+			if (loadVCConfig === null || loadVCConfig === "") {
+				loadVCConfig = true;
+			} else {
+				loadVCConfig = JSON.parse(loadVCConfig)
+			}
+			document.getElementById("load_vc_config").checked = loadVCConfig;
+			
+			checkScaleConfig();
+	
+		    var reachabilityPromise = new $.Deferred();
+		    $.when(checkReachability(reachabilityPromise)).then(function () {
+	
+			});
 		});
-		let portSelection = {};
-		portVariable.addEventListener('keydown', function (e) {
-			const target = e.target;
-			portSelection = {
-				selectionStart: target.selectionStart,
-				selectionEnd: target.selectionEnd,
-			};
-		});
-
-		      $('#hydra-table').DataTable({
-			"paging": false,
-			"searching": false,
-			"info": false,
-			"autoWidth": false,
-			columnDefs: [ {
-				targets: [2,3,4,5],
-				render: function (data, type, full, meta) {
-		                      return "<div class='text-wrap width-150'>" + data + "</div>";
-		              }
-		          }]
-		});
-
-		var table = $('#hydra-table').DataTable();
-
-		      // Edit Account record
-		      table.on('click', '.edit', function() {
-		          $tr = $(this).closest('tr');
-
-		          if ($tr.hasClass('child')) {
-		              $tr = $tr.prev('.parent');
-		          }
-
-		          var data = table.row($tr).data();
-		          editAccount(data[2]);
-		          //alert('You press on Row: ' + data[0] + ' ' + data[1] + ' ' + data[2] + '\'s row.');
-		      });
-
-		      // Delete a record
-		      table.on('click', '.remove', function(e) {
-		          $tr = $(this).closest('tr');
-		          var data = table.row($tr).data();
-		          deleteAccount(data[2]);
-		      });
-
-		      if (localStorage.getItem('base_url') && !localStorage.getItem('account_details')) {
-			// Old account settings - need to migrate to v1.6
-			upgradeAccountSettings();
-		}
-
-		var showingSecrets = localStorage.getItem('reveal_secrets');
-		if (showingSecrets != null && showingSecrets != "undefined") {
-			document.getElementById("revealSecrets").checked = JSON.parse(showingSecrets);
-		} else {
-			document.getElementById("revealSecrets").checked = true;
-			localStorage.setItem('reveal_secrets',true);
-		}
-
-		      populateCentralClusters();
-		loadAccountDetails();
-
-		var apNaming = localStorage.getItem('ap_naming_format');
-		if (apNaming != null && apNaming != "undefined") {
-			document.getElementById("ap_naming_format").value = apNaming;
-		}
-
-		var hostnameVariable = localStorage.getItem('hostname_variable');
-		if (hostnameVariable != null && hostnameVariable != "undefined") {
-			document.getElementById("hostname_variable").value = hostnameVariable;
-		}
-
-		var portNaming = localStorage.getItem('port_variable_format');
-		if (portNaming != null && portNaming != "undefined") {
-			document.getElementById("port_variable_format").value = portNaming;
-		}
-
-		var refreshRate = localStorage.getItem('refresh_rate');
-		if (refreshRate != null && refreshRate != "undefined") {
-			document.getElementById("refresh_rate").value = refreshRate;
-		}
-
-		var qrColor = localStorage.getItem('qr_color');
-		if (qrColor != null && qrColor != "undefined") {
-			document.getElementById("color_picker").value = qrColor;
-		} else {
-			document.getElementById("color_picker").value = "#FF8300";
-		}
-		color_picker_wrapper.style.backgroundColor = color_picker.value;
-
-		var qrLogo = localStorage.getItem('qr_logo');
-		if (qrLogo != null && qrLogo != "undefined") {
-			document.getElementById("qr_logo").value = qrLogo;
-		} else {
-			document.getElementById("qr_logo").value = "";
-		}
-
-		var loadClients = localStorage.getItem('load_clients');
-		if (loadClients === null || loadClients === "") {
-			loadClients = true;
-		} else {
-			loadClients = JSON.parse(loadClients)
-		}
-		document.getElementById("load_clients").checked = loadClients;
-
-		var loadGroupProperties = localStorage.getItem('load_group_properties');
-		if (loadGroupProperties === null || loadGroupProperties === "") {
-			loadGroupProperties = true;
-		} else {
-			loadGroupProperties = JSON.parse(loadGroupProperties)
-		}
-		document.getElementById("load_group_properties").checked = loadGroupProperties;
-
-		var loadGatewayDetails = localStorage.getItem('load_gateway_details');
-		if (loadGatewayDetails === null || loadGatewayDetails === "") {
-			loadGatewayDetails = false;
-		} else {
-			loadGatewayDetails = JSON.parse(loadGatewayDetails)
-		}
-		document.getElementById("load_gateway_details").checked = loadGatewayDetails;
-
-		var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
-		if (loadAirMatchEvents === null || loadAirMatchEvents === "") {
-			loadAirMatchEvents = true;
-		} else {
-			loadAirMatchEvents = JSON.parse(loadAirMatchEvents)
-		}
-		document.getElementById("load_airmatch_events").checked = loadAirMatchEvents;
-
-		var loadVCConfig = localStorage.getItem('load_vc_config');
-		if (loadVCConfig === null || loadVCConfig === "") {
-			loadVCConfig = true;
-		} else {
-			loadVCConfig = JSON.parse(loadVCConfig)
-		}
-		document.getElementById("load_vc_config").checked = loadVCConfig;
-
-		      var reachabilityPromise = new $.Deferred();
-		      $.when(checkReachability(reachabilityPromise)).then(function () {
-
-		});
-		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=230726"></script>
+	<script src="assets/js/main.js?v=240411"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra-main.js?v=230524"></script>
-	<script src="assets/js/hydra.js?v=230524"></script>
+	<script src="assets/js/hydra-main.js?v=231208"></script>
+	<script src="assets/js/hydra.js?v=231106"></script>
 </html>

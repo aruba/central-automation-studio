@@ -4,17 +4,19 @@ Updated: 1.17
 Aaron Scott (WiFi Downunder) 2021-2023
 */
 
-var colorArray = ['text-info', 'text-danger', 'text-warning', 'text-purple', 'text-success', 'text-primary', 'text-series7', 'text-series8'];
-
 var down2APs = [];
 var down5APs = [];
 var down6APs = [];
 var highMemoryAPs = [];
 var highCPUAPs = [];
 var apBSSIDs = [];
+var apRadios = [];
 var bleBeacons = [];
 var bleGroups = [];
 var completedBLEGroups = 0;
+
+var clusterInfo = {};
+var apSwarms = [];
 
 var bssidNotification;
 var bleNotification;
@@ -24,10 +26,15 @@ var blePromise;
 function loadCurrentPageAP() {
 	updateAPGraphs();
 	loadBSSIDs();
+	getDevices();
 }
 
 function loadCurrentPageGroup() {
 	loadBLEData();
+}
+
+function loadCurrentPageSwarm() {
+	loadSwarmData();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -51,6 +58,27 @@ function findAPForMAC(macaddr) {
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		AP functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function getDevices() {
+	var fullAPList = getAPs();
+	clusterInfo = {};
+	$.each(fullAPList, function() {
+		var swarmID = this['swarm_id'];
+
+		// If this AP is in a swarm/cluster
+		if (swarmID) {
+			// Check if this swarm has been seen before
+			if (!clusterInfo[swarmID]) {
+				clusterInfo[swarmID] = [];
+			}
+
+			// Add serial to the list that matches the swarm_id.
+			var devices = clusterInfo[swarmID];
+			devices.push(this);
+			clusterInfo[swarmID] = devices;
+		}
+	});
+}
+
 function updateAPGraphs() {
 	var apModels = {};
 	var apFirmware = {};
@@ -73,6 +101,7 @@ function updateAPGraphs() {
 	down6APs = [];
 	var apCounter = 0;
 	var radioCounter = 0;
+	apRadios = [];
 
 	$('#radios-table')
 		.DataTable()
@@ -134,9 +163,16 @@ function updateAPGraphs() {
 				// Make AP Name as a link to Central
 				var name = encodeURI(currentAP['name']);
 				var apiURL = localStorage.getItem('base_url');
-				var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + currentAP['serial'] + '?casn=' + currentAP['serial'] + '&cdcn=' + name + '&nc=access_point';
+				var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + currentAP['serial'] + '?casn=' + currentAP['serial'] + '&cdcn=' + name + '&nc=access_point';
 				// Add row to table
-				table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, radio['channel'], radio['tx_power'] ? radio['tx_power'] : '-', radio['utilization'] ? radio['utilization'] : '-', radio['spatial_stream']]);
+				if (radio['status'] == 'Up') {
+					table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, radio['channel'], radio['tx_power'] ? radio['tx_power'] : '-', radio['utilization'] ? radio['utilization'] : '-', radio['spatial_stream']]);
+				} else {
+					table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, '-', '-', '-', radio['spatial_stream']]);
+				}
+				
+				apRadios.push({ name: currentAP['name'], serial: currentAP['serial'], status: radio['status'], radiomac: radio['macaddr'], band: band, channel: radio['channel'] ? radio['channel'] : '-', power: radio['tx_power'] ? radio['tx_power'] : '-', util: radio['utilization'] ? radio['utilization'] : '-', streams: radio['spatial_stream'] });
+				
 				radioCounter++;
 
 				if (this.radio_name.includes('2.4 GHz') && this.status === 'Down') {
@@ -261,7 +297,7 @@ function updateAPGraphs() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 	var barOptions = {
-		distributeSeries: true,
+		//distributeSeries: true,
 		seriesBarDistance: 10,
 		axisX: {
 			showGrid: false,
@@ -299,7 +335,7 @@ function updateAPGraphs() {
 		'#chartModel',
 		{
 			labels: apLabels,
-			series: apSeries,
+			series: [apSeries],
 		},
 		barOptions
 	);
@@ -312,6 +348,7 @@ function updateAPGraphs() {
 		var table = $('#selected-device-table').DataTable();
 		var selectedAPs = [];
 		var val = $(this).attr('ct:meta');
+		console.log(this)
 		selectedAPs = apModels[val];
 		document.getElementById('selected-title').innerHTML = 'AP-' + val + ' model Access Points';
 
@@ -332,7 +369,7 @@ function updateAPGraphs() {
 			// Make AP Name as a link to Central
 			var name = encodeURI(ap['name']);
 			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 			// Add row to table
 			table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], duration.humanize()]);
 
@@ -366,7 +403,7 @@ function updateAPGraphs() {
 	for (i = 0; i < busyAPs.length; i++) {
 		var name = encodeURI(busyAPs[i]['name']);
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + busyAPs[i]['serial'] + '?casn=' + busyAPs[i]['serial'] + '&cdcn=' + name + '&nc=access_point';
+		var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + busyAPs[i]['serial'] + '?casn=' + busyAPs[i]['serial'] + '&cdcn=' + name + '&nc=access_point';
 		// Add row to table
 		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + busyAPs[i]['name'] + '</strong></a>', busyAPs[i]['client_count']]);
 	}
@@ -399,7 +436,7 @@ function updateAPGraphs() {
 				var uptime = busyAPs[i]['uptime'] ? busyAPs[i]['uptime'] : 0;
 				var duration = moment.duration(uptime * 1000);
 				var apiURL = localStorage.getItem('base_url');
-				var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + busyAPs[i]['serial'] + '?casn=' + busyAPs[i]['serial'] + '&cdcn=' + name + '&nc=access_point';
+				var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + busyAPs[i]['serial'] + '?casn=' + busyAPs[i]['serial'] + '&cdcn=' + name + '&nc=access_point';
 
 				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Troubleshoot AP" onclick="debugSystemStatus(\'' + busyAPs[i]['serial'] + '\')"><i class="fa-solid fa-screwdriver-wrench"></i></a> ';
 
@@ -439,7 +476,7 @@ function updateAPGraphs() {
 			var name = encodeURI(this['name']);
 			var memoryUsage = (((this['mem_total'] - this['mem_free']) / this['mem_total']) * 100).toFixed(0).toString();
 			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
 
 			var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Reboot AP" onclick="rebootAP(\'' + this['serial'] + '\')"><i class="fa-solid fa-power-off"></i></a> ';
 			if (this.status !== 'Up') {
@@ -500,7 +537,7 @@ function updateAPGraphs() {
 		}
 	);
 
-	$('#chartFirmware').on('click', '.ct-slice-pie', function() {
+	$('#chartFirmware').on('click', '.ct-slice-donut', function() {
 		$('#selected-device-table')
 			.DataTable()
 			.rows()
@@ -528,7 +565,7 @@ function updateAPGraphs() {
 			// Make AP Name as a link to Central
 			var name = encodeURI(ap['name']);
 			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 			// Add row to table
 			table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], duration.humanize()]);
 
@@ -615,7 +652,7 @@ function showAPs(showMode) {
 		// Make AP Name as a link to Central
 		var name = encodeURI(ap['name']);
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+		var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 		// Add row to table
 		table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], ap['firmware_version'], ap['site'], ap['group_name'], ap['macaddr'], duration.humanize()]);
 
@@ -675,7 +712,7 @@ function loadBSSIDTable(currentBSSIDs) {
 		// Make AP Name as a link to Central
 		var name = encodeURI(ap['name']);
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+		var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 		$.each(this.radio_bssids, function() {
 			var radio = this;
 			$.each(radio.bssids, function() {
@@ -703,6 +740,66 @@ function loadBSSIDTable(currentBSSIDs) {
 		.DataTable()
 		.rows()
 		.draw();
+}
+
+/*  -------------------------------------------------------------------------------------------------
+	Swarm Table
+	------------------------------------------------------------------------------------------------- */
+function loadSwarmData() {
+	const transaction = db.transaction('general', 'readonly');
+	const store = transaction.objectStore('general');
+
+	const swarmQuery = store.get('monitoring_swarms');
+	swarmQuery.onsuccess = function() {
+		if (swarmQuery.result && swarmQuery.result.data) {
+			loadSwarmTable(JSON.parse(swarmQuery.result.data));
+		} else {
+			updateSwarmData();
+		}
+	};
+}
+
+function loadSwarmTable(currentSwarms) {
+	apSwarms = [];
+	$('#swarm-table')
+		.DataTable()
+		.rows()
+		.remove();
+	var table = $('#swarm-table').DataTable();
+	for (const [key, value] of Object.entries(clusterInfo)) {
+		var deviceList = value;
+		var currentSwarm = null;
+		$.each(currentSwarms, function() {
+			if (this.swarm_id == key) {
+				currentSwarm = this;
+			}
+		});
+		
+		// Add VC Cluster to table
+		table.row.add([key, '<strong>' + deviceList[0]['swarm_name'] + '</strong>', deviceList.length, deviceList[0]['group_name'], deviceList[0]['site'], currentSwarm.ip_address, currentSwarm.public_ip_address, currentSwarm.firmware_version]);
+		
+		apSwarms.push({ name: deviceList[0]['swarm_name'], aps: deviceList.length, group: deviceList[0]['group_name'], site: deviceList[0]['site'], ip_address: currentSwarm.ip_address, public_ip: currentSwarm.public_ip_address, firmware: currentSwarm.firmware_version });
+		
+		if (document.getElementById('vc_count')) {
+			document.getElementById('vc_count').innerHTML = apSwarms.length;
+		
+			if (apSwarms.length > 0) {
+				$(document.getElementById('vc_icon')).addClass('text-primary');
+				$(document.getElementById('vc_icon')).removeClass('text-warning');
+				$(document.getElementById('vc_icon')).removeClass('text-danger');
+			} else {
+				$(document.getElementById('vc_icon')).removeClass('text-success');
+				$(document.getElementById('vc_icon')).removeClass('text-warning');
+				$(document.getElementById('vc_icon')).addClass('text-danger');
+			}
+		}
+	}
+	
+	$('#swarm-table')
+		.DataTable()
+		.rows()
+		.draw();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 /*  -------------------------------------------------------------------------------------------------
@@ -818,7 +915,7 @@ function loadBLETable() {
 		if (ap) {
 			var name = encodeURI(ap['name']);
 			var apiURL = localStorage.getItem('base_url');
-			var centralURL = centralURLs[0][apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 			table.row.add([i, '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', currentBeacon['iot_radio_mac'], status, currentBeacon['status'], currentBeacon['profile_name'], currentBeacon['radio_instance'], currentBeacon['adv_format'], currentBeacon['interval'], currentBeacon['major'], currentBeacon['minor'], ap['group_name']]);
 		} else {
 			table.row.add([i, currentBeacon['ap_mac'], currentBeacon['iot_radio_mac'], status, currentBeacon['status'], currentBeacon['profile_name'], currentBeacon['radio_instance'], currentBeacon['adv_format'], currentBeacon['interval'], currentBeacon['major'], currentBeacon['minor'], '']);
@@ -853,6 +950,60 @@ function showRadios() {
 
 function showBLE() {
 	$('#BLEModalLink').trigger('click');
+}
+
+function showVCs() {
+	$('#VCModalLink').trigger('click');
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Download Radios Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function downloadRadios() {
+	csvData = buildRadioCSVData();
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	var table = $('#bssid-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', 'Radios-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', 'Radios.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+function buildRadioCSVData() {
+	//CSV header
+	var nameKey = 'DEVICE NAME';
+	var serialKey = 'SERIAL';
+	var statusKey = 'STATUS';
+	var radioKey = 'RADIO MAC';
+	var bandKey = 'BAND';
+	var channelKey = 'CHANNEL';
+	var powerKey = 'POWER';
+	var utilKey = 'UTLIZATION';
+	var streamsKey = 'SPATIAL STREAMS';
+
+	var csvDataBuild = [];
+
+	var table = $('#radios-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var row = apRadios[this];
+		csvDataBuild.push({ [nameKey]: row.name, [serialKey]:row.serial, [statusKey]: row.status, [radioKey]: row.radiomac, [bandKey]: row.band, [channelKey]: row.channel, [powerKey]: row.power, [utilKey]: row.util, [streamsKey]: row.streams });
+	});
+
+	return csvDataBuild;
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -904,7 +1055,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	Download BSSID Action
+	Download Beacons Action
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function downloadBeacons() {
@@ -954,6 +1105,53 @@ function buildBLECSVData() {
 		} else {
 			csvDataBuild.push({ [nameKey]: row['ap_mac'], [bleKey]: row['iot_radio_mac'], [statusKey]: row['status'], [configKey]: row['profile_name'], [radioKey]: row['radio_instance'], [formatKey]: row['adv_format'], [intervalKey]: row['interval'], [majorKey]: row['major'], [minorKey]: row['minor'], [groupKey]: '' });
 		}
+	});
+
+	return csvDataBuild;
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Download VC Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function downloadVCs() {
+	csvData = buildVCCSVData();
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	var table = $('#swarm-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', 'VirtualControllers-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', 'VirtualControllers.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+function buildVCCSVData() {
+	//CSV header
+	var nameKey = 'NAME';
+	var apsKey = 'APs';
+	var groupKey = 'GROUP';
+	var siteKey = 'SITE';
+	var ipKey = 'IP ADDRESS';
+	var publicKey = "PUBLIC IP";
+	var firmwareKey = "FIRMWARE";
+
+	var csvDataBuild = [];
+
+	var table = $('#swarm-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var row = apSwarms[this.toString()];
+		csvDataBuild.push({ [nameKey]: row['name'], [apsKey]: row['aps'], [groupKey]: row['group'], [siteKey]: row['site'], [ipKey]: row['ip_address'], [publicKey]:row['public_ip'], [firmwareKey]:row['firmware']});
 	});
 
 	return csvDataBuild;

@@ -830,9 +830,44 @@ Generated using nucleoapp.com
   content: "\ea9e";
 }
 
+.ca-layout-11::before {
+  content: "\ea9f";
+}
+
+.ca-compare-items::before {
+  content: "\eaa0";
+}
+
+.ca-tag-remove::before {
+  content: "\eaa1";
+}
+
+.ca-tag-add::before {
+  content: "\eaa2";
+}
+
+.ca-pin-remove-2::before {
+  content: "\eaa3";
+}
+
+.ca-pins::before {
+  content: "\eaa4";
+}
+
+
+
 /*------------------------
 	Extra Styling
 -------------------------*/
+
+.graphLabel {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #999;
+  margin-bottom: 0px;
+  margin-top: -40px;
+  text-align: center;
+}
 
 .extra-h5-padding {
   margin-top: 30px;
@@ -843,14 +878,26 @@ Generated using nucleoapp.com
 }
 
 .card {
-    border-radius: 8px;
-    margin-bottom: 30px;
-    box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+}
+
+.card-stats:hover{
+  box-shadow: rgba(99, 99, 99, 0.3) 0px 2px 8px 0px;
+}
+
+.card-tasks:hover{
+  box-shadow: rgba(99, 99, 99, 0.3) 0px 2px 8px 0px;
 }
 
 .card .card-header {
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
+}
+
+.h-160 {
+  height:160px;
 }
 
 .no-focus {
@@ -921,7 +968,6 @@ Generated using nucleoapp.com
     padding-top: 30px;
 }
 
-.card .country-table tbody td:last-child,
 .card .country-table thead th:last-child {
     padding-right: 8px;
     display: block;
@@ -929,6 +975,32 @@ Generated using nucleoapp.com
     padding-top: 12px;
 }
 
+.card .country-table tbody td:last-child {
+    padding-right: 8px;
+    display: block;
+    width: 100%;
+    padding-top: 12px;
+    font-weight: bold;
+}
+
+.card .simple-table thead th:last-child {
+    padding-right: 8px;
+    display: block;
+    width: 100%;
+    padding-top: 12px;
+}
+
+.card .simple-table tbody td:last-child {
+    padding-right: 8px;
+    display: block;
+    width: 100%;
+    padding-top: 12px;
+    font-weight: bold;
+}
+
+.flag {
+  text-align: center;
+}
 
 .big-cell { 
 	text-align: center;
@@ -1050,6 +1122,11 @@ Generated using nucleoapp.com
     color: #FBE540 !important;
 }
 
+.text-transparent,
+.text-transparent:hover {
+    opacity:0;
+}
+
 .card-title {
 	display: inline;
 	width: 90%;
@@ -1115,6 +1192,12 @@ Generated using nucleoapp.com
   color: #ff8500 !important;
 }
 
+.download-icon {
+  font-size: 2em;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 4px;
+}
 
 
 td.cellDivider {
@@ -1188,6 +1271,15 @@ input[type=search]::-webkit-search-cancel-button {
   font-size: .875rem;
   padding-top: 8px;
   color: #23CCEF !important
+}
+
+.table-detail {
+  font-size: .875rem;
+  margin-bottom: 0px;
+}
+
+.table-dot {
+  padding-top: 14px;
 }
 
 .tooltip-inner {

@@ -7,6 +7,8 @@ Copyright Aaron Scott (WiFi Downunder) 2023
 var hydraMonitoringData = {};
 var authNotification;
 
+var goToAllowed = true;
+
 var cop_url = 'https://apigw-';
 
 /*  ----------------------------------------------------------------------------------
@@ -14,16 +16,19 @@ var cop_url = 'https://apigw-';
 	---------------------------------------------------------------------------------- */
 
 function saveGlobalSettings() {
+	checkScaleConfig();
 	// Save all the global settings (except for the accounts)
 	localStorage.setItem('ap_naming_format', $('#ap_naming_format').val());
 	localStorage.setItem('hostname_variable', $('#hostname_variable').val());
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
+	localStorage.setItem('data_optimization', document.getElementById('scaleselector').value);
 	localStorage.setItem('load_clients', document.getElementById('load_clients').checked);
 	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').checked);
 	localStorage.setItem('load_gateway_details', document.getElementById('load_gateway_details').checked);
-	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').checked);
 	localStorage.setItem('load_vc_config', document.getElementById('load_vc_config').checked);
+	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').checked);
+	localStorage.setItem('load_optimization_history', document.getElementById('load_optimization_history').checked);
 	localStorage.setItem('qr_color', $('#color_picker').val());
 	localStorage.setItem('qr_logo', $('#qr_logo').val());
 	// remove existing client data
@@ -32,6 +37,37 @@ function saveGlobalSettings() {
 		saveDataToDB('monitoring_wiredClients', JSON.stringify([]));
 	}
 	logInformation('Central Automation Studio settings saved');
+}
+
+function checkScaleConfig() {
+	if (document.getElementById('load_clients').checked && document.getElementById('load_group_properties').checked && document.getElementById('load_gateway_details').checked && document.getElementById('load_airmatch_events').checked && document.getElementById('load_optimization_history').checked && document.getElementById('load_vc_config').checked) {
+		$('#scaleselector').val('full');
+	} else if (!document.getElementById('load_clients').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
+		$('#scaleselector').val('scale');
+	} else {
+		$('#scaleselector').val('custom');
+	};
+	$('#scaleselector').selectpicker('refresh')
+}
+
+function updateScaleSettings() {
+	var scale = document.getElementById('scaleselector').value;
+	if (scale === "full") {
+		document.getElementById('load_clients').checked = true;
+		document.getElementById('load_group_properties').checked = true;
+		document.getElementById('load_gateway_details').checked = true;
+		document.getElementById('load_vc_config').checked = true;
+		document.getElementById('load_airmatch_events').checked = true;
+		document.getElementById('load_optimization_history').checked = true;
+	} else if (scale === "scale") {
+		document.getElementById('load_clients').checked = false;
+		document.getElementById('load_group_properties').checked = false;
+		document.getElementById('load_gateway_details').checked = false;
+		document.getElementById('load_vc_config').checked = false;
+		document.getElementById('load_airmatch_events').checked = false;
+		document.getElementById('load_optimization_history').checked = false;
+	}
+	saveGlobalSettings();
 }
 
 function onFinishSetup() {
@@ -43,7 +79,7 @@ function onFinishSetup() {
 
 function loadDashboardData(refreshrate) {
 	// Check if we need to get the latest data - or can we just load it from localStorage
-
+	goToAllowed = true;
 	if (!localStorage.getItem('monitoring_update')) {
 		console.log('Reading new hydra monitoring data from Central');
 		getDashboardData();
@@ -206,11 +242,14 @@ function tokenRefreshForAccount(clientID) {
 function getDashboardData() {
 	// Try and refresh the token
 	showNotification('ca-api', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'primary');
-
+	goToAllowed = false;
 	// Refresh card data
 	var account_details = localStorage.getItem('account_details');
 	if (account_details != null && account_details != 'undefined') {
 		centralCredentials = JSON.parse(account_details);
+		var hydraAuthSuccess = 0;
+		var hydraAuthFailed = 0;
+		authNotification = showLongNotification('ca-padlock', 'Authenticating with Central on all Accounts...', 'bottom', 'center', 'info');
 		$.each(centralCredentials, function() {
 			// Try and refresh the token for each clientID
 			var clientID = this.client_id;
@@ -243,11 +282,30 @@ function getDashboardData() {
 					}
 				}
 				if (response.hasOwnProperty('error')) {
-					showNotification('ca-padlock', response.error_description + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
+					showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
+					
+					hydraAuthFailed++;
+					if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
+						goToAllowed = true;
+						if (authNotification) {
+							if (hydraAuthFailed == 0) authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+							setTimeout(authNotification.close, 1000);
+						}
+					}
 				} else {
 					account['refresh_token'] = response.refresh_token;
 					account['access_token'] = response.access_token;
 					updateAccountDetails(account);
+					
+					// Counter used to try and prevent jumping another page when auth refresh is in process
+					hydraAuthSuccess++;
+					if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
+						goToAllowed = true;
+						if (authNotification) {
+							authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+							setTimeout(authNotification.close, 1000);
+						}
+					}
 
 					var apKey = 'aps';
 					var switchKey = 'switches';
@@ -488,33 +546,37 @@ function loadHydraTable() {
 }
 
 function loadIndividualAccount(client_id, hydra) {
-	// get account details and save them out
-	var account = getAccountforClientID(client_id);
-
-	// If COP account - write the base_url with the COP address
-	var baseURL = account.base_url;
-	if (baseURL === getAPIGateway('Central On-Prem')) {
-		console.log('Setting COP address');
-		baseURL = cop_url + account.cop_address;
-		localStorage.setItem('is_cop', '1');
+	if (!goToAllowed) {
+		if (authNotification) authNotification.update({ type: 'warning', message: 'Authenticating with Central is still in progress' });
 	} else {
-		localStorage.removeItem('is_cop');
+		// get account details and save them out
+		var account = getAccountforClientID(client_id);
+	
+		// If COP account - write the base_url with the COP address
+		var baseURL = account.base_url;
+		if (baseURL === getAPIGateway('Central On-Prem')) {
+			console.log('Setting COP address');
+			baseURL = cop_url + account.cop_address;
+			localStorage.setItem('is_cop', '1');
+		} else {
+			localStorage.removeItem('is_cop');
+		}
+	
+		localStorage.setItem('central_id', account.central_id);
+		localStorage.setItem('client_id', account.client_id);
+		localStorage.setItem('client_secret', account.client_secret);
+		localStorage.setItem('base_url', baseURL);
+		localStorage.setItem('refresh_token', account.refresh_token);
+		localStorage.setItem('access_token', account.access_token);
+	
+		// Jump to individual dashboard and refresh data
+		if (hydra == 1) localStorage.setItem('from_hydra', hydra);
+		else localStorage.removeItem('from_hydra');
+	
+		localStorage.removeItem('monitoring_update');
+		deleteDataFomDB('monitoring_bssids');
+		window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'dashboard.html';
 	}
-
-	localStorage.setItem('central_id', account.central_id);
-	localStorage.setItem('client_id', account.client_id);
-	localStorage.setItem('client_secret', account.client_secret);
-	localStorage.setItem('base_url', baseURL);
-	localStorage.setItem('refresh_token', account.refresh_token);
-	localStorage.setItem('access_token', account.access_token);
-
-	// Jump to individual dashboard and refresh data
-	if (hydra == 1) localStorage.setItem('from_hydra', hydra);
-	else localStorage.removeItem('from_hydra');
-
-	localStorage.removeItem('monitoring_update');
-	deleteDataFomDB('monitoring_bssids');
-	window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'dashboard.html';
 }
 
 function getWirelessClientOverviewForAccount(clientID) {

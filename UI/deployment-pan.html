@@ -13,7 +13,7 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.12
+Central Automation v1.15
 Updated: 
 Aaron Scott (WiFi Downunder) 2021-2023
 -->
@@ -51,7 +51,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
                     	<div class="icon-big text-center icon-warning">
 							<i class="central-icon ca-api text-warning"></i>
 						</div>
-                        <a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: MPSK-Local </a>
+                        <a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Personal Area Network </a>
                     </div>
                     <div class="collapse navbar-collapse justify-content-end">
                     	<ul class="nav navbar-nav">
@@ -106,157 +106,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
             <!-- End Navbar -->
             <div class="content">
                 <div class="container-fluid">
-                	<!-- Overview Cards -->                               
-                    <div class="row">
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                            	<a data-toggle="modal" data-target="#ClientModal" >
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-laptop-1 text-warning" id="client_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Connected Clients</p>
-                                                <h4 class="card-title" id="client_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats">
-                            	<a data-toggle="modal" data-target="#APModal" >
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Access Points</p>
-                                                <h4 class="card-title" id="ap_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                            	<a data-toggle="modal" data-target="#SwitchModal" >
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-switch-stack text-warning" id="switch_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Switches</p>
-                                                <h4 class="card-title" id="switch_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6" id='gateway_stats'>
-							<div class="card card-stats no-focus">
-								<a data-toggle="modal" data-target="#GatewayModal">
-								<div class="card-body ">
-									<div class="row">
-										<div class="col-4">
-											<div class="icon-big text-center icon-warning">
-												<i class="central-icon ca-gateway text-warning" id="gateway_icon"></i>
-											</div>
-										</div>
-										<div class="col-8">
-											<div class="numbers">
-												<p class="card-category">Gateways</p>
-												<h4 class="card-title" id="gateway_count">-</h4>
-											</div>
-										</div>
-									</div>
-								</div>
-								</a>
-							</div>
-						</div>
-						<div class="col-lg-2 col-sm-6" id='controller_stats' hidden>
-							<div class="card card-stats no-focus">
-								<a data-toggle="modal" data-target="#ControllerModal">
-								<div class="card-body ">
-									<div class="row">
-										<div class="col-4">
-											<div class="icon-big text-center icon-warning">
-												<i class="central-icon ca-controller text-warning" id="controller_icon"></i>
-											</div>
-										</div>
-										<div class="col-8">
-											<div class="numbers">
-												<p class="card-category">Controllers</p>
-												<h4 class="card-title" id="controller_count">-</h4>
-											</div>
-										</div>
-									</div>
-								</div>
-								</a>
-							</div>
-						</div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats no-focus">
-                            	<a data-toggle="modal" data-target="#SiteModal" >
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-world-pin text-warning" id="site_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Sites</p>
-                                                <h4 class="card-title" id="site_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-sm-6">
-                            <div class="card card-stats">
-                            	<a data-toggle="modal" data-target="#GroupModal" >
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="central-icon ca-folder-settings text-warning" id="group_icon"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Groups</p>
-                                                <h4 class="card-title" id="group_count">-</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- End Overview Cards -->
                     <!-- Change PSK Card -->
 					<div class='row'>
 						<div class="col-md-8">
@@ -266,7 +115,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<div class="col-md-6">
 											<div class="card-header ">
 												<h4 class="card-title">Group Selection</h4>
-												<p class="card-category">Choose a group to obtain WLAN config</p>
+												<p class="card-category">Choose a group to obtain WLAN config<p>
+											
 											</div>
 											<div class="card-body">
 												<select id="groupselector" class="selectpicker" data-title="Select a group..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getGroupConfig()">
@@ -276,37 +126,40 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<div class="col-md-6">
 											<div class="card-header ">
 												<h4 class="card-title">WLAN Selection</h4>
-												<p class="card-category">Choose a WLAN to update the associated MPSKs</p>
+												<p class="card-category">Choose a WLAN to update the associated MPSKs<p>
+											
 											</div>
 											<div class="card-body">
 												<select id="wlanselector" class="selectpicker" data-title="Select a wlan..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange"  onchange="loadMPSKTable()">
 												</select>
 											</div>
+									
 										</div> 
+								 		
 									</div>
                     			</div>  
                     		</div> 
 						</div>
 						<!-- CSV Card -->
-						<div class="col-md-4">
-							<div class="card">
-								<div class="card-header ">
-									<h4 class="card-title">Bulk MPSK Upload</h4>
-									<p class="card-category">Upload MPSK CSV data here</p>
+							<div class="col-md-4" hidden>
+								<div class="card">
+									<div class="card-header ">
+										<h4 class="card-title">Bulk MPSK Upload</h4>
+										<p class="card-category">Upload MPSK CSV data here</p>
+									</div>
+						
+									<div class="card-body">
+										<form class="form-inline">
+											<div class="form-group">
+												<input type="file" id="files" class="form-control btn btn-fill btn-info" accept=".csv" required />
+											</div>
+										</form>
+										<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" id="uploadMPSKBtn" onclick="uploadMPSKCSV()" disabled>Upload MPSK CSV</button>
+										<a class="btn btn-outline btn-info" href="sample-mpsk.csv" download>Download Sample CSV</a>
+									</div>
+									
 								</div>
-					
-								<div class="card-body">
-									<form class="form-inline">
-										<div class="form-group">
-											<input type="file" id="files" class="form-control btn btn-fill btn-info" accept=".csv" required />
-										</div>
-									</form>
-									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" id="uploadMPSKBtn" onclick="uploadMPSKCSV()" disabled>Upload MPSK CSV</button>
-									<a class="btn btn-outline btn-info" href="sample-mpsk.csv" download>Download Sample CSV</a>
-								</div>
-								
 							</div>
-						</div>
 						<!-- End CSV Card -->
 					</div>
                     <!-- End Change PSK Card -->
@@ -326,8 +179,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 													<thead>
 														<th>Index</th>
 														<th>Name</th>
-														<th>MPSK</th>														
-														<th>User Role</th>
+														<th>MPSK</th>
 														<th>Action</th>
 													</thead>
 													<tbody>
@@ -355,8 +207,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-									<h4 class="card-title">Connected Clients</h4><a class="refresh-link" onclick="refreshClientData()"><i class="central-icon ca-reload"></i></a>
-								</div>
+										<h4 class="card-title">Connected Clients</h4><a class="refresh-link" onclick="refreshClientData()"><i class="central-icon ca-reload"></i></a>
+									</div>
 								<div class="card-body">
 									<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -375,6 +227,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 												<tbody>
 												</tbody>
 											</table>
+
 										</div>
 									</div>
 								</div>
@@ -395,8 +248,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-									<h4 class="card-title">Access Points</h4><a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
-								</div>
+										<h4 class="card-title">Access Points</h4><a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
+									</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -418,6 +271,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 												<tbody>
 												</tbody>
 											</table>
+
 										</div>
 									</div>
 								</div>
@@ -442,8 +296,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-									<h4 class="card-title">Switches</h4><a class="refresh-link" onclick="refreshSwitchData()"><i class="central-icon ca-reload"></i></a>
-								</div>
+										<h4 class="card-title">Switches</h4><a class="refresh-link" onclick="refreshSwitchData()"><i class="central-icon ca-reload"></i></a>
+									</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -480,8 +334,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-									<h4 class="card-title">Gateways</h4><a class="refresh-link" onclick="refreshGatewayData()"><i class="central-icon ca-reload"></i></a>
-								</div>
+										<h4 class="card-title">Gateways</h4><a class="refresh-link" onclick="refreshGatewayData()"><i class="central-icon ca-reload"></i></a>
+									</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -604,8 +458,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						<div class="row">
 							<div class="col-md-12">
 								<div class="card-header">
-										<h4 class="card-title">Groups</h4>
-									</div>
+									<h4 class="card-title">Groups</h4>
+								</div>
 								<div class="card-body">
 									<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 										<div class="fresh-datatables">
@@ -711,14 +565,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<label class="col-md-5">Passphrase</label>
 										<div class="col-md-6">
 											<input type="password" placeholder="MPSK" class="form-control" id="mpskPassphrase" onchange="mpskChange();" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
-										</div>
-									</div>
-									</br>
-									<div class="row">
-										<label class="col-md-5">Assigned User Role</label>
-										<div class="col-md-6">
-											<select data-title="Select User Role..." name="mpskRoleSelector" id="mpskRoleSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
-											</select>
 										</div>
 									</div>
 								</div>
@@ -828,7 +674,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		getCASVersion();
 		openIndexedDB();
 		
-		var pageName = 'MPSK-Local';
+		var pageName = 'Personal Area Network';
 		if  (localStorage.getItem('from_hydra')) {
 			document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
 		} else {
@@ -840,6 +686,17 @@ Aaron Scott (WiFi Downunder) 2021-2023
     	var reachabilityPromise = new $.Deferred();
         $.when(checkReachability(reachabilityPromise)).then(function () {
 			
+			$( 'body' ).on( 'keypress', ':input[pattern]', function( ev ) {
+				var regex  = new RegExp( $(this).attr( 'pattern' ) );
+				var newVal = $(this).val() + String.fromCharCode(!ev.charCode ? ev.which : ev.charCode);
+			
+				if ( regex.test( newVal ) ) {
+					return true;
+				} else {
+					ev.preventDefault();
+					return false;
+				}
+			} );
 			
 			$(".clickable-row").click(function() {
 				var clickedRow = $(this).data("href");
@@ -905,19 +762,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
-				
-				$('#controller-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Controllers",
-					},
-					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
 			} else {
 				$('#gateway-table').DataTable({
 					"pagingType": "simple_numbers",
@@ -931,20 +775,18 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,12,13], "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
-				
-				$('#controller-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Controllers",
-					},
-					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }, { type: 'title-numeric', targets: 10}],
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
 			}
+		
+			$('#site-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Sites",
+				}
+			});
 		
 			$('#group-table').DataTable({
 				"pagingType": "simple_numbers",
@@ -993,15 +835,12 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					"searchable": false
 				},
 				{
-					"targets": [ 4 ],
+					"targets": [ 3 ],
 					"visible": true,
 					"searchable": false,
 					"orderable": false
 				}]
 			});
-			
-			// Check if using COP
-			checkUIForCOP();
 		
 		
 			// Check if we need to get the latest data - or can we just load it from localStorage
@@ -1038,7 +877,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 <script src="assets/js/main.js?v=240411"></script>
 <script src="assets/js/proxy.js?v=230325"></script>
 <script src="assets/js/hydra.js?v=230524"></script>
-<script src="assets/js/mpsk.js"></script>
+<script src="assets/js/pan.js"></script>
 
 
 </html>

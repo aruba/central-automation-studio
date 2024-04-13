@@ -9,11 +9,33 @@ var graphDataType = {};
 var graphDataMode = {};
 var graphDataStatus = {};
 var graphDataClients = {};
+var graphDataTime = {};
+var graphDataDB = {};
+var performanceStats = {};
+var performanceCSVData = [];
 
 var statusNotification;
 var balanceNotification;
 var unsteerableNotification;
 var historyNotification;
+
+//CSV header
+var typeKey = 'TYPE';
+var totalKey = 'TOTAL';
+var successTotalKey = 'SUCCESS TOTAL';
+var successPercentageKey = 'SUCCESS PERCENTAGE';
+var successAverageKey = 'SUCCESS AVERAGE ROAM TIME';
+var deauthTotalKey = 'DEAUTH TOTAL';
+var deauthPercentageKey = 'DEAUTH PERCENTAGE';
+var deauthAverageKey = 'DEAUTH AVERAGE ROAM TIME';
+var vTotalKey = '802.11v TOTAL';
+var vPercentageKey = '802.11v PERCENTAGE';
+var vAverageKey = '802.11v AVERAGE ROAM TIME';
+var timeoutTotalKey = 'TIMEOUTS';
+var timeoutAvgKey = 'TIMEOUT AVERAGE'
+var rejectTotalKey = 'REJECTS';
+var wrongDstTotalKey = 'WRONG DST';
+var wrongSrcTotalKey = 'WRONG SRC';
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
@@ -37,7 +59,6 @@ function findAPForRadio(radiomac) {
 
 function findAPForBSSID(bssidMac) {
 	var radioMac = bssidMac.slice(0, -1) + '0';
-	console.log(radioMac);
 	return findAPForRadio(radioMac);
 }
 
@@ -359,7 +380,7 @@ function getUnsteerableClients() {
 							// Make link to Central
 							client_name_url = encodeURI(client_name);
 							var apiURL = localStorage.getItem('base_url');
-							var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
+							var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
 
 							var steerBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Make Steerable" onclick="steerClient(\'' + this['macaddr'] + '\')"><i class="fa-solid  fa-directions"></i></a>';
 
@@ -383,7 +404,7 @@ function getUnsteerableClients() {
 						// Make link to Central
 						client_name_url = encodeURI(client_name);
 						var apiURL = localStorage.getItem('base_url');
-						var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + processedMac + '?ccma=' + processedMac + '&cdcn=' + client_name_url + '&nc=client';
+						var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + processedMac + '?ccma=' + processedMac + '&cdcn=' + client_name_url + '&nc=client';
 
 						var steerBtn = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="right" title="Make Steerable" onclick="steerClient(\'' + processedMac + '\')"><i class="fa-solid  fa-directions"></i></a>';
 
@@ -441,7 +462,14 @@ function steerClient(macaddr) {
 function getSteerHistory() {
 	historyNotification = showNotification('ca-m-search', 'Getting Steering History...', 'bottom', 'center', 'info');
 
+	graphDataType = {};
+	graphDataMode = {};
 	graphDataStatus = {};
+	graphDataClients = {};
+	graphDataTime = {};
+	graphDataDB = {};
+	performanceStats = {};
+	
 	$('#history-table')
 		.DataTable()
 		.clear();
@@ -483,6 +511,7 @@ function getSteerHistory() {
 			var centralHostURL = localStorage.getItem('base_url');
 
 			$.each(response.result.SteerHistory, function() {
+				
 				if (!this.hasOwnProperty('TimeNow')) {
 					// process item
 					// Date and time string
@@ -505,6 +534,7 @@ function getSteerHistory() {
 					var roamTime = '';
 
 					var steerString = this[Object.keys(this)[0]].toString();
+					//console.log(steerString.split(', '))
 					//console.log(steerString);
 					macaddr = steerString.match(/Mac=(.+?),/)[1];
 					client_name = macaddr;
@@ -518,9 +548,14 @@ function getSteerHistory() {
 
 					type = titleCase(steerString.match(/Type=(.+?),/)[1]);
 					type = type.replace('Band_steer', 'Band Steer');
+					type = type.replace('Load_bal', 'Load Balance');
+					type = type.replace('HE_steer', 'HE Steer');
+					type = type.replace('Voice_roam', 'Voice Roam');
 					mode = titleCase(steerString.match(/Mode=(.+?),/)[1]);
 
 					status = titleCase(steerString.match(/Status=(.+?),/)[1]);
+					status = status.replace('Wrong_dst', 'Wrong Destination');
+					status = status.replace('Wrong_src', 'Wrong Source');
 					statusResult = titleCase(steerString.match(/11vResult=(.+?),/)[1]);
 					var statusString = status;
 					if (mode === '11v') var statusString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="11v Result: ' + statusResult + '">' + status + '</span>';
@@ -553,13 +588,13 @@ function getSteerHistory() {
 					}
 					// Make AP Name as a link to Central
 					var apName = encodeURI(fromAP['name']);
-					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
 					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
 
 					var toRadio = steerString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
 					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					toAP = findAPForRadio(toRadioClean);
-					console.log(toAP);
+					
 					var toBand = '';
 					var toChannel = '';
 					for (var i = 0, len = toAP.radios.length; i < len; i++) {
@@ -572,7 +607,7 @@ function getSteerHistory() {
 					}
 					// Make AP Name as a link to Central
 					var apName = encodeURI(toAP['name']);
-					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
 					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
 
 					var destRadio = steerString.match(/DstRadio=\((.+?)\)/)[1].split(', ');
@@ -593,17 +628,56 @@ function getSteerHistory() {
 					}
 
 					var dstName = destRadioClean;
-					if (destAP) dstName = destAP.name;
-					var centralURL = centralURLs[0][centralHostURL] + '/frontend/#/APDETAILV2/' + destAP['serial'] + '?casn=' + destAP['serial'] + '&cdcn=' + dstName + '&nc=access_point';
-					var destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>Channel: ' + destChannel + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + dstName + '</strong></a>' + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
+					var destAPString = '-';
+					if (destAP) {
+						dstName = destAP.name;
+						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + destAP['serial'] + '?casn=' + destAP['serial'] + '&cdcn=' + dstName + '&nc=access_point';
+						destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>Channel: ' + destChannel + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + dstName + '</strong></a>' + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
+					}
 
 					roamTime = steerString.match(/RoamTime=(.*)/)[1];
 					roamTime = roamTime.replace('s', '');
+					
+					// Store roamTime by Type for graphing
+					var typeData = {};
+					if (!graphDataTime.hasOwnProperty(type)) {
+						graphDataTime[type] = typeData;
+					}
+					typeData = graphDataTime[type];
+					
+					// Build the correct array for each type
+					var statusData = [];
+					if (!typeData.hasOwnProperty(status)) {
+						typeData[status] = statusData;
+					}
+					statusData = typeData[status];
+					statusData.push(roamTime);
+					typeData[status] = statusData;
+					graphDataTime[type] = typeData;
+					
+					// Store dB change by Type for graphing
+					if (mode === "11v") {
+						var typeData = {};
+						if (!graphDataDB.hasOwnProperty(type)) {
+							graphDataDB[type] = typeData;
+						}
+						typeData = graphDataDB[type];
+						
+						// Build the correct array for each type
+						var statusData = [];
+						if (!typeData.hasOwnProperty(status)) {
+							typeData[status] = statusData;
+						}
+						statusData = typeData[status];
+						statusData.push(parseInt(fromRadio[1])-parseInt(toRadio[1]));
+						typeData[status] = statusData;
+						graphDataDB[type] = typeData;
+					}
 
 					// Make link to Central
 					client_name_url = encodeURI(client_name);
 					var apiURL = localStorage.getItem('base_url');
-					var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + macaddr + '?ccma=' + macaddr + '&cdcn=' + client_name_url + '&nc=client';
+					var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + macaddr + '?ccma=' + macaddr + '&cdcn=' + client_name_url + '&nc=client';
 
 					// Create link to get station record
 					var actionBtns = '';
@@ -612,16 +686,69 @@ function getSteerHistory() {
 					// Add row to table
 					var table = $('#history-table').DataTable();
 					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime, actionBtns]);
+					
+					// Store for performance stats table
+					// Create dictionary with counters for each mod
+					if (!performanceStats.hasOwnProperty(type)) performanceStats[type] = {};
+					var typeStats = performanceStats[type];
+					
+					if (!typeStats.hasOwnProperty(mode)) typeStats[mode] = {};
+					var modeStats = typeStats[mode];
+					if (!modeStats.hasOwnProperty(status)) modeStats[status] = 1;
+					else modeStats[status] = modeStats[status] + 1;
+					
+					// Add up the roam times for averaging
+					if (status === 'Timeout') {
+						if (!typeStats.hasOwnProperty('Total-Timeout')) typeStats['Total-Timeout'] = parseInt(roamTime);
+						else typeStats['Total-Timeout'] = typeStats['Total-Timeout'] + parseInt(roamTime);
+					} else if (status === 'Success') {
+						if (!typeStats.hasOwnProperty('Total-Success')) typeStats['Total-Success'] = parseInt(roamTime);
+						else typeStats['Total-Success'] = typeStats['Total-Success'] + parseInt(roamTime);
+					}
+					if ((mode === '11v') && (status !== 'Timeout'))  {
+						if (!typeStats.hasOwnProperty('Total-11v')) typeStats['Total-11v'] = parseInt(roamTime);
+						else typeStats['Total-11v'] = typeStats['Total-11v'] + parseInt(roamTime);
+					} else if ((mode === 'Deauth') && (status !== 'Timeout')) {
+						if (!typeStats.hasOwnProperty('Total-Deauth')) typeStats['Total-Deauth'] = parseInt(roamTime);
+						else typeStats['Total-Deauth'] = typeStats['Total-Deauth'] + parseInt(roamTime);
+					}
+					
+					typeStats[mode] = modeStats;
+					performanceStats[type] = typeStats;
 				}
 			});
 		}
-		updateGraphs();
 		$('#history-table')
 			.DataTable()
 			.rows()
 			.draw();
 		$('[data-toggle="tooltip"]').tooltip();
 		historyNotification.close();
+		
+		// Update the CM Stats Graphs
+		updateGraphs();
+		
+		// Configure the selectors for the Performance Stats cards
+		select = document.getElementById('graphSelector');
+		select.options.length = 0;
+		$.each(Object.keys(graphDataTime), function() {
+			$('#graphSelector').append($('<option>', { value: this, text: this }));
+		})
+		if ($('#graphSelector').length != 0) {
+			$('#graphSelector').selectpicker('refresh');
+		}
+		
+		select = document.getElementById('graph11vSelector');
+		select.options.length = 0;
+		$('#graph11vSelector').append($('<option>', { value: 'All', text: 'All' }));
+		$.each(Object.keys(graphDataDB), function() {
+			$('#graph11vSelector').append($('<option>', { value: this, text: this }));
+		})
+		if ($('#graph11vSelector').length != 0) {
+			$('#graph11vSelector').selectpicker('refresh');
+		}
+		
+		updateStatisticsTable();
 	});
 }
 
@@ -654,14 +781,14 @@ function getStationRecord(clientMac) {
 		}
 		var response = JSON.parse(commandResults.responseBody);
 		var results = response.result;
-		console.log(results);
+		
 		// Load UI elements
 		document.getElementById('recordTitle').innerHTML = 'Station Record: <strong>' + clientMac + '</strong>';
 		$('#RecordModalLink').trigger('click');
 
 		// Get details for client and AP links to Central
 		var apiURL = localStorage.getItem('base_url');
-		var centralBaseURL = centralURLs[0][apiURL];
+		var centralBaseURL = centralURLs[apiURL];
 		if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
 
 		$('#generalRecord').empty();
@@ -705,11 +832,9 @@ function getStationRecord(clientMac) {
 
 		var vbrRows = vbrTableData.split('\n');
 		vbrRows.shift();
-		console.log(vbrRows);
+		
 		$.each(vbrRows, function() {
-			console.log(this.toString());
 			var vbrEntry = this.toString().split('\t');
-			console.log(vbrEntry);
 			var vbrRadio = vbrEntry[0].replace(/(..)/g, '$1:').slice(0, -1);
 			var vbrAP = findAPForBSSID(vbrRadio);
 			var vbrName = encodeURI(associatedAP['name']);
@@ -746,7 +871,7 @@ function updateGraphs() {
 			},
 			axisY: {
 				onlyInteger: true,
-				offset: 30,
+				offset: 40,
 			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
@@ -771,7 +896,7 @@ function updateGraphs() {
 			},
 			axisY: {
 				onlyInteger: true,
-				offset: 30,
+				offset: 40,
 			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
@@ -796,7 +921,7 @@ function updateGraphs() {
 			},
 			axisY: {
 				onlyInteger: true,
-				offset: 30,
+				offset: 40,
 			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
@@ -832,7 +957,7 @@ function updateGraphs() {
 			},
 			axisY: {
 				onlyInteger: true,
-				offset: 30,
+				offset: 40,
 			},
 			plugins: [Chartist.plugins.tooltip()],
 		}
@@ -841,4 +966,334 @@ function updateGraphs() {
 	// Show the graphs section
 	document.getElementById('cmGraphs').hidden = false;
 	document.getElementById('cmGraphs2').hidden = false;
+}
+
+function updatePerformanceGraphs() {
+	$('#performanceLegend').empty();
+	var legendIndex = 0;
+	
+	// Massage raw data based on selected graph
+	var select = document.getElementById('graphSelector');
+	var currentType = select.value;
+	var dataTimeSet = graphDataTime[currentType];
+	
+	var maxXValue = 0;
+	var massagedData = [];
+	if (dataTimeSet) {
+		dataTimeSet = sortDataSets(dataTimeSet);
+		// Determine the max value in the data sets
+		$.each(Object.keys(dataTimeSet), function(){
+			if (this.toString() === "Timeout") {
+				// skip
+			} else if ((document.getElementById('includeRejectCheckbox').checked == false) && (this.toString() === "Reject")) {
+				// skip
+			} else {
+				var currentData = dataTimeSet[this];
+				currentData.sort(function(a, b) {
+					return parseInt(a) - parseInt(b);
+				});
+				var currMax = parseInt(currentData[currentData.length - 1])
+				if (currMax > maxXValue) maxXValue = currMax;
+			}
+		});
+		
+		// Generate Labels
+		var labels;
+		if (maxXValue > 20 && maxXValue <= 100) {
+			labels = Array.from(new Array(maxXValue+1),(val,index)=> "");
+			for (var i=0;i<maxXValue+1;i=i+10) {
+				labels.splice(i, 1, i.toString())
+			}
+		} else if (maxXValue > 100 && maxXValue < 1000) {
+			labels = Array.from(new Array(maxXValue+1),(val,index)=> "");
+			for (var i=0;i<maxXValue+1;i=i+100) {
+				labels.splice(i, 1, i.toString())
+			}
+		} else if (maxXValue > 1000) {
+			labels = Array.from(new Array(maxXValue+1),(val,index)=> "");
+			for (var i=0;i<maxXValue+1;i=i+500) {
+				labels.splice(i, 1, i.toString())
+			}
+		} else {
+			labels = Array.from(new Array(maxXValue+1),(val,index)=> index+"");
+		}
+		
+		// Populate the massaged data
+		$.each(Object.keys(dataTimeSet), function(){
+			if (this.toString() === "Timeout") {
+				// skip
+			} else if ((document.getElementById('includeRejectCheckbox').checked == false) && (this.toString() === "Reject")) {
+				// skip
+			} else {
+				$('#performanceLegend').append('<i class="fa-solid fa-circle '+colorArray[legendIndex]+'"></i> '+this.toString()+'\t');
+				var currentData = dataTimeSet[this];
+				var currentCounts = Array.from(new Array(maxXValue+1),(val,index)=> 0);
+				$.each(currentData, function() {
+					var currentTime = parseInt(this);
+					var currentCount = currentCounts[currentTime] +1;
+					currentCounts.splice(currentTime, 1, currentCount);
+				});
+				massagedData.push(currentCounts);
+				legendIndex++;
+			}
+		});
+		
+		Chartist.Bar('#chartCMTime', {
+			labels: labels,
+			series: massagedData
+		}, {
+			showPoint: false,
+			lineSmooth: Chartist.Interpolation.none(),
+			height: 250,
+			seriesBarDistance: 12,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
+			plugins: [Chartist.plugins.tooltip()],
+		});			
+	}
+}
+
+function sortDataSets(obj) {
+	items = Object.keys(obj).map(function(key) {
+		return [key, obj[key]];
+	});
+	items.sort((a, b) => a[0].localeCompare(b[0]))
+	sorted_obj={}
+	$.each(items, function(k, v) {
+		use_key = v[0]
+		use_value = v[1]
+		sorted_obj[use_key] = use_value
+	})
+	return(sorted_obj)
+} 
+
+
+function update11vGraphs() {
+	$('#11vLegend').empty();
+
+	// Massage raw data based on selected graph
+	var select = document.getElementById('graph11vSelector');
+	var currentType = select.value;
+
+	if (currentType === 'All') {
+		displayMergedDataSets(graphDataDB);
+	} else {
+		displayIndividualDataSet(graphDataDB[currentType]);
+	}
+}
+
+function displayMergedDataSets(dataDBSet) {
+
+	dataDBSet = sortDataSets(dataDBSet);
+	var mergedDataSet = {};
+	$.each(Object.keys(dataDBSet), function(){
+		var mergedSet = [];
+		// merge the data first
+		var currentSet = dataDBSet[this.toString()]
+		$.each(Object.keys(currentSet), function(){
+			if ((document.getElementById('include11vTimeoutCheckbox').checked == false) && (this.toString() === "Timeout")) {
+				// skip
+			} else if ((document.getElementById('include11vRejectCheckbox').checked == false) && (this.toString() === "Reject")) {
+				// skip
+			} else {
+				mergedSet = mergedSet.concat(currentSet[this]);
+			}
+		})
+		mergedDataSet[this.toString()] = mergedSet;	
+	})
+	displayIndividualDataSet(mergedDataSet);
+}
+
+
+function displayIndividualDataSet(dataDBSet) {
+	var legendIndex = 0;
+	
+	var minXValue = 0;
+	var maxXValue = 0;
+	var massagedData = [];
+	if (dataDBSet) {
+		dataDBSet = sortDataSets(dataDBSet);
+		// Determine the max value in the data sets
+		$.each(Object.keys(dataDBSet), function(){
+			if ((document.getElementById('include11vTimeoutCheckbox').checked == false) && (this.toString() === "Timeout")) {
+				// skip
+			} else if ((document.getElementById('include11vRejectCheckbox').checked == false) && (this.toString() === "Reject")) {
+				// skip
+			} else {
+				var currentData = dataDBSet[this];
+				currentData.sort(function(a, b) {
+					return parseInt(a) - parseInt(b);
+				});
+				var currMax = parseInt(currentData[currentData.length - 1])
+				if (currMax > maxXValue) maxXValue = currMax;
+				
+				var currMin = parseInt(currentData[0])
+				if (currMin < minXValue) minXValue = currMin;
+			}
+		});
+		
+		// Generate Labels
+		var labels;
+		var valueSpread = maxXValue - minXValue;
+		if (valueSpread > 20) {
+			labels = Array.from(new Array(valueSpread+1),(val,index)=> "");
+			for (var i=0;i<valueSpread+1;i=i+5) {
+				labels.splice(i, 1, (minXValue+i).toString())
+			}
+		} else {
+			labels = Array.from(new Array(valueSpread+1),(val,index)=> "");
+			for (var i=0;i<valueSpread+1;i++) {
+				labels.splice(i, 1, (minXValue+i).toString())
+			}
+		}
+		// Populate the massaged data
+		$.each(Object.keys(dataDBSet), function(){
+			if ((document.getElementById('include11vTimeoutCheckbox').checked == false) && (this.toString() === "Timeout")) {
+				// skip
+			} else if ((document.getElementById('include11vRejectCheckbox').checked == false) && (this.toString() === "Reject")) {
+				// skip
+			} else {
+				$('#11vLegend').append('<i class="fa-solid fa-circle '+colorArray[legendIndex]+'"></i> '+this.toString()+'\t');
+				var currentData = dataDBSet[this];
+				var currentCounts = Array.from(new Array(valueSpread+1),(val,index)=> 0);
+				$.each(currentData, function() {
+					var currentDB = parseInt(this);
+					
+					var locationIndex = 0;
+					if (minXValue == 0) indexLocation = currentDB;
+					else if (minXValue < 0) indexLocation = Math.abs(currentDB) - Math.abs(minXValue);
+					else indexLocation = currentDB - minXValue;
+					
+					var currentCount = currentCounts[indexLocation] +1;
+					currentCounts.splice(indexLocation, 1, currentCount);
+					
+				});
+				console.log(currentCounts)
+				massagedData.push(currentCounts);
+				legendIndex++;
+			}
+		});
+		
+		Chartist.Line('#chartCM11v', {
+			labels: labels,
+			series: massagedData
+		}, {
+			showPoint: false,
+			lineSmooth: Chartist.Interpolation.none(),
+			height: 250,
+			seriesBarDistance: 12,
+			axisX: {
+				showGrid: false,
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 30,
+			},
+			plugins: [Chartist.plugins.tooltip()],
+		});
+		
+						
+	}
+}
+
+function updateStatisticsTable() {
+	performanceCSVData = [];
+	
+	$('#performance-table')
+		.DataTable()
+		.clear();
+	var table = $('#performance-table').DataTable();
+	
+	$.each(Object.keys(performanceStats), function() {
+		var steerType = this.toString();
+		var steerCounts = performanceStats[steerType];
+		var typeTotal = 0;
+		var successTotal = 0;
+		var vTotal = 0;
+		var vSuccess = 0;
+		var deauthTotal = 0;
+		var deauthSuccess = 0;
+		var timeoutTotal = 0;
+		var timeoutT
+		var rejectTotal = 0;
+		var wrongDstTotal = 0;
+		var wrongSrcTotal = 0;
+		console.log(steerCounts)
+		$.each(Object.keys(steerCounts), function() {
+			var mode = this.toString();
+			var statusCounts = steerCounts[this.toString()];
+			$.each(Object.keys(statusCounts), function() {
+				typeTotal += statusCounts[this.toString()]
+				if (this.toString() === "Success") successTotal += statusCounts[this.toString()]
+				else if (this.toString() === "Timeout") timeoutTotal += statusCounts[this.toString()]
+				else if (this.toString() === "Reject") rejectTotal += statusCounts[this.toString()]
+				else if (this.toString() === "Wrong Destination") wrongDstTotal += statusCounts[this.toString()]
+				else if (this.toString() === "Wrong Source") wrongSrcTotal += statusCounts[this.toString()]
+				if (mode === "11v") {
+					vTotal += statusCounts[this.toString()];
+					if (this.toString() === "Success") vSuccess += statusCounts[this.toString()];
+				} else if (mode === "Deauth") {
+					deauthTotal += statusCounts[this.toString()];
+					if (this.toString() === "Success") deauthSuccess += statusCounts[this.toString()];
+				}
+			});
+		});
+		
+		
+		table.row.add([steerType, typeTotal, (successTotal/typeTotal*100).toFixed(2)+'%', deauthTotal!=0?deauthTotal + ' (' + (deauthSuccess/deauthTotal*100).toFixed(2)+'%)':'-',vTotal!=0?vTotal + ' (' + (vSuccess/vTotal*100).toFixed(2)+'%)':'-',timeoutTotal,rejectTotal,wrongDstTotal,wrongSrcTotal]);
+		
+		performanceCSVData.push({
+			[typeKey]: steerType,
+			[totalKey]: typeTotal,
+			[successTotalKey]: successTotal,
+			[successPercentageKey]: (successTotal/typeTotal*100).toFixed(2)+'%',
+			[successAverageKey]: successTotal>0?(steerCounts['Total-Success']/successTotal).toFixed(0):'-',
+			[deauthTotalKey]: deauthTotal,
+			[deauthPercentageKey]: deauthTotal>0?(deauthSuccess/deauthTotal*100).toFixed(2)+'%':'-',
+			[deauthAverageKey]: deauthTotal>0?(steerCounts['Total-Deauth']/deauthTotal).toFixed(0):'-',
+			[vTotalKey]: vTotal,
+			[vPercentageKey]: vTotal>0?(vSuccess/vTotal*100).toFixed(2)+'%':'-',
+			[vAverageKey]: vTotal>0?(steerCounts['Total-11v']/vTotal).toFixed(0):'-',
+			[timeoutTotalKey]: timeoutTotal,
+			[timeoutAvgKey]: timeoutTotal>0?(steerCounts['Total-Timeout']/timeoutTotal).toFixed(0):'-',
+			[rejectTotalKey]: rejectTotal,
+			[wrongDstTotalKey]: wrongDstTotal,
+			[wrongSrcTotalKey]: wrongSrcTotal,
+		});
+		
+	});
+	
+	$('#performance-table')
+	.DataTable()
+	.rows()
+	.draw();
+	
+	table.columns.adjust().draw();	
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Download Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function downloadPerformanceStats() {
+	csvData = performanceCSVData;
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	csvLink.setAttribute('download', 'CM-PerformanceStats.csv');
+
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
 }

@@ -20,6 +20,8 @@ function updateClientGraphs() {
 	var count11r = 0;
 	var rClients = [];
 	var noRClients = [];
+	var count6E = 0;
+	var sixEClients = [];
 	var count11ax = 0;
 	var axClients = [];
 	var count11ac = 0;
@@ -95,7 +97,11 @@ function updateClientGraphs() {
 			}
 
 			// Standard Split
-			if (this.connection.includes('802.11ax')) {
+			if (this.connection.includes('802.11ax') && this.band == 6) {
+				count6E++;
+				sixEClients.push(this);
+			}
+			if (this.connection.includes('802.11ax') && this.band != 6) {
 				count11ax++;
 				axClients.push(this);
 			}
@@ -266,7 +272,7 @@ function updateClientGraphs() {
 			}
 		);
 
-		$('#chartMAC').on('click', '.ct-slice-pie', function() {
+		$('#chartMAC').on('click', '.ct-slice-donut', function() {
 			$('#selected-client-table')
 				.DataTable()
 				.rows()
@@ -313,7 +319,7 @@ function updateClientGraphs() {
 				// Make link to Central
 				name = encodeURI(client_name);
 				var apiURL = localStorage.getItem('base_url');
-				var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 				// Add row to table
 				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -362,7 +368,7 @@ function updateClientGraphs() {
 			}
 		);
 
-		$('#chart11k').on('click', '.ct-slice-pie', function() {
+		$('#chart11k').on('click', '.ct-slice-donut', function() {
 			$('#selected-client-table')
 				.DataTable()
 				.rows()
@@ -409,7 +415,7 @@ function updateClientGraphs() {
 				// Make link to Central
 				name = encodeURI(client_name);
 				var apiURL = localStorage.getItem('base_url');
-				var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 				// Add row to table
 				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -459,7 +465,7 @@ function updateClientGraphs() {
 			}
 		);
 
-		$('#chart11v').on('click', '.ct-slice-pie', function() {
+		$('#chart11v').on('click', '.ct-slice-donut', function() {
 			$('#selected-client-table')
 				.DataTable()
 				.rows()
@@ -506,7 +512,7 @@ function updateClientGraphs() {
 				// Make link to Central
 				name = encodeURI(client_name);
 				var apiURL = localStorage.getItem('base_url');
-				var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 				// Add row to table
 				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -556,7 +562,7 @@ function updateClientGraphs() {
 			}
 		);
 
-		$('#chart11r').on('click', '.ct-slice-pie', function() {
+		$('#chart11r').on('click', '.ct-slice-donut', function() {
 			$('#selected-client-table')
 				.DataTable()
 				.rows()
@@ -603,7 +609,7 @@ function updateClientGraphs() {
 				// Make link to Central
 				name = encodeURI(client_name);
 				var apiURL = localStorage.getItem('base_url');
-				var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 				// Add row to table
 				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -660,7 +666,7 @@ function updateClientGraphs() {
 			}
 		);
 
-		$('#chartBand').on('click', '.ct-slice-pie', function() {
+		$('#chartBand').on('click', '.ct-slice-donut', function() {
 			$('#selected-client-table')
 				.DataTable()
 				.rows()
@@ -710,7 +716,7 @@ function updateClientGraphs() {
 				// Make link to Central
 				name = encodeURI(client_name);
 				var apiURL = localStorage.getItem('base_url');
-				var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 				// Add row to table
 				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -726,11 +732,14 @@ function updateClientGraphs() {
 		Standard Chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
+		percentage6e = Math.round((count6E / wirelessClients.length) * 100);
 		percentage11ax = Math.round((count11ax / wirelessClients.length) * 100);
 		percentage11ac = Math.round((count11ac / wirelessClients.length) * 100);
 		percentage11gn = Math.round((count11gn / wirelessClients.length) * 100);
 		percentage11an = Math.round((count11an / wirelessClients.length) * 100);
 
+		label6E = percentage6e + '%';
+		if (percentage6e == 0) label6E = '';
 		labelAX = percentage11ax + '%';
 		if (percentage11ax == 0) labelAX = '';
 		labelAC = percentage11ac + '%';
@@ -743,10 +752,13 @@ function updateClientGraphs() {
 		Chartist.Pie(
 			'#chart11',
 			{
-				labels: [labelAX, labelAC, labelGN, labelAN],
+				labels: [label6E, labelAX, labelAC, labelGN, labelAN],
 				//series: [percentage11ax, percentage11ac, percentage11gn, percentage11an]
 				series: [
 					{
+						meta: '11ax/6E',
+						value: percentage6e,
+					},{
 						meta: '11ax',
 						value: percentage11ax,
 					},
@@ -774,7 +786,7 @@ function updateClientGraphs() {
 			}
 		);
 
-		$('#chart11').on('click', '.ct-slice-pie', function() {
+		$('#chart11').on('click', '.ct-slice-donut', function() {
 			$('#selected-client-table')
 				.DataTable()
 				.rows()
@@ -782,7 +794,10 @@ function updateClientGraphs() {
 			var table = $('#selected-client-table').DataTable();
 			var selectedClients = [];
 			var val = $(this).attr('ct:meta');
-			if (val === '11ax') {
+			if (val === '11ax/6E') {
+				selectedClients = sixEClients;
+				document.getElementById('selected-title').innerHTML = 'Wi-Fi 6E Clients (802.11ax)';
+			}else if (val === '11ax') {
 				selectedClients = axClients;
 				document.getElementById('selected-title').innerHTML = 'Wi-Fi 6 Clients (802.11ax)';
 			} else if (val === '11ac') {
@@ -827,7 +842,7 @@ function updateClientGraphs() {
 				// Make link to Central
 				name = encodeURI(client_name);
 				var apiURL = localStorage.getItem('base_url');
-				var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 				// Add row to table
 				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -997,7 +1012,7 @@ function updateClientGraphs() {
 			// Make link to Central
 			name = encodeURI(client_name);
 			var apiURL = localStorage.getItem('base_url');
-			var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+			var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 			// Add row to table
 			table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
@@ -1045,17 +1060,17 @@ function updateClientGraphs() {
 	var osSeries = [];
 	$.each(top5os, function() {
 		osLabels.push(this[0]);
-		osSeries.push({ meta: this[0], value: this[1].length });
+		osSeries.push({ meta: this[0], value: this[1].length});
 	});
 
 	Chartist.Bar(
 		'#chartOS',
 		{
 			labels: osLabels,
-			series: osSeries,
+			series: [osSeries],
 		},
 		{
-			distributeSeries: true,
+			//distributeSeries: true,
 			height: 250,
 			axisX: {
 				showGrid: false,
@@ -1075,6 +1090,7 @@ function updateClientGraphs() {
 			.remove();
 		var table = $('#selected-client-table').DataTable();
 		var selectedClients = [];
+		console.log(this)
 		var val = $(this).attr('ct:meta');
 		selectedClients = osType[val];
 		document.getElementById('selected-title').innerHTML = 'Clients running operating system: ' + val;
@@ -1110,7 +1126,7 @@ function updateClientGraphs() {
 			// Make link to Central
 			name = encodeURI(client_name);
 			var apiURL = localStorage.getItem('base_url');
-			var clientURL = centralURLs[0][apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+			var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
 
 			// Add row to table
 			table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);

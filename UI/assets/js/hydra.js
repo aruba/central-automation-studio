@@ -126,13 +126,13 @@ function saveAccount() {
 	var currentAccount = checkForDuplicateAccount($('#client_id').val());
 
 	if (currentAccount == -1) {
-		centralCredentials.push({ account_name: $('#account_name').val(), central_id: $('#central_id').val(), client_id: $('#client_id').val(), client_secret: $('#client_secret').val(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val(), access_token: $('#access_token').val() });
+		centralCredentials.push({ account_name: $('#account_name').val(), central_id: $('#central_id').val().trim(), client_id: $('#client_id').val().trim(), client_secret: $('#client_secret').val().trim(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val().trim(), access_token: $('#access_token').val().trim() });
 
 		// save array to localStorage
 		localStorage.setItem('account_details', JSON.stringify(centralCredentials));
 	} else {
 		//modify existing account
-		centralCredentials[currentAccount] = { account_name: $('#account_name').val(), central_id: $('#central_id').val(), client_id: $('#client_id').val(), client_secret: $('#client_secret').val(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val(), access_token: $('#access_token').val() };
+		centralCredentials[currentAccount] = { account_name: $('#account_name').val(), central_id: $('#central_id').val().trim(), client_id: $('#client_id').val().trim(), client_secret: $('#client_secret').val().trim(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val().trim(), access_token: $('#access_token').val().trim() };
 		localStorage.setItem('account_details', JSON.stringify(centralCredentials));
 	}
 
@@ -280,4 +280,103 @@ function testToken() {
 				// something weird is happening
 			}
 		});
+}
+
+function exportSettings() {
+	var exportData = {};
+	exportData['account_details'] = localStorage.getItem('account_details');
+	exportData['reveal_secrets'] = localStorage.getItem('reveal_secrets');
+	exportData['ap_naming_format'] = localStorage.getItem('ap_naming_format');
+	exportData['hostname_variable'] = localStorage.getItem('hostname_variable');
+	exportData['port_variable_format'] = localStorage.getItem('port_variable_format');
+	console.log(localStorage.getItem('refresh_rate'))
+	exportData['refresh_rate'] = localStorage.getItem('refresh_rate');
+	exportData['qr_color'] = localStorage.getItem('qr_color');
+	exportData['qr_logo'] = localStorage.getItem('qr_logo');
+	exportData['load_clients'] = localStorage.getItem('load_clients');
+	exportData['load_group_properties'] = localStorage.getItem('load_group_properties');
+	exportData['load_gateway_details'] = localStorage.getItem('load_gateway_details');
+	exportData['load_airmatch_events'] = localStorage.getItem('load_airmatch_events');
+	exportData['load_vc_config'] = localStorage.getItem('load_vc_config');
+	
+	//console.log(exportData)
+	
+	var exportBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'text/plain' });
+	var exportURL = window.URL.createObjectURL(exportBlob);
+	var exportLink = document.createElement('a');
+	exportLink.href = exportURL;
+	exportLink.setAttribute('download', 'cas-settings.json');
+	exportLink.click();
+	window.URL.revokeObjectURL(exportLink);
+}
+
+function importSettings() {
+
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'Importing settings will overwrite the current settings with those in the selected file.',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, import it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			importConfirmed();
+		}
+	});
+}
+	
+function importConfirmed() {
+	var files = document.getElementById('import').files;
+	console.log(files);
+	if (files.length <= 0) {
+		showNotification('ca-migration', 'Please select a backup file', 'bottom', 'center', 'danger');
+		return false;
+	}
+	
+	var fr = new FileReader();
+	fr.onload = function(e) { 
+	var importData = JSON.parse(e.target.result);
+		console.log(importData);
+		if (importData['account_details']) {
+			if (importData['account_details']) localStorage.setItem('account_details', importData['account_details']);
+			if (importData['reveal_secrets']) localStorage.setItem('reveal_secrets', importData['reveal_secrets']);
+			if (importData['ap_naming_format']) localStorage.setItem('ap_naming_format', importData['ap_naming_format']);
+			else localStorage.setItem('ap_naming_format', '');
+			if (importData['hostname_variable']) localStorage.setItem('hostname_variable', importData['hostname_variable']);
+			else localStorage.setItem('hostname_variable', '');
+			if (importData['port_variable_format']) localStorage.setItem('port_variable_format', importData['port_variable_format']);
+			else localStorage.setItem('port_variable_format', '');
+			if (importData['refresh_rate']) localStorage.setItem('refresh_rate', importData['refresh_rate']);
+			else localStorage.setItem('refresh_rate', '');
+			if (importData['qr_color']) localStorage.setItem('qr_color', importData['qr_color']);
+			if (importData['qr_logo']) localStorage.setItem('qr_logo', importData['qr_logo']);
+			else localStorage.setItem('qr_logo', '');
+			if (importData['load_clients']) localStorage.setItem('load_clients', importData['load_clients']);
+			if (importData['load_group_properties']) localStorage.setItem('load_group_properties', importData['load_group_properties']);
+			if (importData['load_gateway_details']) localStorage.setItem('load_gateway_details', importData['load_gateway_details']);
+			if (importData['load_airmatch_events']) localStorage.setItem('load_airmatch_events', importData['load_airmatch_events']);
+			if (importData['load_vc_config']) localStorage.setItem('load_vc_config', importData['load_vc_config']);
+			
+			Swal.fire({
+				title: 'Settings Import Successful!',
+				text: 'Backup has been imported. Reload for changes to take effect',
+				icon: 'success',
+				confirmButtonText: 'Reload Now',
+			}).then(result => {
+				if (result.isConfirmed) {
+					location.reload();
+				}
+			});
+		} else {
+			Swal.fire({
+				title: 'Settings Import Failed',
+				text: 'File does not seem to be a Central Automation Studio backup.',
+				icon: 'error',
+			});
+		}
+		
+	}
+	fr.readAsText(files.item(0));
 }

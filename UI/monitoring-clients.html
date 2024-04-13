@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.1
-Updated: 1.12.3
+Updated: 1.31.1
 Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=230726" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -76,6 +76,14 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<a class="nav-link" onclick="showLog()" href="#">
 										<i class="central-icon ca-research"></i>
 									</a>
+								</li>
+								<li class="nav-item dropdown" id='accountDropdown' hidden>
+									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<i class="nc-icon nc-single-02"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink" id='accountDropdownList'>
+										
+									</div>
 								</li>
 								<li class="nav-item dropdown">
 									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -261,9 +269,9 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						</div>
 						<div class="row" id="mainBoxes">
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
-										<h4 class="card-title">Wi-Fi Standard</h4>
+										<h4 class="card-title">Wi-Fi Protocol</h4>
 										<p class="card-category">Breakdown of 802.11 support</p>
 										<p></p>
 									</div>
@@ -272,14 +280,14 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<div id="chart11" class="ct-chart ct-minor-third"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> 11ax <i class="fa-solid fa-circle text-danger"></i> 11ac <i class="fa-solid fa-circle text-warning"></i> 11gn <i class="fa-solid fa-circle text-purple"></i> 11an</div>
+										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Wi-Fi 6E <i class="fa-solid fa-circle text-danger"></i> Wi-Fi 6 <i class="fa-solid fa-circle text-warning"></i> Wi-Fi 5 <i class="fa-solid fa-circle text-purple"></i> Wi-Fi 4 <i class="fa-solid fa-circle text-success"></i> Wi-Fi 4 </div>
 									</div>
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
-										<h4 class="card-title">Band Split</h4>
+										<h4 class="card-title">Radio Band</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz</p>
 										<p></p>
 									</div>
@@ -293,7 +301,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">Authentication Types</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz vs Wired</p>
@@ -309,7 +317,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">Randomized MAC Addresses</h4>
 										<p class="card-category">Randomized vs Actual</p>
@@ -327,7 +335,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						</div>
 						<div class="row" id="amendmentSupportBoxes">
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11k Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -343,7 +351,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11v Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -359,7 +367,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card  card-tasks" style="height:600px;">
+								<div class="card" style="height:600px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11r Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -385,7 +393,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
-										<h4 class="card-title">Connected Clients</h4>
+										<h4 class="card-title">Connected Clients</h4><a class="refresh-link" onclick="refreshClientData()"><i class="central-icon ca-reload"></i></a>
 									</div>
 									<div class="card-body">
 										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
@@ -393,6 +401,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 												<table id="client-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Name</th>
+														<th></th>
 														<th>Health</th>
 														<th>MAC Address</th>
 														<th>IP Address</th>
@@ -754,6 +763,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</script>
 								<a href="http://www.wifidownunder.com">WiFi Downunder</a>
 							</p>
+							<p class="copyright text-center" id="cas-version"> </p>
 						</nav>
 					</div>
 				</footer>
@@ -802,10 +812,22 @@ Aaron Scott (WiFi Downunder) 2021-2023
 	<script src="assets/js/plugins/papaparse.min.js"></script>
 	<!-- Sorting by IP Address plugin for DataTables -->
 	<script src="assets/js/plugins/ip-address.js"></script>
+	<script src="assets/js/plugins/title-numeric.js"></script>
 	<script type="text/javascript">
-		  $(document).ready(function() {
+	$(document).ready(function() {
+		getCASVersion();
 		openIndexedDB();
-		  	var reachabilityPromise = new $.Deferred();
+		
+		var pageName = 'Clients';
+		if  (localStorage.getItem('from_hydra')) {
+			document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
+		} else {
+			document.getElementById('titleText').innerHTML = "Central Automation Studio: "+ '<strong>' + pageName + '</strong>';
+		}
+		// If more than one account build Account list and show menu in top right
+		loadAccountList();
+		
+		var reachabilityPromise = new $.Deferred();
 		      $.when(checkReachability(reachabilityPromise)).then(function () {
 
 
@@ -881,7 +903,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					search: "_INPUT_",
 					searchPlaceholder: "Search Clients",
 				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }],
+				columnDefs: [{ type: 'ip-address', targets: 4 }, { type: 'title-string', targets: 1}],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
@@ -895,7 +917,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					search: "_INPUT_",
 					searchPlaceholder: "Search APs",
 				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
@@ -908,7 +930,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					search: "_INPUT_",
 					searchPlaceholder: "Search Switches",
 				},
-				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
@@ -928,7 +950,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Gateways",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 
@@ -941,7 +963,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Controllers",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 			} else {
@@ -954,7 +976,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Gateways",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,11,12], "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,12,13], "visible": false }, { type: 'title-numeric', targets: 11}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 
@@ -967,7 +989,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						search: "_INPUT_",
 						searchPlaceholder: "Search Controllers",
 					},
-					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }],
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }, { type: 'title-numeric', targets: 10}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 			}
@@ -1037,12 +1059,18 @@ Aaron Scott (WiFi Downunder) 2021-2023
 				clearInterval(loadIntervalID);
 			  }
 			}, false);
+			
+			document.onkeyup = function(e) {
+				if (e.ctrlKey && e.which == 82) {
+					getMonitoringData()
+				}
+			};
 		});
-		  });
+	});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=230726"></script>
+	<script src="assets/js/main.js?v=240411"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/clients.js?v=230505"></script>
+	<script src="assets/js/clients.js?v=240209"></script>
 </html>

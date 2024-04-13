@@ -4,8 +4,6 @@ Updated:
 Aaron Scott (WiFi Downunder) 2021-2023
 */
 
-var colorArray = ['text-info', 'text-danger', 'text-warning', 'text-purple', 'text-success', 'text-primary', 'text-series7', 'text-series8'];
-
 var allClients;
 var osType = [];
 
@@ -15,7 +13,8 @@ var vrfRogues = [];
 var vrfRogueLocations = [];
 var vrfAPs = [];
 var vrfAPLocations = [];
-var vrfPathloss = {}; // Possibly remove this
+var vrfSelectedAPs = {};
+var vrfPathloss = {};
 var vrfFloorplan;
 var vrfFloorId;
 var vrfBuildingId;
@@ -30,16 +29,18 @@ var currentClient = null;
 var currentFloor;
 var storedAP;
 var found;
-const vrfLimit = 100;
-const units = 'FEET';
+
+var rfNeighbours = {};
+var neighbourNotification;
+var noiseEvents = [];
+var radarNotification;
+
+var neighbourMode = ScaleType.Full; // 0 = All, 1 = Per Radio
+var apRFNeighbours = [];
+var neighbourCache = {};
 
 var apImage;
 var clientImage;
-const ratio = window.devicePixelRatio;
-const apColors = ['#23CCEF', '#FB404B', '#FFA534', '#9368E9', '#87CB16', '#1D62F0', '#5E5E5E', '#DD4B39', '#35465c', '#e52d27', '#55acee', '#cc2127', '#1769ff', '#6188e2', '#a748ca', '#ca489f', '#48ca9a', '#95e851', '#f2f536', '#b0b0b0', '#3414b5', '#1498b5', '#b55714', '#e3e3e3', '#851919', '#196385', '#88fceb', '#cafc88'];
-var labels2 = ['1', '6', '11'];
-var labels5 = ['36', '40', '44', '48', '52', '56', '60', '64', '100', '104', '108', '112', '116', '120', '124', '128', '132', '136', '140', '144', '149', '153', '157', '161', '165', '169', '173', '177'];
-var labels6 = ['5', '21', '37', '53', '69', '85', '101', '117', '133', '149', '165', '181', '197', '213', '229'];
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Callback functions
@@ -57,10 +58,35 @@ function loadCurrentPageAP() {
 
 	updateBandSelector();
 	updateChannelSelector();
+	
+	getNoiseEvents();
+	
+	
+	getRFNeighbours();
 }
 
 function loadCurrentPageClient() {
-	document.getElementById('secondaryFilter').style.display = 'none';
+	if (document.getElementById('visualizationselector').value === 'channels') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'health') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'utilization') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'radar') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'block';
+		drawRadarOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'clients') {
+		document.getElementById('secondaryFilter').style.display = 'block';
+		document.getElementById('timeFilter').style.display = 'none';
+	}
+	
 	allClients = getWirelessClients();
 	osType = [];
 	$.each(allClients, function() {
@@ -79,6 +105,26 @@ function loadCurrentPageClient() {
 		}
 		return 0;
 	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		Utility functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function findAPForRadio(radiomac) {
+	// Check APs for radio mac
+	var foundDevice = null;
+	var aps = getAPs();
+	$.each(aps, function() {
+		for (var i = 0, len = this.radios.length; i < len; i++) {
+			if (this.radios[i]['macaddr'] === radiomac) {
+				foundDevice = this;
+				return false; // break  out of the for loop
+			}
+		}
+	});
+
+	return foundDevice;
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -128,6 +174,16 @@ function getCampus(repeat) {
 				// Grab the building list for the individual campus
 				getBuildings(0, this['campus_id']);
 			});
+		} else if (response['campus_count'] == 0) {
+			if (visualRFNotification) {
+				visualRFNotification.update({ message: 'No Campus Information was retrieved', type: 'warning' });
+				setTimeout(visualRFNotification.close, 3000);
+			}
+		} else if (repeat){
+			if (visualRFNotification) {
+				visualRFNotification.update({ message: 'Unable to Retrieve Campus Information', type: 'danger' });
+				setTimeout(visualRFNotification.close, 3000);
+			}
 		} else {
 			getCampus(true);
 		}
@@ -143,7 +199,7 @@ function getBuildings(offset, campusId) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/campus/' + campusId + '?offset=' + offset + '&limit=' + vrfLimit,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/campus/' + campusId + '?offset=' + offset + '&limit=' + apiVRFLimit,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -164,7 +220,7 @@ function getBuildings(offset, campusId) {
 		var response = JSON.parse(commandResults.responseBody);
 		vrfBuildings = vrfBuildings.concat(response['buildings']);
 
-		offset += vrfLimit;
+		offset += apiVRFLimit;
 		if (offset < response['building_count']) getBuildings(offset);
 		else {
 			// maybe save to indexedDB...
@@ -192,7 +248,7 @@ function getFloors(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/building/' + vrfBuildingId + '?offset=' + offset + '&limit=' + vrfLimit + '&units=' + units,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/building/' + vrfBuildingId + '?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -236,7 +292,7 @@ function getFloors(offset) {
 			} else {
 				vrfFloors = vrfFloors.concat(response['floors']);
 
-				offset += vrfLimit;
+				offset += apiVRFLimit;
 				if (offset < response['floor_count']) getFloors(offset);
 				else {
 					// maybe save to indexedDB...
@@ -357,7 +413,7 @@ function loadAPsForFloor(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/floor/' + vrfFloorId + '/access_point_location?offset=' + offset + '&limit=' + vrfLimit + '&units=' + units,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/floor/' + vrfFloorId + '/access_point_location?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -379,7 +435,7 @@ function loadAPsForFloor(offset) {
 		currentFloor = response['floor'];
 		vrfAPs = vrfAPs.concat(response['access_points']);
 		//console.log(vrfAPs);
-		offset += vrfLimit;
+		offset += apiVRFLimit;
 		if (offset < response['access_point_count']) {
 			loadAPsForFloor(offset);
 		} else {
@@ -395,6 +451,7 @@ function drawAPsOnFloorplan() {
 	clearInfoCanvas();
 
 	// Draw APs on floorplan
+	vrfSelectedAPs = {};
 	vrfAPLocations = [];
 	var floorplanCanvas = document.getElementById('ap-floorplanCanvas');
 	var canvas = document.getElementById('ap-apCanvas');
@@ -438,13 +495,13 @@ function drawAPsOnFloorplan() {
 		x = (this['x'] / currentFloor['floor_width']) * (canvas.width / ratio);
 		y = (this['y'] / currentFloor['floor_length']) * (canvas.height / ratio);
 		vrfAPLocations.push({ x: x, y: y, serial: this['serial_number'] });
-
+		vrfSelectedAPs[this['serial_number']] = thisAP['macaddr'];
 		// default AP colour
 		ctx.fillStyle = 'white';
 
 		var selectedBand = document.getElementById('bandselector').value;
 		var selectedChannel = document.getElementById('channelselector').value;
-		if (document.getElementById('visualizationselector').value === 'channels') {
+		if ((document.getElementById('visualizationselector').value === 'channels') || (document.getElementById('visualizationselector').value === 'pathloss')) {
 			$.each(thisAP.radios, function() {
 				var currentChannel = this.channel.replace(/\D/g, '');
 				if (currentChannel !== '') {
@@ -482,6 +539,76 @@ function drawAPsOnFloorplan() {
 					}
 				}
 			});
+		} else if (document.getElementById('visualizationselector').value === 'utilization') {
+			$.each(thisAP.radios, function() {
+				//console.log(this)
+				var currentChannel = this.channel.replace(/\D/g, '');
+				var utilValue = this.utilization;
+				if (currentChannel !== '') {
+					if (this.radio_name.includes('2.4 GHz') && selectedBand == 2 && (selectedChannel == parseInt(currentChannel) || selectedChannel == 'All')) {
+						if (this.status != "Up") {
+							ctx.fillStyle = 'white';
+						} else if (utilValue < 10) {
+							ctx.fillStyle = apColors[4];
+						} else if (utilValue < 20) {
+							ctx.fillStyle = apColors[0];
+						} else if (utilValue < 30) {
+							ctx.fillStyle = apColors[5];
+						} else if (utilValue < 50) {
+							ctx.fillStyle = apColors[3];
+						} else if (utilValue < 80) {
+							ctx.fillStyle = apColors[2];
+						} else if (utilValue < 100) {
+							ctx.fillStyle = apColors[1];
+						}
+						apLabel2 = utilValue+'%';
+					} else if (this.radio_name.includes('2.4 GHz') && selectedChannel == 'All') {
+						apLabel2Alt[0] = utilValue+'%';
+					}
+		
+					if (this.radio_name.includes('5 GHz') && selectedBand == 5 && (selectedChannel == parseInt(currentChannel) || selectedChannel == 'All')) {
+						if (this.status != "Up") {
+							ctx.fillStyle = 'white';
+						} else if (utilValue < 10) {
+							ctx.fillStyle = apColors[4];
+						} else if (utilValue < 20) {
+							ctx.fillStyle = apColors[0];
+						} else if (utilValue < 30) {
+							ctx.fillStyle = apColors[5];
+						} else if (utilValue < 50) {
+							ctx.fillStyle = apColors[3];
+						} else if (utilValue < 80) {
+							ctx.fillStyle = apColors[2];
+						} else if (utilValue < 100) {
+							ctx.fillStyle = apColors[1];
+						}
+						apLabel2 = utilValue+'%';
+					} else if (this.radio_name.includes('5 GHz') && selectedChannel == 'All') {
+						apLabel2Alt[1] = utilValue+'%';
+					}
+		
+					if (this.radio_name.includes('6 GHz') && selectedBand == 6 && (selectedChannel == parseInt(currentChannel) || selectedChannel == 'All')) {
+						if (this.status != "Up") {
+							ctx.fillStyle = 'white';
+						} else if (utilValue < 10) {
+							ctx.fillStyle = apColors[4];
+						} else if (utilValue < 20) {
+							ctx.fillStyle = apColors[0];
+						} else if (utilValue < 30) {
+							ctx.fillStyle = apColors[5];
+						} else if (utilValue < 50) {
+							ctx.fillStyle = apColors[3];
+						} else if (utilValue < 80) {
+							ctx.fillStyle = apColors[2];
+						} else if (utilValue < 100) {
+							ctx.fillStyle = apColors[1];
+						}
+						apLabel2 = utilValue+'%';
+					} else if (this.radio_name.includes('6 GHz') && selectedChannel == 'All') {
+						apLabel2Alt.push(utilValue+'%');
+					}
+				}
+			});
 		} else if (document.getElementById('visualizationselector').value === 'health') {
 			var memoryUsage = (((thisAP['mem_total'] - thisAP['mem_free']) / thisAP['mem_total']) * 100).toFixed(0);
 			var uptime = thisAP['uptime'] ? thisAP['uptime'] : 0;
@@ -493,6 +620,54 @@ function drawAPsOnFloorplan() {
 			else ctx.fillStyle = '#87CB16';
 		} else if (document.getElementById('visualizationselector').value === 'clients') {
 			ctx.fillStyle = '#447DF7';
+		}  else if (document.getElementById('visualizationselector').value === 'bandwidth') {
+			$.each(thisAP.radios, function() {
+				console.log(this)
+				var currentChannel = this.channel.replace(/\D/g, '');
+				var currentWidth = this.channel.replace(/\d/g, '');
+				if (currentChannel !== '') {
+					if (this.radio_name.includes('2.4 GHz') && selectedBand == 2 && (selectedChannel == parseInt(currentChannel) || selectedChannel == 'All')) {
+						if (currentWidth == '') {
+							ctx.fillStyle = apColors[0];
+						} else if (currentWidth.includes('+') || currentWidth.includes('-')) {
+							ctx.fillStyle = apColors[1];
+						}
+						apLabel2 = this.channel;
+					} else if (this.radio_name.includes('2.4 GHz') && selectedChannel == 'All') {
+						apLabel2Alt[0] = this.channel;
+					}
+			
+					if (this.radio_name.includes('5 GHz') && selectedBand == 5 && (selectedChannel == parseInt(currentChannel) || selectedChannel == 'All')) {
+						if (currentWidth == '') {
+							ctx.fillStyle = apColors[0];
+						} else if (currentWidth.includes('+') || currentWidth.includes('-')) {
+							ctx.fillStyle = apColors[1];
+						} else if (currentWidth.includes('E')) {
+							ctx.fillStyle = apColors[2];
+						} else if (currentWidth.includes('S')) {
+							ctx.fillStyle = apColors[4];
+						}
+						apLabel2 = this.channel;
+					} else if (this.radio_name.includes('5 GHz') && selectedChannel == 'All') {
+						apLabel2Alt[1] = this.channel;
+					}
+			
+					if (this.radio_name.includes('6 GHz') && selectedBand == 6 && (selectedChannel == parseInt(currentChannel) || selectedChannel == 'All')) {
+						if (currentWidth == '') {
+							ctx.fillStyle = apColors[0];
+						} else if (currentWidth.includes('+') || currentWidth.includes('-')) {
+							ctx.fillStyle = apColors[1];
+						} else if (currentWidth.includes('E')) {
+							ctx.fillStyle = apColors[2];
+						} else if (currentWidth.includes('S')) {
+							ctx.fillStyle = apColors[4];
+						}
+						apLabel2 = this.channel;
+					} else if (this.radio_name.includes('6 GHz') && selectedChannel == 'All') {
+						apLabel2Alt.push(this.channel);
+					}
+				}
+			});
 		}
 
 		if (selectedBand == 'All' && document.getElementById('visualizationselector').value === 'channels') {
@@ -501,8 +676,13 @@ function drawAPsOnFloorplan() {
 		}
 
 		ctx.beginPath();
-		ctx.shadowColor = 'white';
-		ctx.shadowBlur = 14;
+		if (document.getElementById('visualizationselector').value === 'utilization') {
+			ctx.shadowColor = 'white';
+			ctx.shadowBlur = 24;
+		} else {
+			ctx.shadowColor = 'white';
+			ctx.shadowBlur = 14;
+		}
 		ctx.roundRect(x - 8, y - 8, 16, 16, 1);
 		ctx.fill();
 		ctx.drawImage(apImage, x - 10, y - 10, 20, 20);
@@ -558,7 +738,7 @@ function drawAPsOnFloorplan() {
 				}
 			}
 		});
-
+		
 		if (found) {
 			clearLinkCanvas();
 			drawApLinks(currentAP);
@@ -601,7 +781,7 @@ function loadClientsForFloor(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/floor/' + vrfFloorId + '/client_location?offset=' + offset + '&limit=' + vrfLimit + '&units=' + units,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/floor/' + vrfFloorId + '/client_location?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -621,7 +801,7 @@ function loadClientsForFloor(offset) {
 		var response = JSON.parse(commandResults.responseBody);
 		currentFloor = response['floor'];
 		vrfClients = vrfClients.concat(response['locations']);
-		offset += vrfLimit;
+		offset += apiVRFLimit;
 		if (offset < response['location_count']) {
 			loadClientsForFloor(offset);
 		} else {
@@ -675,7 +855,6 @@ function drawClientsOnFloorplan() {
 
 				x = (this['x'] / currentFloor['floor_width']) * (canvas.width / ratio);
 				y = (this['y'] / currentFloor['floor_length']) * (canvas.height / ratio);
-				vrfClientLocations.push({ x: x, y: y, mac: thisClient });
 				if (this.associated) ctx.fillStyle = '#87CB16';
 				else ctx.fillStyle = '#c2c2c2';
 
@@ -701,17 +880,18 @@ function drawClientsOnFloorplan() {
 					$.each(vrfAPLocations, function() {
 						if (Math.floor(this.x) == Math.floor(x) && Math.floor(this.y) == Math.floor(y)) {
 							// exact same location as the AP - pick a random spot around the AP (but nice and close)
-							var xAmount = Math.floor(Math.random() * 40);
+							var xAmount = Math.floor(Math.random() * 60) + 15;
 							var xSymbol = Math.random() > 0.5 ? 1 : -1;
 							var xChange = xAmount * xSymbol;
 							x = x + xChange;
 
-							var yAmount = Math.floor(Math.random() * 40);
+							var yAmount = Math.floor(Math.random() * 60) + 15;;
 							var ySymbol = Math.random() > 0.5 ? 1 : -1;
 							var yChange = yAmount * ySymbol;
 							y = y + yChange;
 						}
 					});
+					vrfClientLocations.push({ x: x, y: y, mac: thisClient });
 
 					// Draw client
 					ctx.beginPath();
@@ -759,20 +939,23 @@ function drawApLinks(fromAP) {
 	var band = document.getElementById('bandselector').value;
 	if (band == 2) band = 2.4;
 	storedAP = findDeviceInMonitoring(fromAP['serial']);
-	var allClients = getWirelessClients();
-
-	$.each(vrfClients, function() {
-		var currentClient = this;
-		var storedClient = null;
-		$.each(allClients, function() {
-			if (this['macaddr'] === currentClient.device_mac) storedClient = this;
-		});
-		if (storedClient && storedClient.band == band) {
-			if (storedClient['associated_device'] === fromAP['serial']) {
-				drawClientRSSI(fromAP, currentClient, storedClient['signal_db'], false);
+	if (document.getElementById('visualizationselector').value === 'pathloss') {
+		drawPathLinks(fromAP['serial']);
+	} else {
+		var allClients = getWirelessClients();
+		$.each(vrfClientLocations, function() {
+			var currentClient = this;
+			var storedClient = null;
+			$.each(allClients, function() {
+				if (this['macaddr'] === currentClient.mac) storedClient = this;
+			});
+			if (storedClient && storedClient.band == band) {
+				if (storedClient['associated_device'] === fromAP['serial']) {
+					drawClientRSSI(fromAP, currentClient, storedClient['signal_db'], false);
+				}
 			}
-		}
-	});
+		});
+	}
 }
 
 function drawClientLink(currentClient) {
@@ -799,13 +982,9 @@ function drawClientRSSI(fromAP, toClient, rssi, fromClient) {
 	// Figure out position of APs
 	x1 = fromAP.x;
 	y1 = fromAP.y;
-	if (fromClient) {
-		x2 = toClient.x;
-		y2 = toClient.y;
-	} else {
-		x2 = (toClient.x / currentFloor['floor_width']) * (linkCanvas.width / ratio);
-		y2 = (toClient.y / currentFloor['floor_length']) * (linkCanvas.height / ratio);
-	}
+	x2 = toClient.x;
+	y2 = toClient.y;
+
 
 	// Figure out center for text
 	x_center = (x1 + x2) / 2;
@@ -818,7 +997,6 @@ function drawClientRSSI(fromAP, toClient, rssi, fromClient) {
 	else if (rssi < -80) strokeColour = '#FB404B';
 
 	if (rssi == 0) strokeColour = 'black';
-
 	// Draw Line
 	ctx.strokeStyle = strokeColour;
 	ctx.lineWidth = 2;
@@ -841,6 +1019,8 @@ function drawClientRSSI(fromAP, toClient, rssi, fromClient) {
 		ctx.fillText(label, x_center - label_size.width / 2, y_center + 6);
 	}
 }
+
+
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Canvas Clearing functions
@@ -894,12 +1074,31 @@ function changeFloorplanData() {
 	changeFooter();
 	if (document.getElementById('visualizationselector').value === 'channels') {
 		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
 		drawAPsOnFloorplan();
 	} else if (document.getElementById('visualizationselector').value === 'health') {
 		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
 		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'utilization') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'bandwidth') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'pathloss') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'radar') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'block';
+		drawRadarOnFloorplan();
 	} else if (document.getElementById('visualizationselector').value === 'clients') {
 		document.getElementById('secondaryFilter').style.display = 'block';
+		document.getElementById('timeFilter').style.display = 'none';
 
 		// populate the secondary Filter
 		select = document.getElementById('secondaryselector');
@@ -942,6 +1141,24 @@ function changeFooter() {
 		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-danger"></i> Down\t');
 		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-warning"></i> Poor\t');
 		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> Good ');
+	} else if (document.getElementById('visualizationselector').value === 'utilization') {
+		$('#floorplanFooter').empty();
+		$('#floorplanFooter').append('Utilization:\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> < 10%\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-info"></i> < 20%\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-primary"></i> < 30%\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-purple"></i> < 50%\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-warning"></i> < 80%\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-danger"></i> 80+%');
+	} else if (document.getElementById('visualizationselector').value === 'radar') {
+		$('#floorplanFooter').empty();
+		$('#floorplanFooter').append('Number of Radar hits:\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-info"></i> 1\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-danger"></i> 2\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-warning"></i> 3\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-purple"></i> 4\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> 5\t');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-primary"></i> 6+');
 	} else if (document.getElementById('visualizationselector').value === 'clients') {
 		if (document.getElementById('secondaryselector').value === '80211mix') {
 			$('#floorplanFooter').empty();
@@ -957,6 +1174,12 @@ function changeFooter() {
 			$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> Good ');
 			$('#floorplanFooter').append('<i class="fa-solid fa-circle text-muted"></i> Unassociated Client');
 		}
+	} else if (document.getElementById('visualizationselector').value === 'bandwidth') {
+		$('#floorplanFooter').empty();
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-info"></i> 20Mhz  ');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-danger"></i> 40Mhz  ');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-warning"></i> 80MHz  ');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> 160MHz  ');
 	}
 }
 
@@ -1106,4 +1329,415 @@ function updateSizes(width, height) {
 	var rfVisualPlanHeight = height + 20;
 	document.getElementById('ap-visualPlan').setAttribute('style', 'height:' + rfVisualPlanHeight + 'px');
 	document.getElementById('ap-visualPlan').style.height = rfVisualPlanHeight + 'px';
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	RF Neighbours
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function getRFNeighbours() {
+	neighbourNotification = showNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
+	rfNeighbours = {};
+	var settings2 = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_all/2.4ghz',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings2).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_all/2.4ghz)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		rfNeighbours['2'] = response;
+
+		var settings5 = {
+			url: getAPIURL() + '/tools/getCommandwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_all/5ghz',
+				access_token: localStorage.getItem('access_token'),
+			}),
+		};
+
+		$.ajax(settings5).done(function(commandResults, statusText, xhr) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_all/5ghz)');
+				apiErrorCount++;
+				return;
+			} else if (commandResults.hasOwnProperty('error_code')) {
+				logError(commandResults.description);
+				apiErrorCount++;
+				return;
+			}
+			var response = JSON.parse(commandResults.responseBody);
+			rfNeighbours['5'] = response;
+
+			var settings6 = {
+				url: getAPIURL() + '/tools/getCommandwHeaders',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_all/6ghz',
+					access_token: localStorage.getItem('access_token'),
+				}),
+			};
+
+			$.ajax(settings6).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
+				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_all/6ghz)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+				rfNeighbours['6'] = response;
+				//console.log(rfNeighbours);
+
+				if (neighbourNotification) {
+					neighbourNotification.update({ message: 'Retrieved RF Neighbourhood', type: 'success' });
+					setTimeout(neighbourNotification.close, 1000);
+				}
+			})
+			.fail(function(XMLHttpRequest, textStatus, errorThrown) {
+				if (errorThrown == 'Gateway Time-out' || errorThrown == 'Bad Gateway') {
+					if (neighbourNotification) {
+						neighbourNotification.update({ type: 'warning', message: 'Response form Central took too long. The 6GHz RF Neighbours data set is likely too large to return in a timely manner. Automatically switching to per Radio Neighbour mode.'});
+						setTimeout(neighbourNotification.close, 2000);
+					}
+					logError('6GHz Neighbours data set took too long to return.');
+					logInformation('Automatically switching to per Radio Neighbour mode');
+					neighbourMode = ScaleType.Scale;
+				}
+			});
+		})
+		.fail(function(XMLHttpRequest, textStatus, errorThrown) {
+			if (errorThrown == 'Gateway Time-out' || errorThrown == 'Bad Gateway') {
+				if (neighbourNotification) {
+					neighbourNotification.update({ type: 'warning', message: 'Response form Central took too long. The 5GHz RF Neighbours data set is likely too large to return in a timely manner. Automatically switching to per Radio Neighbour mode.'});
+					setTimeout(neighbourNotification.close, 2000);
+				}
+				logError('5GHz Neighbours data set took too long to return.');
+				logInformation('Automatically switching to per Radio Neighbour mode');
+				neighbourMode = ScaleType.Scale;
+			}
+		});
+	})
+	.fail(function(XMLHttpRequest, textStatus, errorThrown) {
+		if (errorThrown == 'Gateway Time-out' || errorThrown == 'Bad Gateway') {
+			if (neighbourNotification) {
+				neighbourNotification.update({ type: 'warning', message: 'Response form Central took too long. The 2.4GHz RF Neighbours data set is likely too large to return in a timely manner. Automatically switching to per Radio Neighbour mode.'});
+				setTimeout(neighbourNotification.close, 2000);
+			}
+		}
+		logError('2.4GHz Neighbours data set took too long to return.');
+		logInformation('Automatically switching to per Radio Neighbour mode');
+		neighbourMode = ScaleType.Scale;
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Pathloss Drawing functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function drawPathLinks(serial) {
+	var band = document.getElementById('bandselector').value;
+	storedAP = findDeviceInMonitoring(serial);
+	
+	var radioMac = null;
+	if (band == 2) band = 2.4;
+	$.each(storedAP.radios, function() {
+		if (this.radio_name.includes(band + ' GHz')) radioMac = this['macaddr'];
+	});
+	
+	if (neighbourMode == ScaleType.Scale) {
+		// in Large Scale Mode - ask for neighbours for the single radio
+		// Check neighbour cache for existing data
+		var neighbourCacheString = radioMac+'-'+band+'ghz';
+		if (neighbourCache[neighbourCacheString]) {
+			apRFNeighbours = neighbourCache[neighbourCacheString];
+			findAPsForPathloss(apRFNeighbours);
+		} else {
+			$.when(getRFNeighboursForRadio(radioMac, band+'ghz')).then(function() {
+				findAPsForPathloss(apRFNeighbours);
+			});
+		}
+	} else {
+		// Full detail mode
+		if (band == 2.4) band = 2;
+		var bandPathLoss = rfNeighbours[band];
+		var foundNeighbours = [];
+		$.each(bandPathLoss, function() {
+			if (this['reporting_mac'] === radioMac) foundNeighbours.push(this);
+		});
+		findAPsForPathloss(foundNeighbours);
+	}
+}
+
+function getRFNeighboursForRadio(radioMac, band) {
+	neighbourPromise = new $.Deferred();
+	neighbourNotification = showLongNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/nbr_pathloss_radio/' + radioMac + '/' + band,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/nbr_pathloss_radio/)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		apRFNeighbours = response;
+		
+		// Add to neighbour cache for repeat viewing
+		var neighbourCacheString = radioMac+'-'+band;
+		neighbourCache[neighbourCacheString] = response;
+		if (neighbourNotification) {
+			neighbourNotification.update({ message: 'Neighbours retrieved', type: 'success' });
+			setTimeout(neighbourNotification.close, 1000);
+		}
+		neighbourPromise.resolve();
+	});
+	return neighbourPromise.promise();
+}
+
+function findAPsForPathloss(response) {
+	$.each(response, function() {
+		var ap = findAPForRadio(this['nbr_mac']);
+		if (ap) {
+			var apSerial = ap['serial'];
+			var pathLoss = this['pathloss'];
+			if (ap && vrfSelectedAPs[apSerial]) {
+				$.each(vrfAPs, function() {
+					if (this['serial_number'] === ap['serial']) {
+						draw_PL(storedAP['serial'], ap['serial'], pathLoss);
+					}
+				});
+			}
+		}
+	});
+}
+
+function draw_PL(fromAP, toAP, pathLoss) {
+	var fromAPVRFData;
+	var toAPVRFData;
+	$.each(vrfAPLocations, function() {
+		if (this['serial'] === fromAP) fromAPVRFData = this;
+		else if (this['serial'] === toAP) toAPVRFData = this;
+	});
+
+	var linkCanvas = document.getElementById('ap-linkCanvas');
+	var ctx = linkCanvas.getContext('2d');
+
+	// Figure out position of APs
+	x1 = fromAPVRFData.x
+	y1 = fromAPVRFData.y
+	x2 = toAPVRFData.x
+	y2 = toAPVRFData.y
+
+	// Figure out center for text
+	x_center = (x1 + x2) / 2;
+	y_center = (y1 + y2) / 2;
+
+	// choose pathloss colour
+	var strokeColour = 'black';
+	if (pathLoss < 70) strokeColour = '#87CB16';
+	else if (pathLoss < 90) strokeColour = '#FFA534';
+	else if (pathLoss < 110) strokeColour = '#FB404B';
+
+	// Draw Line
+	ctx.strokeStyle = strokeColour;
+	ctx.lineWidth = 2;
+	ctx.beginPath();
+	ctx.moveTo(x1, y1);
+	ctx.lineTo(x2, y2);
+	ctx.stroke();
+
+	pl_size = ctx.measureText(pathLoss);
+	ctx.strokeStyle = 'black';
+	ctx.shadowColor = 'black';
+	ctx.shadowBlur = 2;
+	ctx.fillStyle = 'white';
+	//ctx.fillRect(x - ap_name_size.width / 2 - 3, y + 10, ap_name_size.width + 6, 14);
+	ctx.fillRect(x_center - pl_size.width / 2 - 3, y_center - 4, pl_size.width + 6, 14);
+
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = 'black';
+	ctx.fillText(pathLoss, x_center - pl_size.width / 2, y_center + 6);
+	//ctx.fillText(pathLoss, x_center, y_center);
+}
+
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Radar Neighbours
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function getNoiseEvents() {
+	noiseNotification = showNotification('ca-radar', 'Getting Radar & Noise Events...', 'bottom', 'center', 'info');
+
+	noiseEvents = [];
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/airmatch/telemetry/v1/priority_rf_events_all',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/airmatch/telemetry/v1/rf_events_all)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		//console.log("RF Events: "+ JSON.stringify(response))
+		noiseEvents = noiseEvents.concat(response);
+
+		if (noiseNotification) {
+			noiseNotification.update({ message: 'Retrieved Radar & Noise Events', type: 'success' });
+			setTimeout(noiseNotification.close, 1000);
+		}
+	});
+}
+
+function drawRadarOnFloorplan() {
+	// Clear APs from view
+	clearAPCanvas();
+
+	// Get Timescale
+	var select = document.getElementById('timescalePicker');
+	var timescale = select.value;
+	var now = new Date();
+
+	// Draw APs on floorplan
+	vrfSelectedAPs = {};
+	var canvas = document.getElementById('ap-apCanvas');
+	var floorplanCanvas = document.getElementById('ap-floorplanCanvas');
+	var ctx = canvas.getContext('2d');
+	$.each(vrfAPs, function() {
+		var apLabel1 = this['ap_name'];
+		var apLabel2 = null;
+		var currentAP = findDeviceInMonitoring(this['serial_number']);
+
+		x = (this['x'] / currentFloor['floor_width']) * (canvas.width / ratio);
+		y = (this['y'] / currentFloor['floor_length']) * (canvas.height / ratio);
+		// AP with no Radar hits will be white.
+		ctx.fillStyle = 'white';
+		var hitCounter = 0;
+
+		$.each(noiseEvents, function() {
+			if (this['type'] === 'RADAR_DETECTED') {
+				// convert timescale and timestamp ms
+				var fromTime = Math.floor(now.getTime() - timescale * 60 * 1000);
+				var eventTime = this['timestamp'] * 1000;
+
+				if (eventTime > fromTime) {
+					var foundAP = findAPForRadio(this['mac']);
+					if (foundAP.name === currentAP.name) {
+						hitCounter++;
+						apLabel2 = this['channel'];
+						ctx.fillStyle = apColors[1];
+					}
+				}
+			}
+		});
+
+		// Coloured to match the number of radar hits on an AP.
+		if (hitCounter > 0) ctx.fillStyle = apColors[hitCounter - 1];
+		if (hitCounter > 6) ctx.fillStyle = apColors[5];
+
+		ctx.beginPath();
+		ctx.roundRect(x - 7, y - 7, 14, 14, 2);
+		ctx.fill();
+		ctx.drawImage(apImage, x - 8, y - 8, 16, 16);
+
+		if (apLabel2) {
+			apLabel1_size = ctx.measureText(apLabel1);
+			apLabel2_size = ctx.measureText(apLabel2);
+			var boxSize = apLabel1_size;
+			if (apLabel2_size.width > apLabel1_size.width) boxSize = apLabel2_size;
+			ctx.strokeStyle = 'black';
+			ctx.shadowColor = 'black';
+			ctx.shadowBlur = 2;
+			ctx.fillStyle = 'white';
+			ctx.fillRect(x - boxSize.width / 2 - 4, y + 12, boxSize.width + 6, 24);
+			ctx.shadowBlur = 0;
+			ctx.fillStyle = 'black';
+			ctx.fillText(apLabel1, x - apLabel1_size.width / 2, y + 22);
+			ctx.fillText(apLabel2, x - apLabel2_size.width / 2, y + 32);
+		} else if (apLabel1) {
+			apLabel1_size = ctx.measureText(apLabel1);
+			ctx.strokeStyle = 'black';
+			ctx.shadowColor = 'black';
+			ctx.shadowBlur = 2;
+			ctx.fillStyle = 'white';
+			ctx.fillRect(x - apLabel1_size.width / 2 - 4, y + 12, apLabel1_size.width + 6, 14);
+			ctx.shadowBlur = 0;
+			ctx.fillStyle = 'black';
+			ctx.fillText(apLabel1, x - apLabel1_size.width / 2, y + 22);
+		}
+	});
+
+	needChannelList = false;
 }

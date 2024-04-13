@@ -12,6 +12,8 @@ var modifyGroup = {};
 var completeTotal = 0;
 var runningTotal = 0;
 
+var complianceNotification;
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -302,6 +304,8 @@ function getFirmwareVersions() {
 	select.options.length = 0;
 	select = document.getElementById('switchselector');
 	select.options.length = 0;
+	select = document.getElementById('cxswitchselector');
+	select.options.length = 0;
 	select = document.getElementById('gatewayselector');
 	select.options.length = 0;
 
@@ -344,7 +348,7 @@ function getFirmwareVersions() {
 	});
 
 	// Switch Firmware Versions
-	$('#switchselector').append($('<option>', { value: 'No Switch Compliance', text: 'No Switch Compliance' }));
+	$('#switchselector').append($('<option>', { value: 'No Switch Compliance', text: 'No AOS-Switch Compliance' }));
 	var switchAOSSSettings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -381,7 +385,8 @@ function getFirmwareVersions() {
 		});
 	});
 
-	/*var switchCXSettings = {
+	$('#cxswitchselector').append($('<option>', { value: 'No Switch Compliance', text: 'No CX Switch Compliance' }));
+	var switchCXSettings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
 		timeout: 0,
@@ -394,7 +399,7 @@ function getFirmwareVersions() {
 		}),
 	};
 
-	$.ajax(gatewaySettings).done(function(commandResults, statusText, xhr) {
+	$.ajax(switchCXSettings).done(function(commandResults, statusText, xhr) {
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -408,7 +413,14 @@ function getFirmwareVersions() {
 			return;
 		}
 		var response = JSON.parse(commandResults.responseBody);
-	});*/
+		
+		$.each(response, function() {
+			$('#cxswitchselector').append($('<option>', { value: this['firmware_version'], text: this['firmware_version'] }));
+			if ($('#cxswitchselector').length != 0) {
+				$('#cxswitchselector').selectpicker('refresh');
+			}
+		});
+	});
 
 	// Gateway Firmware Versions
 	$('#gatewayselector').append($('<option>', { value: 'No Gateway Compliance', text: 'No Gateway Compliance' }));
@@ -459,7 +471,7 @@ function getFirmwareCompliance() {
 
 		// get Firmware info
 		groupInfo[groupName] = this;
-
+		console.log(this);
 		// Check if group includes APs
 		if (this['group_properties']['AllowedDevTypes'].includes('AccessPoints')) {
 			var apSettings = {
@@ -508,46 +520,99 @@ function getFirmwareCompliance() {
 
 		// Check if group includes Switches
 		if (this['group_properties']['AllowedDevTypes'].includes('Switches')) {
-			var switchSettings = {
-				url: getAPIURL() + '/tools/getCommandwHeaders',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/firmware/v1/upgrade/compliance_version?device_type=HP&group=' + groupName,
-					access_token: localStorage.getItem('access_token'),
-				}),
-			};
-			// Get Switch Compliance
-			$.ajax(switchSettings).done(function(commandResults, statusText, xhr) {
-				if (commandResults.hasOwnProperty('headers')) {
-					updateAPILimits(JSON.parse(commandResults.headers));
-				}
-				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-					logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/upgrade/compliance_version)');
-					apiErrorCount++;
-					return;
-				} else if (commandResults.hasOwnProperty('error_code')) {
-					logError(commandResults.description);
-					apiErrorCount++;
-					return;
-				}
-				var response = JSON.parse(commandResults.responseBody);
-
+			if (this['group_properties']['AllowedSwitchTypes'].includes('AOS_S')) {
+				var switchSettings = {
+					url: getAPIURL() + '/tools/getCommandwHeaders',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						url: localStorage.getItem('base_url') + '/firmware/v1/upgrade/compliance_version?device_type=HP&group=' + groupName,
+						access_token: localStorage.getItem('access_token'),
+					}),
+				};
+				// Get Switch Compliance
+				$.ajax(switchSettings).done(function(commandResults, statusText, xhr) {
+					if (commandResults.hasOwnProperty('headers')) {
+						updateAPILimits(JSON.parse(commandResults.headers));
+					}
+					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+						logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/upgrade/compliance_version)');
+						apiErrorCount++;
+						return;
+					} else if (commandResults.hasOwnProperty('error_code')) {
+						logError(commandResults.description);
+						apiErrorCount++;
+						return;
+					}
+					var response = JSON.parse(commandResults.responseBody);
+	
+					currentInfo = groupInfo[groupName];
+					if (response['firmware_compliance_version']) {
+						currentInfo['SwitchVersion'] = response['firmware_compliance_version'];
+					} else {
+						currentInfo['SwitchVersion'] = 'Not Set';
+					}
+					groupInfo[groupName] = currentInfo;
+					loadFirmwareTable(false);
+				});
+			} else {
 				currentInfo = groupInfo[groupName];
-				if (response['firmware_compliance_version']) {
-					currentInfo['SwitchVersion'] = response['firmware_compliance_version'];
-				} else {
-					currentInfo['SwitchVersion'] = 'Not Set';
-				}
+				currentInfo['SwitchVersion'] = '-';
 				groupInfo[groupName] = currentInfo;
 				loadFirmwareTable(false);
-			});
+			}
+			
+			if (this['group_properties']['AllowedSwitchTypes'].includes('AOS_CX')) {
+				var switchSettings = {
+					url: getAPIURL() + '/tools/getCommandwHeaders',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						url: localStorage.getItem('base_url') + '/firmware/v1/upgrade/compliance_version?device_type=CX&group=' + groupName,
+						access_token: localStorage.getItem('access_token'),
+					}),
+				};
+				// Get Switch Compliance
+				$.ajax(switchSettings).done(function(commandResults, statusText, xhr) {
+					if (commandResults.hasOwnProperty('headers')) {
+						updateAPILimits(JSON.parse(commandResults.headers));
+					}
+					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+						logError('Central Server Error (503): ' + commandResults.reason + ' (/firmware/v1/upgrade/compliance_version)');
+						apiErrorCount++;
+						return;
+					} else if (commandResults.hasOwnProperty('error_code')) {
+						logError(commandResults.description);
+						apiErrorCount++;
+						return;
+					}
+					var response = JSON.parse(commandResults.responseBody);
+			
+					currentInfo = groupInfo[groupName];
+					if (response['firmware_compliance_version']) {
+						currentInfo['CXSwitchVersion'] = response['firmware_compliance_version'];
+					} else {
+						currentInfo['CXSwitchVersion'] = 'Not Set';
+					}
+					groupInfo[groupName] = currentInfo;
+					loadFirmwareTable(false);
+				});
+			} else {
+				currentInfo = groupInfo[groupName];
+				currentInfo['CXSwitchVersion'] = '-';
+				groupInfo[groupName] = currentInfo;
+				loadFirmwareTable(false);
+			}
 		} else {
 			currentInfo = groupInfo[groupName];
 			currentInfo['SwitchVersion'] = '-';
+			currentInfo['CXSwitchVersion'] = '-';
 			groupInfo[groupName] = currentInfo;
 			loadFirmwareTable(false);
 		}
@@ -638,7 +703,7 @@ function loadFirmwareTable(checked) {
 
 		// Add VC Cluster to table
 		var table = $('#firmware-group-table').DataTable();
-		table.row.add([key, checkBoxString, '<strong>' + key + '</strong>', group['APVersion'] ? group['APVersion'] : '', group['SwitchVersion'] ? group['SwitchVersion'] : '', group['GatewayVersion'] ? group['GatewayVersion'] : '']);
+		table.row.add([key, checkBoxString, '<strong>' + key + '</strong>', group['APVersion'] ? group['APVersion'] : '', group['SwitchVersion'] ? group['SwitchVersion'] : '',group['CXSwitchVersion'] ? group['CXSwitchVersion'] : '', group['GatewayVersion'] ? group['GatewayVersion'] : '']);
 	}
 	$('#firmware-group-table')
 		.DataTable()
@@ -649,6 +714,11 @@ function loadFirmwareTable(checked) {
 
 function checkFirmwareUpdateDone() {
 	if (runningTotal >= completeTotal) {
+		
+		if (complianceNotification) {
+			complianceNotification.update({ type: 'success', message: 'Firmware Compliance was configured' });
+			setTimeout(complianceNotification.close, 1000);
+		}
 		if (apiErrorCount > 0) {
 			Swal.fire({
 				title: 'Firmware Compliance Failure',
@@ -662,6 +732,7 @@ function checkFirmwareUpdateDone() {
 				icon: 'success',
 			});
 		}
+		getFirmwareCompliance();
 	}
 }
 
@@ -675,6 +746,7 @@ function configureSelectedGroupsFirmware() {
 
 	var apselect = document.getElementById('apselector');
 	var switchselect = document.getElementById('switchselector');
+	var cxswitchselect = document.getElementById('cxswitchselector');
 	var gatewayselect = document.getElementById('gatewayselector');
 
 	// UI Sanity Check
@@ -682,7 +754,7 @@ function configureSelectedGroupsFirmware() {
 		showNotification('ca-folder-check', 'Please select one or more Groups from the table', 'bottom', 'center', 'warning');
 		return;
 	}
-	if (apselect.value === '' && switchselect.value === '' && gatewayselect.value === '') {
+	if (apselect.value === '' && switchselect.value === '' && cxswitchselect.value === '' && gatewayselect.value === '') {
 		showNotification('ca-folder-check', 'Please select one or more Firmware choices', 'bottom', 'center', 'warning');
 		return;
 	}
@@ -694,9 +766,9 @@ function configureSelectedGroupsFirmware() {
 	}
 
 	// 3 device types
-	completeTotal = groupArray.length * 3;
+	completeTotal = groupArray.length * 4;
 
-	showNotification('ca-folder-check', 'Setting Firmware Compliance...', 'bottom', 'center', 'info');
+	complianceNotification = showLongNotification('ca-folder-check', 'Setting Firmware Compliance...', 'bottom', 'center', 'info');
 	// Update APs
 	if (apselect.value !== '') {
 		if (apselect.value !== 'No AP Compliance') {
@@ -819,7 +891,7 @@ function configureSelectedGroupsFirmware() {
 		checkFirmwareUpdateDone();
 	}
 
-	// Update Switches
+	// Update AOS-S Switches
 	if (switchselect.value !== '') {
 		if (switchselect.value !== 'No Switch Compliance') {
 			// Set the compliance
@@ -830,7 +902,7 @@ function configureSelectedGroupsFirmware() {
 					runningTotal++;
 				} else if (groupInfo[currentGroup]['SwitchVersion'] === switchselect.value) {
 					runningTotal++;
-					logInformation('Firmware Compliance for Switches in ' + currentGroup + ' were already configured for ' + switchselect.value);
+					logInformation('Firmware Compliance for AOS-S Switches in ' + currentGroup + ' were already configured for ' + switchselect.value);
 				} else {
 					// Update the cached info (assuming change is successful)
 					currentInfo = groupInfo[currentGroup];
@@ -891,7 +963,7 @@ function configureSelectedGroupsFirmware() {
 					runningTotal++;
 				} else if (groupInfo[currentGroup]['SwitchVersion'] === 'Not Set') {
 					runningTotal++;
-					logInformation('Firmware Compliance for Switches in ' + currentGroup + ' is not configured');
+					logInformation('Firmware Compliance for AOS-S Switches in ' + currentGroup + ' is not configured');
 				} else {
 					// Update the cached info (assuming change is successful)
 					currentInfo = groupInfo[currentGroup];
@@ -927,7 +999,128 @@ function configureSelectedGroupsFirmware() {
 								icon: 'error',
 							});
 						} else {
-							logInformation('Firmware Compliance for Switches in ' + currentGroup + ' was removed');
+							logInformation('Firmware Compliance for AOS-S Switches in ' + currentGroup + ' was removed');
+							checkFirmwareUpdateDone();
+						}
+						// Refresh the table to show the changes.
+						loadFirmwareTable(false);
+					});
+				}
+			});
+		}
+	} else {
+		runningTotal += groupArray.length;
+		checkFirmwareUpdateDone();
+	}
+	
+	// Update AOS-CX Switches
+	if (cxswitchselect.value !== '') {
+		if (cxswitchselect.value !== 'No Switch Compliance') {
+			// Set the compliance
+			$.each(groupArray, function() {
+				var currentGroup = this;
+				// Check if groups includes the AP device type or if the version compliance is already set to the selected version
+				if (groupInfo[currentGroup]['CXSwitchVersion'] === '-') {
+					runningTotal++;
+				} else if (groupInfo[currentGroup]['CXSwitchVersion'] === cxswitchselect.value) {
+					runningTotal++;
+					logInformation('Firmware Compliance for AOS-CX Switches in ' + currentGroup + ' were already configured for ' + cxswitchselect.value);
+				} else {
+					// Update the cached info (assuming change is successful)
+					currentInfo = groupInfo[currentGroup];
+					currentInfo['CXSwitchVersion'] = cxswitchselect.value;
+					groupInfo[currentGroup] = currentInfo;
+					var switchsettings = {
+						url: getAPIURL() + '/tools/postCommand',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/firmware/v2/upgrade/compliance_version',
+							access_token: localStorage.getItem('access_token'),
+							data: JSON.stringify({
+								device_type: 'CX',
+								group: currentGroup,
+								firmware_compliance_version: cxswitchselect.value,
+								reboot: true,
+								allow_unsupported_version: true,
+								compliance_scheduled_at: 0,
+							}),
+						}),
+					};
+	
+					$.ajax(switchsettings).done(function(response, statusText, xhr) {
+						runningTotal++;
+						if (response.hasOwnProperty('status')) {
+							if (response.status === '503') {
+								apiErrorCount++;
+								logError('Central Server Error (503): ' + response.reason + ' (/firmware/v2/upgrade/compliance_version)');
+							}
+						} else if (response.hasOwnProperty('error_codes')) {
+							apiErrorCount++;
+							logError('Central Server Error (' + response.error_codes + ')');
+							Swal.fire({
+								title: 'Firmware Compliance Failure',
+								text: 'Some or all Groups failed to be configured',
+								icon: 'error',
+							});
+						} else {
+							logInformation('Firmware Compliance for AOS-CX Switches in ' + currentGroup + ' was updated to ' + cxswitchselect.value);
+							checkFirmwareUpdateDone();
+						}
+						// Refresh the table to show the changes.
+						loadFirmwareTable(false);
+					});
+				}
+			});
+		} else {
+			// need to remove the compliance
+			$.each(groupArray, function() {
+				var currentGroup = this;
+				// Check if groups includes the AP device type or if the version compliance is already set to the selected version
+				if (groupInfo[currentGroup]['CXSwitchVersion'] === '-') {
+					runningTotal++;
+				} else if (groupInfo[currentGroup]['CXSwitchVersion'] === 'Not Set') {
+					runningTotal++;
+					logInformation('Firmware Compliance for AOS-CX Switches in ' + currentGroup + ' is not configured');
+				} else {
+					// Update the cached info (assuming change is successful)
+					currentInfo = groupInfo[currentGroup];
+					currentInfo['SwitchVersion'] = 'Not Set';
+					groupInfo[currentGroup] = currentInfo;
+	
+					var apsettings = {
+						url: getAPIURL() + '/tools/deleteCommand',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/firmware/v1/upgrade/compliance_version?device_type=CX&group=' + currentGroup,
+							access_token: localStorage.getItem('access_token'),
+						}),
+					};
+	
+					$.ajax(apsettings).done(function(response, statusText, xhr) {
+						runningTotal++;
+						if (response.hasOwnProperty('status')) {
+							if (response.status === '503') {
+								apiErrorCount++;
+								logError('Central Server Error (503): ' + response.reason + ' (/firmware/v2/upgrade/compliance_version)');
+							}
+						} else if (response.hasOwnProperty('error_codes')) {
+							apiErrorCount++;
+							logError('Central Server Error (' + response.error_codes + ')');
+							Swal.fire({
+								title: 'Firmware Compliance Failure',
+								text: 'Some or all Groups failed to be configured',
+								icon: 'error',
+							});
+						} else {
+							logInformation('Firmware Compliance for AOS-CX Switches in ' + currentGroup + ' was removed');
 							checkFirmwareUpdateDone();
 						}
 						// Refresh the table to show the changes.
