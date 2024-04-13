@@ -22,6 +22,7 @@ RUN echo "**** install Python ****" && \
     apk add --no-cache python3 && \
     echo "**** install pip ****" && \
     apk add --no-cache py3-pip && \
+    rm /usr/lib/python*/EXTERNALLY-MANAGED && \
     pip3 install --no-cache --upgrade pip setuptools wheel
 
 RUN echo "installing Flask and gunicorn" && \
