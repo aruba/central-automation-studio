@@ -1,10 +1,10 @@
 /*
 Central Automation v1.x
-Last Updated 1.36.3
+Last Updated 1.36.8
 Aaron Scott (WiFi Downunder) 2023-2024
 */
 
-const CASVersion = "1.36.7";
+const CASVersion = "1.36.8";
 function getCASVersion() {
 	var versionP = document.getElementById('cas-version');
 	if (versionP) versionP.innerHTML = 'Version: ' + CASVersion;
@@ -6890,7 +6890,7 @@ function setAPZone() {
 								'Content-Type': 'application/json',
 							},
 							data: JSON.stringify({
-								url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+								url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
 								access_token: localStorage.getItem('access_token'),
 							}),
 						};
@@ -6900,7 +6900,7 @@ function setAPZone() {
 								updateAPILimits(JSON.parse(commandResults.headers));
 							}
 							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
 								apiErrorCount++;
 								return;
 							} else if (commandResults.hasOwnProperty('error_code')) {
@@ -6912,8 +6912,9 @@ function setAPZone() {
 							
 							
 							
+							// Alternate approach using /configuration/v1/ap_settings_cli/<SERIAL>
 							
-							
+							/*
 							var apCLIResponse = response;
 							if (apCLIResponse.indexOf('  zonename ' + newZonename) != -1) {
 								// no need to change the config
@@ -6964,14 +6965,8 @@ function setAPZone() {
 									zoneCounter++;
 									checkForZoneCompletion();
 								});
-							}
+							}*/
 
-
-
-
-
-
-							/*
 							//console.log(response, textStatus, jqXHR);
 							if (response.hasOwnProperty('error_code')) {
 								logError(response.description);
@@ -7019,7 +7014,7 @@ function setAPZone() {
 									zoneCounter = zoneCounter + 1;
 									checkForZoneCompletion();
 								});
-							}*/	
+							}
 						});
 					} else {
 						// Either switch or controller/gateway

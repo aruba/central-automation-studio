@@ -61,8 +61,6 @@ function getWLANsforGroup() {
 	var wlanGroup = select.value;
 
 	var selectedGroupWLANs = groupWLANs[wlanGroup];
-	var wlans = document.getElementById('wlanselector');
-	wlans.options.length = 0;
 	if (!selectedGroupWLANs || selectedGroupWLANs.length == 0) showNotification('ca-wifi-protected', 'No WLANs are configured for selected group', 'bottom', 'center', 'warning');
 	$.each(selectedGroupWLANs, function() {
 		$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
@@ -310,6 +308,7 @@ function getWLANs() {
 		configGroups = getGroups();
 		groupCounter = 0;
 		groupConfigs = {};
+		groupWLANs = {};
 		wlans = [];
 		groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 
@@ -576,6 +575,20 @@ function getWLANsFromConfig(config, group) {
 		WLAN UI Functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageGroup() {
+	select = document.getElementById('wlanselector');
+	select.options.length = 0;
+	
+	table = document.getElementById('device-table');
+	if (table) {
+		$('#device-table')
+		.DataTable()
+		.rows()
+		.remove();
+		$('#device-table')
+		.DataTable()
+		.rows()
+		.draw();
+	}
 	getWLANs();
 }
 
@@ -1029,8 +1042,11 @@ function loadDevicesAndSSIDs() {
 
 	// Pull the SSIDs for the selected Group
 	var selectedGroupWLANs = groupWLANs[select.value];
+	
 	var wlans = document.getElementById('wlanselector');
 	wlans.options.length = 0;
+	
+	$('#wlanselector').selectpicker('refresh');
 	$.each(selectedGroupWLANs, function() {
 		$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
 	});
@@ -1085,7 +1101,7 @@ function assignSSIDs() {
 
 	// Get Selected SSIDs
 	var select = document.getElementById('wlanselector');
-	var selectedSSIDs = [...select.selectedOptions].map(option => option.value);
+	var selectedSSIDs = [...select.selectedOptions].map(option => option.value.replace(/"/g, ''));
 	selectedSSIDstring = selectedSSIDs.join(',');
 	if (document.getElementById('selectAllSSIDs').checked) selectedSSIDstring = '*';
 

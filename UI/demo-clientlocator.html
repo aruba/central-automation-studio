@@ -13,8 +13,8 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.5.0
-Updated: 1.6.0
+Central Automation v1.30
+Updated: 
 Aaron Scott (WiFi Downunder) 2021-2023
 -->
 
@@ -26,7 +26,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-16x16.png" sizes="16x16" />
 		<link rel="icon" type="image/png" href="assets/img/favicon-32x32.png" sizes="32x32" />
-		<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
 
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 		<title>Central Automation Studio</title>
@@ -38,8 +37,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
 		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
-		<!-- CSS Just for demo purpose, don't include it in your project -->
-		<link href="assets/css/demo.css" rel="stylesheet" />
+		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -52,7 +50,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: AP Group Configuration </a>
+							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Client Locator
+							 </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="nav navbar-nav">
@@ -79,14 +78,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<i class="central-icon ca-research"></i>
 									</a>
 								</li>
-								<li class="nav-item dropdown" id='accountDropdown' hidden>
-									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-										<i class="nc-icon nc-single-02"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink" id='accountDropdownList'>
-										
-									</div>
-								</li>
 								<li class="nav-item dropdown">
 									<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 										<i class="nc-icon nc-bullet-list-67"></i>
@@ -103,213 +94,42 @@ Aaron Scott (WiFi Downunder) 2021-2023
 				<!-- End Navbar -->
 				<div class="content">
 					<div class="container-fluid">
-						<!-- Overview Cards -->
 						<div class="row">
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#ClientModal">
-										<div class="card-body ">
+							<div class="col-md-12">
+								<div class="card">
+									<div class="card-body">
+										<div class="row">
+											<div class="col-md-6">
+												<h5>Client Info</h5>
+												<hr />
+												<ul class="list-inline" id="clientInfoList"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Roaming History <i>(Last 10 Roams)</i></h5>
+												<hr />
+												<ul class="list-inline" id="roamingList"></ul>
+											</div>
+										</div>
+										<div id="floorplanView">
 											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-laptop-1 text-warning" id="client_icon"></i>
-													</div>
+												<div class="col-md-12">
+													<h5>Client Location</h5>
+												<hr />
 												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Connected Clients</p>
-														<h4 class="card-title" id="client_count">-</h4>
+												<div class="col-md-12" id="ap-visualPlan">
+													<div id="canvasStack">
+														<canvas id="ap-floorplanCanvas"></canvas>
+														<canvas id="ap-linkCanvas"></canvas>
+														<canvas id="ap-apCanvas"></canvas>
+														<canvas id="ap-infoCanvas"></canvas>
 													</div>
 												</div>
 											</div>
 										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#APModal">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Access Points</p>
-														<h4 class="card-title" id="ap_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#SwitchModal">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-switch-stack text-warning" id="switch_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Switches</p>
-														<h4 class="card-title" id="switch_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6" id="gateway_stats">
-								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#GatewayModal">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-gateway text-warning" id="gateway_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Gateways</p>
-														<h4 class="card-title" id="gateway_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6" id="controller_stats">
-								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#ControllerModal">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-controller text-warning" id="controller_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Controllers</p>
-														<h4 class="card-title" id="controller_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats no-focus">
-									<a data-toggle="modal" data-target="#SiteModal">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-world-pin text-warning" id="site_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Sites</p>
-														<h4 class="card-title" id="site_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
-									<a data-toggle="modal" data-target="#GroupModal">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-folder-settings text-warning" id="group_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Groups</p>
-														<h4 class="card-title" id="group_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
+									</div>
 								</div>
 							</div>
 						</div>
-						<!-- End Overview Cards -->
-						<!-- Change PSK Card -->
-						<div class="card col-md-8">
-							<div class="card-body">
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Group / Virtual Controller Selection</h4>
-											<p class="card-category">Choose a group or Virtual Controller to obtain the Wireless config</p>
-											<p></p>
-										</div>
-
-										<div class="card-body">
-											<select id="groupselector" class="selectpicker" data-title="Select a group or VC..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getConfigforGroup()"> </select>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Configuration</h4>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<textarea type="text" placeholder="Configuration goes here" class="form-control textarea" id="wlanConfig" rows="20"></textarea>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Config Shortcuts</h4>
-										</div>
-										<div class="card-body">
-											<div class="form-check pad-10">
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="clearAWCheckbox" onclick="clearAWConfig()" />
-													<span class="form-check-sign"></span><span data-toggle="tooltip" data-placement="right" data-html="true" title="Only available if selected Group contains Airwave configuration">Clear Airwave Configuration</span>
-												</label>
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="clearAutoDRTCheckbox" onclick="clearAutoDRTConfig()" />
-													<span class="form-check-sign"></span>Disable Auto DRT Update
-												</label>
-											</div>
-										</div>
-									</div>
-								</div>
-								<hr />
-							</div>
-							<div class="card-footer">
-								<div class="col-md-12">
-									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="saveWLANBtn" id="saveWLANBtn" id="saveWLANBtn" onclick="updateFullWLAN()">Update Configuration</button>
-								</div>
-							</div>
-						</div>
-						<!-- End Change PSK Card -->
 					</div>
 				</div>
 				<!-- Client Modal -->
@@ -335,6 +155,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 														<th>Connected To</th>
 														<th>Site</th>
 														<th>VLAN</th>
+														<th>Location</th>
 													</thead>
 													<tbody></tbody>
 												</table>
@@ -342,7 +163,9 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										</div>
 									</div>
 									<div class="card-footer ">
-										<a class="btn btn-fill btn-info" href="monitoring-clients.html">Client Statistics</a>
+										<div class="col-md-12">
+											<a class="btn btn-fill btn-info" href="monitoring-clients.html">Client Statistics</a>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -588,6 +411,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					</div>
 				</div>
 				<!--  End Modal -->
+
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -643,11 +467,12 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					</div>
 				</div>
 				<!--  End Modal -->
+
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
-						<a data-toggle="modal" data-target="#WLANModal" id="WLANModalLink"></a>
+						<a data-toggle="modal" data-target="#ClientModal" id="ClientModalLink"></a>
+
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -657,7 +482,6 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</script>
 								<a href="http://www.wifidownunder.com">WiFi Downunder</a>
 							</p>
-							<p class="copyright text-center" id="cas-version"> </p>
 						</nav>
 					</div>
 				</footer>
@@ -671,7 +495,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 	<!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
 	<script src="assets/js/plugins/bootstrap-switch.js"></script>
 	<!--  Chartist Plugin  -->
-	<script src="assets/js/plugins/chartist.min.js"></script>
+	<script src="assets/js/plugins/chartist.js"></script>
+	<script src="assets/js/plugins/chartist-plugin-tooltip.js"></script>
 	<!--  Notifications Plugin    -->
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
@@ -709,239 +534,188 @@ Aaron Scott (WiFi Downunder) 2021-2023
 	<script type="text/javascript">
 		$(document).ready(function() {
 			getCASVersion();
-			openIndexedDB();
-			
-			var pageName = 'AP Group Configuration';
-			if  (localStorage.getItem('from_hydra')) {
-				document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
-			} else {
-				document.getElementById('titleText').innerHTML = "Central Automation Studio: "+ '<strong>' + pageName + '</strong>';
-			}
-			// If more than one account build Account list and show menu in top right
-			loadAccountList();
-
-		  	var reachabilityPromise = new $.Deferred();
+		    openIndexedDB();
+		    var reachabilityPromise = new $.Deferred();
 		    $.when(checkReachability(reachabilityPromise)).then(function () {
-			
 
-				$(".clickable-row").click(function() {
-					var clickedRow = $(this).data("href");
-					generateCSVForSite(clickedRow);
-				});
-	
-				$('#client-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": true,
-					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Clients",
-					},
-					columnDefs: [{ type: 'ip-address', targets: 4 }, { type: 'title-string', targets: 1}],
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
-	
-	
-				$('#ap-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search APs",
-					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
-	
-				$('#switch-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Switches",
-					},
-					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
-	
-				var loadGatewayDetails = localStorage.getItem('load_gateway_details');
-				if (loadGatewayDetails === null || loadGatewayDetails === "") {
-					loadGatewayDetails = false;
-				} else {
-					loadGatewayDetails = JSON.parse(loadGatewayDetails)
-				}
-				if (loadGatewayDetails) {
-					$('#gateway-table').DataTable({
-						"pagingType": "simple_numbers",
-						"autoWidth": false,
-						"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-						responsive: true,
-						language: {
-							search: "_INPUT_",
-							searchPlaceholder: "Search Gateways",
-						},
-						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
-						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-					});
-	
-					$('#controller-table').DataTable({
-						"pagingType": "simple_numbers",
-						"autoWidth": false,
-						"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-						responsive: true,
-						language: {
-							search: "_INPUT_",
-							searchPlaceholder: "Search Controllers",
-						},
-						columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
-						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-					});
-				} else {
-					$('#gateway-table').DataTable({
-						"pagingType": "simple_numbers",
-						"autoWidth": false,
-						"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-						responsive: true,
-						language: {
-							search: "_INPUT_",
-							searchPlaceholder: "Search Gateways",
-						},
-						columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,12,13], "visible": false }, { type: 'title-numeric', targets: 11}],
-						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-					});
-	
-					$('#controller-table').DataTable({
-						"pagingType": "simple_numbers",
-						"autoWidth": false,
-						"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-						responsive: true,
-						language: {
-							search: "_INPUT_",
-							searchPlaceholder: "Search Controllers",
-						},
-						columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }, { type: 'title-numeric', targets: 10}],
-						"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-					});
-				}
-	
-				$('#site-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Sites",
-					}
-				});
-	
-				$('#group-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Groups",
-					}
-				});
-	
-				$('#universal-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search Devices",
-					},
-					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
-				});
-	
-				document.getElementById('searchForm').addEventListener('submit', function(e) {
-					e.preventDefault();
-					$('#universal-table').DataTable().rows().draw();
-					$('#UniversalModalLink').trigger('click');
-					$('#universal-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
-				}, false);
-	
-	
-				$('#wlan-table tbody').on('click', 'tr', function(){
-					// grab index of the clicked role
-	
-					var row = $(this).children();
-					var data = $('#wlan-table').DataTable().row(row).data();
-					var wlanIndex = data[0];
-					loadWLANUI(wlanIndex);
-				})
-	
-				$('#wlan-table').DataTable({
-					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
-					"order": [[ 1, "asc" ]],
-					responsive: true,
-					language: {
-						search: "_INPUT_",
-						searchPlaceholder: "Search WLANs",
-					},
-					"columnDefs": [{
-						"targets": [ 0 ],
-						"visible": false,
-						"searchable": false
-					}]
-				});
-	
-				$('#wlanName').keyup(function(){
-					$(this).css('color', function(){
-						return checkForDuplicateWLANName($(this).val()) ? '#fc727a' : 'inherit';
-					});
-				});
-	
-				// Check if using COP
-				checkUIForCOP();
-	
-				// Check if we need to get the latest data - or can we just load it from localStorage
-				var refreshrate = localStorage.getItem('refresh_rate');
-				if (refreshrate === null || refreshrate === "") {
-					refreshrate = "30";
-				}
-	
-				loadMonitoringData(refreshrate);
-	
-				var loadIntervalID;
-				loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
-	
-				document.addEventListener("visibilitychange", function handleVisibilityChange() {
-			  	if (!document.hidden) {
-					var reachabilityPromise = new $.Deferred();
-					$.when(checkReachability(reachabilityPromise)).then(function () {
-						loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
-					});
-			  	} else {
-					clearInterval(loadIntervalID);
-			  	}
-				}, false);
-	
-				checkForAWConfig();
-				checkForAutoDRTConfig();
-				
-				document.onkeyup = function(e) {
-					if (e.ctrlKey && e.which == 82) {
-						getMonitoringData()
-					}
-				};
+
+			$('#client-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": true,
+				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Clients",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 4 }, { type: 'title-string', targets: 1}],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
+
+
+			$('#ap-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+
+			$('#switch-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Switches",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+
+			var loadGatewayDetails = localStorage.getItem('load_gateway_details');
+			if (loadGatewayDetails === null || loadGatewayDetails === "") {
+				loadGatewayDetails = false;
+			} else {
+				loadGatewayDetails = JSON.parse(loadGatewayDetails)
+			}
+			if (loadGatewayDetails) {
+				$('#gateway-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Gateways",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+				$('#controller-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Controllers",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 10}],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+			} else {
+				$('#gateway-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Gateways",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": [2,4,12,13], "visible": false }, { type: 'title-numeric', targets: 11}],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+
+				$('#controller-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Controllers",
+					},
+					columnDefs: [{ type: 'ip-address', targets: [3] }, { "targets": [2], "visible": false }, { type: 'title-numeric', targets: 10}],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+			}
+
+			$('#site-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Sites",
+				}
+			});
+
+			$('#group-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Groups",
+				}
+			});
+
+			$('#universal-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Devices",
+				},
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+
+
+			document.getElementById('searchForm').addEventListener('submit', function(e) {
+				e.preventDefault();
+				$('#client-table').DataTable().rows().draw();
+				$('#ClientModalLink').trigger('click');
+				$('#client-table').dataTable().fnFilter(document.getElementById('universalSearchInput').value);
+			}, false);
+
+			// Check if using COP
+			checkUIForCOP();
+
+
+			// Check if we need to get the latest data - or can we just load it from localStorage
+			var refreshrate = localStorage.getItem('refresh_rate');
+			if (refreshrate === null || refreshrate === "") {
+				refreshrate = "30";
+			}
+			loadMonitoringData(refreshrate);
+
+			var loadIntervalID;
+			loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+
+			document.addEventListener("visibilitychange", function handleVisibilityChange() {
+			  if (!document.hidden) {
+				var reachabilityPromise = new $.Deferred();
+				$.when(checkReachability(reachabilityPromise)).then(function () {
+					loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+				});
+			  } else {
+				clearInterval(loadIntervalID);
+			  }
+			}, false);
+
+			window.addEventListener("resize", function (){
+				// redraw the floorplan view when window resizes
+				drawFloorplan();
+			})
+		  });
 		});
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/main.js?v=240415"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/wlan-group.js?v=231114"></script>
+	<script src="assets/js/locator.js?v=240212"></script>
 </html>

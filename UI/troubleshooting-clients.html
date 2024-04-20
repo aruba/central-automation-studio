@@ -13,7 +13,7 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.12
+Central Automation v1.33
 Updated: 
 Copyright Aaron Scott (WiFi Downunder) 2021-2023
 -->
@@ -51,7 +51,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: AP Troubleshooting </a>
+							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Client Troubleshooting </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -96,67 +96,213 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					<div class="container-fluid">
 						<div class="row">
 							<div class="col-md-12">
-								<!-- APs Card -->
+								<!-- Client List Card -->
 								<div class="card">
 									<div class="card-header">
-										<h4 class="card-title">Access Points</h4>
-										<a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
+										<h4 class="card-title">Clients</h4>
+										<a class="refresh-link" onclick="refreshClientDataTable()"><i class="central-icon ca-reload"></i></a>
 									</div>
 									<div class="card-body">
+										<h5>Filtering Options</h5>
+										<div class="row filter-row">
+											<div class="col-md-1 filter-label"><h5>Connection: </h5></div>
+											<div class="col-md-2">
+												<select id="connectionselector" class="selectpicker" data-title="Select an connection type" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="reloadClientTable(0)">
+													<option selected>All</option>
+													<option >Wired</option>
+													<option >Wireless</option>
+												</select>
+											</div>
+											<div class="col-md-1 filter-label"><h5>Device Type: </h5></div>
+											<div class="col-md-2">
+												<select id="typeselector" class="selectpicker" data-title="Select an RF Domain" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="reloadClientTable(1)"> 
+													<option selected>All</option>
+												</select>
+											</div>
+										</div>
 										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 											<div class="fresh-datatables">
-												<table id="device-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+												<table id="client-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 													<thead>
 														<th>Name</th>
-														<th>Status</th>
-														<th>Status Text</th>
-														<th>Serial Number</th>
+														<th></th>
+														<th>Health</th>
 														<th>MAC Address</th>
-														<th>Group</th>
+														<th>IP Address</th>
+														<th>Client OS</th>
+														<th>Connected To</th>
 														<th>Site</th>
-														<th>Firmware</th>
-														<th>Uptime</th>
+														<th>VLAN</th>
 														<th>Troubleshooting</th>
 													</thead>
-													<tbody></tbody>
+													<tbody>
+													</tbody>
 												</table>
 											</div>
 										</div>
 									</div>
 								</div>
-								<!-- End APs Card -->
+								<!-- End Client List Card -->
 							</div>
 						</div>
 					</div>
 				</div>
-				<!-- AP System Status Modal -->
-				<div class="modal fade modal-mini modal-primary" id="SystemStatusModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<!-- Wireless Client Modal -->
+				<div class="modal fade modal-mini modal-primary" id="WirelessClientModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
 						<div class="modal-content">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
-										<h4 class="card-title" id="systemStatusTitle">System Status</h4>
+										<h4 class="card-title" id="WirelessClientTitle">Wireless Client</h4>
 									</div>
 									<div class="card-body">
 										<div class="row">
-											<div class="col-md-6">
-												<h5>General</h5>
+											<div class="col-md-4">
+												<h5>Client Info</h5>
 												<hr />
-												<ul class="list-inline" id="generalSystemIssues"></ul>
+												<ul class="list-inline" id="wirelessInfo"></ul>
 											</div>
-											<div class="col-md-6">
-												<h5>Power Information</h5>
-												<hr />
-												<ul class="list-inline" id="powerIssues"></ul>
+											<div class="col-md-4">
+												<div class="row">
+													<div class="col-sm-12">
+														<h5>Connection Info</h5>
+														<hr />
+														<ul class="list-inline" id="wirelessConnection"></ul>
+													</div>
+												</div>
+												<br  />
+												<div class="row">
+													<div class="col-sm-12">
+														<h5>Access Point Info</h5>
+														<hr />
+														<ul class="list-inline" id="wirelessAP"></ul>
+													</div>
+												</div>
+											</div>
+											<div class="col-md-4">
+												<div id="floorplanView">
+													<div class="row">
+														<div class="col-md-12">
+															<h5>Client Location</h5>
+														<hr />
+														</div>
+														<div class="col-md-12" id="ap-visualPlan">
+															<div id="canvasStack">
+																<canvas id="ap-floorplanCanvas"></canvas>
+																<canvas id="ap-linkCanvas"></canvas>
+																<canvas id="ap-apCanvas"></canvas>
+																<canvas id="ap-infoCanvas"></canvas>
+															</div>
+														</div>
+													</div>
+												</div>
 											</div>
 										</div>
-										<div class="row"></div>
 										<div class="row">
+											<div class="col-md-12">
+												<h5>Troubleshooting</h5>
+												<hr />
+												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayEvents()" id='eventsBtn'>Events</button>
+												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayMobility()" id='mobilityBtn'>Mobility Trail</button>
+												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayKeySync()" id='keySyncBtn'>Key Syncing</button>
+											</div>
+										</div>
+										<br  />
+										<div class="row">
+											<div class="col-md-12" id="eventsCard" hidden>
+												<div class="card">
+													<div class="card-header">
+														<h4 class="card-title" id="eventsTitle">Client Events</h4>
+														<a class="refresh-link" onclick="refreshEvents()"><i class="central-icon ca-reload"></i></a>
+													</div>
+													<div class="card-body">
+														<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+															<div class="fresh-datatables">
+																<table id="events-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																	<thead>
+																		<th>Time</th>
+																		<th>Event</th>
+																		<th>Level</th>
+																		<th>Device</th>
+																		<th>Description</th>
+																	</thead>
+																	<tbody></tbody>
+																</table>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12" id="mobilityCard" hidden>
+												<div class="card">
+													<div class="card-header">
+														<h4 class="card-title" id="eventsTitle">Mobility Trail</h4>
+														<a class="refresh-link" onclick="refreshMobility()"><i class="central-icon ca-reload"></i></a>
+													</div>
+													<div class="card-body">
+														<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+															<div class="fresh-datatables">
+																<table id="mobility-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																	<thead>
+																		<th>Time</th>
+																		<th>SSID</th>
+																		<th>To AP</th>
+																		<th>Channel</th>
+																		<th>RSSI</th>
+																		<th>From AP</th>
+																		<th>Type</th>
+																		<th>Latency (msec)</th>
+																	</thead>
+																	<tbody></tbody>
+																</table>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12" id="syncedAPCard" hidden>
+												<div class="card">
+													<div class="card-header">
+														<h4 class="card-title" id="syncAPTitle">Access Points</h4>
+														<a class="refresh-link" onclick="refreshSyncedAP()"><i class="central-icon ca-reload"></i></a>
+													</div>
+													<div class="card-body">
+														<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+															<div class="fresh-datatables">
+																<table id="synced-ap-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																	<thead>
+																		<th>Name</th>
+																		<th>Status</th>
+																		<th>Status Text</th>
+																		<th>IP Address</th>
+																		<th>Model</th>
+																		<th>Serial</th>
+																		<th>Clients</th>
+																		<th>Firmware</th>
+																		<th>Site</th>
+																		<th>Group</th>
+																		<th>MAC Address</th>
+																		<th>Uptime</th>
+																		<th>Action</th>
+																	</thead>
+																	<tbody></tbody>
+																</table>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row" id='wirelessResults' hidden>
 											<div class="col-md-6">
 												<h5 class="extra-h5-padding">Hardware</h5>
 												<hr />
-												<ul class="list-inline" id="hardwareIssues"></ul>
+												<ul class="list-inline" id="wirelessIssues"></ul>
 											</div>
 											<div class="col-md-6">
 												<h5 class="extra-h5-padding">Interfaces</h5>
@@ -165,7 +311,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 											</div>
 										</div>
 										<div class="row"></div>
-										<div class="accordions" id="accordion">
+										<div class="accordions" id="accordion" hidden>
 											<div class="card">
 												<div class="card-header">
 													<h4 class="card-title">
@@ -177,7 +323,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 												</div>
 												<div id="collapseSystem" class="card-collapse collapse">
 													<div class="card-body">
-														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="systemStatusText" rows="50"></textarea>
+														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="wirelessText" rows="50"></textarea>
 													</div>
 												</div>
 											</div>
@@ -189,48 +335,62 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Radio Stats Modal -->
-				<div class="modal fade modal-mini modal-primary" id="RadioStatsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				
+				<!-- Wired Client Modal -->
+				<div class="modal fade modal-mini modal-primary" id="WiredClientModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
 						<div class="modal-content">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
-										<h4 class="card-title" id="radioStatsTitle"></h4>
+										<h4 class="card-title" id="WirelessClientTitle">Wired Client</h4>
 									</div>
 									<div class="card-body">
 										<div class="row">
 											<div class="col-md-4">
-												<h5>General</h5>
+												<h5>Client Info</h5>
 												<hr />
-												<ul class="list-inline" id="generalRFIssues"></ul>
+												<ul class="list-inline" id="wiredInfo"></ul>
 											</div>
-
 											<div class="col-md-4">
-												<h5>Transmit</h5>
+												<h5>Connection Info</h5>
 												<hr />
-												<ul class="list-inline" id="txIssues"></ul>
-											</div>
-
-											<div class="col-md-4">
-												<h5>Receive</h5>
-												<hr />
-												<ul class="list-inline" id="rxIssues"></ul>
+												<ul class="list-inline" id="wiredConnection"></ul>
 											</div>
 										</div>
-										<div class="accordions" id="accordion">
+										<div class="row">
+											<div class="col-md-12">
+												<h5>Troubleshooting</h5>
+												<hr />
+												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="">Authentication</button>
+											</div>
+										</div>
+										<div class="row" id='wirelessResults' hidden>
+											<div class="col-md-6">
+												<h5 class="extra-h5-padding">Hardware</h5>
+												<hr />
+												<ul class="list-inline" id="wirelessIssues"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5 class="extra-h5-padding">Interfaces</h5>
+												<hr />
+												<ul class="list-inline" id="interfaceIssues"></ul>
+											</div>
+										</div>
+										<div class="row"></div>
+										<div class="accordions" id="accordion" hidden>
 											<div class="card">
 												<div class="card-header">
 													<h4 class="card-title">
-														<a data-target="#collapseRF" href="#" data-toggle="collapse">
+														<a data-target="#collapseSystem" href="#" data-toggle="collapse">
 															Raw Results
 															<b class="caret"></b>
 														</a>
 													</h4>
 												</div>
-												<div id="collapseRF" class="card-collapse collapse">
+												<div id="collapseSystem" class="card-collapse collapse">
 													<div class="card-body">
-														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="radioStatsText" rows="50"></textarea>
+														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="wiredText" rows="50"></textarea>
 													</div>
 												</div>
 											</div>
@@ -242,52 +402,70 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- AAA Modal -->
-				<div class="modal fade modal-mini modal-primary" id="AAAModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				
+				<!-- PMK Cache Modal -->
+				<div class="modal fade modal-mini modal-primary" id="PMKCacheModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
 						<div class="modal-content">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
-										<h4 class="card-title" id="aaaTitle">AAA Details</h4>
+										<h4 class="card-title" id="pmkCacheTitle">AP KMS Troubleshooting Information</h4>
 									</div>
 									<div class="card-body">
 										<div class="row">
-											<div class="col-md-6">
-												<h5>Average Response Times</h5>
-												<hr />
-												<ul class="list-inline" id="aaaResponseTimes"></ul>
-											</div>
-											<div class="col-md-6">
-												<h5>Response Stats</h5>
-												<hr />
-												<ul class="list-inline" id="aaaResponseStats"></ul>
+											<div class="col-md-12">
+												<ul class="list-inline" id="pmkAPDetails"></ul>
 											</div>
 										</div>
-										<div class="row"></div>
+										<br />
+										<h4 class="card-title" id="pmkCacheTitle">AP PMK Cache Record</h4>
+										<hr />
+										<div class="row" id="pmkUserRow">
+											<hr />
+											<div class="col-md-6">
+												<h5>User Information</h5>
+												<hr />
+												<ul class="list-inline" id="pmkUserDetails"></ul>
+											</div>
+											<div class="col-md-6">
+												<h5>Key Information</h5>
+												<hr />
+												<ul class="list-inline" id="pmkKeyDetails"></ul>
+											</div>
+										</div>
+										<br />
+										<br />
+										<h4 class="card-title" id="pmkCacheTitle">AP PMK Sync Statistics</h4>
+										<hr />
+										<div class="row" id="pmkStatsRow">
+											<div class="col-md-4">
+												<h5>Roaming PMK Sync Stats</h5>
+												<hr />
+												<ul class="list-inline" id="pmkRoamingDetails"></ul>
+											</div>
+											<div class="col-md-4">
+												<h5>Neighbor update Stats</h5>
+												<hr />
+												<ul class="list-inline" id="pmkNeighourDetails"></ul>
+											</div>
+											<div class="col-md-4">
+												<h5>FT/11r Authentication Stats</h5>
+												<hr />
+												<ul class="list-inline" id="pmkFTDetails"></ul>
+											</div>
+										</div>
+										<br />
 										<div class="row">
-											<div class="col-md-6">
-												<h5 class="extra-h5-padding">Possible Issues</h5>
+											<div class="col-md-4">
+												<h5>OKC Authentication Stats</h5>
 												<hr />
-												<ul class="list-inline" id="aaaPossibleIssues"></ul>
+												<ul class="list-inline" id="pmkOKCDetails"></ul>
 											</div>
-										</div>
-										<div class="row"></div>
-										<div class="accordions" id="accordion">
-											<div class="card">
-												<div class="card-header">
-													<h4 class="card-title">
-														<a data-target="#collapseAAA" href="#" data-toggle="collapse">
-															Raw Results
-															<b class="caret"></b>
-														</a>
-													</h4>
-												</div>
-												<div id="collapseAAA" class="card-collapse collapse">
-													<div class="card-body">
-														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="aaaText" rows="50"></textarea>
-													</div>
-												</div>
+											<div class="col-md-4">
+												<h5>PMK keycache latency Stats</h5>
+												<hr />
+												<ul class="list-inline" id="pmkLatencyDetails"></ul>
 											</div>
 										</div>
 									</div>
@@ -297,48 +475,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- AP BSSID Modal -->
-				<div class="modal fade modal-mini modal-primary" id="BSSIDModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="card-header">
-										<h4 class="card-title">AP Neighbour Table</h4>
-									</div>
-									<div class="card-body">
-										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
-											<div class="fresh-datatables">
-												<table id="bssid-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
-													<thead>
-														<th>AP/BSSID</th>
-														<th>ESSID</th>
-														<th>Band</th>
-														<th>Channel</th>
-														<th>SNR</th>
-														<th>Tx Power</th>
-														<th>Path Loss</th>
-														<th>Discovery</th>
-													</thead>
-													<tbody></tbody>
-												</table>
-											</div>
-										</div>
-									</div>
-									<div class="card-footer ">
-										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" onclick="downloadNeighbourTable()">
-												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
-												Download CSV
-											</a>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!--  End Modal -->
+				
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -359,10 +496,9 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#RadioStatsModal" id="RadioStatsModalLink"></a>
-						<a data-toggle="modal" data-target="#SystemStatusModal" id="SystemStatusModalLink"></a>
-						<a data-toggle="modal" data-target="#AAAModal" id="AAAModalLink"></a>
-						<a data-toggle="modal" data-target="#BSSIDModal" id="BSSIDModalLink"></a>
+						<a data-toggle="modal" data-target="#WirelessClientModal" id="WirelessClientModalLink"></a>
+						<a data-toggle="modal" data-target="#WiredClientModal" id="WiredClientModalLink"></a>
+						<a data-toggle="modal" data-target="#PMKCacheModal" id="PMKCacheModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -427,7 +563,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 			getCASVersion();
 			openIndexedDB();
 			
-			var pageName = 'AP Troubleshooting';
+			var pageName = 'Client Troubleshooting';
 			if  (localStorage.getItem('from_hydra')) {
 				document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
 			} else {
@@ -440,44 +576,49 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		    $.when(checkReachability(reachabilityPromise)).then(function () {
 				getAPIURL(); // force the Proxy status to update
 
-				$('#device-table').DataTable({
+				$('#client-table').DataTable({
 					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
+					"autoWidth": true,
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
 					responsive: true,
 					language: {
 						search: "_INPUT_",
-						searchPlaceholder: "Search APs",
+						searchPlaceholder: "Search Clients",
 					},
-					"columnDefs": [{
-			    		'targets': 1,
-			    		'searchable':false,
-			    		'orderable':false,
-			    		'className': 'dt-body-center'
-					}, { 
-						"targets": 2, 
-						"visible": false 
-					}, { 
-						type: 'title-numeric', 
-						targets: 8 
-					}],
-					'order': [[0, 'asc']],
+					columnDefs: [{ type: 'ip-address', targets: 4 }, { type: 'title-string', targets: 1}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
-
-				$('#bssid-table').DataTable({
+				
+				$('#events-table').DataTable({
 					"pagingType": "simple_numbers",
-					"autoWidth": false,
-					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					"autoWidth": true,
+					"order": [[ 0, "desc" ]],
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
 					responsive: true,
 					language: {
 						search: "_INPUT_",
-						searchPlaceholder: "Search Neighbours",
+						searchPlaceholder: "Search Events",
 					},
+					columnDefs: [{ type: 'title-numeric', targets: 1}],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
-
-
+				
+				$('#mobility-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": true,
+					"order": [[ 0, "desc" ]],
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Mobility Trail",
+					},
+					columnDefs: [{ type: 'title-numeric', targets: 1}],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+				
+				osType = [];
+				
 				$('[data-toggle="tooltip"]').tooltip();
 
 				var refreshrate = localStorage.getItem('refresh_rate');
@@ -485,8 +626,8 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					refreshrate = "30";
 				}
 				loadMonitoringData(refreshrate);
-
-				getDevices();
+				
+				getCampus(false);
 				
 				document.onkeyup = function(e) {
 					if (e.ctrlKey && e.which == 82) {
@@ -501,5 +642,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 	<script src="assets/js/main.js?v=240415"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/troubleshooting-ap.js?v=230111"></script>
+	<script src="assets/js/kms.js?v=240326"></script>
+	<script src="assets/js/locator.js?v=240212"></script>
+	<script src="assets/js/troubleshooting-clients.js?v=231027"></script>
 </html>
