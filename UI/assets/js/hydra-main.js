@@ -1,12 +1,14 @@
 /*
 Central Automation v1.6.0
-Updated: 1.30
-Copyright Aaron Scott (WiFi Downunder) 2023
+Updated: 1.37.4
+Aaron Scott (WiFi Downunder) 2024
 */
 
 var hydraMonitoringData = {};
 var authNotification;
-
+var authCounter;
+var authPromise;
+var authErrorCount;
 var goToAllowed = true;
 
 var cop_url = 'https://apigw-';
@@ -37,6 +39,9 @@ function saveGlobalSettings() {
 		saveDataToDB('monitoring_wiredClients', JSON.stringify([]));
 	}
 	logInformation('Central Automation Studio settings saved');
+	
+	// remove that update is in progress
+	localStorage.removeItem('update_in_progress');
 }
 
 function checkScaleConfig() {
@@ -167,79 +172,90 @@ function checkAuthComplete() {
 					loadIndividualAccount(centralCredentials[0].client_id, 0);
 				}
 			}
+			if (authNotification) authNotification.close();
 		}
 		authPromise.resolve();
 	}
 }
 
 function tokenRefreshForAccount(clientID) {
-	var settings = {
-		url: getAPIURL() + '/auth/refresh',
-		method: 'POST',
-		timeout: 0,
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify({
-			client_id: clientID,
-			client_secret: getClientSecretforClientID(clientID),
-			access_token: getAccessTokenforClientID(clientID),
-			refresh_token: getRefreshTokenforClientID(clientID),
-			base_url: getbaseURLforClientID(clientID),
-		}),
-	};
-
-	return $.ajax(settings)
-		.done(function(response, textStatus, jqXHR) {
-			//console.log(response);
-			if (response.hasOwnProperty('status')) {
-				if (response.status === '503') {
-					logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
-					return;
+	if (getRefreshTokenforClientID(clientID) !== '') {
+		var settings = {
+			url: getAPIURL() + '/auth/refresh',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				client_id: clientID,
+				client_secret: getClientSecretforClientID(clientID),
+				access_token: getAccessTokenforClientID(clientID),
+				refresh_token: getRefreshTokenforClientID(clientID),
+				base_url: getbaseURLforClientID(clientID),
+			}),
+		};
+	
+		return $.ajax(settings)
+			.done(function(response, textStatus, jqXHR) {
+				//console.log(response);
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
+						return;
+					}
 				}
-			}
-			if (response.hasOwnProperty('error')) {
-				logError(response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"');
-				showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
+				if (response.hasOwnProperty('error')) {
+					logError(response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"');
+					showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
+					authErrorCount++;
+				} else {
+					var cluster = getAccountforClientID(clientID);
+					cluster['refresh_token'] = response.refresh_token;
+					cluster['access_token'] = response.access_token;
+					updateAccountDetails(cluster);
+	
+					var path = window.location.pathname;
+					var page = path.split('/').pop();
+					if (page.includes('settings')) {
+						// refresh settings page table
+						loadAccountDetails();
+					}
+				}
+				authCounter++;
+				checkAuthComplete();
+			})
+			.fail(function(XMLHttpRequest, textStatus, errorThrown) {
+				console.log("error")
+				if (XMLHttpRequest.readyState == 4) {
+					// HTTP error (can be checked by XMLHttpRequest.status and XMLHttpRequest.statusText)
+					showNotification('ca-globe', XMLHttpRequest.statusText, 'bottom', 'center', 'danger');
+				} else if (XMLHttpRequest.readyState == 0) {
+					// Network error (i.e. connection refused, access denied due to CORS, etc.)
+					showNotification('ca-globe', 'Can not connect to API server', 'bottom', 'center', 'danger');
+				} else {
+					// something weird is happening
+				}
 				authErrorCount++;
-			} else {
-				var cluster = getAccountforClientID(clientID);
-				cluster['refresh_token'] = response.refresh_token;
-				cluster['access_token'] = response.access_token;
-				updateAccountDetails(cluster);
-
-				var path = window.location.pathname;
-				var page = path.split('/').pop();
-				if (page.includes('settings')) {
-					// refresh settings page table
-					loadAccountDetails();
-				}
-			}
-			authCounter++;
-			checkAuthComplete();
-		})
-		.fail(function(XMLHttpRequest, textStatus, errorThrown) {
-			//console.log("error")
-			if (XMLHttpRequest.readyState == 4) {
-				// HTTP error (can be checked by XMLHttpRequest.status and XMLHttpRequest.statusText)
-				showNotification('ca-globe', XMLHttpRequest.statusText, 'bottom', 'center', 'danger');
-			} else if (XMLHttpRequest.readyState == 0) {
-				// Network error (i.e. connection refused, access denied due to CORS, etc.)
-				showNotification('ca-globe', 'Can not connect to API server', 'bottom', 'center', 'danger');
-			} else {
-				// something weird is happening
-			}
-			authErrorCount++;
-			authCounter++;
-			checkAuthComplete();
-		});
+				authCounter++;
+				checkAuthComplete();
+			});
+	} else {
+		// Missing refresh token
+		console.log('Missing refresh token');
+		authErrorCount++;
+		authCounter++;
+		checkAuthComplete();
+	}
 }
+
 
 /*  ----------------------------------------------------------------------------------
 		Monitoring functions
 	---------------------------------------------------------------------------------- */
 
 function getDashboardData() {
+	authPromise = new $.Deferred();
 	// Try and refresh the token
 	showNotification('ca-api', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'primary');
 	goToAllowed = false;
@@ -249,83 +265,92 @@ function getDashboardData() {
 		centralCredentials = JSON.parse(account_details);
 		var hydraAuthSuccess = 0;
 		var hydraAuthFailed = 0;
+		authCounter = 0;
 		authNotification = showLongNotification('ca-padlock', 'Authenticating with Central on all Accounts...', 'bottom', 'center', 'info');
 		$.each(centralCredentials, function() {
-			// Try and refresh the token for each clientID
-			var clientID = this.client_id;
-			var account = this;
-			var saveBaseURL = this.base_url;
-			if (saveBaseURL === getAPIGateway('Central On-Prem')) {
-				saveBaseURL = cop_url + this.cop_address;
+			if (this.refresh_token && this.refresh_token !== '') {
+				// Try and refresh the token for each clientID
+				var clientID = this.client_id;
+				var account = this;
+				var saveBaseURL = this.base_url;
+				if (saveBaseURL === getAPIGateway('Central On-Prem')) {
+					saveBaseURL = cop_url + this.cop_address;
+				}
+				var settings = {
+					url: getAPIURL() + '/auth/refresh',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						client_id: this.client_id,
+						client_secret: this.client_secret,
+						access_token: this.access_token,
+						refresh_token: this.refresh_token,
+						base_url: saveBaseURL,
+					}),
+				};
+	
+				$.ajax(settings).done(function(response, textStatus, jqXHR) {
+					if (response.hasOwnProperty('status')) {
+						if (response.status === '503') {
+							logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
+							return;
+						}
+					}
+					if (response.hasOwnProperty('error')) {
+						showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
+						
+						hydraAuthFailed++;
+						if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
+							goToAllowed = true;
+							if (authNotification) {
+								if (hydraAuthFailed == 0) authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+								setTimeout(authNotification.close, 1000);
+							}
+						}
+					} else {
+						account['refresh_token'] = response.refresh_token;
+						account['access_token'] = response.access_token;
+						updateAccountDetails(account);
+						
+						// Counter used to try and prevent jumping another page when auth refresh is in process
+						hydraAuthSuccess++;
+						if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
+							goToAllowed = true;
+							if (authNotification) {
+								authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
+								setTimeout(authNotification.close, 1000);
+							}
+						}
+	
+						var apKey = 'aps';
+						var switchKey = 'switches';
+						var gatewayKey = 'gateways';
+						var siteKey = 'sites';
+						var dataFramework = { [apKey]: [], [switchKey]: [], [gatewayKey]: [], [siteKey]: [] };
+	
+						hydraMonitoringData[clientID] = dataFramework;
+						showNotification('ca-cloud-data-download', 'Updating data for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'info');
+	
+						getWirelessClientOverviewForAccount(clientID);
+						getWiredClientOverviewForAccount(clientID);
+						getAPOverviewForAccount(clientID);
+						getSwitchOverviewForAccount(clientID);
+						getGatewayOverviewForAccount(clientID);
+						getSiteDataForAccount(clientID, 0);
+	
+						localStorage.setItem('monitoring_update', +new Date());
+					}
+					authCounter++;
+					checkAuthComplete();
+				});
+			} else {
+				showNotification('ca-padlock', 'Missing Refresh Token for "'+this.account_name + '"', 'bottom', 'center', 'danger');
+				authCounter++;
+				checkAuthComplete();
 			}
-			var settings = {
-				url: getAPIURL() + '/auth/refresh',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					client_id: this.client_id,
-					client_secret: this.client_secret,
-					access_token: this.access_token,
-					refresh_token: this.refresh_token,
-					base_url: saveBaseURL,
-				}),
-			};
-
-			$.ajax(settings).done(function(response, textStatus, jqXHR) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
-						return;
-					}
-				}
-				if (response.hasOwnProperty('error')) {
-					showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
-					
-					hydraAuthFailed++;
-					if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
-						goToAllowed = true;
-						if (authNotification) {
-							if (hydraAuthFailed == 0) authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
-							setTimeout(authNotification.close, 1000);
-						}
-					}
-				} else {
-					account['refresh_token'] = response.refresh_token;
-					account['access_token'] = response.access_token;
-					updateAccountDetails(account);
-					
-					// Counter used to try and prevent jumping another page when auth refresh is in process
-					hydraAuthSuccess++;
-					if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
-						goToAllowed = true;
-						if (authNotification) {
-							authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
-							setTimeout(authNotification.close, 1000);
-						}
-					}
-
-					var apKey = 'aps';
-					var switchKey = 'switches';
-					var gatewayKey = 'gateways';
-					var siteKey = 'sites';
-					var dataFramework = { [apKey]: [], [switchKey]: [], [gatewayKey]: [], [siteKey]: [] };
-
-					hydraMonitoringData[clientID] = dataFramework;
-					showNotification('ca-cloud-data-download', 'Updating data for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'info');
-
-					getWirelessClientOverviewForAccount(clientID);
-					getWiredClientOverviewForAccount(clientID);
-					getAPOverviewForAccount(clientID);
-					getSwitchOverviewForAccount(clientID);
-					getGatewayOverviewForAccount(clientID);
-					getSiteDataForAccount(clientID, 0);
-
-					localStorage.setItem('monitoring_update', +new Date());
-				}
-			});
 		});
 	}
 }
@@ -341,24 +366,24 @@ function loadHydraTable() {
 		// Process Clients
 		var clientString = '';
 		if (hydraMonitoringData[k]['wirelessClientsUp']) {
-			clientString += '<i class="fa-solid fa-laptop fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wirelessClientsUp'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw text-success"></i><span class="text-success me-2"><strong> ' + hydraMonitoringData[k]['wirelessClientsUp'] + ' </strong></span>';
 		} else {
-			clientString += '<i class="fa-solid fa-laptop fa-fw text-success"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw"></i><span class="me-2"> 0 </span>';
 		}
 		if (hydraMonitoringData[k]['wirelessClientsDown']) {
-			clientString += '<i class="fa-solid fa-laptop fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wirelessClientsDown'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + hydraMonitoringData[k]['wirelessClientsDown'] + ' </strong></span>';
 		} else {
-			clientString += '<i class="fa-solid fa-laptop fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-laptop fa-fw"></i><span class="me-2"> 0 </span>';
 		}
 		if (hydraMonitoringData[k]['wiredClientsUp']) {
-			clientString += '<i class="fa-solid fa-computer fa-fw text-success"><strong> ' + hydraMonitoringData[k]['wiredClientsUp'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw text-success"></i><span class="text-success me-2"><strong> ' + hydraMonitoringData[k]['wiredClientsUp'] + ' </strong></span>';
 		} else {
-			clientString += '<i class="fa-solid fa-computer fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw"></i><span class="me-2"> 0 </span>';
 		}
 		if (hydraMonitoringData[k]['wiredClientsDown']) {
-			clientString += '<i class="fa-solid fa-computer fa-fw text-danger"><strong> ' + hydraMonitoringData[k]['wiredClientsDown'] + ' </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + hydraMonitoringData[k]['wiredClientsDown'] + ' </strong></span>';
 		} else {
-			clientString += '<i class="fa-solid fa-computer fa-fw"><strong> 0 </strong></i>';
+			clientString += '<i class="fa-solid fa-computer fa-fw"></i><span class="me-2"> 0 </span>';
 		}
 
 		// Process APs
@@ -368,10 +393,10 @@ function loadHydraTable() {
 		if (hydraMonitoringData[k]['apsDown']) apsDown = hydraMonitoringData[k]['apsDown'];
 
 		var apString = '';
-		if (apsUp > 0) apString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + apsUp + ' </strong></i>';
-		else apString += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + apsUp + ' </i>';
-		if (apsDown > 0) apString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + apsDown + ' </strong></i>';
-		else apString += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + apsDown + ' </i>';
+		if (apsUp > 0) apString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"></i><span class="text-success me-2"><strong> ' + apsUp + ' </strong></ispan>';
+		else apString += '<i class="fa-solid  fa-arrow-up fa-fw"></i><span class="me-2"> ' + apsUp + ' </span>';
+		if (apsDown > 0) apString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + apsDown + ' </strong></span>';
+		else apString += '<i class="fa-solid  fa-arrow-down fa-fw"></i><span class="me-2"> ' + apsDown + ' </span>';
 
 		// Process Switches
 		var switchesUp = 0;
@@ -380,10 +405,10 @@ function loadHydraTable() {
 		if (hydraMonitoringData[k]['switchesDown']) switchesDown = hydraMonitoringData[k]['switchesDown'];
 
 		var switchesString = '';
-		if (switchesUp > 0) switchesString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + switchesUp + ' </strong></i>';
-		else switchesString += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + switchesUp + ' </i>';
-		if (switchesDown > 0) switchesString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + switchesDown + ' </strong></i>';
-		else switchesString += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + switchesDown + ' </i>';
+		if (switchesUp > 0) switchesString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"></i><span class="text-success me-2"><strong> ' + switchesUp + ' </strong></span>';
+		else switchesString += '<i class="fa-solid  fa-arrow-up fa-fw"></i><span class="me-2"> ' + switchesUp + ' </span>';
+		if (switchesDown > 0) switchesString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + switchesDown + ' </strong></span>';
+		else switchesString += '<i class="fa-solid  fa-arrow-down fa-fw"></i><span class="me-2"> ' + switchesDown + ' </span>';
 
 		// Process Gateways
 		var gatewaysUp = 0;
@@ -392,10 +417,10 @@ function loadHydraTable() {
 		if (hydraMonitoringData[k]['gatewaysDown']) gatewaysDown = hydraMonitoringData[k]['gatewaysDown'];
 
 		var gatewayString = '';
-		if (gatewaysUp > 0) gatewayString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"><strong> ' + gatewaysUp + ' </strong></i>';
-		else gatewayString += '<i class="fa-solid  fa-arrow-up fa-fw"> ' + gatewaysUp + ' </i>';
-		if (gatewaysDown > 0) gatewayString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"><strong> ' + gatewaysDown + ' </strong></i>';
-		else gatewayString += '<i class="fa-solid  fa-arrow-down fa-fw"> ' + gatewaysDown + ' </i>';
+		if (gatewaysUp > 0) gatewayString += '<i class="fa-solid  fa-arrow-up fa-fw text-success"></i><span class="text-success me-2"><strong> ' + gatewaysUp + ' </strong></span>';
+		else gatewayString += '<i class="fa-solid  fa-arrow-up fa-fw"></i><span class="me-2"> ' + gatewaysUp + ' </span>';
+		if (gatewaysDown > 0) gatewayString += '<i class="fa-solid  fa-arrow-down fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + gatewaysDown + ' </strong></span>';
+		else gatewayString += '<i class="fa-solid  fa-arrow-down fa-fw"></i><span class="me-2"> ' + gatewaysDown + ' </span>';
 
 		// Process sites
 		var siteDanger = 0;
@@ -529,10 +554,10 @@ function loadHydraTable() {
 			}
 		});
 		var siteString = '';
-		if (siteOK > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-success"><strong> ' + siteOK + ' </strong></i>';
-		if (siteDanger > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-danger"><strong> ' + siteDanger + ' </strong></i>';
-		if (siteWarning > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-warning"><strong> ' + siteWarning + ' </strong></i>';
-		if (siteMinor > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-minor"><strong> ' + siteMinor + ' </strong></i>';
+		if (siteOK > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-success"></i><span class="text-success"><strong> ' + siteOK + ' </strong></span>';
+		if (siteDanger > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-danger"></i><span class="text-danger"><strong> ' + siteDanger + ' </strong></span>';
+		if (siteWarning > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-warning"></i><span class="text-warning"><strong> ' + siteWarning + ' </strong></span>';
+		if (siteMinor > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-minor"></i><span class="text-minor"><strong> ' + siteMinor + ' </strong></span>';
 
 		var checkBtn = '<button class="btn btn-round btn-sm btn-outline btn-info" onclick="loadIndividualAccount(\'' + k + '\',1)">Go To Account <i class="fa-solid  fa-arrow-right text-default"><strong></button>';
 

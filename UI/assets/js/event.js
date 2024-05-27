@@ -35,6 +35,8 @@ var newDownGateways = {};
 var upGateways = {};
 var newUpGateways = {};
 
+var graphHeightMultiplier = 1;
+
 /*---------------------------------------------------------------------
 	Dashboard Functions
 ---------------------------------------------------------------------*/
@@ -677,7 +679,7 @@ function processAPs() {
 
 					eventTime = new Date(updateTimestamp);
 
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'AP <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is now down', eventTime.toLocaleString()]);
+					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'AP <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is down', eventTime.toLocaleString()]);
 
 					$('#infra-table')
 						.DataTable()
@@ -739,8 +741,8 @@ function processSwitches() {
 					var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
 
 					eventTime = new Date(updateTimestamp);
-
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'Switch <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is now down', eventTime.toLocaleString()]);
+					
+					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'Switch <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is down', eventTime.toLocaleString()]);
 
 					$('#infra-table')
 						.DataTable()
@@ -982,7 +984,7 @@ function loadClientCountForNetwork(network) {
 		lineSmooth: false,
 		showPoint: false,
 		showArea: false,
-		height: '280px',
+		height: 280*graphHeightMultiplier+ 'px',
 		axisY: {
 			offset: 40,
 			onlyInteger: true,
@@ -1229,7 +1231,7 @@ function loadBandwidthForNetwork(network) {
 		lineSmooth: false,
 		showPoint: false,
 		showArea: false,
-		height: '280px',
+		height: 280*graphHeightMultiplier+ 'px',
 		axisY: {
 			offset: 40,
 			onlyInteger: true,
@@ -1286,6 +1288,7 @@ function saveDashboardSettings() {
 	localStorage.setItem('dashboard_infra', document.getElementById('dashboard_infra').checked);
 	localStorage.setItem('dashboard_top', document.getElementById('dashboard_top').checked);
 	localStorage.setItem('dashboard_condensed', document.getElementById('dashboard_condensed').checked);
+	localStorage.setItem('dashboard_clients', document.getElementById('dashboard_clients').checked);
 	updateVisibleCards();
 
 	getDashboardData();
@@ -1299,6 +1302,8 @@ function updateVisibleCards() {
 	}
 	
 	if (document.getElementById('dashboard_condensed').checked) {
+		graphHeightMultiplier = 0.75;
+		document.getElementById('client-card').setAttribute("style","height:400px");
 		document.getElementById('top-aps-card').classList.remove('col-md-6');
 		document.getElementById('top-aps-card').classList.add('col-md-4');
 		document.getElementById('top-clients-card').classList.remove('col-md-6');
@@ -1306,6 +1311,8 @@ function updateVisibleCards() {
 		document.getElementById('top-apps-card').classList.remove('col-md-6');
 		document.getElementById('top-apps-card').classList.add('col-md-4');	
 	} else {
+		graphHeightMultiplier = 1
+		document.getElementById('client-card').setAttribute("style","height:500px");
 		document.getElementById('top-aps-card').classList.remove('col-md-4');
 		document.getElementById('top-aps-card').classList.add('col-md-6');
 		document.getElementById('top-clients-card').classList.remove('col-md-4');
@@ -1317,11 +1324,15 @@ function updateVisibleCards() {
 	if (document.getElementById('dashboard_wlan').checked) {
 		dashboardWLAN = true;
 		document.getElementById('wlan-md').hidden = false;
-		document.getElementById('mix-card').hidden = false;
-		document.getElementById('band-card').hidden = false;
 	} else {
 		dashboardWLAN = false;
 		document.getElementById('wlan-md').hidden = true;
+	}
+	
+	if (document.getElementById('dashboard_clients').checked) {
+		document.getElementById('mix-card').hidden = false;
+		document.getElementById('band-card').hidden = false;
+	} else {
 		document.getElementById('mix-card').hidden = true;
 		document.getElementById('band-card').hidden = true;
 	}

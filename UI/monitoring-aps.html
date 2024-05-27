@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.16
 Updated: 1.31.1
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -548,6 +548,61 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 									<div class="card-footer">
 										<div class="legend"><ul id="firmware-footer" class="nobull"></ul></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row"><h4 class="section-header">Bandwidth Statistics</h4></div>
+						<div class="row" id="bandwidth">
+							<div class="col-md-12">
+								<div class="card">
+									<div class='row'>
+									<div class="col-md-4">
+										<div class="card-header ">
+											<h4 class="card-title">APs</h4>
+											<select id="timescalePicker" class="selectpicker" data-title="Select a timescale..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getTopAPs()">
+												<!--<option value="5">5 Minutes</option>
+												<option value="10">10 Minutes</option>
+												<option value="30">30 Minutes</option>
+												<option value="60">1 Hour</option>-->
+												<option value="180">3 Hours</option>
+												<option value="1440" selected>1 Day</option>
+												<option value="4320">3 Days</option>
+												<option value="10080">7 Days</option>
+												<!--<option value="custom">Custom Date Range</option>-->
+											</select>
+										</div>
+										<div class="card-body ">
+											<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
+												<div class="fresh-datatables">
+													<table id="bandwidth-table" class="table table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+														<thead>
+															<th>AP</th>
+															<th>Bandwidth</th>
+															<th></th>
+														</thead>
+														<tbody></tbody>
+													</table>
+												</div>
+											</div>
+										</div>
+										<div class="card-footer ">
+											<div class="legend"><i class="fa-solid fa-circle text-info"></i> Transmit <i class="fa-solid fa-circle text-danger"></i> Receive </div>
+										</div>
+										
+									</div>
+									<div class="col-md-8 leftborder" id='bandwidthChart'>
+										<div class="card-header ">
+											<h4 class="card-title">Bandwidth Graph</h4>
+											<p class="card-category" id='bandwidthLabel'>Select an AP from the table by clicking on the throughput bar</p>
+										</div>
+										<div class="card-body ">
+											<div id="bandwidth-chart" class="ct-chart"></div>
+										</div>
+										<div class="card-footer ">
+											<div class="legend"><i class="fa-solid fa-circle text-info"></i> Transmit <i class="fa-solid fa-circle text-danger"></i> Receive </div>
+										</div>
+									</div>
 									</div>
 								</div>
 							</div>
@@ -1506,6 +1561,21 @@ Aaron Scott (WiFi Downunder) 2021-2023
 				columnDefs: [{ "targets": [0,3], "visible": false }],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
+			
+			$('#bandwidth-table').DataTable({
+				"autoWidth": true,
+				"bLengthChange": false,
+				"bInfo": false,
+				"bSort": false,
+				"bPaginate": false,
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				columnDefs: [{ type: 'title-numeric', targets: 1}],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
 
 
 			document.getElementById('searchForm').addEventListener('submit', function(e) {
@@ -1549,9 +1619,9 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240415"></script>
+	<script src="assets/js/main.js?v=240525"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
 	<script src="assets/js/troubleshooting-ap.js"></script>
-	<script src="assets/js/accesspoints.js?v=231102"></script>
+	<script src="assets/js/accesspoints.js?v=240502"></script>
 </html>

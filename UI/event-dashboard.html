@@ -1,6 +1,6 @@
 <!--
 Central Automation v1.x
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2023-2024
 -->
 
 <!-- 
@@ -20,7 +20,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.x
 Updated: 1.28
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2023-2024
 -->
 
 <!DOCTYPE html>
@@ -40,7 +40,7 @@ Aaron Scott (WiFi Downunder) 2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -282,12 +282,12 @@ Aaron Scott (WiFi Downunder) 2023
 									<div class="row">
 										<div class="col-md-6">
 											<div class="card-body ">
-												<div id="client-chart" class="ct-chart"></div>
+												<div id="client-chart" class="ct-chart-tooltip"></div>
 											</div>
 										</div>
 										<div class="col-md-6">
 											<div class="card-body ">
-												<div id="bandwidth-chart" class="ct-chart"></div>
+												<div id="bandwidth-chart" class="ct-chart-tooltip"></div>
 											</div>
 										</div>
 									</div>
@@ -318,7 +318,7 @@ Aaron Scott (WiFi Downunder) 2023
 								</div>
 							</div>
 							<div class="col-md-6" id="top-aps-card">
-								<div class="card" style="height:450px;">
+								<div class="card" style="height:460px;">
 									<div class="card-header ">
 										<h4 class="card-title">Top APs</h4>
 										<p class="card-category">Top 5 AP by Traffic (in GB)</p>
@@ -332,7 +332,7 @@ Aaron Scott (WiFi Downunder) 2023
 								</div>
 							</div>
 							<div class="col-md-6" id="top-clients-card">
-								<div class="card" style="height:450px;">
+								<div class="card" style="height:460px;">
 									<div class="card-header ">
 										<h4 class="card-title">Top Clients</h4>
 										<p class="card-category">Top 5 Clients Traffic (in GB)</p>
@@ -346,7 +346,7 @@ Aaron Scott (WiFi Downunder) 2023
 								</div>
 							</div>
 							<div class="col-md-6" id="top-apps-card">
-								<div class="card" style="height:450px;">
+								<div class="card" style="height:460px;">
 									<div class="card-header ">
 										<h4 class="card-title">Top Applications</h4>
 										<p class="card-category">Top 5 Apps (in GB)</p>
@@ -360,30 +360,30 @@ Aaron Scott (WiFi Downunder) 2023
 								</div>
 							</div>
 							<div class="col-md-3" id="mix-card">
-								<div class="card" style="height:450px;">
+								<div class="card" style="height:460px;">
 									<div class="card-header ">
 										<h4 class="card-title">Wi-Fi Protocol</h4>
 										<p class="card-category">Breakdown of 802.11 support</p>
 									</div>
-									<div class="card-body" style="height:280px;">
-										<div id="chart11" class="ct-chart ct-minor-sixth"></div>
+									<div class="card-body" style="height:280px">
+										<div id="chart11" class="ct-chart ct-perfect-fifth" style="height:280px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Wi-Fi 6E <i class="fa-solid fa-circle text-danger"></i> Wi-Fi 6 <i class="fa-solid fa-circle text-warning"></i> Wi-Fi 5 <i class="fa-solid fa-circle text-purple"></i> Wi-Fi 4 <i class="fa-solid fa-circle text-success"></i> Wi-Fi 4 </div>
+										<div class="legend"><a class="navbar-brand" onclick="displaySelectedClients11('11be')"><i class="fa-solid fa-circle text-info"></i> Wi-Fi 7</a> <a class="navbar-brand" onclick="displaySelectedClients11('11ax/6E')"><i class="fa-solid fa-circle text-danger"></i> Wi-Fi 6E</a> <a class="navbar-brand" onclick="displaySelectedClients11('11ax')"><i class="fa-solid fa-circle text-warning"></i> Wi-Fi 6</a> <br /><a class="navbar-brand" onclick="displaySelectedClients11('11ac')"><i class="fa-solid fa-circle text-purple"></i> Wi-Fi 5</a> <a class="navbar-brand" onclick="displaySelectedClients11('11an')"><i class="fa-solid fa-circle text-success"></i> Wi-Fi 4 (5GHz)</a> <a class="navbar-brand" onclick="displaySelectedClients11('11gn')"><i class="fa-solid fa-circle text-primary"></i> Wi-Fi 4 (2.4GHz)</a></div>
 									</div>
 								</div>
 							</div>
 							<div class="col-md-3" id="band-card">
-								<div class="card" style="height:450px;">
+								<div class="card" style="height:460px;">
 									<div class="card-header ">
 										<h4 class="card-title">Band Band</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz</p>
 									</div>
-									<div class="card-body" style="height:280px;">
-										<div id="chartBand" class="ct-chart ct-minor-sixth"></div>
+									<div class="card-body" style="height:280px">
+										<div id="chartBand" class="ct-chart ct-perfect-fifth" style="height:280px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> 6Ghz <i class="fa-solid fa-circle text-danger"></i> 5GHz <i class="fa-solid fa-circle text-warning"></i> 2.4GHz</div>
+										<div class="legend"><a onclick="displaySelectedClientsBand('6GHz')"><i class="fa-solid fa-circle text-info"></i> 6Ghz</a> <a onclick="displaySelectedClientsBand('5GHz')"><i class="fa-solid fa-circle text-danger"></i> 5GHz</a> <a onclick="displaySelectedClientsBand('2.4GHz')"><i class="fa-solid fa-circle text-warning"></i> 2.4GHz</a></div>
 									</div>
 								</div>
 							</div>
@@ -800,6 +800,14 @@ Aaron Scott (WiFi Downunder) 2023
 															</label>
 														</div>
 													</div>
+													<div class="col-md-4">	
+														<div class="form-check">
+															<label class="form-check-label-options">
+																<input class="form-check-input" type="checkbox" value="" id="dashboard_clients" checked="true" />
+																<span class="form-check-sign"></span>Client Monitoring
+															</label>
+														</div>
+													</div>
 													
 													<!--<div class="col-md-4">	
 														<div class="form-check">
@@ -1212,7 +1220,7 @@ Aaron Scott (WiFi Downunder) 2023
 				setTimeout(getNonInfrastructureData, 7000, refreshrate);
 				var loadIntervalID = setInterval(getNonInfrastructureData, parseInt(refreshrate)*60000);
 	
-				/*document.addEventListener("visibilitychange", function handleVisibilityChange() {
+				document.addEventListener("visibilitychange", function handleVisibilityChange() {
 			  	if (!document.hidden) {
 					console.log('Restarting background updates');
 					var reachabilityPromise = new $.Deferred();
@@ -1223,12 +1231,12 @@ Aaron Scott (WiFi Downunder) 2023
 					console.log('Stopping background updates');
 					clearInterval(loadIntervalID);
 			  	}
-				}, false);*/
+				}, false);
 			});
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240415"></script>
+	<script src="assets/js/main.js?v=240525"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
 	<script src="assets/js/clients.js?v=230919"></script>

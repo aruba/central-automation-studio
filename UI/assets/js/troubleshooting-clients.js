@@ -1,20 +1,26 @@
 /*
-Central Automation v1.33
-Updated: 
-© Aaron Scott (WiFi Downunder) 2023
+Central Automation v1.37
+Updated: 1.37.1
+© Aaron Scott (WiFi Downunder) 2024
 */
 
 var osType = [];
 
 var clientNotification;
 var eventsNotification;
+var mobilityNotification;
+var authNotification;
 var disconnectNotification;
 var disconnectingClient;
+var troubleshootingNotification;
+var cmNotification;
 
 var currentClientMac;
+var connectedAP;
 var needAllLabels = false;
 var needClientLabel = false;
 var associateAP;
+var ipToUsername = {};
 
 /*  ----------------------------------
 		Global functions
@@ -75,7 +81,7 @@ function loadClientsUI(client) {
 
 	// Add row to table
 	var table = $('#client-table').DataTable();
-	table.row.add([client_mac === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', clientIcon, status, client_mac, ip_address, os_type, associatedDevice_name, site, vlan, tshootBtns]);
+	table.row.add([client_mac === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', clientIcon, status, client_mac, ip_address, os_type, client['user_role'], associatedDevice_name, site, vlan, tshootBtns]);
 
 	$('[data-toggle="tooltip"]').tooltip();
 }
@@ -128,6 +134,7 @@ function refreshClientDataTable() {
 
 function loadCurrentPageClient() {
 	populateOSSelector();
+	generateIPtoUsernameMapping();
 }
 
 function populateOSSelector() {
@@ -181,6 +188,10 @@ function hideTroubleshooting() {
 	$(document.getElementById('eventsBtn')).removeClass('btn-fill');
 	$(document.getElementById('eventsBtn')).addClass('btn-outline');
 	document.getElementById('eventsCard').hidden = true;
+	
+	$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+	$(document.getElementById('datapathBtn')).addClass('btn-outline');
+	document.getElementById('datapathCard').hidden = true;
 
 	// Clear old table data
 	$('#events-table').DataTable().rows().remove();
@@ -197,8 +208,16 @@ function showWirelessClient(currentClient) {
 	
 	vrfClients = [];
 	selectedClient = currentClient;
+	
+	client_name_url = encodeURI(currentClient['name']);
+	var apiURL = localStorage.getItem('base_url');
+	var centralBaseURL = centralURLs[apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url); //manually build the COP address
+	var clientURL = centralBaseURL + '/frontend/#/CLIENTDETAIL/' + currentClient['macaddr'] + '?ccma=' + currentClient['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
+	var nameValue = '<a href="' + clientURL + '" target="_blank"><strong>' + currentClient['name'] + '</strong></a>'
+	
 	$('#wirelessInfo').empty();
-	$('#wirelessInfo').append('<li>Name: <strong>' + currentClient['name'] + '</strong></li>');
+	$('#wirelessInfo').append('<li>Name: ' + nameValue + '</li>');
 	var status = '<i class="fa-solid fa-circle text-neutral"></i>';
 	if (!currentClient['health'] && currentClient['failure_stage'] !== '' && currentClient['failure_stage'] !== 'NA') {
 		status = '<span data-toggle="tooltip" data-placement="right" title="Failed To Connect: ' + currentClient['failure_reason'] + ' at ' + currentClient['failure_stage'] + '"><i class="fa-solid fa-circle text-danger"></i></span>';
@@ -212,7 +231,7 @@ function showWirelessClient(currentClient) {
 		status = '<span data-toggle="tooltip" data-placement="right" title="Health: ' + currentClient['health'] + '"><i class="fa-solid fa-circle text-success"></i></span>';
 	}
 	
-	var connectedAP = findDeviceInMonitoring(currentClient['associated_device']);
+	connectedAP = findDeviceInMonitoring(currentClient['associated_device']);
 	var connectedRadio;
 	$.each(connectedAP.radios, function() {
 		var currentChannel = this['channel'].replace(/\D/g,'');
@@ -224,8 +243,25 @@ function showWirelessClient(currentClient) {
 		uptimeString = uptime.humanize();
 	}
 	
-	/*
-	console.log(currentClient)
+	// AP Link to Central
+	var apName = encodeURI(connectedAP['name']);
+	var centralURLAP = centralBaseURL + '/frontend/#/APDETAILV2/' + connectedAP['serial'] + '?casn=' + connectedAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+	var centralURLAPLink = '<a href="' + centralURLAP + '" target="_blank"><strong>' + connectedAP['name'] + '</strong></a>';
+	
+	// Site Link to Central
+	var siteName = encodeURI(currentClient['site']);
+	var siteId = getIDforSite(currentClient['site'])
+	var centralURLSite = centralBaseURL + '/frontend/#/SITEHEALTH?id=' + siteId + '&name=' + siteName + '&cid=2&cn=Site&l=label&nc=site';
+	var centralURLSiteLink = '<a href="' + centralURLSite + '" target="_blank"><strong>' + currentClient['site'] + '</strong></a>';
+	
+	// Group Link to Central
+	var groupName = encodeURI(connectedAP['group_name']);
+	var groupId = connectedAP['group_id'];
+	var centralURLGroup = centralBaseURL + '/frontend/#/DASHBOARD?cgid='+groupId+'&nc=group';
+	var centralURLGroupLink = '<a href="' + centralURLGroup + '" target="_blank"><strong>' + connectedAP['group_name'] + '</strong></a>';
+	
+	
+	/*console.log(currentClient)
 	console.log(connectedAP)
 	console.log(connectedRadio)
 	*/
@@ -236,11 +272,13 @@ function showWirelessClient(currentClient) {
 	$('#wirelessInfo').append('<li>IP Address: <strong>' + currentClient['ip_address'] + '</strong></li>');
 	$('#wirelessInfo').append('<li>VLAN: <strong>' + currentClient['vlan'] + '</strong></li>');
 	$('#wirelessInfo').append('<li>User Role: <strong>' + currentClient['user_role'] + '</strong></li>');
-	$('#wirelessInfo').append('<li>Site: <strong>' + currentClient['site'] + '</strong></li>');
+	$('#wirelessInfo').append('<li>Connected Since: <strong>' + moment(currentClient['last_connection_time']).toString()  + '</strong></li>');
+	$('#wirelessInfo').append('<li>Site: ' + centralURLSiteLink + '</li>');
+	
 	
 	
 	$('#wirelessConnection').empty();
-	$('#wirelessConnection').append('<li>Associated To: <strong>' + currentClient['associated_device_name'] + '</strong></li>');
+	$('#wirelessConnection').append('<li>Associated To: ' + centralURLAPLink + '</li>');
 	if (currentClient['failure_stage'] !== '') $('#wirelessConnection').append('<li>Failure Reason: '+currentClient['failure_stage']+'</li>');
 	$('#wirelessConnection').append('<li>SSID: <strong>'+currentClient['network']+'</li>');
 	$('#wirelessConnection').append('<li>Auth Method: <strong>'+currentClient['authentication_type']+'</li>');
@@ -250,11 +288,14 @@ function showWirelessClient(currentClient) {
 	$('#wirelessConnection').append('<li>RSSI: <strong>' + currentClient['signal_db'] + 'dB</strong></li>');
 	$('#wirelessConnection').append('<li>SNR: <strong>' + currentClient['snr'] + '</strong></li>');
 	$('#wirelessConnection').append('<li>Speed: <strong>' + currentClient['speed'] + 'Mbps</strong></li>');
-	$('#wirelessConnection').append('<li>Capabilities: <strong>' + currentClient['connection'] ? currentClient['connection']:'-' + '</strong></li>');
+	var capabilities = currentClient['connection'] ? currentClient['connection']:'-';
+	$('#wirelessConnection').append('<li>Capabilities: <strong>' + capabilities + '</strong></li>');
 	
 	$('#wirelessAP').empty();
 	$('#wirelessAP').append('<li>Uptime: <strong>' + uptimeString + '</strong></li>');
-	$('#wirelessAP').append('<li>Config Group: <strong>' + connectedAP['group_name'] + '</strong></li>');
+	$('#wirelessAP').append('<li>AP Model: <strong>' + connectedAP['model'] + '</strong></li>');
+	$('#wirelessAP').append('<li>Firmware: <strong>' + connectedAP['firmware_version'] + '</strong></li>');
+	$('#wirelessAP').append('<li>Config Group: ' + centralURLGroupLink + '</li>');
 	$('#wirelessAP').append('<li>Total Clients: <strong>' + connectedAP['client_count'] + '</strong></li>');
 	$('#wirelessAP').append('<li>CPU Utilization: <strong>' + connectedAP['cpu_utilization'] + '%</strong></li>');
 	var memoryUsage = (((connectedAP['mem_total'] - connectedAP['mem_free']) / connectedAP['mem_total']) * 100).toFixed(0).toString();
@@ -412,8 +453,40 @@ function checkDisconnectStatus(taskID) {
 	Wired Troubleshooting functions
 ---------------------------------- */
 function showWiredClient(currentClient) {
+	
+	connectedSwitch = findDeviceInMonitoring(currentClient['associated_device']);
+	var uptimeString = '-';
+	if (connectedSwitch['uptime'] > 0) {
+		var uptime = moment.duration(connectedSwitch['uptime'] * 1000);
+		uptimeString = uptime.humanize();
+	}
+	
+	client_name_url = encodeURI(currentClient['name']);
+	var apiURL = localStorage.getItem('base_url');
+	var centralBaseURL = centralURLs[apiURL];
+	if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url); //manually build the COP address
+	var clientURL = centralBaseURL + '/frontend/#/CLIENTDETAIL/' + currentClient['macaddr'] + '?ccma=' + currentClient['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
+	var nameValue = '<a href="' + clientURL + '" target="_blank"><strong>' + currentClient['name'] + '</strong></a>';
+	
+	var switchName = encodeURI(currentClient['associated_device_name']);
+	var switchURL = centralBaseURL + '/frontend/#/SWITCHDETAILS/' + currentClient['associated_device'] + '?cssn=' + currentClient['associated_device'] + '&cdcn=' + switchName + '&nc=device';
+	var switchValue = '<a href="' + switchURL + '" target="_blank"><strong>' + currentClient['associated_device_name'] + '</strong></a>';
+	
+	// Site Link to Central
+	var siteName = encodeURI(currentClient['site']);
+	var siteId = getIDforSite(currentClient['site'])
+	var centralURLSite = centralBaseURL + '/frontend/#/SITEHEALTH?id=' + siteId + '&name=' + siteName + '&cid=2&cn=Site&l=label&nc=site';
+	var centralURLSiteLink = '<a href="' + centralURLSite + '" target="_blank"><strong>' + currentClient['site'] + '</strong></a>';
+	
+	// Group Link to Central
+	var groupName = encodeURI(connectedSwitch['group_name']);
+	var groupId = connectedSwitch['group_id'];
+	var centralURLGroup = centralBaseURL + '/frontend/#/DASHBOARD?cgid='+groupId+'&nc=group';
+	var centralURLGroupLink = '<a href="' + centralURLGroup + '" target="_blank"><strong>' + connectedSwitch['group_name'] + '</strong></a>';
+	
+	
 	$('#wiredInfo').empty();
-	$('#wiredInfo').append('<li>Name: <strong>' + currentClient['name'] + '</strong></li>');
+	$('#wiredInfo').append('<li>Name: ' + nameValue + '</li>');
 	var status = '<i class="fa-solid fa-circle text-neutral"></i>';
 	
 	$('#wiredInfo').append('<li>Device: <strong>' + currentClient['os_type'] + '</strong></li>');
@@ -421,13 +494,22 @@ function showWiredClient(currentClient) {
 	if (currentClient['ip_address']) $('#wiredInfo').append('<li>IP Address: <strong>' + currentClient['ip_address'] + '</strong></li>');
 	$('#wiredInfo').append('<li>VLAN: <strong>' + currentClient['vlan'] + '</strong></li>');
 	if (currentClient['user_role']) $('#wiredInfo').append('<li>User Role: <strong>' + currentClient['user_role'] + '</strong></li>');
-	$('#wiredInfo').append('<li>Site: <strong>' + currentClient['site'] + '</strong></li>');
+	$('#wiredInfo').append('<li>Site: ' + centralURLSiteLink + '</li>');
 	
 	
 	$('#wiredConnection').empty();
-	$('#wiredConnection').append('<li>Connected To: <strong>' + currentClient['associated_device_name'] + '</strong></li>');
+	$('#wiredConnection').append('<li>Connected To: ' + switchValue + '</li>');
 	$('#wiredConnection').append('<li>Port: <strong>' + currentClient['interface_port'] + '</strong></li>');
 	if (currentClient['authentication_type'] !== '') $('#wiredConnection').append('<li>Auth Method: <strong>'+currentClient['authentication_type']+'</li>');
+	
+	$('#wiredSwitch').empty();
+	$('#wiredSwitch').append('<li>Uptime: <strong>' + uptimeString + '</strong></li>');
+	$('#wiredSwitch').append('<li>Model: <strong>' + connectedSwitch['model'] + '</strong></li>');
+	$('#wiredSwitch').append('<li>Firmware: <strong>' + connectedSwitch['firmware_version'] + '</strong></li>');
+	$('#wiredSwitch').append('<li>Config Group: ' + centralURLGroupLink + '</li>');
+	if (connectedSwitch['client_count']) $('#wiredSwitch').append('<li>Total Clients: <strong>' + connectedSwitch['client_count'] + '</strong></li>');
+	$('#wiredSwitch').append('<li>CPU Utilization: <strong>' + connectedSwitch['cpu_utilization'] + '%</strong></li>');
+	if (connectedSwitch['poe_consumption']) $('#wiredSwitch').append('<li>PoE Consumption: <strong>' + connectedSwitch['poe_consumption'] + 'W</strong></li>');
 	
 	$('#WiredClientModalLink').trigger('click');
 }
@@ -465,6 +547,15 @@ function displayKeySync() {
 		
 		$(document.getElementById('keySyncBtn')).removeClass('btn-outline');
 		$(document.getElementById('keySyncBtn')).addClass('btn-fill');
+		document.getElementById('syncedAPCard').hidden = false;
+		
+		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+		$(document.getElementById('datapathBtn')).addClass('btn-outline');
+		document.getElementById('datapathCard').hidden = true;
+		
+		$(document.getElementById('cmBtn')).removeClass('btn-fill');
+		$(document.getElementById('cmBtn')).addClass('btn-outline');
+		document.getElementById('cmCard').hidden = true;
 	} else {
 		$(document.getElementById('keySyncBtn')).removeClass('btn-fill');
 		$(document.getElementById('keySyncBtn')).addClass('btn-outline');
@@ -497,6 +588,14 @@ function displayEvents() {
 		$(document.getElementById('eventsBtn')).removeClass('btn-outline');
 		$(document.getElementById('eventsBtn')).addClass('btn-fill');
 		document.getElementById('eventsCard').hidden = false;
+		
+		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+		$(document.getElementById('datapathBtn')).addClass('btn-outline');
+		document.getElementById('datapathCard').hidden = true;
+		
+		$(document.getElementById('cmBtn')).removeClass('btn-fill');
+		$(document.getElementById('cmBtn')).addClass('btn-outline');
+		document.getElementById('cmCard').hidden = true;
 	} else {
 		$(document.getElementById('eventsBtn')).removeClass('btn-fill');
 		$(document.getElementById('eventsBtn')).addClass('btn-outline');
@@ -509,7 +608,7 @@ function refreshEvents() {
 }
 
 function getEventsForClient(clientMac) {
-	eventsNotification = showNotification('ca-check-list', 'Getting Client Events...', 'bottom', 'center', 'info');
+	eventsNotification = showNotification('ca-row-table', 'Getting Client Events...', 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -573,8 +672,6 @@ function getEventsForClient(clientMac) {
 		.rows()
 		.draw();
 		$('#events-table').DataTable().columns.adjust().draw();
-		
-		console.log(response)
 	
 		if (eventsNotification) {
 			eventsNotification.update({ message: 'Obtained Events for the last 3hrs', type: 'success' });
@@ -607,6 +704,14 @@ function displayMobility() {
 		$(document.getElementById('mobilityBtn')).removeClass('btn-outline');
 		$(document.getElementById('mobilityBtn')).addClass('btn-fill');
 		document.getElementById('mobilityCard').hidden = false;
+		
+		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+		$(document.getElementById('datapathBtn')).addClass('btn-outline');
+		document.getElementById('datapathCard').hidden = true;
+		
+		$(document.getElementById('cmBtn')).removeClass('btn-fill');
+		$(document.getElementById('cmBtn')).addClass('btn-outline');
+		document.getElementById('cmCard').hidden = true;
 	} else {
 		$(document.getElementById('mobilityBtn')).removeClass('btn-fill');
 		$(document.getElementById('mobilityBtn')).addClass('btn-outline');
@@ -619,7 +724,7 @@ function refreshMobility() {
 }
 
 function getMobilityForClient(clientMac) {
-	mobilityNotification = showLongNotification('ca-check-list', 'Getting Client Mobility Trail...', 'bottom', 'center', 'info');
+	mobilityNotification = showLongNotification('ca-journey', 'Getting Client Mobility Trail...', 'bottom', 'center', 'info');
 	
 	var roamingSettings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -688,5 +793,557 @@ function getMobilityForClient(clientMac) {
 	});
 }
 
+/*  ----------------------------------
+	Datapath functions
+---------------------------------- */
+function displayDatapath() {
+	
+	// Control the UI pieces
+	if ($(document.getElementById('datapathBtn')).hasClass('btn-outline' )) {
+		$('#datapath-table')
+		.DataTable()
+		.rows()
+		.remove();
+		$('#datapath-table')
+		.DataTable()
+		.rows()
+		.draw();
+		
+		// Not selected
+		getDatapathForClient(currentClientMac, connectedAP.serial);
+		
+		// Hide other tabs
+		$(document.getElementById('keySyncBtn')).removeClass('btn-fill');
+		$(document.getElementById('keySyncBtn')).addClass('btn-outline');
+		document.getElementById('syncedAPCard').hidden = true;
+		
+		$(document.getElementById('eventsBtn')).removeClass('btn-fill');
+		$(document.getElementById('eventsBtn')).addClass('btn-outline');
+		document.getElementById('eventsCard').hidden = true;
+		
+		$(document.getElementById('mobilityBtn')).removeClass('btn-fill');
+		$(document.getElementById('mobilityBtn')).addClass('btn-outline');
+		document.getElementById('mobilityCard').hidden = true;
+		
+		$(document.getElementById('datapathBtn')).removeClass('btn-outline');
+		$(document.getElementById('datapathBtn')).addClass('btn-fill');
+		document.getElementById('datapathCard').hidden = false;
+		
+		$(document.getElementById('cmBtn')).removeClass('btn-fill');
+		$(document.getElementById('cmBtn')).addClass('btn-outline');
+		document.getElementById('cmCard').hidden = true;
+	} else {
+		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+		$(document.getElementById('datapathBtn')).addClass('btn-outline');
+		document.getElementById('datapathCard').hidden = true;
+	}
+}
+
+function refreshDatapath() {
+	getDatapathForClient(currentClientMac);
+}
+
+function getDatapathForClient(clientMac, deviceSerial) {
+	datapathNotification = showLongNotification('ca-firewall', 'Getting Client Datapath information...', 'bottom', 'center', 'info');
+	
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 45 }, { command_id: 211 }] });
+	
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+	
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			troubleshootingNotification = showPermanentNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkDatapathStatus, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
 
 
+function checkDatapathStatus(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				troubleshootingNotification.update({ message: response.message.replace(' Please try after sometime', '.'), type: 'info' });
+				setTimeout(checkDatapathStatus, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				//var results = decodeURI(response.output);
+				var results = response.output;
+				
+				// Find client in monitoring - to get current IP Address for session filtering
+				var client = findDeviceInMonitoringForMAC(currentClientMac);
+				
+				// Clear the table
+				var table = $('#datapath-table').DataTable();
+				$('#datapath-table')
+				.DataTable()
+				.rows()
+				.remove();
+				
+				// split into the two commands (show datapath session, show datapath session dpi)
+				var pos = results.indexOf('COMMAND=show datapath session');
+				var sessionResults = results.substring(pos, results.indexOf('COMMAND=show datapath session dpi', pos));
+				pos = results.indexOf('COMMAND=show datapath session dpi');
+				var dpiResults = results.substring(pos);
+				
+				// Turn command results into arrays for iterating through
+				var sessionLines = sessionResults.split('\n');
+				var rawDpiLines = dpiResults.split('\n');
+				var dpiLines = [];
+				// filter dpiLines for specific client info only (less to loop through each time)
+				$.each(rawDpiLines, function() {
+					if (this.includes(client['ip_address']+' ')) dpiLines.push(this);
+				});
+				
+				// Filter session table for client specific entries
+				// and Sort session table into flow pairs...
+				var clientPairs = {};
+				$.each(sessionLines, function() {
+					if (this.includes(client['ip_address']+' ')) {
+						var lineData = this.replace(/  +/g, ' '); // remove the extra padding in the results
+						var lineArray = lineData.split(' ');
+						lineArray[10] = parseInt(lineArray[10], 16).toString(); // convert hex to int
+						lineArray[11] = parseInt(lineArray[11], 16).toString(); // convert hex to int
+						lineArray[12] = parseInt(lineArray[12], 16).toString(); // convert hex to int
+						if (lineArray.length < 15) lineArray.push(' '); // Add extra if Offload Flags are empty (and therefore trimmed off)
+						
+						lineArray.splice(10, 1); // Remove TAge since we are not showing it
+						lineArray[5] = '-'; // repurposing CNTR value with DPI App
+						lineArray[6] = '-'; // repurposing PRIO value with DPI Web Category
+						
+						// Check for DPI information for session line
+						$.each(dpiLines, function(){
+							var dpiLineData = this.replace(/  +/g, ' ');
+							var dpiLineArray = dpiLineData.split(' ');
+							// Match on Src IP/Port and Dest IP/port 
+							if ((lineArray[0] === dpiLineArray[0]) && (lineArray[1] === dpiLineArray[1]) && (lineArray[3] === dpiLineArray[3]) && (lineArray[4] === dpiLineArray[4])) {
+								// Put in App
+								if (dpiLineArray[5] === 'App-Not-Class') lineArray[5] = 'Not Classified';
+								else lineArray[5] = titleCase(dpiLineArray[5]);
+								
+								// Put in Web Category
+								var webCat = dpiLineArray[7];
+								if (webCat === ']') webCat = dpiLineArray[8];
+								if (webCat === 'Web-Not-Class') webCat = "Not Classified";
+								lineArray[6] = titleCase(webCat);
+								return false; // Break out of dpiLines iteration
+							}
+						});
+						
+						// create session pair key - used to link in and out sessions together
+						var sessionKey = '';
+						if (lineArray[0] === client['ip_address']) sessionKey = lineArray[1] + ':' + lineArray[3] + ':' + lineArray[4]; // key for outbound traffic
+						else sessionKey = lineArray[0] + ':' + lineArray[4] + ':' + lineArray[3]; // key for return traffic
+						
+						if (!clientPairs[sessionKey]) {
+							clientPairs[sessionKey] = [];
+						}
+						clientPairs[sessionKey].push(lineArray); // add session line to pairing
+					}
+				});
+				
+				var sessionKeyArray = Object.keys(clientPairs);
+				for (var i=0;i<sessionKeyArray.length;i++) {
+					var sessionLines = clientPairs[sessionKeyArray[i]];
+					
+					// Sort the session pairs so that the outbound is first
+					sessionLines.sort((a,b) => (b[0] === client['ip_address']) ? 1 : (a[0] === client['ip_address'] ? -1 : 0))
+					
+					$.each(sessionLines, function(){
+						// Add session direction arrow (and colour red is Denied)
+						var sessionRow = this;
+						if (sessionRow[0] === client['ip_address']) {
+							if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up text-danger"></i>');
+							else sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up"></i>');
+						} else {
+							if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down text-danger"></i>');
+							else sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down"></i>');
+						}
+						// Add the session pair number as the first element in the row, then add row to table
+						sessionRow.unshift(i+1);
+						var srcIP = sessionRow[2];
+						var dstIP = sessionRow[3];
+						if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
+						if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
+						table.row.add(sessionRow);
+					});
+				}
+				
+				
+				$('#datapath-table')
+				.DataTable()
+				.rows()
+				.draw();
+				$('#datapath-table').DataTable().columns.adjust().draw();
+				
+				
+				if (troubleshootingNotification) {
+					troubleshootingNotification.update({ message: response.message, type: 'success' });
+					setTimeout(troubleshootingNotification.close, 1000);
+				}
+			} else {
+				if (troubleshootingNotification) {
+					troubleshootingNotification.update({ message: response.message, type: 'danger' });
+					setTimeout(troubleshootingNotification.close, 2000);
+				}
+			}
+			if (datapathNotification) datapathNotification.close();
+		}
+	});
+}
+
+function generateIPtoUsernameMapping() {
+	ipToUsername = {};
+	var allClients = getClients();
+	$.each(allClients, function() {
+		if (this.ip_address) ipToUsername[this.ip_address] = this.name;
+	});
+}
+
+
+/*  ----------------------------------
+	ClientMatch functions
+---------------------------------- */
+function displayClientMatch() {
+	
+	// Control the UI pieces
+	if ($(document.getElementById('cmBtn')).hasClass('btn-outline' )) {
+		// Not selected
+		getClientMatchForClient(currentClientMac);
+		
+		// Hide other tabs
+		$(document.getElementById('keySyncBtn')).removeClass('btn-fill');
+		$(document.getElementById('keySyncBtn')).addClass('btn-outline');
+		document.getElementById('syncedAPCard').hidden = true;
+		
+		$(document.getElementById('eventsBtn')).removeClass('btn-fill');
+		$(document.getElementById('eventsBtn')).addClass('btn-outline');
+		document.getElementById('eventsCard').hidden = true;
+		
+		$(document.getElementById('mobilityBtn')).removeClass('btn-fill');
+		$(document.getElementById('mobilityBtn')).addClass('btn-outline');
+		document.getElementById('mobilityCard').hidden = true;
+		
+		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+		$(document.getElementById('datapathBtn')).addClass('btn-outline');
+		document.getElementById('datapathCard').hidden = true;
+		
+		$(document.getElementById('cmBtn')).removeClass('btn-outline');
+		$(document.getElementById('cmBtn')).addClass('btn-fill');
+		document.getElementById('cmCard').hidden = false;
+	} else {
+		$(document.getElementById('cmBtn')).removeClass('btn-fill');
+		$(document.getElementById('cmBtn')).addClass('btn-outline');
+		document.getElementById('cmCard').hidden = true;
+	}
+}
+
+function refreshCM() {
+	getClientMatchForClient(currentClientMac);
+}
+
+function getClientMatchForClient(clientMac) {
+	if (!localStorage.getItem('central_id') || localStorage.getItem('central_id') === 'undefined') {
+		Swal.fire({
+			title: 'Central ID Needed!',
+			text: 'ClientMatch requires you to enter your Central ID in the settings',
+			icon: 'warning',
+			confirmButtonText: 'Go to Settings',
+		}).then(result => {
+			if (result.isConfirmed) {
+				window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'settings.html';
+			}
+		});
+	} else {
+		cmNotification = showLongNotification('ca-crossroad', 'Getting ClientMatch details...', 'bottom', 'center', 'info');
+		var notificationClosed = false;
+		var settings = {
+			url: getAPIURL() + '/tools/getCommandwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/cm-api/station/v1/' + localStorage.getItem('central_id') + '/'+ clientMac,
+				access_token: localStorage.getItem('access_token'),
+			}),
+		};
+		
+		$.ajax(settings).done(function(commandResults, statusText, xhr) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/station/v1/<central-id>/<client-mac>)');
+				apiErrorCount++;
+				return;
+			} else if (commandResults.hasOwnProperty('error_code')) {
+				logError(commandResults.description);
+				apiErrorCount++;
+				return;
+			}
+			var response = JSON.parse(commandResults.responseBody);
+			console.log(response.result);
+			var fullString = response.result;
+			var vbrString = fullString.substring(fullString.indexOf('Timestamp \n')+11, fullString.indexOf('Last Redis Write'));
+			var vbrArray = vbrString.split('\n');
+			
+			$('#cm-info-table')
+			.DataTable()
+			.rows()
+			.remove();
+			var table = $('#cm-info-table').DataTable();
+
+			$.each(vbrArray, function() {
+				if (this.trim() !== '') {
+					var vbrPieces = this.split('\t');
+					var foundAP = findDeviceInMonitoringForMAC(vbrPieces[1]);
+					
+					var name = encodeURI(foundAP['name']);
+					var apiURL = localStorage.getItem('base_url');
+					var centralBaseURL = centralURLs[apiURL];
+					if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url);
+					var centralURL = centralBaseURL + '/frontend/#/APDETAILV2/' + foundAP['serial'] + '?casn=' + foundAP['serial'] + '&cdcn=' + name + '&nc=access_point';
+					
+					table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + foundAP['name'] + '</strong></a>','-'+vbrPieces[2]+'dB', vbrPieces[3]]);
+				}
+			});
+			$('#cm-info-table')
+			.DataTable()
+			.rows()
+			.draw();
+			$('#cm-info-table').DataTable().columns.adjust().draw();
+			
+			if (cmNotification && !notificationClosed) {
+				cmNotification.update({ message: 'Obtained ClientMatch details', type: 'success' });
+				notificationClosed = true;
+				setTimeout(cmNotification.close, 1000);
+			}
+		});
+		
+		var steerSettings = {
+			url: getAPIURL() + '/tools/getCommandwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/cm-api/history/v1/' + localStorage.getItem('central_id') + '/'+ clientMac,
+				access_token: localStorage.getItem('access_token'),
+			}),
+		};
+		
+		$.ajax(steerSettings).done(function(commandResults, statusText, xhr) {
+			if (commandResults.hasOwnProperty('headers')) {
+				updateAPILimits(JSON.parse(commandResults.headers));
+			}
+			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+				logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/history/v1/<central-id>/<client-mac>)');
+				apiErrorCount++;
+				return;
+			} else if (commandResults.hasOwnProperty('error_code')) {
+				logError(commandResults.description);
+				apiErrorCount++;
+				return;
+			}
+			var response = JSON.parse(commandResults.responseBody);
+			console.log(response.result);
+			
+			$('#cm-history-table')
+			.DataTable()
+			.rows()
+			.remove();
+			var table = $('#cm-history-table').DataTable();
+			if (response.result.SteerHistory !== 'Not found') {
+				// load into table
+				if (!this.hasOwnProperty('TimeNow')) {
+					// process item
+					// Date and time string
+					var m = moment(Object.keys(this)[0], 'YYYY-MM-DD hh:mm:ss.SSS Z');
+					//Event string
+				
+					var client_name;
+					var client_type = 'Unknown';
+					var macaddr = '';
+					var type = '';
+					var mode = '';
+					var status = '';
+					var statusResult = '';
+					var fromRadio = '';
+					var fromAP;
+					var toRadio = '';
+					var toAP;
+					var destRadio = '';
+					var destAP = '';
+					var roamTime = '';
+				
+					var steerString = this[Object.keys(this)[0]].toString();
+					//console.log(steerString.split(', '))
+					//console.log(steerString);
+					macaddr = steerString.match(/Mac=(.+?),/)[1];
+					client_name = macaddr;
+					$.each(clientList, function() {
+						var cleanMac = this['macaddr'].replace(/:/g, '');
+						if (cleanMac === macaddr) {
+							if (this['name']) client_name = this['name'];
+							if (this['os_type']) client_type = this['os_type'];
+						}
+					});
+				
+					type = titleCase(steerString.match(/Type=(.+?),/)[1]);
+					type = type.replace('Band_steer', 'Band Steer');
+					type = type.replace('Load_bal', 'Load Balance');
+					type = type.replace('HE_steer', 'HE Steer');
+					type = type.replace('Voice_roam', 'Voice Roam');
+					mode = titleCase(steerString.match(/Mode=(.+?),/)[1]);
+				
+					status = titleCase(steerString.match(/Status=(.+?),/)[1]);
+					status = status.replace('Wrong_dst', 'Wrong Destination');
+					status = status.replace('Wrong_src', 'Wrong Source');
+					statusResult = titleCase(steerString.match(/11vResult=(.+?),/)[1]);
+					var statusString = status;
+					if (mode === '11v') var statusString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="11v Result: ' + statusResult + '">' + status + '</span>';
+				
+					var fromRadio = steerString.match(/FromRadio=\((.+?)\)/)[1].split(', ');
+					var fromRadioClean = fromRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					fromAP = findAPForRadio(fromRadioClean);
+					var fromBand = '';
+					var fromChannel = '';
+					for (var i = 0, len = fromAP.radios.length; i < len; i++) {
+						if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
+							fromChannel = fromAP.radios[i].channel;
+							if (fromAP.radios[i].band == 3) fromBand = '6GHz';
+							else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
+							else fromBand = '5GHz';
+						}
+					}
+					// Make AP Name as a link to Central
+					var apName = encodeURI(fromAP['name']);
+					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
+				
+					var toRadio = steerString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
+					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					toAP = findAPForRadio(toRadioClean);
+					
+					var toBand = '';
+					var toChannel = '';
+					for (var i = 0, len = toAP.radios.length; i < len; i++) {
+						if (toAP.radios[i]['macaddr'] === toRadioClean) {
+							toChannel = toAP.radios[i].channel;
+							if (toAP.radios[i].band == 3) toBand = '6GHz';
+							else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
+							else toBand = '5GHz';
+						}
+					}
+					// Make AP Name as a link to Central
+					var apName = encodeURI(toAP['name']);
+					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
+				
+					var destRadio = steerString.match(/DstRadio=\((.+?)\)/)[1].split(', ');
+					var destRadioClean = destRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					destAP = findAPForRadio(destRadioClean);
+					destStatus = titleCase(steerString.match(/DstAcceptable=(.+?),/)[1]);
+					var destBand = '';
+					var destChannel = '';
+					if (destAP && destAP.radios) {
+						for (var i = 0, len = destAP.radios.length; i < len; i++) {
+							if (destAP.radios[i]['macaddr'] === destRadioClean) {
+								destChannel = destAP.radios[i].channel;
+								if (destAP.radios[i].band == 3) destBand = '6GHz';
+								else if (destAP.radios[i].band == 0) destBand = '2.4GHz';
+								else destBand = '5GHz';
+							}
+						}
+					}
+				
+					var dstName = destRadioClean;
+					var destAPString = '-';
+					if (destAP) {
+						dstName = destAP.name;
+						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + destAP['serial'] + '?casn=' + destAP['serial'] + '&cdcn=' + dstName + '&nc=access_point';
+						destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>Channel: ' + destChannel + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + dstName + '</strong></a>' + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
+					}
+				
+					roamTime = steerString.match(/RoamTime=(.*)/)[1];
+					roamTime = roamTime.replace('s', '');
+				
+					// Make link to Central
+					var client_name_url = encodeURI(client_name);
+					var apiURL = localStorage.getItem('base_url');
+					var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + macaddr + '?ccma=' + macaddr + '&cdcn=' + client_name_url + '&nc=client';
+				
+					// Add row to table
+					var table = $('#cm-history-table').DataTable();
+					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime, actionBtns]);
+					
+				}
+			}
+			$('#cm-history-table')
+			.DataTable()
+			.rows()
+			.draw();
+			$('#cm-history-table').DataTable().columns.adjust().draw();
+			
+			if (cmNotification && !notificationClosed) {
+				cmNotification.update({ message: 'Obtained ClientMatch details', type: 'success' });
+				notificationClosed = true;
+				setTimeout(cmNotification.close, 1000);
+			}
+		});
+	}
+}

@@ -1,7 +1,7 @@
 /*
 Central Automation v1.30
 Updated:
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var allClients;
@@ -1180,6 +1180,11 @@ function changeFooter() {
 		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-danger"></i> 40Mhz  ');
 		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-warning"></i> 80MHz  ');
 		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> 160MHz  ');
+	} else if (document.getElementById('visualizationselector').value === 'pathloss') {
+		$('#floorplanFooter').empty();
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-success"></i> < 70dB  ');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-warning"></i> < 90dB  ');
+		$('#floorplanFooter').append('<i class="fa-solid fa-circle text-danger"></i> < 110dB  ');
 	}
 }
 
@@ -1335,7 +1340,7 @@ function updateSizes(width, height) {
 	RF Neighbours
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getRFNeighbours() {
-	neighbourNotification = showNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
+	neighbourNotification = showPermanentNotification('ca-duplicate', 'Retrieving 2.4Hz RF Neighbours...', 'bottom', 'center', 'info');
 	rfNeighbours = {};
 	var settings2 = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -1365,6 +1370,8 @@ function getRFNeighbours() {
 		}
 		var response = JSON.parse(commandResults.responseBody);
 		rfNeighbours['2'] = response;
+		neighbourNotification.update({ message: 'Retrieving 5Hz RF Neighbours...', type: 'info' });
+		
 
 		var settings5 = {
 			url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -1394,6 +1401,7 @@ function getRFNeighbours() {
 			}
 			var response = JSON.parse(commandResults.responseBody);
 			rfNeighbours['5'] = response;
+			neighbourNotification.update({ message: 'Retrieving 6GHz RF Neighbours...', type: 'info' });
 
 			var settings6 = {
 				url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -1477,7 +1485,10 @@ function drawPathLinks(serial) {
 	var radioMac = null;
 	if (band == 2) band = 2.4;
 	$.each(storedAP.radios, function() {
-		if (this.radio_name.includes(band + ' GHz')) radioMac = this['macaddr'];
+		if (this.radio_name.includes(band + ' GHz') && this.status == "Up") {
+			radioMac = this['macaddr'];
+			return false;
+		}
 	});
 	
 	if (neighbourMode == ScaleType.Scale) {

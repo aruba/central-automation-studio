@@ -1,7 +1,7 @@
 /*
 Central Automation v1.1.4
 Updated: 1.28.4
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 const VisualLocation = { Optimization: 0, Radar: 1 };
@@ -246,7 +246,7 @@ function updateAirMatchData() {
 	RF Neighbours
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getRFNeighbours() {
-	neighbourNotification = showPermanentNotification('ca-duplicate', 'Getting RF Neighbours...', 'bottom', 'center', 'info');
+	neighbourNotification = showPermanentNotification('ca-duplicate', 'Retrieving 2.4Hz RF Neighbours...', 'bottom', 'center', 'info');
 	rfNeighbours = {};
 	var settings2 = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -277,6 +277,7 @@ function getRFNeighbours() {
 		var response = JSON.parse(commandResults.responseBody);
 		console.log("There are " +response.length+" 2.4GHz neighbours")
 		rfNeighbours['2.4'] = response;
+		neighbourNotification.update({ message: 'Retrieving 5Hz RF Neighbours...', type: 'info' });
 
 		var settings5 = {
 			url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -307,6 +308,7 @@ function getRFNeighbours() {
 			var response = JSON.parse(commandResults.responseBody);
 			console.log("There are " +response.length+" 5GHz neighbours")
 			rfNeighbours['5'] = response;
+			neighbourNotification.update({ message: 'Retrieving 6GHz RF Neighbours...', type: 'info' });
 
 			var settings6 = {
 				url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -2986,7 +2988,10 @@ function drawApLinks(serial) {
 	var radioMac = null;
 	if (band == 2) band = 2.4;
 	$.each(storedAP.radios, function() {
-		if (this.radio_name.includes(band + ' GHz')) radioMac = this['macaddr'];
+		if (this.radio_name.includes(band + ' GHz') && this.status == "Up") {
+			radioMac = this['macaddr'];
+			return false;
+		}
 	});
 	
 	if (neighbourMode == ScaleType.Full) {

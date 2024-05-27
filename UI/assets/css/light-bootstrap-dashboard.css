@@ -6069,7 +6069,7 @@ fieldset[disabled] .form-control {
 
 .ct-area {
     stroke: none;
-    fill-opacity: 0.8;
+    fill-opacity: 0.5;
 }
 
 .ct-bar {
@@ -6092,6 +6092,7 @@ fieldset[disabled] .form-control {
 .ct-series-a .ct-slice-pie,
 .ct-series-a .ct-area {
     fill: #1DC7EA;
+    fill-opacity: 0.5;
 }
 
 .ct-series-b .ct-point,
@@ -6104,6 +6105,7 @@ fieldset[disabled] .form-control {
 .ct-series-b .ct-slice-pie,
 .ct-series-b .ct-area {
     fill: #FB404B;
+    fill-opacity: 0.5;
 }
 
 .ct-series-c .ct-point,
@@ -6116,6 +6118,7 @@ fieldset[disabled] .form-control {
 .ct-series-c .ct-slice-pie,
 .ct-series-c .ct-area {
     fill: #FFA534;
+    fill-opacity: 0.5;
 }
 
 .ct-series-d .ct-point,
@@ -6128,6 +6131,7 @@ fieldset[disabled] .form-control {
 .ct-series-d .ct-slice-pie,
 .ct-series-d .ct-area {
     fill: #9368E9;
+    fill-opacity: 0.5;
 }
 
 .ct-series-e .ct-point,
@@ -6140,6 +6144,7 @@ fieldset[disabled] .form-control {
 .ct-series-e .ct-slice-pie,
 .ct-series-e .ct-area {
     fill: #87CB16;
+    fill-opacity: 0.5;
 }
 
 .ct-series-f .ct-point,
@@ -6152,6 +6157,7 @@ fieldset[disabled] .form-control {
 .ct-series-f .ct-slice-pie,
 .ct-series-f .ct-area {
     fill: #1F77D0;
+    fill-opacity: 0.5;
 }
 
 .ct-series-g .ct-point,
@@ -6164,6 +6170,7 @@ fieldset[disabled] .form-control {
 .ct-series-g .ct-slice-pie,
 .ct-series-g .ct-area {
     fill: #5e5e5e;
+    fill-opacity: 0.5;
 }
 
 .ct-series-h .ct-point,
@@ -6176,6 +6183,7 @@ fieldset[disabled] .form-control {
 .ct-series-h .ct-slice-pie,
 .ct-series-h .ct-area {
     fill: #dd4b39;
+    fill-opacity: 0.5;
 }
 
 .ct-series-i .ct-point,
@@ -6188,6 +6196,7 @@ fieldset[disabled] .form-control {
 .ct-series-i .ct-slice-pie,
 .ct-series-i .ct-area {
     fill: #35465c;
+    fill-opacity: 0.5;
 }
 
 .ct-series-j .ct-point,
@@ -6200,6 +6209,7 @@ fieldset[disabled] .form-control {
 .ct-series-j .ct-slice-pie,
 .ct-series-j .ct-area {
     fill: #e52d27;
+    fill-opacity: 0.5;
 }
 
 .ct-series-k .ct-point,
@@ -6212,6 +6222,7 @@ fieldset[disabled] .form-control {
 .ct-series-k .ct-slice-pie,
 .ct-series-k .ct-area {
     fill: #55acee;
+    fill-opacity: 0.5;
 }
 
 .ct-series-l .ct-point,
@@ -6224,6 +6235,7 @@ fieldset[disabled] .form-control {
 .ct-series-l .ct-slice-pie,
 .ct-series-l .ct-area {
     fill: #cc2127;
+    fill-opacity: 0.5;
 }
 
 .ct-series-m .ct-point,
@@ -6236,6 +6248,7 @@ fieldset[disabled] .form-control {
 .ct-series-m .ct-slice-pie,
 .ct-series-m .ct-area {
     fill: #1769ff;
+    fill-opacity: 0.5;
 }
 
 .ct-series-n .ct-point,
@@ -6248,6 +6261,7 @@ fieldset[disabled] .form-control {
 .ct-series-n .ct-slice-pie,
 .ct-series-n .ct-area {
     fill: #6188e2;
+    fill-opacity: 0.5;
 }
 
 .ct-series-o .ct-point,
@@ -6260,6 +6274,7 @@ fieldset[disabled] .form-control {
 .ct-series-o .ct-slice-pie,
 .ct-series-o .ct-area {
     fill: #a748ca;
+    fill-opacity: 0.5;
 }
 
 .ct-square {

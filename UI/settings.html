@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.6.0
 Updated: 1.12.4
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -546,42 +546,42 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 				};
 			});
 	
-		      	$('#hydra-table').DataTable({
+			$('#hydra-table').DataTable({
 				"paging": false,
 				"searching": false,
 				"info": false,
 				"autoWidth": false,
 				columnDefs: [ {
-					targets: [2,3,4,5],
-					render: function (data, type, full, meta) {
-		                      	return "<div class='text-wrap width-150'>" + data + "</div>";
-		              	}
-		          	}]
+				targets: [2,3,4,5],
+				render: function (data, type, full, meta) {
+          					return "<div class='text-wrap width-150'>" + data + "</div>";
+  					}
+					}]
 			});
 	
 			var table = $('#hydra-table').DataTable();
 	
-		      	// Edit Account record
-		      	table.on('click', '.edit', function() {
-		          	$tr = $(this).closest('tr');
+		    // Edit Account record
+      		table.on('click', '.edit', function() {
+          		$tr = $(this).closest('tr');
+
+          		if ($tr.hasClass('child')) {
+              		$tr = $tr.prev('.parent');
+          		}
+
+          		var data = table.row($tr).data();
+          		editAccount(data[2]);
+          		//alert('You press on Row: ' + data[0] + ' ' + data[1] + ' ' + data[2] + '\'s row.');
+      		});
+
+      		// Delete a record
+      		table.on('click', '.remove', function(e) {
+          		$tr = $(this).closest('tr');
+          		var data = table.row($tr).data();
+          		deleteAccount(data[2]);
+      		});
 	
-		          	if ($tr.hasClass('child')) {
-		              	$tr = $tr.prev('.parent');
-		          	}
-	
-		          	var data = table.row($tr).data();
-		          	editAccount(data[2]);
-		          	//alert('You press on Row: ' + data[0] + ' ' + data[1] + ' ' + data[2] + '\'s row.');
-		      	});
-	
-		      	// Delete a record
-		      	table.on('click', '.remove', function(e) {
-		          	$tr = $(this).closest('tr');
-		          	var data = table.row($tr).data();
-		          	deleteAccount(data[2]);
-		      	});
-	
-		      	if (localStorage.getItem('base_url') && !localStorage.getItem('account_details')) {
+		    if (localStorage.getItem('base_url') && !localStorage.getItem('account_details')) {
 				// Old account settings - need to migrate to v1.6
 				upgradeAccountSettings();
 			}
@@ -594,7 +594,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 				localStorage.setItem('reveal_secrets',true);
 			}
 	
-		      	populateCentralClusters();
+		    populateCentralClusters();
 			loadAccountDetails();
 	
 			var apNaming = localStorage.getItem('ap_naming_format');
@@ -689,7 +689,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240415"></script>
+	<script src="assets/js/main.js?v=240525"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra-main.js?v=231208"></script>
 	<script src="assets/js/hydra.js?v=231106"></script>

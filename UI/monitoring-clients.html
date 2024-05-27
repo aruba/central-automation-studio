@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.1
 Updated: 1.31.1
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -269,7 +269,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 						</div>
 						<div class="row" id="mainBoxes">
 							<div class="col-md-3">
-								<div class="card" style="height:600px;">
+								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">Wi-Fi Protocol</h4>
 										<p class="card-category">Breakdown of 802.11 support</p>
@@ -277,15 +277,31 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 
 									<div class="card-body ">
-										<div id="chart11" class="ct-chart ct-minor-third"></div>
+										<div id="chart11" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Wi-Fi 6E <i class="fa-solid fa-circle text-danger"></i> Wi-Fi 6 <i class="fa-solid fa-circle text-warning"></i> Wi-Fi 5 <i class="fa-solid fa-circle text-purple"></i> Wi-Fi 4 <i class="fa-solid fa-circle text-success"></i> Wi-Fi 4 </div>
+										<div class="legend"><a onclick="displaySelectedClients11('11be')"><i class="fa-solid fa-circle text-info"></i> Wi-Fi 7</a> <a onclick="displaySelectedClients11('11ax/6E')"><i class="fa-solid fa-circle text-danger"></i> Wi-Fi 6E</a> <a onclick="displaySelectedClients11('11ax')"><i class="fa-solid fa-circle text-warning"></i> Wi-Fi 6</a> <br /><a onclick="displaySelectedClients11('11ac')"><i class="fa-solid fa-circle text-purple"></i> Wi-Fi 5</a> <a onclick="displaySelectedClients11('11an')"><i class="fa-solid fa-circle text-success"></i> Wi-Fi 4 (5GHz)</a> <a onclick="displaySelectedClients11('11gn')"><i class="fa-solid fa-circle text-primary"></i> Wi-Fi 4 (2.4GHz)</a></div>
 									</div>
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card" style="height:600px;">
+								<div class="card" style="height:540px;">
+									<div class="card-header ">
+										<h4 class="card-title">Client Encryption</h4>
+										<p class="card-category">Percentage of Clients</p>
+										<p></p>
+									</div>
+							
+									<div class="card-body ">
+										<div id="chartwpa" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
+									</div>
+									<div class="card-footer ">
+										<div class="legend"><a onclick="displaySelectedClientsWPA('WPA3')"><i class="fa-solid fa-circle text-info"></i> WPA3-Personal</a> <a onclick="displaySelectedClientsWPA('WPA3X')"><i class="fa-solid fa-circle text-danger"></i> WPA3-Enterprise</a> <br /><a onclick="displaySelectedClientsWPA('WPA2')"><i class="fa-solid fa-circle text-warning"></i> WPA2-Personal</a> <a onclick="displaySelectedClientsWPA('WPA2X')"><i class="fa-solid fa-circle text-purple"></i> WPA2-Enterprise</a> <br /><a onclick="displaySelectedClientsWPA('OWE')"><i class="fa-solid fa-circle text-success"></i> OWE</a> <a onclick="displaySelectedClientsWPA('Open')"><i class="fa-solid fa-circle text-primary"></i> Open</a> <a onclick="displaySelectedClientsWPA('Others')"><i class="fa-solid fa-circle text-series7"></i> Others</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">Radio Band</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz</p>
@@ -293,15 +309,15 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 
 									<div class="card-body ">
-										<div id="chartBand" class="ct-chart ct-minor-third"></div>
+										<div id="chartBand" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> 6Ghz <i class="fa-solid fa-circle text-danger"></i> 5GHz <i class="fa-solid fa-circle text-warning"></i> 2.4GHz</div>
+										<div class="legend"><a onclick="displaySelectedClientsBand('6GHz')"><i class="fa-solid fa-circle text-info"></i> 6Ghz</a> <a onclick="displaySelectedClientsBand('5GHz')"><i class="fa-solid fa-circle text-danger"></i> 5GHz</a> <a onclick="displaySelectedClientsBand('2.4GHz')"><i class="fa-solid fa-circle text-warning"></i> 2.4GHz</a></div>
 									</div>
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card" style="height:600px;">
+								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">Authentication Types</h4>
 										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz vs Wired</p>
@@ -309,33 +325,18 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 
 									<div class="card-body ">
-										<div id="chartAuth" class="ct-chart ct-minor-third"></div>
+										<div id="chartAuth" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
 										<div class="legend"><i class="fa-solid fa-circle text-info"></i> 6GHz <i class="fa-solid fa-circle text-danger"></i> 5GHz <i class="fa-solid fa-circle text-warning"></i> 2.4GHz <i class="fa-solid fa-circle text-purple"></i> Wired</div>
 									</div>
 								</div>
 							</div>
-							<div class="col-md-3">
-								<div class="card" style="height:600px;">
-									<div class="card-header ">
-										<h4 class="card-title">Randomized MAC Addresses</h4>
-										<p class="card-category">Randomized vs Actual</p>
-										<p></p>
-									</div>
-
-									<div class="card-body ">
-										<div id="chartMAC" class="ct-chart ct-minor-third"></div>
-									</div>
-									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Randomized <i class="fa-solid fa-circle text-danger"></i> Actual</div>
-									</div>
-								</div>
-							</div>
+							
 						</div>
 						<div class="row" id="amendmentSupportBoxes">
 							<div class="col-md-3">
-								<div class="card" style="height:600px;">
+								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11k Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -343,15 +344,15 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 
 									<div class="card-body ">
-										<div id="chart11k" class="ct-chart ct-minor-third"></div>
+										<div id="chart11k" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Supported <i class="fa-solid fa-circle text-danger"></i> Not Supported</div>
+										<div class="legend"><a onclick="displaySelectedClients11k('11k')"><i class="fa-solid fa-circle text-info"></i> Supported</a> <a onclick="displaySelectedClients11k('no11k')"><i class="fa-solid fa-circle text-danger"></i> Not Supported</a></div>
 									</div>
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card" style="height:600px;">
+								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11v Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -359,15 +360,15 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 
 									<div class="card-body ">
-										<div id="chart11v" class="ct-chart ct-minor-third"></div>
+										<div id="chart11v" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Supported <i class="fa-solid fa-circle text-danger"></i> Not Supported</div>
+										<div class="legend"><a onclick="displaySelectedClients11v('11v')"><i class="fa-solid fa-circle text-info"></i> Supported</a> <a onclick="displaySelectedClients11v('no11v')"><i class="fa-solid fa-circle text-danger"></i> Not Supported</a></div>
 									</div>
 								</div>
 							</div>
 							<div class="col-md-3">
-								<div class="card" style="height:600px;">
+								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">802.11r Support</h4>
 										<p class="card-category">Percentage of Clients</p>
@@ -375,10 +376,26 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</div>
 
 									<div class="card-body ">
-										<div id="chart11r" class="ct-chart ct-minor-third"></div>
+										<div id="chart11r" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><i class="fa-solid fa-circle text-info"></i> Supported <i class="fa-solid fa-circle text-danger"></i> Not Supported</div>
+										<div class="legend"><a onclick="displaySelectedClients11r('11r')"><i class="fa-solid fa-circle text-info"></i> Supported</a> <a onclick="displaySelectedClients11r('no11r')"><i class="fa-solid fa-circle text-danger"></i> Not Supported</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="card" style="height:540px;">
+									<div class="card-header ">
+										<h4 class="card-title">Randomized MAC Addresses</h4>
+										<p class="card-category">Randomized vs Actual</p>
+										<p></p>
+									</div>
+							
+									<div class="card-body ">
+										<div id="chartMAC" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
+									</div>
+									<div class="card-footer ">
+										<div class="legend"><a onclick="displaySelectedClientsRandomMac('randomized')"><i class="fa-solid fa-circle text-info"></i> Randomized</a> <a onclick="displaySelectedClientsRandomMac('actual')"><i class="fa-solid fa-circle text-danger"></i> Actual</a></div>
 									</div>
 								</div>
 							</div>
@@ -1069,8 +1086,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 	});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240415"></script>
+	<script src="assets/js/main.js?v=240525"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/clients.js?v=240209"></script>
+	<script src="assets/js/clients.js?v=240429"></script>
 </html>

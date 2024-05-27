@@ -1,7 +1,7 @@
   /*
 Central Automation v1
 Updated: 1.30
-Copyright Aaron Scott (WiFi Downunder) 2023
+Copyright Aaron Scott (WiFi Downunder) 2023-2024
 */
 
 
@@ -854,6 +854,34 @@ Generated using nucleoapp.com
   content: "\eaa4";
 }
 
+.ca-settings-gear::before {
+  content: "\eaa5";
+}
+
+.ca-row-table::before {
+  content: "\eaa6";
+}
+
+.ca-journey::before {
+  content: "\eaa7";
+}
+
+.ca-machine-learning::before {
+  content: "\eaa8";
+}
+
+.ca-firewall::before {
+  content: "\eaa9";
+}
+
+.ca-p-settings::before {
+  content: "\eaaa";
+}
+
+.ca-l-settings::before {
+  content: "\eaab";
+}
+
 
 
 /*------------------------
@@ -908,15 +936,18 @@ Generated using nucleoapp.com
   list-style-type: none;
 }
 
+.me-2 {
+  margin-right: 0.5rem !important;
+}
+
 .fa-fw {
-  width: 60px;
+  width: 20px;
   text-align: center;
   font-size: 14px;
 }
 
-
 .fa-fw-pointer {
-  width: 60px;
+  width: 20px;
   text-align: center;
   font-size: 14px;
   cursor: pointer;
@@ -1183,7 +1214,9 @@ Generated using nucleoapp.com
 
 .right-link {
   color: #000;
-  padding-top: 6px;
+  padding-top: 4px;
+  height: 28px;
+  width: 26px;
   float: right;
   padding-right: 10px;
 }
@@ -1356,6 +1389,18 @@ input[type="color"] {
 
 .top-padding {
   margin-top: 7px;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem !important;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem !important;
+}
+
+.mb-3 {
+  margin-bottom: 2rem !important;
 }
 
 .btn-element {
@@ -1570,6 +1615,13 @@ pre {
 .legend.airmatch {
   padding-left: 20px;
   font-size: 14px;
+}
+
+.legend a {
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 4px;
+    padding: 0px;
 }
 
 .pad-10 {

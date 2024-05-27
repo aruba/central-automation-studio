@@ -1,7 +1,7 @@
 /*
 Central Automation v1.15.1
 Updated: 1.17 
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var down2APs = [];
@@ -23,10 +23,14 @@ var bleNotification;
 
 var blePromise;
 
+var topAPs;
+var selectedAP;
+
 function loadCurrentPageAP() {
 	updateAPGraphs();
 	loadBSSIDs();
 	getDevices();
+	getTopAPs();
 }
 
 function loadCurrentPageGroup() {
@@ -703,7 +707,7 @@ function loadBSSIDTable(currentBSSIDs) {
 	$.each(currentBSSIDs, function() {
 		var ap = findDeviceInMonitoring(this.serial);
 		var status = '<i class="fa-solid fa-circle text-danger"></i>';
-		if (ap['status'] == 'Up') {
+		if (ap['status'] && ap['status'] == 'Up') {
 			status = '<i class="fa-solid fa-circle text-success"></i>';
 		}
 		var ip_address = ap['ip_address'];
@@ -1155,4 +1159,212 @@ function buildVCCSVData() {
 	});
 
 	return csvDataBuild;
+}
+
+
+/*---------------------------------------------------------------------
+	Top APs API Functions
+---------------------------------------------------------------------*/
+function getTopAPs() {
+	topAPs = [];
+	
+	// filter the data for the timescale
+	var select = document.getElementById('timescalePicker');
+	var timescale = select.value;
+
+	var now = new Date();
+	// convert timescale from minutes to seconds (*60)
+	// convert timestamp from ms to s (/1000)
+	var fromTime = Math.floor(now.getTime() / 1000 - timescale * 60);
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v2/aps/bandwidth_usage/topn?count=100&from_timestamp=' + fromTime,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/aps/bandwidth_usage/topn)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		topAPs = response['aps'];
+		// sort on total usage
+		topAPs.sort(function(first, second) {
+			return (second['rx_data_bytes']+second['tx_data_bytes']) - (first['rx_data_bytes']+first['tx_data_bytes']);
+		});
+		var peakBandwidth = topAPs[0]['rx_data_bytes']+topAPs[0]['tx_data_bytes'];
+		
+		$('#bandwidth-table')
+		.DataTable()
+		.rows()
+		.remove();
+		var table = $('#bandwidth-table').DataTable();
+		$.each(topAPs, function() {
+			var name = encodeURI(this['name']);
+			var apiURL = localStorage.getItem('base_url');
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
+			
+			var totalThroughput = this.tx_data_bytes + this.rx_data_bytes;
+			var labelString = Math.floor(totalThroughput / 1024 / 1024 / 1024) + 'GB';
+			var txAmount = Math.floor(this.tx_data_bytes / 1024 / 1024 / 1024) + 'GB'
+			var txPercentage = (this.tx_data_bytes / peakBandwidth) *100;
+			var rxAmount = Math.floor(this.rx_data_bytes / 1024 / 1024 / 1024) + 'GB';
+			var rxPercentage = (this.rx_data_bytes / peakBandwidth) *100
+			
+			var throughputBar = '<a onclick="getAPBandwidth(\'' + this['serial'] + '\')"><div class="progress progress-thin"><div class="progress-bar progress-bar-info" style="width: '+txPercentage+'%"><span class="sr-only">'+txAmount+'</span></div><div class="progress-bar progress-bar-danger" style="width: '+rxPercentage+'%"><span class="sr-only">'+rxAmount+'</span></div></div></a>';
+			
+			var actionBtns = '<a class="btn btn-link btn-warning" onclick="getAPBandwidth(\'' + this['serial'] + '\')"><i class="fa-solid fa-chart-line"></i></a> ';
+			
+			// Add row to table
+			table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a>', '<span title="totalThroughput">'+labelString+'</span>', throughputBar]);
+		});
+		$('#bandwidth-table')
+			.DataTable()
+			.rows()
+			.draw();
+			
+		$('#bandwidth-table').DataTable().columns.adjust().draw();
+		
+		if (selectedAP) getAPBandwidth(selectedAP)
+	});
+}
+
+function getAPBandwidth(currentSerial) {
+	selectedAP = currentSerial;
+	var currentAP = findDeviceInMonitoring(currentSerial);
+	// filter the data for the timescale
+	var select = document.getElementById('timescalePicker');
+	var timescale = select.value;
+	
+	var now = new Date();
+	// convert timescale from minutes to seconds (*60)
+	// convert timestamp from ms to s (/1000)
+	var fromTime = Math.floor(now.getTime() / 1000 - timescale * 60);
+	
+	if (document.getElementById('bandwidthLabel')) document.getElementById('bandwidthLabel').innerHTML = currentAP.name + ' bandwidth for the last ' + select.options[select.selectedIndex].innerHTML + ' (in MB)';
+	
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v3/aps/bandwidth_usage?serial='+currentSerial+'&from_timestamp=' + fromTime,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v3/aps/bandwidth_usage)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		var series1 = [];
+		var series2 = [];
+		var labels = [];
+		var labelCounter = 0;
+		var peakThroughput = 0;
+		
+		$.each(response['samples'], function() {
+			var timestamp = this['timestamp'];
+			var currentTimestamp = timestamp * 1000;
+			var eventDate = new Date(+currentTimestamp);
+			
+			if (labelCounter == response.count - 1) labels.push(moment(eventDate).format('LT'));
+			else if (labelCounter == Math.floor(response.count / 2) && timescale > 1440) labels.push(moment(eventDate).format('MMM D H:MM A'));
+			else if (labelCounter == Math.floor(response.count / 2)) labels.push(moment(eventDate).format('LT'));
+			else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
+			else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
+			else labels.push('');
+			
+			series1.push(this['tx_data_bytes'] / 1024 / 1024 );
+			series2.push(this['rx_data_bytes'] / 1024 / 1024 );
+			if ((this['rx_data_bytes'] / 1024 / 1024 ) > peakThroughput) peakThroughput = this['rx_data_bytes'] / 1024 / 1024;
+			else if ((this['tx_data_bytes'] / 1024 / 1024 ) > peakThroughput) peakThroughput = this['tx_data_bytes'] / 1024 / 1024 ;
+			peakThroughput = Math.ceil(peakThroughput);
+			labelCounter++;
+		});
+		
+		
+		optionsPage = {
+			lineSmooth: false,
+			showPoint: false,
+			showArea: true,
+			height: '450px',
+			axisY: {
+				offset: 40,
+				onlyInteger: true,
+			},
+			chartPadding: {
+				right: 40,
+				bottom: 50,
+			},
+			lineSmooth: Chartist.Interpolation.simple({
+				divisor: 3,
+			}),
+			low: 0,
+			high: peakThroughput,
+			plugins: [Chartist.plugins.tooltip()],
+		};
+		
+		dataPage = {
+			labels: labels,
+			series: [series1, series2],
+		};
+		
+		var bandwidthChart = Chartist.Line('#bandwidth-chart', dataPage, optionsPage);
+		
+		bandwidthChart.on('draw', function(data) {
+			if (data.type === 'line' || data.type === 'area') {
+				data.element.animate({
+					d: {
+						begin: 0,
+						dur: 1000,
+						from: data.path
+							.clone()
+							.scale(1, 0)
+							.translate(0, data.chartRect.height())
+							.stringify(),
+						to: data.path.clone().stringify(),
+						easing: Chartist.Svg.Easing.easeOutQuint,
+					},
+				});
+			}
+		});
+		
+	});
+	
+	
+	
+	
 }

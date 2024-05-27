@@ -1,6 +1,6 @@
 <!--
 Central Automation v1.x
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!-- 
@@ -20,7 +20,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.x
 Updated: 1.30
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -40,7 +40,7 @@ Aaron Scott (WiFi Downunder) 2023
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=240421" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -530,6 +530,27 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End Country Code Config Page -->
+						<!-- Bulk Config Tasks -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="deployment-bulk-ap.html">
+								<div class="card-header ">
+									<h4 class="card-title">Bulk AP Configuration</h4>
+									<p class="card-category">Configure multiple APs at the same time<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-stack text-warning" id="ap_bulk_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
 					</div>
 					<div class="row"><h4 class="section-header">Central Services</h4></div>
 					<div class="row">
@@ -701,7 +722,7 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- IPAM Page -->
-						<div class="col-sm-3" id="ipam_card">
+						<div class="col-sm-3" id="ipam_card" hidden>
 							<div class="card card-tasks">
 								<a href="monitoring-ipam.html">
 								<div class="card-header ">
@@ -801,6 +822,72 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 					</div>
+					<div class="row"><h4 class="section-header">Troubleshooting</h4></div>
+					<div class="row">
+						<!-- Client Troubleshooting  -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="troubleshooting-clients.html">
+								<div class="card-header ">
+									<h4 class="card-title">Client Troubleshooting</h4>
+									<p class="card-category">Automated Troubleshooting<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-l-settings text-warning" id="client_troubleshooting_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
+						<!-- AP Troubleshooting Tasks -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="troubleshooting-ap.html">
+								<div class="card-header ">
+									<h4 class="card-title">AP Troubleshooting</h4>
+									<p class="card-category">Automated Troubleshooting<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-settings text-warning" id="ap_troubleshooting_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
+						<!-- Switch Troubleshooting Tasks -->
+						<div class="col-sm-3">
+							<div class="card  card-tasks">
+								<a href="troubleshooting-switching.html">
+								<div class="card-header ">
+									<h4 class="card-title">Switch Troubleshooting</h4>
+									<p class="card-category">Simple Troubleshooting<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-plug-2 text-warning" id="switch_troubleshooting_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
+					</div>
 					<div class="row"><h4 class="section-header">Experimental Features</h4></div>
 					<div class="row">
 						<!-- Switching Tasks -->
@@ -824,69 +911,8 @@ Aaron Scott (WiFi Downunder) 2023
 							</div>
 						</div>
 						<!-- End Switching Tasks -->
-						<!-- Troubleshooting Tasks -->
-						<div class="col-sm-3">
-							<div class="card  card-tasks">
-								<a href="troubleshooting-ap.html">
-								<div class="card-header ">
-									<h4 class="card-title">AP Troubleshooting</h4>
-									<p class="card-category">Automated Troubleshooting<p>
-								</div>
-								<div class="card-body ">
-									<div class="row">
-										<div class="col-12">
-											<div class="icon-very-big text-center icon-warning">
-												<i class="central-icon ca-settings text-warning" id="ap_troubleshooting_icon"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-								</a>
-							</div>
-						</div>
-						<!-- End Troubleshooting Tasks -->
-						<!-- Troubleshooting Tasks -->
-						<div class="col-sm-3">
-							<div class="card  card-tasks">
-								<a href="troubleshooting-switching.html">
-								<div class="card-header ">
-									<h4 class="card-title">Switch Troubleshooting</h4>
-									<p class="card-category">Simple Troubleshooting<p>
-								</div>
-								<div class="card-body ">
-									<div class="row">
-										<div class="col-12">
-											<div class="icon-very-big text-center icon-warning">
-												<i class="central-icon ca-plug-2 text-warning" id="switch_troubleshooting_icon"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-								</a>
-							</div>
-						</div>
-						<!-- End Troubleshooting Tasks -->
-						<!-- Bulk Config Tasks -->
-						<div class="col-sm-3">
-							<div class="card  card-tasks">
-								<a href="deployment-bulk-ap.html">
-								<div class="card-header ">
-									<h4 class="card-title">Bulk AP Configuration</h4>
-									<p class="card-category">Configure multiple APs at the same time<p>
-								</div>
-								<div class="card-body ">
-									<div class="row">
-										<div class="col-12">
-											<div class="icon-very-big text-center icon-warning">
-												<i class="central-icon ca-stack text-warning" id="ap_bulk_icon"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-								</a>
-							</div>
-						</div>
-						<!-- End Troubleshooting Tasks -->
+						
+						
 						<!-- MPSK Local PAN Tasks -->
 						<div class="col-sm-3" hidden>
 							<div class="card  card-tasks">
@@ -1668,8 +1694,9 @@ Aaron Scott (WiFi Downunder) 2023
 			// If more than one account build Account list and show menu in top right
 			loadAccountList();
 			
+			localStorage.removeItem('update_in_progress');
+			
 			var loadIntervalID;
-				
 			loadMonitoringData(refreshrate);
 			loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
 			//updateInventory();
@@ -1701,7 +1728,7 @@ Aaron Scott (WiFi Downunder) 2023
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/main.js?v=240415"></script>
+<script src="assets/js/main.js?v=240525"></script>
 <script src="assets/js/proxy.js?v=230325"></script>
 <script src="assets/js/hydra.js?v=230524"></script>
 <script src="assets/js/msp.js?v=231210"></script>

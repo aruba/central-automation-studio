@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.8
 Updated: 1.17
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -181,6 +181,36 @@ Aaron Scott (WiFi Downunder) 2021-2023
 															<th>Destination AP (RSSI)</th>
 															<th>Roam Time (msecs)</th>
 															<th>Actions</th>
+														</thead>
+														<tbody></tbody>
+													</table>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-12">
+								<div class="card">
+									<div class="card-header">
+										<h4 class="card-title">Recent Load Balance History</h4>
+										<a class="refresh-link" onclick="getLoadBalanceHistory()"><i class="central-icon ca-reload"></i></a>
+										<div class="right-link">
+											<span data-toggle="tooltip" data-placement="right" data-html="true" title="Flags: <strong>M</strong> = MU-MIMO match<br/> <strong>H</strong> = HE match"><i class="fa-solid fa-circle-info text-muted"></i></span>
+										</div>
+									</div>
+									<div class="card-body">
+										<div class="card data-tables">
+											<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+												<div class="fresh-datatables">
+													<table id="balance-history-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+														<thead>
+															<th>Event Time</th>
+															<th>Client</th>
+															<th>From AP (RSSI)</th>
+															<th>To AP (RSSI)</th>
 														</thead>
 														<tbody></tbody>
 													</table>
@@ -544,6 +574,19 @@ Aaron Scott (WiFi Downunder) 2021-2023
 					'order': [[0, 'desc']],
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
+				
+				$('#balance-history-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": true,
+					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search History",
+					},
+					'order': [[0, 'desc']],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
 
 				$('#record-table').DataTable({
 					"pagingType": "simple_numbers",
@@ -581,8 +624,8 @@ Aaron Scott (WiFi Downunder) 2021-2023
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240415"></script>
+	<script src="assets/js/main.js?v=240525"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/clientmatch.js?v=240304"></script>
+	<script src="assets/js/clientmatch.js?v=240429"></script>
 </html>

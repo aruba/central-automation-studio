@@ -13,8 +13,8 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 <!--
 Central Automation v1.x
-Updated: 1.34
-Aaron Scott (WiFi Downunder) 2021-2023
+Updated: 1.37.2
+Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=240421" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -84,7 +84,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.36.8</h1>
+                    <h1>Central Automation Studio v1.37.6</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -157,6 +157,9 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<li>
 										<a href="#country-row">Country Code Deployment</a>
 									</li>
+									<li>
+										<a href="#bulk-row">Bulk AP Deployment</a>
+									</li>
 									<li>&nbsp;</li>
                                     <li>
                                         <a href="#airmatch-row">AirMatch</a>
@@ -188,6 +191,10 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									</li>
 									<li>
 										<a href="#event-row">Event Dashboard</a>
+									</li>
+									<li>&nbsp;</li>
+									<li>
+										<a href="#troubleshooting-row">Troubleshooting</a>
 									</li>
 									<li>&nbsp;</li>
                                     <li>
@@ -401,6 +408,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li> Switch Deployment</li>
 										<li> Gateways</li>
 										<li> Country Codes</li>
+										<li> Bulk AP Configuration</li>
 									</ul>
 									<h2>Central Services</h2>
 									Tiles to launch the different Central Services modules supported by Central Automation Studio:
@@ -411,7 +419,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li> License Monitoring</li>
 									</ul>
 									<h2>Monitoring Features</h2>
-									Tiles to launch the different Central Services modules supported by Central Automation Studio:
+									Tiles to launch the different Monitoring modules supported by Central Automation Studio:
 									<ul>
 										<li> Client Statistics</li>
 										<li> AP Statistics</li>
@@ -420,12 +428,17 @@ Aaron Scott (WiFi Downunder) 2021-2023
 										<li> RAPIDS</li>
 										<li> Mesh Monitoring</li>
 									</ul>
+									<h2>Troubleshooting</h2>
+									Tiles to launch the different Troubleshooting modules supported by Central Automation Studio:
+									<ul>
+										<li> Client Troubleshooting</li>
+										<li> AP Troubleshooting</li>
+										<li> Switch Troubleshooting</li>
+									</ul>
 									<h2>Experimental Features</h2>
 									These are the tiles for features that are "in the works" and not fully fleshed out:
 									<ul>
 										<li> AOS-Switch Template Config</li>
-										<li> AP Troubleshooting</li>
-										<li> Bulk AP Configuration</li>
 									</ul>
 									<h2>Management Tasks</h2>
 									<ul>
@@ -528,9 +541,17 @@ Aaron Scott (WiFi Downunder) 2021-2023
                                 	Unassigns the current licenses from all devices in the CSV (using the SERIAL column) </br>
                                 	CSV download from Central Device tables is supported for the upload format. Simply filter in Central for the devices you want to unassign licenses for and download the CSV from Central.
                                 </p>
-                                <h4>Move Devices to Group</h4>
+                                <h4>Pre-provision Devices to Group</h4>
+								<p>
+									Pre-provisions devices to the group assigned in the CSV. This task is designed for devices that have yet to be connected to the network.
+									If the GROUP is missing for a device (or all devices) in the CSV, you will be asked to select a Group to move those devices without a GROUP value to.
+									<div class="img-container">
+										<img src="assets/img/missingGroup.png" alt="Missing Group Selection">
+										<p>Missing Group Selection</p>
+									</div>
+								</p><h4>Move Devices to Group</h4>
                                 <p>
-                                	Moves devices to the group assigned in the CSV.
+                                	Moves devices to the group assigned in the CSV. This task is designed for devices that have already connected to Central
 									If the GROUP is missing for a device (or all devices) in the CSV, you will be asked to select a Group to move those devices without a GROUP value to.
                                 	<div class="img-container">
 										<img src="assets/img/missingGroup.png" alt="Missing Group Selection">
@@ -541,7 +562,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
                                 <p>
                                 	Moves devices to the Site assigned in the CSV.
 									If the SITE is missing for a device (or all devices) in the CSV, the device will not be assigned a device. The device will be listed in the Log for the task.
-									For site assignment to work, the device needs to have contacted Aruba Central - <i>you can not assign a site to a newly added device before it has contacted Aruba Central.</i>
+									For site assignment to work, the device needs to have contacted Aruba Central or have been successfully pre-provisioned - <i>if this task fails as part of an automated workflow, it is generally due to the pre-provisioning process taking longer for Central to complete. Wait a few minutes and try to assigns sites again.</i>
                                 </p>
 								<h4>Remove Devices from Site</h4>
 								<p>
@@ -1199,6 +1220,27 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<i><strong>Note: </strong>AOS10 APs can be set using the Group based config, Site based or per AP</i>
 								</p>
 							</div>
+							<div class="tim-row" id="bulk-row">
+								<h2 class="text-center">Bulk AP Configuration</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-stack text-warning" id="bulk_icon"></i>
+								</div>
+								<legend></legend>
+								<div class="img-container">
+									<img src="assets/img/bulk-ap-antenna.png" alt="Bulk AP Config">
+									<p>Bulk Antenna Configuration</p>
+								</div>
+								<p>
+									The <a href="deployment-bulk-ap.html">Bulk AP Configuration</a> page provides the ability to easily configure multiple APs at a time. The following configuration items are configurable:
+									<ul>
+										<li>RF Profile <button class="btn btn-round btn-sm btn-outline btn-default">for AOS10 APs</button></li>
+										<li>Antenna Gain</li>
+										<li>PoE Optimization Config</li>
+									</ul>
+									Simply select a group, provide any additional filtering to reduce the group to only the APs you want to configure. Then configure all the APs in the list at the same time.<br />
+									Antenna configuration provides a simple list of Aruba antennas (that will auto fill the correct antenna gains), and also allows for custom antenna gains for 3rd party antenna support.
+								</p>
+							</div>
                             <div class="tim-row" id="airmatch-row">
                                 <h2 class="text-center">AirMatch</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1272,7 +1314,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<ul>
 										<li> The state of ClientMatch can be controlled by clicking on the state buttons</li>
 										<li> Unsteerable Clients - with the ability to remove the client from the unsteerable list</li>
-										<li> Recent ClientMatch events</li>
+										<li> Recent ClientMatch events (steering and load balancing)</li>
 										<li> ClientMatch Statistics Graphs</li>
 										<li> ClientMatch Performance Statistics</li>
 									</ul>
@@ -1399,12 +1441,13 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								<ul>
 									<li> Client Operating System</li>
 									<li> 802.11 version support (Mix) </li>
+									<li> Client Encryption (WPA3 vs WPA2 vs Others)</li>
 									<li> Band Split (2.4Ghz vs 5GHz vs 6GHz)</li>
 									<li> Authentication Type</li>
-									<li> Randomized MAC Addresses</li>
 									<li> 802.11k support</li>
 									<li> 802.11v support</li>
 									<li> 802.11r support </li>
+									<li> Randomized MAC Addresses</li>
 								</ul>
 								Each section of the graphs is clickable and will display the matching clients in a table.
 								<div class="img-container">
@@ -1429,6 +1472,7 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									<img src="assets/img/APStats1.png" alt="AP Stats">
 									<p>AP Statistics</p>
 								</div>
+								AP Bandwidth Statistics list the top 10 AP (sorted by total bandwidth). Clicking on the horizontal bar depiction of the total throughput will display the bandwidth over time in the graph.
 								The Global list of BSSIDs is also available for viewing, filtering and downloading as a CSV.
 								<br  /><br  />
 								
@@ -1536,10 +1580,10 @@ Aaron Scott (WiFi Downunder) 2021-2023
 								</ul>
 							</div>
 							<div class="tim-row" id="event-row">
-							<h2 class="text-center">Event Dashboard</h2>
-							<div class="icon-massive text-center icon-warning">
-								<i class="central-icon ca-event-confirm text-warning" id="workflow_event_dashboard"></i>
-							</div>
+								<h2 class="text-center">Event Dashboard</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-event-confirm text-warning" id="workflow_event_dashboard"></i>
+								</div>
 								<p>The <a href="event-dashboard.html">Event Dashboard</a> page provides the timely data needed to monitor event Wi-Fi.</p>
 								<div class="img-container">
 									<img src="assets/img/event.png" alt="Event Dashboard">
@@ -1585,6 +1629,87 @@ Aaron Scott (WiFi Downunder) 2021-2023
 									The time range of displayed data can be selected by the Time Filter in the top right of the menu bar. <i>Note: Top Applications data can only be displayed for 3hrs and higher. Choosing a shorter time filter will still display the data for the last 3hrs.</i>
 								</p>
                             </div>
+							<div class="tim-row" id="troubleshooting-row">
+								<h2 class="text-center">Troubleshooting</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-settings text-warning" id="troublshooting_icon"></i>
+								</div>
+								<legend></legend>
+								<h2>Client Troubleshooting</h2>
+								<div class="img-container">
+									<img src="assets/img/tshoot-client-list.png" alt="Client Troubleshooting List">
+									<p>Client Troubleshooting List</p>
+								</div>
+								<p>
+									The <a href="troubleshooting-clients.html">Client Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Clients, accessible by clicking on the Client Details (i) button. Client overview information is presented at the top of the troubleshooting panel, while additional wireless troubleshooting information is available via the buttons at the bottom of the panel.
+									The Client list provides quick actions for reconnecting clients:
+									<ul>
+										<li>Wireless: Disconnect Client</li>
+										<li>Wired: PoE Bounce, Interface Bounce</li>
+									</ul>
+								</p>
+								<div class="img-container">
+									<img src="assets/img/tshoot-client.png" alt="Client Troubleshooting">
+									<p>Client Troubleshooting Details</p>
+								</div>
+								<p>
+									For Wireless Clients, there are a several pieces of additional troubleshooting information at the bottom of the panel:
+									<ul>
+										<li>Events</li>
+										<li>Mobility Trail</li>
+										<li>Datapath Session Table</li>
+										<li>PMK Key Sync</li>
+									</ul>
+								</p>
+								
+								<p>&nbsp;</p>
+								<h2>AP Troubleshooting</h2>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-list.png" alt="AP Troubleshooting">
+									<p>AP Troubleshooting List</p>
+								</div>
+								<p>
+									The <a href="troubleshooting-ap.html">AP Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific APs. Important information is presented at the top of the troubleshooting panel, while the full command output is available in the "Raw Output" section. If there is a crash log for the AP, an easy "download" button is provided.
+								</p>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-system.png" alt="AP Troubleshooting System">
+									<p>AP Troubleshooting System Details</p>
+								</div>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-radio.png" alt="AP Troubleshooting Radio">
+									<p>AP Troubleshooting Radio Details</p>
+								</div>
+								<p>
+									From a searchable list of Access Points, the following troubleshooting actions/commands are currently supported:
+									<ul>
+										<li><strong>System</strong> - "show ap debug system-status"</li>
+										<li><strong>5GHz</strong> - "show ap debug radio-stats 0"</li>
+										<li><strong>2.4GHz</strong> - "show ap debug radio-stats 1"</li>
+										<li><strong>6GHz</strong> - "show ap debug radio-stats 2"</li>
+										<li><strong>AAA</strong> - "show ap debug radius-statistics"</li>
+										<li><strong>Neighbours</strong> - "show ap arm neighbors"</li>	
+										<ul>
+											<li>Active: Discovered using OTA updates</li>
+											<li>Passive: Discovered using passive scan</li>
+											<li>Indirect: Two hop neighbours discovered using neighbours OTA update</li>
+									</ul> <br/>
+									Only radios that are up are listed in the actions.
+								</p>
+								<div class="img-container">
+									<img src="assets/img/tshoot-ap-aaa.png" alt="AP Troubleshooting AAA">
+									<p>AP Troubleshooting AAA Details</p>
+								</div>
+								
+								<p>&nbsp;</p>
+								<h2>Switch Troubleshooting</h2>
+								<div class="img-container">
+									<img src="assets/img/tshoot-port-list.png" alt="Switch Port Troubleshooting">
+									<p>Switch Port Troubleshooting List</p>
+								</div>
+								<p>
+									The <a href="troubleshooting-switching.html">Switch Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Switches. Important information is presented at the top of the troubleshooting panel, while a list of ports for the switch provide easily accessible information as well as the  ability to perform PoE Bounce and Interface Bounce on a port.
+								</p>
+							</div>
                             <div class="tim-row" id="experimental-row">
                                 <h2 class="text-center">Experimental Features</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1649,57 +1774,6 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 									
                                 </p>
-								<p>&nbsp;</p>
-								<h2>AP Troubleshooting</h2>
-								<div class="img-container">
-									<img src="assets/img/tshoot-ap-list.png" alt="AP Troubleshooting">
-									<p>AP Troubleshooting List</p>
-								</div>
-								<p>
-									The <a href="troubleshooting-ap.html">AP Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific APs. Important information is presented at the top of the troubleshooting panel, while the full command output is available in the "Raw Output" section. If there is a crash log for the AP, an easy "download" button is provided.
-								</p>
-								<div class="img-container">
-									<img src="assets/img/tshoot-ap-system.png" alt="AP Troubleshooting System">
-									<p>AP Troubleshooting System Details</p>
-								</div>
-								<div class="img-container">
-									<img src="assets/img/tshoot-ap-radio.png" alt="AP Troubleshooting Radio">
-									<p>AP Troubleshooting Radio Details</p>
-								</div>
-								<p>
-									From a searchable list of Access Points, the following troubleshooting actions/commands are currently supported:
-									<ul>
-										<li><strong>System</strong> - "show ap debug system-status"</li>
-										<li><strong>5GHz</strong> - "show ap debug radio-stats 0"</li>
-										<li><strong>2.4GHz</strong> - "show ap debug radio-stats 1"</li>
-										<li><strong>AAA</strong> - "show ap debug radius-statistics"</li>
-										<li><strong>Neighbours</strong> - "show ap arm neighbors"</li>	
-										<ul>
-											<li>Active: Discovered using OTA updates</li>
-											<li>Passive: Discovered using passive scan</li>
-											<li>Indirect: Two hop neighbours discovered using neighbours OTA update</li>
-									</ul> <br/>
-									Only radios that are up are listed in the actions. The 3rd radio in tri-radio APs is currently not supported due to lack of CLI commands being available.
-								</p>
-								<div class="img-container">
-									<img src="assets/img/tshoot-ap-aaa.png" alt="AP Troubleshooting AAA">
-									<p>AP Troubleshooting AAA Details</p>
-								</div>
-								<p>&nbsp;</p>
-								<h2>Bulk AP Configuration</h2>
-								<div class="img-container">
-									<img src="assets/img/bulk-ap-antenna.png" alt="Bulk AP Config">
-									<p>Bulk Antenna Configuration</p>
-								</div>
-								<p>
-									The <a href="deployment-bulk-ap.html">Bulk AP Configuration</a> page provides the ability to easily configure multiple APs at a time. The following configuration items are configurable:
-									<ul>
-										<li>RF Profile <button class="btn btn-round btn-sm btn-outline btn-default">for AOS10 APs</button></li>
-										<li>Antenna Gain</li>
-									</ul>
-									Simply select a group, provide any additional filtering to reduce the group to only the APs you want to configure. Then configure all the APs in the list at the same time.<br />
-									Antenna configuration provides a simple list of Aruba antennas (that will auto fill the correct antenna gains), and also allows for custom antenna gains for 3rd party antenna support.
-								</p>
                             </div>
 							<div class="tim-row" id="management-row">
 								<h2 class="text-center">Management Features</h2>
@@ -1762,6 +1836,51 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.37.6 (2024/05/25)</h4>
+									<ul>
+										<li>Added additional Central Clusters</li>
+										<li>Added tooltip to display the hostname of the local devices in the Datapath Session table view in Client Troubleshooting</li>
+										<li>Added Datapath Session table view in AP Troubleshooting</li>
+									</ul>
+									<h4>Version 1.37.5 (2024/05/21)</h4>
+									<ul>
+										<li>Added Client Encryption chart in the Client Statistics page</li>
+										<li>Added Wi-Fi 7 to the Wi-Fi Protocol Chart in the Client Statistics page</li>
+										<li>Fix for Pathloss visualization with APs that have Dual 5GHz</li>
+										<li>Improved condensed mode in the Event Dashboard page</li>
+										<li>Added ClientMatch details to the Client Troubleshooting page</li>
+									</ul>
+									<h4>Version 1.37.4 (2024/05/02)</h4>
+									<ul>
+										<li>Added support for displaying Per AP Bandwidth (Table and Graph) at the bottom of the AP Statistics page</li>
+									</ul>
+									<h4>Version 1.37.3 (2024/04/29)</h4>
+									<ul>
+										<li>Added support for <a href="#clientmatch-row">ClientMatch</a> Load Balance history</li>
+									</ul>
+									<h4>Version 1.37.2 (2024/04/26)</h4>
+									<ul>
+										<li>Added support for bulk deletion of devices from Central in <a href="#csv-row">CSV Workflows</a></li>
+									</ul>
+									<h4>Version 1.37.1 (2024/04/22)</h4>
+									<ul>
+										<li>Client Troubleshooting - Datapath improvements</li>
+										<ul>
+											<li>Session Pairing: related Inbound and Outbound flows are paired together - sort by the "#" column</li>
+											<li>Inbound and Outbound traffic is shown by the direction arrows</li>
+											<li>Direction arrows will change colour to Red if the flow is Denied by the firewall</li>
+											<li>DPI (Application and Web Category) information is merged into the datapath table</li>
+										</ul>
+									</ul>
+									<h4>Version 1.37 (2024/04/21) - "Provisioning Trouble"</h4>
+									<ul>
+										<li>New <a href="#troubleshooting-row">Troubleshooting</a> section - Client (new), AP and Switch</li>
+										<li>Support for device pre-provisioning workflows</li>
+										<li>Improved automation progress notifications</li>
+										<li>Fixes for license assignment, and site assignment tasks</li>
+										<li>Fix for licensing 9100 series Gateways	</li>
+										<li>Bulk AP Configuration now resides in the Configuration Deployment section of the Dashboard</li>
+									</ul>
 									<h4>Version 1.36.8 (2024/04/15)</h4>
 									<ul>
 										<li>Support for SSID assignment of SSIDs with spaces in the SSID name</li>

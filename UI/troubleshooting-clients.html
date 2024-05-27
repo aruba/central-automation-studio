@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.33
 Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
 <!DOCTYPE html>
@@ -36,7 +36,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240308" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project 
 		<link href="assets/css/demo.css" rel="stylesheet" />-->
 	</head>
@@ -130,6 +130,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 														<th>MAC Address</th>
 														<th>IP Address</th>
 														<th>Client OS</th>
+														<th>User Role</th>
 														<th>Connected To</th>
 														<th>Site</th>
 														<th>VLAN</th>
@@ -159,9 +160,13 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 									<div class="card-body">
 										<div class="row">
 											<div class="col-md-4">
-												<h5>Client Info</h5>
-												<hr />
-												<ul class="list-inline" id="wirelessInfo"></ul>
+												<div class="row">
+													<div class="col-sm-12">
+														<h5>Client Info</h5>
+														<hr />
+														<ul class="list-inline" id="wirelessInfo"></ul>
+													</div>
+												</div>
 											</div>
 											<div class="col-md-4">
 												<div class="row">
@@ -205,7 +210,9 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 												<hr />
 												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayEvents()" id='eventsBtn'>Events</button>
 												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayMobility()" id='mobilityBtn'>Mobility Trail</button>
+												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayDatapath()" id='datapathBtn'>Datapath</button>
 												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayKeySync()" id='keySyncBtn'>Key Syncing</button>
+												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayClientMatch()" id='cmBtn'>ClientMatch</button>
 											</div>
 										</div>
 										<br  />
@@ -258,6 +265,92 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 																	</thead>
 																	<tbody></tbody>
 																</table>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12" id="datapathCard" hidden>
+												<div class="card">
+													<div class="card-header">
+														<h4 class="card-title" id="datapathTitle">Datapath</h4>
+														<a class="refresh-link" onclick="refreshDatapath()"><i class="central-icon ca-reload"></i></a>
+														<div class="right-link" id="flagDiv">
+															<span data-toggle="tooltip" data-placement="right" data-html="true" title="Flags: <strong>A</strong> = Application Firewall Inspect;<br/> <strong>C</strong> = Client;<br/> <strong>D</strong> = Deny;<br/> <strong>E</strong> = Media Deep Inspect;<br/> <strong>F</strong> = Fast Age;<br/> <strong>G</strong> = Media Signal;<br/> <strong>H</strong> = High Priority;<br/> <strong>I</strong> = Deep Inspect;<br/><strong>L</strong> = ALG Session;<br/> <strong>M</strong> = Mirror;<br/> <strong>N</strong> = Dest NAT;<br/> <strong>O</strong> = Session is programmed through SDN/Openflow controller;<br/> <strong>P</strong> = Set Priority;<br/> <strong>R</strong> = Redirect;<br/> <strong>S</strong> = Source NAT;<br/> <strong>T</strong> = Set ToS;<br/> <strong>U</strong> = Locally Destined;<br/> <strong>V</strong> = VOIP;<br/> <strong>X</strong> = HTTP/HTTPS redirect for dpi denied session;<br/> <strong>Y</strong> = No Syn;<br/> <strong>a</strong> = RTP Analysis;<br/> <strong>d</strong> = DPI Cache Hit;<br/> <strong>f</strong> = FIB init pending in session;<br/> <strong>h</strong> = HTTPS Redirect Error Page;<br/> <strong>i</strong> = in offload flow;<br/> <strong>m</strong> = Media Mon;<br/> <strong>p</strong> = Session is marked as permanent;<br/> <strong>s</strong> = Media Signal;"><i class="fa-solid fa-circle-info text-muted"></i></span>
+														</div>
+														
+													</div>
+													<div class="card-body">
+														<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+															<div class="fresh-datatables">
+																<table id="datapath-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																	<thead>
+																		<th>#</th>
+																		<th>Direction</th>
+																		<th>Src IP</th>
+																		<th>Dest IP</th>
+																		<th>Protocol</th>
+																		<th>Src Port</th>
+																		<th>Dest Port</th>
+																		<th>App</th>
+																		<th>Web Category</th>
+																		<th>ToS</th>
+																		<th>Age</th>
+																		<th>Destination</th>
+																		<th>Packets</th>
+																		<th>Bytes</th>
+																		<th>Flags</th>
+																		<th>Offload</th>
+																	</thead>
+																	<tbody></tbody>
+																</table>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12" id="cmCard" hidden>
+												<div class="card">
+													<div class="card-header">
+														<h4 class="card-title" id="eventsTitle">ClientMatch Details</h4>
+														<a class="refresh-link" onclick="refreshCM()"><i class="central-icon ca-reload"></i></a>
+													</div>
+													<div class="card-body">
+														<div class='row'>
+															<div class="col-md-5">
+																<h5 class="card-title">VBR</h5>
+																<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+																	<div class="fresh-datatables">
+																		<table id="cm-info-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																			<thead>
+																				<th>AP</th>
+																				<th>RSSI</th>
+																				<th>Timestamp</th>
+																			</thead>
+																			<tbody></tbody>
+																		</table>
+																	</div>
+																</div>
+															</div>
+															<div class="col-md-1"></div>
+															<div class="col-md-5">
+																<h5 class="card-title">Steer History</h5>
+																<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+																	<div class="fresh-datatables">
+																		<table id="cm-history-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																			<thead>
+																				<th>AP</th>
+																				<th>SNR</th>
+																				<th>Timestamp</th>
+																			</thead>
+																			<tbody></tbody>
+																		</table>
+																	</div>
+																</div>
 															</div>
 														</div>
 													</div>
@@ -353,44 +446,19 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 												<ul class="list-inline" id="wiredInfo"></ul>
 											</div>
 											<div class="col-md-4">
-												<h5>Connection Info</h5>
-												<hr />
-												<ul class="list-inline" id="wiredConnection"></ul>
-											</div>
-										</div>
-										<div class="row">
-											<div class="col-md-12">
-												<h5>Troubleshooting</h5>
-												<hr />
-												<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="">Authentication</button>
-											</div>
-										</div>
-										<div class="row" id='wirelessResults' hidden>
-											<div class="col-md-6">
-												<h5 class="extra-h5-padding">Hardware</h5>
-												<hr />
-												<ul class="list-inline" id="wirelessIssues"></ul>
-											</div>
-											<div class="col-md-6">
-												<h5 class="extra-h5-padding">Interfaces</h5>
-												<hr />
-												<ul class="list-inline" id="interfaceIssues"></ul>
-											</div>
-										</div>
-										<div class="row"></div>
-										<div class="accordions" id="accordion" hidden>
-											<div class="card">
-												<div class="card-header">
-													<h4 class="card-title">
-														<a data-target="#collapseSystem" href="#" data-toggle="collapse">
-															Raw Results
-															<b class="caret"></b>
-														</a>
-													</h4>
+												<div class="row">
+													<div class="col-sm-12">
+														<h5>Connection Info</h5>
+														<hr />
+														<ul class="list-inline" id="wiredConnection"></ul>
+													</div>
 												</div>
-												<div id="collapseSystem" class="card-collapse collapse">
-													<div class="card-body">
-														<textarea type="text" placeholder="Troubleshooting Results" class="form-control textarea" id="wiredText" rows="50"></textarea>
+												<br  />
+												<div class="row">
+													<div class="col-sm-12">
+														<h5>Switch Info</h5>
+														<hr />
+														<ul class="list-inline" id="wiredSwitch"></ul>
 													</div>
 												</div>
 											</div>
@@ -523,6 +591,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 	<script src="assets/js/plugins/bootstrap-switch.js"></script>
 	<!--  Chartist Plugin  -->
 	<script src="assets/js/plugins/chartist.min.js"></script>
+	<script src="assets/js/plugins/chartist-plugin-tooltip.js"></script>
 	<!--  Notifications Plugin    -->
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
@@ -589,6 +658,20 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 				
+				
+				$('#synced-ap-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": false,
+					"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search APs",
+					},
+					columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }, { type: 'title-numeric', targets: 11}, { orderable: false, targets: 12 }],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+				
 				$('#events-table').DataTable({
 					"pagingType": "simple_numbers",
 					"autoWidth": true,
@@ -617,6 +700,41 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 				});
 				
+				$('#datapath-table').DataTable({
+					"pagingType": "simple_numbers",
+					"autoWidth": true,
+					"lengthMenu": [[10, 25, 50, 100, 500, 1000, -1], [10, 25, 50, 100, 500, 1000, "All"]],
+					responsive: true,
+					language: {
+						search: "_INPUT_",
+						searchPlaceholder: "Search Entries",
+					},
+					//searchCols: [ null, null, null, null, null, null, null, null, null, null, null, null, null, { caseInsensitive: false }, null ],
+					search: { caseInsensitive: false },
+					columnDefs: [{ type: 'ip-address', targets: [2,3] }, { type: 'title-string', targets: 1}],
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+				
+				$('#cm-info-table').DataTable({
+					searching: false, 
+					paging: false, 
+					info: false,
+					"autoWidth": true,
+					"order": [[ 0, "desc" ]],
+					responsive: true,
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+				
+				$('#cm-history-table').DataTable({
+					searching: false, 
+					paging: false, 
+					info: false,
+					"autoWidth": true,
+					"order": [[ 0, "desc" ]],
+					responsive: true,
+					"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+				});
+				
 				osType = [];
 				
 				$('[data-toggle="tooltip"]').tooltip();
@@ -639,10 +757,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2023
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240415"></script>
+	<script src="assets/js/main.js?v=240525"></script>
 	<script src="assets/js/proxy.js?v=230325"></script>
 	<script src="assets/js/hydra.js?v=230524"></script>
 	<script src="assets/js/kms.js?v=240326"></script>
 	<script src="assets/js/locator.js?v=240212"></script>
-	<script src="assets/js/troubleshooting-clients.js?v=231027"></script>
+	<script src="assets/js/troubleshooting-clients.js?v=240422"></script>
 </html>

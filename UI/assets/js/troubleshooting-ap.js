@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7
 Updated: 1.24.1
-© Aaron Scott (WiFi Downunder) 2023
+© Aaron Scott (WiFi Downunder) 2023-2024
 */
 
 var selectedClusters = {};
@@ -15,6 +15,10 @@ var currentAP;
 var neighbourTableData = [];
 
 var bssidNotification;
+var troubleshootingNotification;
+
+var ipToUsername = {};
+var sessionPairs = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Global functions
@@ -23,6 +27,10 @@ function loadCurrentPageAP() {
 	getDevices();
 	refreshBSSIDs();
 	$('[data-toggle="tooltip"]').tooltip();
+}
+
+function loadCurrentPageClient() {
+	generateIPtoUsernameMapping();
 }
 
 function getDevices() {
@@ -92,14 +100,13 @@ function loadDevicesTable(checked) {
 			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugSystemStatus(\'' + device.serial + '\')">System</button> ';
 
 			$.each(device.radios, function() {
-				//console.log(this);
-				// no support for radio 3 (6GHz) in troubleshooting APIs
-				if (this.band < 2 && this.status == 'Up') tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugRadioStats(\'' + device.serial + "','" + this.index + '\')">' + this.radio_name.replace('Radio ', '') + '</button> ';
+				if (this.status == 'Up') tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugRadioStats(\'' + device.serial + "','" + this.index + '\')">' + this.radio_name.replace('Radio ', '') + '</button> ';
 			});
 
 			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugAAA(\'' + device.serial + '\')">AAA</button> ';
 			//tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugTech(\'' + device.serial + '\')">Tech-Support</button> ';
 			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="debugNeighbours(\'' + device.serial + '\')">Neighbours</button> ';
+			tshootBtns += '<button class="btn btn-round btn-sm btn-outline btn-warning" onclick="getDatapathForAP(\'' + device.serial + '\')">Datapath</button> ';
 		}
 
 		// Add AP to table		
@@ -120,6 +127,7 @@ function debugRadioStats(deviceSerial, radioBand) {
 	var data = '';
 	if (radioBand == 0) data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 105 }] });
 	else if (radioBand == 1) data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 107 }] });
+	else if (radioBand == 2) data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 371 }] });
 
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -437,7 +445,7 @@ function checkDebugSystemStatus(session_id, deviceSerial) {
 				startString = '   ';
 				var startLocation = memoryLine.indexOf(startString) + startString.length;
 				var lastMemoryValue = parseInt(memoryLine.substring(startLocation).trim());
-				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa-solid fa-circle text-warning"></i><strong>' + lastMemoryValue + '%</strong></li>');
+				if (lastMemoryValue > 74) $('#hardwareIssues').append('<li>Memory Usage: <i class="fa-solid fa-circle text-warning"></i><strong> ' + lastMemoryValue + '%</strong></li>');
 				else $('#hardwareIssues').append('<li>Memory Usage: <strong>' + lastMemoryValue + '%</strong></li>');
 
 				// Ethernet status
@@ -727,7 +735,7 @@ function checkAAA(session_id, deviceSerial) {
 						}
 					}
 				});
-				console.log(aaaInfo);
+				//console.log(aaaInfo);
 
 				// Build out the UI elements
 				for (const [key, value] of Object.entries(aaaInfo)) {
@@ -1181,3 +1189,240 @@ function buildCSVData() {
 	return csvDataBuild;
 }
 
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Datapath Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function refreshDatapath() {
+	getDatapathForAP(currentAP.serial);
+}
+
+function getDatapathForAP(deviceSerial) {
+	datapathNotification = showLongNotification('ca-firewall', 'Getting AP Datapath information...', 'bottom', 'center', 'info');
+	currentAP = findDeviceInMonitoring(deviceSerial);
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 45 }, { command_id: 211 }] });
+	
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: data,
+		}),
+	};
+	
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+				return;
+			}
+		}
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response.status === 'QUEUED') {
+			troubleshootingNotification = showPermanentNotification('ca-window-code', response.message, 'bottom', 'center', 'info');
+			setTimeout(checkDatapathStatus, 5000, response.session_id, response.serial);
+		} else {
+			showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
+		}
+	});
+}
+
+
+function checkDatapathStatus(session_id, deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/devices/' + deviceSerial + '?session_id=' + session_id,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/devices/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			if (response.status === 'RUNNING' || response.status === 'QUEUED') {
+				troubleshootingNotification.update({ message: response.message.replace(' Please try after sometime', '.'), type: 'info' });
+				setTimeout(checkDatapathStatus, 10000, session_id, response.serial);
+			} else if (response.status === 'COMPLETED') {
+				$('#DatapathModalLink').trigger('click');
+				//var results = decodeURI(response.output);
+				var results = response.output;
+								
+				// split into the two commands (show datapath session, show datapath session dpi)
+				var pos = results.indexOf('COMMAND=show datapath session');
+				var sessionResults = results.substring(pos, results.indexOf('COMMAND=show datapath session dpi', pos));
+				pos = results.indexOf('COMMAND=show datapath session dpi');
+				var dpiResults = results.substring(pos);
+				// Turn command results into arrays for iterating through and trim to just table contents
+				var sessionLines = sessionResults.split('\n');
+				var tableIndex = sessionLines.indexOf('----------------  --------------  ---- ----- ----- ---- ---- --- --- ----------- ---- ------- ----- ------ ------------- ');
+				sessionLines.splice(0,tableIndex+1);
+				var tableIndex = sessionLines.indexOf('');
+				sessionLines.splice(tableIndex);
+				
+				var dpiLines = dpiResults.split('\n');
+				var tableIndex = dpiLines.indexOf('----------------  --------------  ---- ----- ----- -------------------------- ------------------------- ------ ------- ----- ------- ------ ------------- ---------');
+				dpiLines.splice(0,tableIndex+1);
+				var tableIndex = dpiLines.indexOf('');
+				dpiLines.splice(tableIndex);
+				
+				// Filter session table for client specific entries
+				// and Sort session table into flow pairs...
+				sessionPairs = {};
+				var sessionTableFound
+				$.each(sessionLines, function() {
+					var lineData = this.replace(/  +/g, ' '); // remove the extra padding in the results
+					var lineArray = lineData.split(' ');
+					if (isIpAddress(lineArray[0])) {
+						lineArray[10] = parseInt(lineArray[10], 16).toString(); // convert hex to int
+						lineArray[11] = parseInt(lineArray[11], 16).toString(); // convert hex to int
+						lineArray[12] = parseInt(lineArray[12], 16).toString(); // convert hex to int
+						if (lineArray.length < 15) lineArray.push(' '); // Add extra if Offload Flags are empty (and therefore trimmed off)
+						
+						lineArray.splice(10, 1); // Remove TAge since we are not showing it
+						lineArray[5] = '-'; // repurposing CNTR value with DPI App
+						lineArray[6] = '-'; // repurposing PRIO value with DPI Web Category
+						
+						// Check for DPI information for session line
+						$.each(dpiLines, function(){
+							
+							var dpiLineData = this.replace(/  +/g, ' ');
+							var dpiLineArray = dpiLineData.split(' ');
+							// Match on Src IP/Port and Dest IP/port 
+							if ((lineArray[0] === dpiLineArray[0]) && (lineArray[1] === dpiLineArray[1]) && (lineArray[3] === dpiLineArray[3]) && (lineArray[4] === dpiLineArray[4])) {
+								// Put in App
+								if (dpiLineArray[5] === 'App-Not-Class') lineArray[5] = 'Not Classified';
+								else lineArray[5] = titleCase(dpiLineArray[5]);
+								
+								// Put in Web Category
+								var webCat = dpiLineArray[7];
+								if (webCat === ']') webCat = dpiLineArray[8];
+								if (webCat === 'Web-Not-Class') webCat = "Not Classified";
+								lineArray[6] = titleCase(webCat);
+								return false; // Break out of dpiLines iteration
+							}
+						});
+						
+						// create session pair key - used to link in and out sessions together
+						var sessionKey = '';
+						if (isPrivateIP(lineArray[0])) sessionKey = lineArray[1] + ':' + lineArray[3] + ':' + lineArray[4]; // key for outbound traffic
+						else sessionKey = lineArray[0] + ':' + lineArray[4] + ':' + lineArray[3]; // key for return traffic
+						
+						if (!sessionPairs[sessionKey]) {
+							sessionPairs[sessionKey] = [];
+						}
+						sessionPairs[sessionKey].push(lineArray); // add session line to pairing
+					}
+				});
+				
+				loadDatapathTable();
+				
+				if (troubleshootingNotification) {
+					troubleshootingNotification.update({ message: response.message, type: 'success' });
+					setTimeout(troubleshootingNotification.close, 1000);
+				}
+			} else {
+				if (troubleshootingNotification) {
+					troubleshootingNotification.update({ message: response.message, type: 'danger' });
+					setTimeout(troubleshootingNotification.close, 2000);
+				}
+			}
+			if (datapathNotification) datapathNotification.close();
+		}
+	});
+}
+
+function loadDatapathTable() {
+	// Clear the table
+	var table = $('#datapath-table').DataTable();
+	$('#datapath-table')
+	.DataTable()
+	.rows()
+	.remove();
+	
+	var sessionKeyArray = Object.keys(sessionPairs);
+	for (var i=0;i<sessionKeyArray.length;i++) {
+		var sessionLines = sessionPairs[sessionKeyArray[i]];
+		
+		// Sort the session pairs so that the outbound is first
+		sessionLines.sort((a,b) => (isPrivateIP(b[0])) ? 1 : (isPrivateIP(a[0]) ? -1 : 0))
+		
+		$.each(sessionLines, function(){
+			// Add session direction arrow (and colour red is Denied)
+			var sessionRow = this;
+			if (isPrivateIP(sessionRow[0])) {
+				if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up text-danger"></i>');
+				else sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up"></i>');
+			} else {
+				if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down text-danger"></i>');
+				else sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down"></i>');
+			}
+			// Add the session pair number as the first element in the row, then add row to table
+			sessionRow.unshift(i+1);
+			var srcIP = sessionRow[2];
+			var dstIP = sessionRow[3];
+			if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
+			if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
+			table.row.add(sessionRow);
+		});
+	}
+	
+	
+	$('#datapath-table')
+	.DataTable()
+	.rows()
+	.draw();
+	$('#datapath-table').DataTable().columns.adjust().draw();
+}
+
+function isIpAddress(ip) { 
+	const ipv4Pattern =  
+		/^(\d{1,3}\.){3}\d{1,3}$/; 
+	const ipv6Pattern =  
+		/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/; 
+	return ipv4Pattern.test(ip) || ipv6Pattern.test(ip); 
+}
+
+function isPrivateIP(ip) {
+   var parts = ip.split('.');
+   return parts[0] === '10' || 
+	  (parts[0] === '172' && (parseInt(parts[1], 10) >= 16 && parseInt(parts[1], 10) <= 31)) || 
+	  (parts[0] === '192' && parts[1] === '168');
+}
+
+function generateIPtoUsernameMapping() {
+	ipToUsername = {};
+	var allClients = getClients();
+	$.each(allClients, function() {
+		if (this.ip_address) ipToUsername[this.ip_address] = this.name;
+	});
+	console.log(ipToUsername);
+}
