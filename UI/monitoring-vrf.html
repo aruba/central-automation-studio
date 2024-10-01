@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240817" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -131,7 +131,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
+														<i class="central-icon ca-ap-icon text-warning" id="ap_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -303,9 +303,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
 																<option value="channels">Channel</option>
 																<option value="bandwidth">Channel Bandwidth</option>
 																<option value="utilization">Channel Utilization</option>
-																<option value="radar">Radar Events</option>
-																<option value="pathloss">Path Loss Between APs</option>
 																<option value="clients" selected>Clients</option>
+																<option value="clientcount">Client Count</option>
+																<option value="pathloss">Path Loss Between APs</option>
+																<option value="radar">Radar Events</option>
 															</select>
 														</div>
 													</div>
@@ -437,7 +438,12 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="monitoring-clients.html">Client Statistics</a>
+											<a href="monitoring-clients.html">
+												<button type="submit" class="btn btn-fill btn-info" id="statsClientBtn">
+												<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+												Client Statistics
+												</button>
+											</a>
 										</div>
 									</div>
 								</div>
@@ -481,9 +487,28 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="monitoring-aps.html">AP Statistics</a>
-											<a class="btn btn-fill btn-info" href="monitoring-reboot.html">Reboot APs</a>
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
+											<a href="monitoring-aps.html">
+												<button type="submit" class="btn btn-fill btn-info" id="statsAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+													AP Statistics
+												</button>
+											</a>
+											<a href="monitoring-reboot.html">
+												<button type="submit" class="btn btn-fill btn-info" id="rebootAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-power-off"></i></span>
+													Reboot APs
+												</button>
+											</a>
+											<a href="deployment-country.html">
+												<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+													Configure Country Codes
+												</button>
+											</a>
+											<button type="submit" class="btn btn-fill btn-info" id="downloadAPBtn" onclick="downloadDeviceCSV(DeviceType.AP)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
 										</div>
 									</div>
 								</div>
@@ -522,6 +547,20 @@ Aaron Scott (WiFi Downunder) 2021-2024
 													<tbody></tbody>
 												</table>
 											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<a href="monitoring-switches.html">
+											<button type="submit" class="btn btn-fill btn-info" id="statsSwitchBtn">
+												<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+												Switch Statistics
+											</button>
+										</a>
+											<button type="submit" class="btn btn-fill btn-info" id="downloadSwitchBtn" onclick="downloadDeviceCSV(DeviceType.Switch)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
 										</div>
 									</div>
 								</div>
@@ -566,6 +605,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											</div>
 										</div>
 									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadGatewayBtn" onclick="downloadDeviceCSV(DeviceType.Gateway)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -606,6 +653,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											</div>
 										</div>
 									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadControllerBtn" onclick="downloadDeviceCSV(DeviceType.Controller)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -641,7 +696,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										</div>
 									</div>
 									<div class="card-footer ">
-										<div class="col-md-12"><a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>&nbsp;<a class="btn btn-fill btn-info" href="deployment-site-mgmt.html">Bulk Manage Sites</a></div>
+										<div class="col-md-12"><button type="submit" class="btn btn-fill btn-info" id="countryAPBtn" href="deployment-country.html">
+											<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+											Configure Country Codes
+										</button>&nbsp;<button type="submit" class="btn btn-fill btn-info" id="bulkSiteBtn" href="deployment-site-mgmt.html">
+											<span class="btn-label"><i class="fa-solid fa-location-dot"></i></span>
+											Manage Sites
+										</button></div>
 									</div>
 								</div>
 							</div>
@@ -675,7 +736,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
+											<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn" href="deployment-country.html">
+											<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+											Configure Country Codes
+										</button>
 										</div>
 									</div>
 								</div>
@@ -777,6 +841,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 	<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
 	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
 	<script src="assets/js/plugins/moment.min.js"></script>
+	<script src="assets/js/plugins/luxon.min.js"></script>
 	<!--  DatetimePicker   -->
 	<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
 	<!--  Sweet Alert  -->
@@ -1004,8 +1069,9 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240525"></script>
-	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/visualrf.js?v=240521"></script>
+	<script src="assets/js/version.js?v=240919"></script>
+	<script src="assets/js/main.js?v=240919"></script>
+	<script src="assets/js/proxy.js?v=240920"></script>
+	<script src="assets/js/hydra.js?v=240830"></script>
+	<script src="assets/js/visualrf.js?v=240830"></script>
 </html>

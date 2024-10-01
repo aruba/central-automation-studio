@@ -16,7 +16,7 @@ var rfProfiles = {};
 function loadCurrentPageAP() {
 	loadAntennas();
 
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		deviceList = getFullInventory();
 	});
 	$('[data-toggle="tooltip"]').tooltip();
@@ -148,6 +148,10 @@ function openPOEBulkConfig() {
 	$('#BulkPOEConfigModalLink').trigger('click');
 }
 
+function openAP1XBulkConfig() {
+	$('#BulkAP1XModalLink').trigger('click');
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Antenna Action 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -250,6 +254,41 @@ function applyPOEBulkChanges() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	AP1x Action 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function updateAP1X() {
+	var select = document.getElementById('groupselector');
+	manualGroup = select.value;
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'This will configure the AP1x PEAP Credentials for all APs shown in the table',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, do it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			applyAP1xBulkChanges();
+		}
+	});
+}
+
+function applyAP1xBulkChanges() {
+	logStart('Configuring devices AP1x PEAP Credentials...');
+	// Build CSV with selected group name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(manualGroup, 'ap1x');
+
+	processCSV(csvDataBlob);
+	// Move devices to the selected Group
+	setAP1XCredentials();
+	
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Build CSV with any required changes (group or site action)
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -262,6 +301,9 @@ function buildCSVData(selectedGroup, mode) {
 	var antenna2Key = 'RADIO 2 GAIN';
 	var rfProfileKey = 'RF PROFILE';
 	var poeOptKey = 'POE OPT';
+	var ap1xUsernameKey = 'AP1X USERNAME';
+	var ap1xPasswordKey = 'AP1X PASSWORD';
+	
 
 	var csvDataBuild = [];
 
@@ -280,6 +322,8 @@ function buildCSVData(selectedGroup, mode) {
 			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [rfProfileKey]: document.getElementById('radioSelector').value });
 		} else if (mode === 'poe') {
 			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [poeOptKey]: document.getElementById('poeopt').checked });
+		} else if (mode === 'ap1x') {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [ap1xUsernameKey]: document.getElementById('ap1xUsername').value, [ap1xPasswordKey]: document.getElementById('ap1xPassword').value });
 		}
 	});
 

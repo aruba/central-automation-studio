@@ -13,7 +13,7 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 <!--
 Central Automation v1.x
-Updated: 1.37.2
+Updated: 1.39.3
 Aaron Scott (WiFi Downunder) 2021-2024
 -->
 
@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=240421" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=240817" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -84,7 +84,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
             <div class="page-header-image" data-parallax="true" style="background-image: url('assets/img/bg4.jpg')">
                 <div class="filter"></div>
                 <div class="title-container text-center">
-                    <h1>Central Automation Studio v1.37.6</h1>
+                    <h1 id='docsTitle'>Central Automation Studio</h1>
                     <h3>Documentation</h3>
                 </div>
             </div>
@@ -123,6 +123,9 @@ Aaron Scott (WiFi Downunder) 2021-2024
                                     <li>
                                         <a href="#site-row">Site Workflows</a>
                                     </li>
+									<li>
+										<a href="#scan-row">Barcode Scanner Input</a>
+									</li>
                                     <li>
                                         <a href="#msp-row">MSP Workflows</a>
                                     </li>
@@ -181,7 +184,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
                                     </li>
 									<li>&nbsp;</li>
 									<li>
-										<a href="#monitoring-row">Monitoring Features</a>
+										<a href="#monitoring-row">Monitoring and Statistics</a>
 									</li>
 									<li>
 										<a href="#mesh-row"> Mesh Monitoring</a>
@@ -255,7 +258,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									Multiple API Proxy Servers exist for speed and redundancy. The API Proxy Server used depends on the Central instance being communicated with:
 									<ul>
 										<li> APAC-based Central Cluster = https://api.wifidownunder.com (Hosted in Sydney - Azure Australia East)</li>
-										<li> US-based Central Cluster = https://api-usw.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
+										<li> 2x US-based Central Clusters = https://api-usw.wifidownunder.com, https://api-usw-2.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
 										<li> EU-based Central Cluster = https://api-euw.wifidownunder.com (Hosted in Amsterdam - Azure Europe West)</li>
 									</ul>
 									API Proxy Server Accessibility is available in the footer of each page
@@ -299,15 +302,18 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											<li> <strong>API Data Optimization</strong> - adjusts how much data is gathered from APIs</li>
 											<ul>
 												<li>Full Details - Includes all options listed below</li>
-												<li>Large Scale Deployment - Disables all options listed below</li>
+												<li>Large Scale Deployment - Disables all options listed below except AP & Switch Monitoring as well as Gateway Monitoring</li>
+												<li>Group Config Only - Disables all options listed below</li>
 												<li>Custom - Mix and Match the optional information</li>
 											</ul>
 											</ul>
 											<li> Optional Information</li>
 											<ul>
 											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? Disabling improves performance at the loss of client information/statistics. This is enabled by default</li>
-											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? Disabling improves performance of large numbers of groups. This is enabled by default</li>
+											<li> <strong>AP & Switch Monitoring</strong> - Are AP and Switch details downloaded? Disabling improves speed when using Central Automation Studio only for group based config changes. This is enabled by default</li>
+											<li> <strong>Gateway Monitoring</strong> - Are Gateway details downloaded? Disabling improves speed when using Central Automation Studio only for group based config changes. This is enabled by default</li>
 											<li> <strong>Gateway Details</strong> - Are detailed Gateway properties fetched? Disabling improves performance of large numbers of gateways. This is disabled by default</li>
+											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? Disabling improves performance of large numbers of groups. This is enabled by default</li>
 											<li> <strong>Virtual Controller Config</strong> - Are Virtual Controllers added in the WLAN Group config page? Disabling improves performance of large numbers of Virtual Controllers. This is enabled by default</li>
 											<li> <strong>AirMatch - All RF Events</strong> - Are "All" RF events fetched for AirMatch? Disabling improves performance on large networks with lots of RF events - channel changes, radar, noise. This is enabled by default</li>
 											<li> <strong>AirMatch - Optimization History</strong> - The latest AirMatch optimization, plus the previous 10 are fetched. Disabling,  fetches only the latest optimization, improving performance with very large AOS10 deployments. This is enabled by default</li>
@@ -395,6 +401,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									<ul>
 										<li> CSV Upload Workflows</li>
 										<li> Site Workflows</li>
+										<li> Barcode Scanning Input</li>
 										<li> MSP Workflows (only visible if the Central account is MSP enabled)</li>
 									</ul>
 									<h2>Configuration Deployment</h2>
@@ -418,11 +425,12 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li> Device Inventory</li>
 										<li> License Monitoring</li>
 									</ul>
-									<h2>Monitoring Features</h2>
+									<h2>Monitoring and Statistics</h2>
 									Tiles to launch the different Monitoring modules supported by Central Automation Studio:
 									<ul>
 										<li> Client Statistics</li>
 										<li> AP Statistics</li>
+										<li> Switch Statistics</li>
 										<li> AP Rebooting</li>
 										<li> IPAM Monitoring</li>
 										<li> RAPIDS</li>
@@ -434,6 +442,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li> Client Troubleshooting</li>
 										<li> AP Troubleshooting</li>
 										<li> Switch Troubleshooting</li>
+										<li> Gateway Troubleshooting</li>
 									</ul>
 									<h2>Experimental Features</h2>
 									These are the tiles for features that are "in the works" and not fully fleshed out:
@@ -481,12 +490,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li> DUAL 5GHZ MODE</li>
 										<li> SPLIT 5GHZ MODE</li>
 										<li> FLEX DUAL BAND</li>
-										
 										<li> IP ADDRESS</li>
 										<li> SUBNET MASK</li>
 										<li> DEFAULT GATEWAY</li>
 										<li> DNS SERVER</li>
 										<li> DOMAIN NAME</li>
+										<li> TIMEZONE</li>
+										<li> AP1X USERNAME</li>
+										<li> AP1X PASSWORD</li>
 									</ul>
 									Behaviour Notes:
 									<ul>
@@ -500,13 +511,15 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li>If the SWARM MODE is missing, the device will be skipped when assigning devices a Swarm Mode</li>
 										<li>If the RF PROFILE or RF ZONE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
 										<li>If the RF PROFILE or RF ZONE is missing or is equal to "-", the device will be skipped when assigning an RF ZONE to an 8.x Instant Access Point</li>
-										<li>If the INSTALLATION TYPE is missing or is equal to "-", the device will be skipped when configuring the installation type of an  Access Point</li>
+										<li>If the INSTALLATION TYPE is missing or is equal to "-", the device will be skipped when configuring the installation type of an Access Point</li>
 										<li>If any of the RADIO 0/1/2 MODE values are missing or is equal to "-", the device will be skipped when assigning a radio mode for that particular radio to an Access Point. RADIO 2 MODE is only applied to supported AP Models (AP-555, AP-635, AP-655)</li>
 										<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
 										<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
 										<li>If the FLEX DUAL BAND value is missing or is equal to "-", the device will be skipped when assigning the flexible dual band mode for that Access Point. <i>Config is only applied to supported AP Models (AP-615, AP-605R)</i></li>
 										<li>Static IP Addresses will only be <strong>set</strong> if all of the required values are provided (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER). If any of the Static IP values (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER) are missing, the device will be skipped when assigning a static IP address for that Access Point</li>
 										<li>Static IP Address information will <strong>updated</strong> (if the Access Point is already configured for a Static IP) using any supplied fields (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER, DOMAIN NAME). Any fields not supplied will be left as previously configured</li>
+										<li>If the TIMEZONE is missing, the device will be skipped when configuring the Timezone of a Gateway</li>
+										<li>If the AP1X USERNAME or AP1X PASSWORD is missing, the device will be skipped when configuring the Timezone of a Gateway</li>
 										<li><b><i>Skipped devices will be listed in the Log for the task/automation</i></b></li>
 									</ul>
 									</br>
@@ -743,6 +756,15 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								<p>
 									Uses the SERIAL column in the CSV file to trigger a device reboot.
 								</p>
+								<h2>ArubaOS 10 Specific</h2>
+								<h4>Turn off AP LEDs & Turn on AP LEDs</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to turn on or off the LEDs on the AP.
+								</p>
+								<h4>Set Gateway Timezone</h4>
+								<p>
+									Uses the SERIAL, MAC and TIMEZONE columns in the CSV file to configure the timezone for a Gateway. Timezone format uses IANA format (e.g. Australia/Sydney, America/Los_Angeles)
+								</p>
                                 <h2>Automated Tasks</h2>
                                 <p>
                                 	The automated tasks are the individual tasks linked together. Refer to the descriptions above for each individual task.
@@ -868,7 +890,17 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								This action will trigger a Topology reset for the selected site. Requires user to already be logged into the Central UI to trigger. Rebuilding of the topology by Central can take a few hours.
 								</p>
                             </div>
-                            <div class="tim-row" id="msp-row">  
+                            <div class="tim-row" id="scan-row">  
+								<h2 class="text-center">Barcode Scanner Input</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-scan text-warning" id="deploy-scan-icon"></i>
+								</div>
+								<legend></legend>
+								<p>
+									<a href="deployment-scanner.html">Barcode Scanner Input</a> allow for scanning of device serial numbers and MAC addresses using a barcode scanner. The appropriate Group and Site in Central can be selected. The device can then added to the table of devices, ready to be added directly to Central as a bulk import or downloaded as a CSV for use with the CSV based Workflows.
+								</p>
+							</div>
+							<div class="tim-row" id="msp-row">  
                                 <h2 class="text-center">MSP Workflows</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-dish text-warning" id="workflow_msp_icon"></i>
@@ -952,22 +984,26 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li> License Assigned</li>
 									</ul>
 								</p>
+								<h4>Download Expiring Inventory</h4>
+								<p>
+									Downloads the device inventory to a CSV but only includes devices with licenses assigned that expire within the next 90 days
+								</p>
 							</div>
 							<div class="tim-row" id="group-config-row">
-                                <h2 class="text-center">AP Group Configuration</h2>
+                                <h2 class="text-center">AP Group</h2>
                                 <div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-setup-tools text-warning" id="workflow_ap_icon"></i>
+									<i class="central-icon ca-config-ap text-warning" id="workflow_ap_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-group.html">AP Group Configuration</a> allows for the modification of the wireless configuration for a selected group or Virtual Controller. This allows for entry/modification of configuration that doesn't yet have a UI knob in Central.
+                                	The <a href="deployment-group.html">AP Group</a> allows for the modification of the wireless configuration for a selected group or Virtual Controller. This allows for entry/modification of configuration that doesn't yet have a UI knob in Central.
                                 </p>
                                 <p>
                                 	<i><strong>Note:</strong> Background updating of the monitoring data is disabled on this page to ensure group and virtual controller lists are not modified whilst editing the group configuration. Use the refresh button in the top right to refresh the data in the page.</i>
                                 </p>
                             </div>
 							<div class="tim-row" id="wlan-row">
-                                <h2 class="text-center">WLAN Deployment</h2>
+                                <h2 class="text-center">WLANs</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-wifi-protected text-warning" id="workflow_psk_icon"></i>
 								</div>
@@ -1014,13 +1050,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
                                 </p>
                             </div>
                             <div class="tim-row" id="user-role-row">
-                                <h2 class="text-center">User Role Deployment</h2>
+                                <h2 class="text-center">User Roles</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-folder-shared text-warning" id="user_role_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-user-roles.html">User Role Deployment</a> workflows support the creation and modification of User Roles for Access Point UI Groups in Aruba Central. AOS10 is currently supported in <u>underlay</u> deployments only.
+                                	The <a href="deployment-user-roles.html">User Role</a> workflows support the creation and modification of User Roles for Access Point UI Groups in Aruba Central. AOS10 is currently supported in <u>underlay</u> deployments only.
                                 </p>
                                 <div class="img-container">
 										<img src="assets/img/user-role.png" alt="User Role">
@@ -1051,13 +1087,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
                                 </p>
                             </div>
                             <div class="tim-row" id="auth-server-row">
-                                <h2 class="text-center">Authentication Server Deployment</h2>
+                                <h2 class="text-center">Authentication Servers</h2>
                                 <div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-password text-warning" id="auth_server_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-auth-servers.html">Authentication Server Deployment</a> workflows support the creation and modification of Authentication Servers for Access Point <strong>UI Groups</strong> in Aruba Central. AOS10 is supported in underlay deployments only. 
+                                	The <a href="deployment-auth-servers.html">Authentication Servers</a> workflows support the creation and modification of Authentication Servers for Access Point <strong>UI Groups</strong> in Aruba Central. AOS10 is supported in underlay deployments only. 
                                 </p>
                                 <div class="img-container">
 										<img src="assets/img/auth-server.png" alt="Auth Server">
@@ -1089,13 +1125,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
                                 </p>
                             </div>
 							<div class="tim-row" id="mpsk-local-row">
-								<h2 class="text-center">MPSK-Local Deployment</h2>
+								<h2 class="text-center">MPSK-Local</h2>
 								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-password-1 text-warning" id="mpsk_icon"></i>
 								</div>
 								<legend></legend>
 								<p>
-									The <a href="deployment-mpsk.html">MPSK-Local Deployment</a> workflows support the creation and modification of MPSK-Local passphrases. QR Code generation is available when passphrases are created or modified 
+									The <a href="deployment-mpsk.html">MPSK-Local</a> workflows support the creation and modification of MPSK-Local passphrases. QR Code generation is available when passphrases are created or modified 
 								</p>
 								<div class="img-container">
 										<img src="assets/img/mpsk-local.png" alt="MPSK-Local">
@@ -1119,13 +1155,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
 							</div>
 							<div class="tim-row" id="mpsk-row">
-								<h2 class="text-center">Named MPSK Deployment</h2>
+								<h2 class="text-center">Named MPSK</h2>
 								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-cloud-auth text-warning" id="named_mpsk_icon"></i>
 								</div>
 								<legend></legend>
 								<p>
-									The <a href="deployment-cda-mpsk.html">Named MPSK Deployment</a> workflows support the creation and modification of Named MPSK passphrases. QR Code generation is available for each Named MPSK 
+									The <a href="deployment-cda-mpsk.html">Named MPSK</a> workflows support the creation and modification of Named MPSK passphrases. QR Code generation is available for each Named MPSK 
 								</p>
 								<div class="img-container">
 										<img src="assets/img/mpsk-named.png" alt="Named MPSK">
@@ -1144,7 +1180,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
 							</div>
 							<div class="tim-row" id="denylist-row">
-								<h2 class="text-center">Denylist Deployment</h2>
+								<h2 class="text-center">Denylisting</h2>
 								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-l-remove text-warning" id="denylist_icon"></i>
 								</div>
@@ -1162,9 +1198,9 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
 							</div>
                             <div class="tim-row" id="switch-row">
-                                <h2 class="text-center">Switch Deployment</h2>
+                                <h2 class="text-center">Switches</h2>
                                 <div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-switch-stack text-warning" id="switching_icon"></i>
+									<i class="central-icon ca-config-switch text-warning" id="switching_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
@@ -1180,13 +1216,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
                             </div>
                             <div class="tim-row" id="gateway-row">
-								<h2 class="text-center">Gateway Deployment</h2>
+								<h2 class="text-center">Gateways</h2>
 								<div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-gateway text-warning" id="gateway_icon"></i>
+									<i class="central-icon ca-config-gateway text-warning" id="gateway_icon"></i>
 								</div>
 								<legend></legend>
 								<p>
-									The <a href="deployment-gateway.html">Gateway Deployment</a> workflows support of configuration for Gateways using Config Snippets. 
+									The <a href="deployment-gateway.html">Gateway </a> workflows support of configuration for Gateways using Config Snippets. 
 								</p>
 								<p>
 									Select the Group or Device and enter the structured CLI commands. The following should be noted:
@@ -1199,13 +1235,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
 							</div>
 							<div class="tim-row" id="country-row">
-								<h2 class="text-center">Country Code Deployment</h2>
+								<h2 class="text-center">Country Code</h2>
 								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-world text-warning" id="country_icon"></i>
 								</div>
 								<legend></legend>
 								<p>
-									The <a href="deployment-country.html">Country Code Deployment</a> workflows support configuration of AP Country Codes. 
+									The <a href="deployment-country.html">Country Code</a> workflows support configuration of AP Country Codes. 
 								</p>
 								<p>
 									<ul>
@@ -1221,9 +1257,9 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
 							</div>
 							<div class="tim-row" id="bulk-row">
-								<h2 class="text-center">Bulk AP Configuration</h2>
+								<h2 class="text-center">Bulk AP</h2>
 								<div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-stack text-warning" id="bulk_icon"></i>
+									<i class="central-icon ca-bulk-ap text-warning" id="bulk_icon"></i>
 								</div>
 								<legend></legend>
 								<div class="img-container">
@@ -1231,11 +1267,12 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									<p>Bulk Antenna Configuration</p>
 								</div>
 								<p>
-									The <a href="deployment-bulk-ap.html">Bulk AP Configuration</a> page provides the ability to easily configure multiple APs at a time. The following configuration items are configurable:
+									The <a href="deployment-bulk-ap.html">Bulk AP</a> page provides the ability to easily configure multiple APs at a time. The following configuration items are configurable:
 									<ul>
 										<li>RF Profile <button class="btn btn-round btn-sm btn-outline btn-default">for AOS10 APs</button></li>
 										<li>Antenna Gain</li>
 										<li>PoE Optimization Config</li>
+										<li>AP1X PEAP Credentials</li>
 									</ul>
 									Simply select a group, provide any additional filtering to reduce the group to only the APs you want to configure. Then configure all the APs in the list at the same time.<br />
 									Antenna configuration provides a simple list of Aruba antennas (that will auto fill the correct antenna gains), and also allows for custom antenna gains for 3rd party antenna support.
@@ -1427,9 +1464,12 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
 							</div>
 						    <div class="tim-row" id="monitoring-row">
-                                <h2 class="text-center">Monitoring Features</h2>
+                                <h2 class="text-center">Monitoring and Statistics</h2>
                                 <div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-cctv text-warning" id="workflow_monitoring_icon"></i>
+									<i class="central-icon ca-stats-client text-warning" id="workflow_monitoring_icon"></i>
+									<i class="central-icon ca-stats-ap text-warning" id="workflow_monitoring_icon"></i>
+									<i class="central-icon ca-stats-switch text-warning" id="workflow_monitoring_icon"></i>
+									<i class="central-icon ca-reboot-ap text-warning" id="workflow_monitoring_icon"></i>
 								</div>
                                 <legend></legend>
                                 <p>
@@ -1437,9 +1477,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
                                 </p>
 								
 								<h2>Client Statistics</h2>
-								The <a href="monitoring-clients.html">Client Statistics</a> page is also accessible from the bottom of the Clients table. The following statistics for clients are supported:
+								The <a href="monitoring-clients.html">Client Statistics</a> page is also accessible from the bottom of the Clients table. The data displayed in the charts and tables can be filtered based on the WLANs dropdown. The following statistics for clients are supported:
 								<ul>
 									<li> Client Operating System</li>
+									<li> Client SNR</li>
 									<li> 802.11 version support (Mix) </li>
 									<li> Client Encryption (WPA3 vs WPA2 vs Others)</li>
 									<li> Band Split (2.4Ghz vs 5GHz vs 6GHz)</li>
@@ -1456,7 +1497,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</div>
 								
 								<br  /><br  />
-								<h2>Access Point Statistics</h2>
+								<h2>AP Statistics</h2>
 								The <a href="monitoring-aps.html">Access Point Statistics</a> page is also accessible from the bottom of the Access Points table. The following statistics for APs are supported:
 								<ul>
 									<li> AP Models</li>
@@ -1476,6 +1517,25 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								The Global list of BSSIDs is also available for viewing, filtering and downloading as a CSV.
 								<br  /><br  />
 								
+								<h2>Switch Statistics</h2>
+								The <a href="monitoring-switches.html">Switch Statistics</a> page is also accessible from the bottom of the Switches table. The following statistics for Switches are supported:
+								<ul>
+									<li> Switch Models</li>
+									<li> Tables for Stacks</li>
+									<li> Overview stats for Memory Utilization, CPU Usage, Fan Speed Health </li>
+									<li> 10 Switches with the most Clients</li>
+									<li> 10 Switchess with the lowest Uptime (with a Troubleshooting action button - providing easy switch information and port level tools)</li>
+									<li> 10 Switches with the highest PoE Draw (with a Reboot action button)</li>
+									<li> Firmware</li>
+								</ul>
+								Each section of the graphs is clickable and will display the matching clients in a table.
+								<div class="img-container">
+									<img src="assets/img/SwitchStats1.png" alt="Switch Stats">
+									<p>Switch Statistics</p>
+								</div>
+								Switch Bandwidth Statistics list the top 10 Switches (sorted by total bandwidth). Clicking on the horizontal bar depiction of the total throughput will display the bandwidth over time in the graph.
+								<br  /><br  />
+								
 								<h2>AP Reboot</h2>
 								The <a href="monitoring-reboot.html">AP Reboot</a> page is also accessible from the bottom of the  Access Points table. The following is supported:
 								<ul>
@@ -1492,11 +1552,16 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</div>
 								<br  /><br  />
 								
+								<div hidden>
 								<h2>IPAM Monitoring</h2>
 								The <a href="monitoring-ipam.html">IP Address Management Monitoring</a> provides the ability to see which IP addresses (Inner IP Pools and Shared DHCP Pools) are assigned to Microbranch APs.
+								</div>
 								<br  /><br  />
 								
-								<h2>RAPIDS</h2>
+								<h2 class="text-center">RAPIDS</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-rapids text-warning" id="workflow_mesh"></i>
+								</div>
 								The <a href="monitoring-rapids.html">RAPIDS</a> page provides the ability to view and export APs detected by RAPIDS. Filtering and search of the detected APs is supported, along with exporting the displayed APs in CSV format. Additional information fields are available in the CSV.
 								<div class="img-container">
 									<img src="assets/img/rapids.png" alt="Rapids">
@@ -1505,7 +1570,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								<div class="tim-row" id="mesh-row">
 								<h2 class="text-center">Mesh Monitoring</h2>
 								<div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-network-connection text-warning" id="workflow_mesh"></i>
+									<i class="central-icon ca-mesh text-warning" id="workflow_mesh"></i>
 								</div>
 								The <a href="monitoring-mesh.html">Mesh</a> page provides the ability to view mesh topologies. The Portal APs are displayed a table, with the ability display the topology of the mesh cluster formed from the selected portal.
 								<div class="img-container">
@@ -1514,8 +1579,8 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</div>
 								The topology view supports multiple labels and overlays on the topology to provide enhanced troubleshooting. The following overlays/labels are supported for each end of the mesh mesh links:
 								<ul>
-									<li> Channel: Channel used for the mesh link </li>
-									<li> Connected clients: this is across all radios on the AP</li>
+									<li> Channel: Channel used for the mesh link, as well as the channel utilization </li>
+									<li> Connected clients: this is across all radios on the AP, as well as Wired Clients. Format is 'Wireless | Wired'</li>
 									<li> Data Rate: Tx / Rx data rates </li>
 									<li> Flags: the flags displayed are described below (and available via the info tooltip next to the dropdown) </li>
 									<li> SNR: Links are coloured according to the SNR values from the point </li>
@@ -1551,18 +1616,15 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li>Band: Will show only the channels for the selected band. APs will be colour coded based on the channel</li>
 										<li>Channel: Only colour code the APs that match the selected channel</li>
 									</ul>
+									<li> Channel Bandwidth: Show the width channels being used by the APs</li>
+									<ul>
+										<li>Band: Will show only the channels for the selected band. APs will be colour coded based on the channel</li>
+										<li>Channel: Only colour code the APs that match the selected channel</li>
+									</ul>
 									<li> Channel Utilization: Show the channel utilization of the Radios in each AP</li>
 									<ul>
 										<li>Band: Will show only the channel utilization for the selected band. APs will be colour coded based on the utilization percentage</li>
 										<li>Channel: Only colour code the APs that match the selected channel</li>
-									</ul>
-									<li> Radar Events: Show the how many times APs have changed channels due to radar events</li>
-									<ul>
-										<li>Time Scale: Which time period to use for event totals per AP</li>
-									</ul>
-									<li> Path Loss Between APs: Show the path loss between a selected AP and its neighbours (requires band selection)</li>
-									<ul>
-										<li>Band: Will show path loss between selected AP and its RF neighbours on the selected band</li>
 									</ul>
 									<li> Clients: Show Clients on the floorplan </li>
 									<ul>
@@ -1571,6 +1633,23 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li>Include Unassociated Clients: Hide/Show unassociated clients on the floorplan</li>
 										<li>Show Client Labels: Hide/Show labels for each client
 									</ul>
+									<li> Client Count: Show the number of clients associated with the AP</li>
+									<ul>
+										<li>Red: 50 or more Clients</li>
+										<li>Orange: Between 25 and 50 Clients</li>
+										<li>Green: Less than 25 Clients</li>
+										<li>White: Down AP</li>
+									</ul>
+									<li> Path Loss Between APs: Show the path loss between a selected AP and its neighbours (requires band selection)</li>
+									<ul>
+										<li>Band: Will show path loss between selected AP and its RF neighbours on the selected band</li>
+									</ul>
+									<li> Radar Events: Show the how many times APs have changed channels due to radar events</li>
+									<ul>
+										<li>Time Scale: Which time period to use for event totals per AP</li>
+									</ul>
+									
+									
 								</ul>
 								Additional details:
 								<ul>
@@ -1632,7 +1711,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
 							<div class="tim-row" id="troubleshooting-row">
 								<h2 class="text-center">Troubleshooting</h2>
 								<div class="icon-massive text-center icon-warning">
-									<i class="central-icon ca-settings text-warning" id="troublshooting_icon"></i>
+									<i class="central-icon ca-tshoot-client text-warning" id="troublshooting_icon"></i>
+									<i class="central-icon ca-tshoot-ap text-warning" id="troublshooting_icon"></i>
+									<i class="central-icon ca-tshoot-switch text-warning" id="troublshooting_icon"></i>
+									<i class="central-icon ca-tshoot-gateway text-warning" id="troublshooting_icon"></i>
 								</div>
 								<legend></legend>
 								<h2>Client Troubleshooting</h2>
@@ -1659,17 +1741,27 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li>Mobility Trail</li>
 										<li>Datapath Session Table</li>
 										<li>PMK Key Sync</li>
+										<li>ClientMatch</li>
+										<li>User Role definition - available from the button within the Client Info section</li>
 									</ul>
 								</p>
 								
 								<p>&nbsp;</p>
 								<h2>AP Troubleshooting</h2>
 								<div class="img-container">
-									<img src="assets/img/tshoot-ap-list.png" alt="AP Troubleshooting">
-									<p>AP Troubleshooting List</p>
+									<img src="assets/img/tshoot-ap.png" alt="AP Troubleshooting">
+									<p>AP Troubleshooting</p>
 								</div>
 								<p>
 									The <a href="troubleshooting-ap.html">AP Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific APs. Important information is presented at the top of the troubleshooting panel, while the full command output is available in the "Raw Output" section. If there is a crash log for the AP, an easy "download" button is provided.
+									<ul>
+										<li>System Status</li>
+										<li>RF View</li>
+										<li>AAA</li>
+										<li>RF Neighbours</li>
+										<li>Datapath Session Table</li>
+										<li>Radio Stats - available from the Radios section</li>
+									</ul>
 								</p>
 								<div class="img-container">
 									<img src="assets/img/tshoot-ap-system.png" alt="AP Troubleshooting System">
@@ -1693,7 +1785,6 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											<li>Passive: Discovered using passive scan</li>
 											<li>Indirect: Two hop neighbours discovered using neighbours OTA update</li>
 									</ul> <br/>
-									Only radios that are up are listed in the actions.
 								</p>
 								<div class="img-container">
 									<img src="assets/img/tshoot-ap-aaa.png" alt="AP Troubleshooting AAA">
@@ -1707,7 +1798,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									<p>Switch Port Troubleshooting List</p>
 								</div>
 								<p>
-									The <a href="troubleshooting-switching.html">Switch Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Switches. Important information is presented at the top of the troubleshooting panel, while a list of ports for the switch provide easily accessible information as well as the  ability to perform PoE Bounce and Interface Bounce on a port.
+									The <a href="troubleshooting-switching.html">Switch Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Switches. Important information is presented at the top of the troubleshooting panel, while a list of ports for the switch provide easily accessible information as well as the ability to perform PoE Bounce and Interface Bounce on a port.<br />
+									Additionally, for switches that support port-access configuration, the port-access client information can be displayed - along with the ability to bounce the interface or PoE on that port.
+								</p>
+								
+								<p>&nbsp;</p>
+								<h2>Gateway Troubleshooting</h2>
+								<p>
+									The <a href="troubleshooting-gateway.html">Gateway Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Gateways. Important information is presented at the top of the troubleshooting panel, while a list of CLI commands are avilabel to executing.
 								</p>
 							</div>
                             <div class="tim-row" id="experimental-row">
@@ -1776,7 +1874,7 @@ ip dns server-address priority 2 %dns2.ip%
                                 </p>
                             </div>
 							<div class="tim-row" id="management-row">
-								<h2 class="text-center">Management Features</h2>
+								<h2 class="text-center">Management Tasks</h2>
 								<div class="icon-massive text-center icon-warning">
 									<i class="central-icon ca-filter-organization text-warning" id="workflow_management_icon"></i>
 								</div>
@@ -1798,16 +1896,17 @@ ip dns server-address priority 2 %dns2.ip%
 								<p>&nbsp;</p>
 								<h2>Site Management</h2>
 								<p>
-									The <strong>Add Sites</strong> provides the quickly add Sites, either manually or using a CSV upload. Sites can be added either using street addresses or Geo-coordinates
+									The <a href="deployment-site-mgmt.html">Site Management</a> page provides the following abilities:
+									<ul>
+										<li> Creation of Sites via form completion</li>
+										<li> Bulk creation of Sites via CSV upload</li>
+										<li> Assign APs to Same Site as the Virtual Controller</li>
+										<li> View and Delete Sites</li>
+									</ul>
+									Sites can be added either using street addresses or Geo-coordinates.
 								</p>
 								<p>
 									The <strong>Assign APs to Sites</strong> tile provides the ability to automatically assign the Virtual Controller's Site to all the member APs in the cluster.
-								</p>
-								<p>
-									Bulk deletion of Sites is supported through multi-select in the Sites table
-									<ul>
-										<li> Any devices associated to the site/s being deleted will be unassociated prior to the deletion.</li>
-									</ul>
 								</p>
 								<p>&nbsp;</p>
 								<h2>Visitor Management</h2>
@@ -1836,6 +1935,135 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.41.6 (2024/09/19)</h4>
+									<ul>
+										<li>Added an additional API Proxy for redundancy</li>
+										<li>Added a randomizer for load across the two US based API Proxies</li>
+									</ul>
+									<h4>Version 1.41.5 (2024/09/14)</h4>
+									<ul>
+										<li>Improved display of Datapath information in AP and Client Troubleshooting pages</li>
+										<li>Fixed issue preventing config status from being correctly reported for Instant APs in the AP Troubleshooting page</li>
+										<li>Added the Channel Utilization to the Channel overlay in the <a href="#mesh-row">Mesh Monitoring</a></li>
+										<li>Added the Wired Client count to the Clients overlay in the <a href="#mesh-row">Mesh Monitoring</a></li>
+									</ul>
+									<h4>Version 1.41.4 (2024/09/06)</h4>
+									<ul>
+										<li>Improved licensing task in <a href="#csv-row">CSV Workflows</a>. Task now checks if auto-subscribe is enabled in GreenLake</li>
+									</ul>
+									<h4>Version 1.41.3 (2024/09/05)</h4>
+									<ul>
+										<li>Added support for configuring AP1X PEAP credentials in <a href="#csv-row">CSV Workflows</a> and in <a href="#bulk-row">Bulk AP Deployment</a></li>
+									</ul>
+									<h4>Version 1.41.2 (2024/08/31)</h4>
+									<ul>
+										<li>Improved fetching of Device Inventory</li>
+										<li>Major improvements to API Token refresh - now only refreshes if the access token is about to expire or has expired</li>
+										<li>Improvements to Hydra Dashboard - Account connectivity status now displayed in table</li>
+										<li>Improved licensing workflows to report a reason when licensing fails</li>
+										<li>Improved licensing to device type match</li>
+									</ul>
+									<h4>Version 1.41.1 (2024/08/20)</h4>
+									<ul>
+										<li>Improved licensing workflows to support 8/12 port models and 6300L switches</li>
+									</ul>
+									<h4>Version 1.41.0 (2024/08/18) - "CSV Explosion"</h4>
+									<ul>
+										<li>Added CSV download from AP, Switch and Gateway/Controller tables (in the format for using with CSV Workflows)</li>
+										<li>Added <a href="#scan-row">Barcode Scanner Input page</a> - allows for using Barcode scanners to build CSV file ready for using in CSV Workflows. Also provides easy adding of devices to GreenLake</li>
+										<li>Added <a href="#monitoring-row">Switch Statistics page</a></li>
+									</ul>
+									<h4>Version 1.40.0 (2024/08/08) - "Graphing"</h4>
+									<ul>
+										<li>Added Client SNR Graph to <a href="#monitoring-row">Client Statistics page</a></li>
+										<li>Added Site filter to <a href="#monitoring-row">Client Statistics page</a> - works in combination with WLAN Filter</li>
+										<li>Added RF View to AP Troubleshooting - <i>(requires AOS10)</i></li>
+										<ul>
+											<li>Client count comparison graph with nearest neighbour APs - Neighbour APs determined by AirMatch pathloss</li>
+											<li>Client SNR graph for AP Clients</li>
+										</ul>
+										<li>Added Client Count overlay in <a href="#vrf-row">VisualRF</a></li>
+									</ul>
+									<h4>Version 1.39.5 (2024/08/03)</h4>
+									<ul>
+										<li>Improved accuracy of donut percentages on <a href="#monitoring-row">Client Statistics page</a></li>
+									</ul>
+									<h4>Version 1.39.4 (2024/07/17)</h4>
+									<ul>
+										<li>Added data filter to <a href="#monitoring-row">Client Statistics page</a> - allowing for per WLAN statistics</li>
+										<li>Added Service status to Key Management Service page</li>
+										<li>Enlarged the view for gateway effective and committed configs</li>
+									</ul>
+									<h4>Version 1.39.3 (2024/07/03)</h4>
+									<ul>
+										<li>Added Gateway Timezone config in  <a href="#csv-row">CSV Workflows</a></li>
+										<li>Improved error logging for Gateway Configuration - now informs you which command(s) failed and which were successful</li>
+										<li>Added CSV download for AirMatch Radar & Noise Events</li>
+									</ul>
+									<h4>Version 1.39.2 (2024/07/01)</h4>
+									<ul>
+										<li>Device Inventory data is now cached locally in the IndexedDB (reduces API calls and improves speed)</li>
+										<li>Hydra now handles when going into the same account that was previously open (doesn't force reloading of data from Central)</li>
+									</ul>
+									<h4>Version 1.39.1 (2024/06/27)</h4>
+									<ul>
+										<li>Added support for CLI commands to the AP Troubleshooting page</li>
+										<li>BSSID table in AP Statistics now includes Site and Group for the AP</li>
+										<li>Device Inventory table now support horizontal scrolling to better handle the large number of columns</li>
+										<li>Added Expiring License filter in the Device Inventory page</li>
+										<li>MSP page now includes the ability to download devices that have expiring licenses in the next 90 days (CSV download)</li>
+									</ul>
+									<h4>Version 1.39 (2024/06/25) - Discover '24</h4>
+									<ul>
+										<li>Added Config state to AP Troubleshooting (including display of dirty config)</li>
+										<li>Monospaced font used for CLI output</li>
+										<li>Fixed link from AP Monitoring to AP Troubleshooting</li>
+										<li>Event Dashboard now includes peak and average for client counts and bandwidth</li>
+										<li>AirMatch page shows if an optimization was partially deployed (e.g. only some RF Partitions)</li>
+										<li>AirMatch page lists RF Domains/Partitions for each optimization</li>
+										<li>Introduced Gateway Troubleshooting page - initial support for CLI commands</li>
+									</ul>
+									<h4>Version 1.38.4 (2024/06/14)</h4>
+									<ul>
+										<li>Switch troubleshooting update to match the Client and AP troubleshooting look and feel</li>
+										<li>Switch troubleshooting now includes Port Access information (on switches that support it)</li>
+										<li>Improved AppRF data in Datapath for Client and AP Troubleshooting</li>
+									</ul>
+									<h4>Version 1.38.3 (2024/06/12)</h4>
+									<ul>
+										<li>Split the "Device Monitoring" knob into "AP & Switch Monitoring" and "Gateway Monitoring" in Settings</li>
+										<li>Introduced a knob to disable Gateway Monitoring (useful for very large customers who only want to use Group based config - similar to the Client Monitoring). Prevents Gateway information being pulled from Central, while still allowing Gateway group level configurations</li>
+										<li>Updated icons for consistency across different categories in Central Automation Studio</li>
+									</ul>
+									<h4>Version 1.38.2 (2024/06/11)</h4>
+									<ul>
+										<li>Introduced a "Group Config Only" in the API Data Optimization drop down</li>
+										<li>Introduced a knob to disable Device Monitoring (useful for very large customers who only want to use Group based config - similar to the Client Monitoring). Prevents AP, Switch and Gateway information being pulled from Central</li>
+									</ul>
+									<h4>Version 1.38.1 (2024/06/10)</h4>
+									<ul>
+										<li>Added User Role display to the Client Troubleshooting (Click on the user role button in the  Client Info section)</li>
+										<li>Added support for an additional cluster</li>
+									</ul>
+									<h4>Version 1.38 (2024/06/07)</h4>
+									<ul>
+										<li>Added LED on/off per AP in CSV Workflows (new ArubaOS 10 Specific section in middle task column)</li>
+										<li>Improvements to Infrastructure Events in the Event Dashboard</li>
+										<li>Additional information made available in the AP Troubleshooting details</li>
+										<li>New quick filter tiles in Device Inventory page</li>
+										<li>Updated icons</li>
+									</ul>
+									<h4>Version 1.37.8 (2024/05/29)</h4>
+									<ul>
+										<li>Fix for duplicating Clients in the Clients table</li>
+										<li>Support for PAN-ID in the Datapath Tables</li>
+										<li>Improved colouring of Datapath sessions that are Denied</li>
+										<li>Protocol number in Datapath Tables replaced with name of the protocol</li>
+									</ul>
+									<h4>Version 1.37.7 (2024/05/28)</h4>
+									<ul>
+										<li>Refreshed AP Troubleshooting UX (now matches the Client Troubleshooting)</li>
+									</ul>
 									<h4>Version 1.37.6 (2024/05/25)</h4>
 									<ul>
 										<li>Added additional Central Clusters</li>
@@ -2212,7 +2440,7 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 									<h4>Version 1.23 (2022/12/19) - <i>"Gaining Options"</i></h4>
 									<ul>	
-										<li> Setting antenna gain is now supported in <a href="#csv-row">CSV</a> and <a href="#site-row">Site</a> based workflows, in addition to the <a href="#experimental-row">Bulk AP config</a> workflows</li>
+										<li> Setting antenna gain is now supported in <a href="#csv-row">CSV</a> and <a href="#site-row">Site</a> based workflows, in addition to the <a href="#bulk-row">Bulk AP config</a> workflows</li>
 										<li> Added the ability to check current antenna configuration for APs at a site in the <a href="#site-row">Site</a> based workflows</li>
 										<li> Rebooting devices is now supported in the Site based workflows</li>
 										<li> Improved information in <a href="#clientmatch-row">ClientMatch</a> Steering History table - Channel for From and To AP is now available in the tooltip, and AP names are now links to the AP in Central
@@ -2260,7 +2488,7 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 									<h4>Version 1.18 (2022/10/18) - <i>"Trouble Brewing"</i></h4>
 									<ul>
-										<li> <a href="#experimental-row">Bulk AP Config</a> page added (under the Experimental Section until it is feature complete)</li>
+										<li> <a href="#bulk-row">Bulk AP Config</a> page added (under the Experimental Section until it is feature complete)</li>
 										<li> AAA Troubleshooting tool added to the <a href="#experimental-row">AP Troubleshooting</a> page</li>
 										<li> Global BSSID Table now available on the <a href="#monitoring-row">AP Statistics</a> page (Replacing the "APs Processed" card)</li>
 										<li> Daily API Count and Usage now displayed as a tooltip on the Central Automation Studio header on each page (updated after each GET command is called)</li>
@@ -2532,7 +2760,7 @@ ip dns server-address priority 2 %dns2.ip%
 									<h4>Version 1.7.4 (2022/01/10)</h4>
                                 	<ul>
 										<li> <a href="#monitoring-row">IP Address Management</a> Monitoring support added</li>
-										<li> Improved discoverability of <a href="#dashboard-row">Client Statistics and AP Reboot</a> by adding tiles to the <a href="#monitoring-row">Monitoring Features</a> section</li>
+										<li> Improved discoverability of <a href="#dashboard-row">Client Statistics and AP Reboot</a> by adding tiles to the <a href="#monitoring-row">Monitoring and Statistics</a> section</li>
 										<li> Improved legibility of deep links in tables (now in bold)</li>
 									</ul>
 									<h4>Version 1.7.3 (2022/01/05)</h4>
@@ -2790,6 +3018,7 @@ ip dns server-address priority 2 %dns2.ip%
 <script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
 <!--  Plugin for Date Time Picker and Full Calendar Plugin-->
 <script src="assets/js/plugins/moment.min.js"></script>
+<script src="assets/js/plugins/luxon.min.js"></script>
 <!--  DatetimePicker   -->
 <script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
 <!--  Sweet Alert  -->
@@ -2820,6 +3049,8 @@ ip dns server-address priority 2 %dns2.ip%
     var floating = false;
 
     $(document).ready(function() {
+		getCASVersion();
+		
         suggestions_distance = $("#suggestions").offset();
         pay_height = $('.fixed-section').outerHeight();
 
@@ -2851,5 +3082,6 @@ ip dns server-address priority 2 %dns2.ip%
 	}
 </script>
 
+<script src="assets/js/version.js?v=240919"></script>
 
 </html>

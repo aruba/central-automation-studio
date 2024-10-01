@@ -1,7 +1,7 @@
 /*
 Central Automation v1.32
 Updated:
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var vrfBuildings = [];
@@ -201,8 +201,7 @@ function getFloors(vrfBuildingId) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getFloors(vrfBuildingId);

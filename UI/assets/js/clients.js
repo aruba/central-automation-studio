@@ -59,7 +59,7 @@ var macClientsW = [];
 var dot1XClientsW = [];
 var noAuthClientsW = [];
 var osType = {};
-var maxOSLimit = 10;
+var maxOSLimit = 7;
 var wirelessClients;
 var wiredClients;
 var wpa3Clients = [];
@@ -70,10 +70,126 @@ var oweClients = [];
 var openClients = [];
 var otherClients = [];
 
+var snr0 = [];
+var snr10 = [];
+var snr20 = [];
+var snr30 = [];
+var snr40 = [];
+var snr50 = [];
+var snr60 = [];
+var snrArray = [];
+var snrLabels = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60+'];
+
+var selectedWLAN;
+var selectedSite;
+
+function loadCurrentPageClient() {
+	getWLANs();
+}
+
+function loadCurrentPageSite() {
+	var allSites = getSites();
+	allSites.sort((a, b) => {
+		const siteA = a.name.toUpperCase(); // ignore upper and lowercase
+		const siteB = b.name.toUpperCase(); // ignore upper and lowercase
+		// Sort on Site Name
+		if (siteA < siteB) {
+			return -1;
+		}
+		if (siteA > siteB) {
+			return 1;
+		}
+		return 0;
+	});
+	
+	// Clear the Sites from the dropdown
+	select = document.getElementById('client-siteselector');
+	select.options.length = 0;
+	$('#client-siteselector').append($('<option>', { value: '_all', text: 'All Sites' }));
+	$('#client-siteselector').append($('<option>', { value: '', text: '────────────────────────', style: 'color: #cccccc;', disabled: true }));
+	$.each(allSites, function() {
+		// Add group to the dropdown selector
+		$('#client-siteselector').append($('<option>', { value: this['name'], text: this['name'] }));
+		if ($('#client-siteselector').length != 0) {
+			$('#client-siteselector').selectpicker('refresh');
+		}
+	});
+	
+	if (selectedSite) {
+		$('#client-siteselector').selectpicker('val', selectedSite);
+	} else {
+		$('#client-siteselector').selectpicker('val', '_all');
+	}
+	updateClientGraphs();
+}
+
+function getWLANs() {
+	// Clear the WLANs from the dropdown
+	select = document.getElementById('client-wlanselector');
+	select.options.length = 0;
+	$('#client-wlanselector').append($('<option>', { value: '_all', text: 'All Clients' }));
+	$('#client-wlanselector').append($('<option>', { value: '_wlan', text: 'All WLANs' }));
+	$('#client-wlanselector').append($('<option>', { value: '_wired', text: 'Wired Only' }));
+	$('#client-wlanselector').append($('<option>', { value: '', text: '────────────────────────', style: 'color: #cccccc;', disabled: true }));
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/monitoring/v2/networks?calculate_client_count=false',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/monitoring/v2/networks)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		var networks = response['networks'];
+		localStorage.setItem('networks', JSON.stringify(networks));
+
+		for (var i = 0; i < networks.length; i++) {
+			$('#client-wlanselector').append($('<option>', { value: networks[i]['essid'], text: networks[i]['essid'] }));
+			if ($('#client-wlanselector').length != 0) {
+				$('#client-wlanselector').selectpicker('refresh');
+			}
+		}
+		if (selectedWLAN) {
+			$('#client-wlanselector').selectpicker('val', selectedWLAN);
+		} else {
+			$('#client-wlanselector').selectpicker('val', '_all');
+		}
+		updateClientGraphs();
+	});
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Client functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
 function updateClientGraphs() {
+	select = document.getElementById('client-wlanselector');
+	selectedWLAN = select.value;
+	localStorage.setItem('filter_client_ssid', selectedWLAN);
+	
+	select = document.getElementById('client-siteselector');
+	selectedSite = select.value;
+	localStorage.setItem('filter_client_site', selectedSite);
+	
 	countRandomMAC = 0;
 	randomMACClients = [];
 	actualMACClients = [];
@@ -135,14 +251,21 @@ function updateClientGraphs() {
 	oweClients = [];
 	openClients = [];
 	otherClients = [];
+	snr0 = [];
+	snr10 = [];
+	snr20 = [];
+	snr30 = [];
+	snr40 = [];
+	snr50 = [];
+	snr60 = [];
+	
 	osType = {};
-	maxOSLimit = 10;
 	wirelessClients = getWirelessClients();
 	wiredClients = getWiredClients();
 
 	// Get stats for wireless clients
 	$.each(wirelessClients, function() {
-		if (this.connection) {
+		if ((this.network === selectedWLAN || selectedWLAN === '_all' || selectedWLAN === '_wlan') && (this.site === selectedSite || selectedSite === '_all'))  {			
 			// Randomized MAC?
 			if (this.macaddr.charAt(1) === '2' || this.macaddr.charAt(1) === '6' || this.macaddr.charAt(1) === 'a' || this.macaddr.charAt(1) === 'e') {
 				countRandomMAC++;
@@ -152,19 +275,19 @@ function updateClientGraphs() {
 			}
 
 			// 11k/v/r
-			if (this.connection.includes('802.11k')) {
+			if (this.connection && this.connection.includes('802.11k')) {
 				count11k++;
 				kClients.push(this);
 			} else {
 				noKClients.push(this);
 			}
-			if (this.connection.includes('802.11v')) {
+			if (this.connection && this.connection.includes('802.11v')) {
 				count11v++;
 				vClients.push(this);
 			} else {
 				noVClients.push(this);
 			}
-			if (this.connection.includes('802.11r')) {
+			if (this.connection && this.connection.includes('802.11r')) {
 				count11r++;
 				rClients.push(this);
 			} else {
@@ -172,32 +295,33 @@ function updateClientGraphs() {
 			}
 
 			// Standard Split
-			if (this.connection.includes('802.11be')) {
+			if (this.connection && this.connection.includes('802.11be')) {
 				count11be++;
 				beClients.push(this);
 			}
-			if (this.connection.includes('802.11ax') && this.band == 6) {
+			if (this.connection && this.connection.includes('802.11ax') && this.band == 6) {
 				count6E++;
 				sixEClients.push(this);
 			}
-			if (this.connection.includes('802.11ax') && this.band != 6) {
+			if (this.connection && this.connection.includes('802.11ax') && this.band != 6) {
 				count11ax++;
 				axClients.push(this);
 			}
-			if (this.connection.includes('802.11ac')) {
+			if (this.connection && this.connection.includes('802.11ac')) {
 				count11ac++;
 				acClients.push(this);
 			}
-			if (this.connection.includes('802.11gn')) {
+			if (this.connection && this.connection.includes('802.11gn')) {
 				count11gn++;
 				gnClients.push(this);
 			}
-			if (this.connection.includes('802.11an')) {
+			if (this.connection && this.connection.includes('802.11an')) {
 				count11an++;
 				anClients.push(this);
 			}
 
 			// Authentication splits per band
+			
 			if (this.authentication_type) {
 				if (this.band == 5) {
 					count5Ghz++;
@@ -288,39 +412,50 @@ function updateClientGraphs() {
 			} else {
 				openClients.push(this);
 			}
+			
+			if (this.snr >= 0 && this.snr < 10) snr0.push(this);
+			else if (this.snr >= 10 && this.snr < 20) snr10.push(this);
+			else if (this.snr >= 20 && this.snr < 30) snr20.push(this);
+			else if (this.snr >= 30 && this.snr < 40) snr30.push(this);
+			else if (this.snr >= 40 && this.snr < 50) snr40.push(this);
+			else if (this.snr >= 50 && this.snr < 60) snr50.push(this);
+			else if (this.snr >= 60) snr60.push(this);
+			
 		}
 	});
 
 	// Get stats for wired clients
 	$.each(wiredClients, function() {
-		if (this.authentication_type) {
-			if (this.authentication_type.includes('MAC')) {
-				countMACAuthW++;
-				macClientsW.push(this);
-			}
-			if (this.authentication_type.includes('DOT1X')) {
-				countDot1XW++;
-				dot1XClientsW.push(this);
-			}
-			if (this.authentication_type.includes('No Authentication')) {
+		if (selectedWLAN === '_all' || selectedWLAN === '_wired') {
+			if (this.authentication_type) {
+				if (this.authentication_type.includes('MAC')) {
+					countMACAuthW++;
+					macClientsW.push(this);
+				}
+				if (this.authentication_type.includes('DOT1X')) {
+					countDot1XW++;
+					dot1XClientsW.push(this);
+				}
+				if (this.authentication_type.includes('No Authentication')) {
+					countNoAuthW++;
+					noAuthClientsW.push(this);
+				}
+			} else {
 				countNoAuthW++;
 				noAuthClientsW.push(this);
 			}
-		} else {
-			countNoAuthW++;
-			noAuthClientsW.push(this);
-		}
-
-		// OS Type
-		if (this.os_type !== '--') {
-			if (osType[this.os_type]) {
-				var osArray = osType[this.os_type];
-				osArray.push(this);
-				osType[this.os_type] = osArray;
-			} else {
-				var osArray = [];
-				osArray.push(this);
-				osType[this.os_type] = osArray;
+	
+			// OS Type
+			if (this.os_type !== '--') {
+				if (osType[this.os_type]) {
+					var osArray = osType[this.os_type];
+					osArray.push(this);
+					osType[this.os_type] = osArray;
+				} else {
+					var osArray = [];
+					osArray.push(this);
+					osType[this.os_type] = osArray;
+				}
 			}
 		}
 	});
@@ -331,30 +466,30 @@ function updateClientGraphs() {
 			WPA chart
 		------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 		var countedLength = wpa3Clients.length + wpa3XClients.length + wpa2Clients.length + wpa2XClients.length + oweClients.length + openClients.length + otherClients.length
-		var percentageWPA3 = Math.round((wpa3Clients.length / countedLength) * 100);
-		var percentageWPA3X = Math.round((wpa3XClients.length / countedLength) * 100);
-		var percentageWPA2 = Math.round((wpa2Clients.length / countedLength) * 100);
-		var percentageWPA2X = Math.round((wpa2XClients.length / countedLength) * 100);
-		var percentageOWE = Math.round((oweClients.length / countedLength) * 100);
-		var percentageOpen = Math.round((openClients.length / countedLength) * 100);
-		var percentageOther = Math.round((otherClients.length / countedLength) * 100)
+		var percentageWPA3 = (wpa3Clients.length / countedLength) * 100;
+		var percentageWPA3X = (wpa3XClients.length / countedLength) * 100;
+		var percentageWPA2 = (wpa2Clients.length / countedLength) * 100;
+		var percentageWPA2X = (wpa2XClients.length / countedLength) * 100;
+		var percentageOWE = (oweClients.length / countedLength) * 100;
+		var percentageOpen = (openClients.length / countedLength) * 100;
+		var percentageOther = (otherClients.length / countedLength) * 100;
 		if (otherClients.length > 0) percentageOther = 100 - percentageWPA3 - percentageWPA3X - percentageWPA2 - percentageWPA2X - percentageOWE - percentageOpen;
 
 		
 	
-		labelWPA3 = percentageWPA3 + '%';
+		labelWPA3 =  Math.round(percentageWPA3) + '%';
 		if (wpa3Clients.length == 0) labelWPA3 = ' ';
-		labelWPA3X = percentageWPA3X + '%';
+		labelWPA3X =  Math.round(percentageWPA3X) + '%';
 		if (wpa3XClients.length == 0) labelWPA3X = ' ';
-		labelWPA2 = percentageWPA2 + '%';
+		labelWPA2 =  Math.round(percentageWPA2) + '%';
 		if (wpa2Clients.length == 0) labelWPA2 = ' ';
-		labelWPA2X = percentageWPA2X + '%';
+		labelWPA2X =  Math.round(percentageWPA2X) + '%';
 		if (wpa2XClients.length == 0) labelWPA2X = ' ';
-		labelOWE = percentageOWE + '%';
+		labelOWE =  Math.round(percentageOWE) + '%';
 		if (oweClients.length == 0) labelOWE = ' ';
-		labelOpen = percentageOpen + '%';
+		labelOpen =  Math.round(percentageOpen) + '%';
 		if (openClients.length == 0) labelOpen = ' ';
-		labelOther = percentageOther + '%';
+		labelOther =  Math.round(percentageOther) + '%';
 		if (otherClients.length == 0) labelOther = ' ';
 	
 		Chartist.Pie(
@@ -409,12 +544,12 @@ function updateClientGraphs() {
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------
 		Randomized MAC chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
-		percentageRandomzied = Math.round((countRandomMAC / wirelessClients.length) * 100);
+		percentageRandomzied = (countRandomMAC / wirelessClients.length) * 100;
 		var percentageActual = 100 - percentageRandomzied;
 
-		labelRandom = percentageRandomzied + '%';
+		labelRandom =  Math.round(percentageRandomzied) + '%';
 		if (percentageRandomzied == 0) labelRandom = '';
-		labelActual = percentageActual + '%';
+		labelActual =  Math.round(percentageActual) + '%';
 		if (percentageActual == 0) labelActual = '';
 
 		Chartist.Pie(
@@ -449,12 +584,12 @@ function updateClientGraphs() {
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		11k chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
-		percentage11k = Math.round((count11k / wirelessClients.length) * 100);
+		percentage11k = (count11k / wirelessClients.length) * 100;
 		var percentageNoK = 100 - percentage11k;
 
-		labelK = percentage11k + '%';
+		labelK =  Math.round(percentage11k) + '%';
 		if (percentage11k == 0) labelK = '';
-		labelNoK = percentageNoK + '%';
+		labelNoK =  Math.round(percentageNoK) + '%';
 		if (percentageNoK == 0) labelNoK = '';
 
 		Chartist.Pie(
@@ -491,12 +626,12 @@ function updateClientGraphs() {
 		11v chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
-		percentage11v = Math.round((count11v / wirelessClients.length) * 100);
+		percentage11v = (count11v / wirelessClients.length) * 100;
 		percentageNoV = 100 - percentage11v;
 
-		labelV = percentage11v + '%';
+		labelV =  Math.round(percentage11v) + '%';
 		if (percentage11v == 0) labelV = ' ';
-		labelNoV = percentageNoV + '%';
+		labelNoV =  Math.round(percentageNoV) + '%';
 		if (percentageNoV == 0) labelNoV = ' ';
 
 		Chartist.Pie(
@@ -533,12 +668,12 @@ function updateClientGraphs() {
 		11r chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
-		percentage11r = Math.round((count11r / wirelessClients.length) * 100);
+		percentage11r =(count11r / wirelessClients.length) * 100;
 		percentageNoR = 100 - percentage11r;
 
-		labelR = percentage11r + '%';
+		labelR =  Math.round(percentage11r) + '%';
 		if (percentage11r == 0) labelR = ' ';
-		labelNoR = percentageNoR + '%';
+		labelNoR =  Math.round(percentageNoR) + '%';
 		if (percentageNoR == 0) labelNoR = ' ';
 
 		Chartist.Pie(
@@ -575,16 +710,16 @@ function updateClientGraphs() {
 		Band split chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
-		percentage5 = Math.round((count5Ghz / wirelessClients.length) * 100);
-		percentage6 = Math.round((count6Ghz / wirelessClients.length) * 100);
-		percentage2 = 100 - percentage5 - percentage6;
-
-		label5 = percentage5 + '%';
-		if (percentage5 == 0) label5 = ' ';
-		label6 = percentage6 + '%';
-		if (percentage6 == 0) label6 = ' ';
-		label2 = percentage2 + '%';
-		if (percentage2 == 0) label2 = ' ';
+		percentage5 = (count5Ghz / wirelessClients.length) * 100;
+		percentage6 = (count6Ghz / wirelessClients.length) * 100;
+		percentage2 = (count2Ghz / wirelessClients.length) * 100;
+		
+		label5 = Math.round(percentage5) + '%';
+		if (count5Ghz == 0) label5 = ' ';
+		label6 = Math.round(percentage6) + '%';
+		if (count6Ghz == 0) label6 = ' ';
+		label2 = Math.round(percentage2) + '%';
+		if (count2Ghz == 0) label2 = ' ';
 
 		Chartist.Pie(
 			'#chartBand',
@@ -623,26 +758,28 @@ function updateClientGraphs() {
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Standard Chart
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
-
-		percentage11be = Math.round((count11be / wirelessClients.length) * 100);
-		percentage6e = Math.round((count6E / wirelessClients.length) * 100);
-		percentage11ax = Math.round((count11ax / wirelessClients.length) * 100);
-		percentage11ac = Math.round((count11ac / wirelessClients.length) * 100);
-		percentage11gn = Math.round((count11gn / wirelessClients.length) * 100);
-		percentage11an = Math.round((count11an / wirelessClients.length) * 100);
-
-		labelBE = percentage11be + '%';
-		if (percentage11be == 0) labelBE = ' ';
-		label6E = percentage6e + '%';
-		if (percentage6e == 0) label6E = ' ';
-		labelAX = percentage11ax + '%';
-		if (percentage11ax == 0) labelAX = ' ';
-		labelAC = percentage11ac + '%';
-		if (percentage11ac == 0) labelAC = ' ';
-		labelGN = percentage11gn + '%';
-		if (percentage11gn == 0) labelGN = ' ';
-		labelAN = percentage11an + '%';
-		if (percentage11an == 0) labelAN = ' ';
+		var countedStandardLength = count11be + count6E + count11ax + count11ac + count11gn + count11an;
+			
+		percentage11be = (count11be / countedStandardLength) * 100;
+		percentage6e = (count6E / countedStandardLength) * 100;
+		percentage11ax = (count11ax / countedStandardLength) * 100;
+		percentage11ac = (count11ac / countedStandardLength) * 100;
+		percentage11gn = (count11gn / countedStandardLength) * 100;
+		percentage11an = (count11an / countedStandardLength) * 100;
+		
+		
+		labelBE =  Math.round(percentage11be) + '%';
+		if (count11be == 0) labelBE = ' ';
+		label6E =  Math.round(percentage6e) + '%';
+		if (count6E == 0) label6E = ' ';
+		labelAX =  Math.round(percentage11ax) + '%';
+		if (count11ax == 0) labelAX = ' ';
+		labelAC =  Math.round(percentage11ac) + '%';
+		if (count11ac == 0) labelAC = ' ';
+		labelGN =  Math.round(percentage11gn) + '%';
+		if (count11gn == 0) labelGN = ' ';
+		labelAN =  Math.round(percentage11an) + '%';
+		if (count11an == 0) labelAN = ' ';
 
 		Chartist.Pie(
 			'#chart11',
@@ -885,7 +1022,119 @@ function updateClientGraphs() {
 			.draw();
 		$('#SelectedClientModalLink').trigger('click');
 	});
+	
+	/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		SNR Chart
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+	snrArray = [];
+	snrArray.push(snr0);
+	snrArray.push(snr10);
+	snrArray.push(snr20);
+	snrArray.push(snr30);
+	snrArray.push(snr40);
+	snrArray.push(snr50);
+	snrArray.push(snr60);
+	
+	var barOptions = {
+		distributeSeries: true,
+		seriesBarDistance: 10,
+		axisX: {
+			showGrid: false,
+		},
+		axisY: {
+			onlyInteger: true,
+			offset: 30,
+		},
+		height: 250,
+		plugins: [Chartist.plugins.tooltip()],
+	};
+	
+	// Build series
+	var snrSeries = [{ meta: '0-9', value: snr0.length}, { meta: '10-19', value: snr10.length}, { meta: '20-29', value: snr20.length}, { meta: '30-39', value: snr30.length}, { meta: '40-49', value: snr40.length}, { meta: '50-59', value: snr50.length}, { meta: '60+', value: snr60.length}];
+	
+	Chartist.Bar(
+		'#chartSNR',
+		{
+			labels: snrLabels,
+			series: [snrSeries],
+		},
+		{
+			//distributeSeries: true,
+			height: 250,
+			axisX: {
+				showGrid: false,
+				labelInterpolationFnc: function(value) {
+				  return value + 'dB'
+				},
+			},
+			axisY: {
+				onlyInteger: true,
+				offset: 50,
+			},
+			plugins: [Chartist.plugins.tooltip()],
+		}
+	);
+	
+	$('#chartSNR').on('click', '.ct-bar', function() {
+		$('#selected-client-table')
+			.DataTable()
+			.rows()
+			.remove();
+		var table = $('#selected-client-table').DataTable();
+		var selectedClients = [];
+		var val = $(this).attr('ct:meta');
+		var valIndex = snrLabels.indexOf(val);
+		selectedClients = snrArray[valIndex];
+		console.log(val)
+		console.log(valIndex)
+		document.getElementById('selected-title').innerHTML = 'Clients with SNR in the Range: ' + snrLabels[valIndex] + 'dB';
+	
+		$.each(selectedClients, function() {
+			var status = '';
+			if (!this['health']) {
+				status = '<i class="fa-solid fa-circle text-neutral"></i>';
+			} else if (this['health'] < 50) {
+				status = '<i class="fa-solid fa-circle text-danger"></i>';
+			} else if (this['health'] < 70) {
+				status = '<i class="fa-solid fa-circle text-warning"></i>';
+			} else {
+				status = '<i class="fa-solid fa-circle text-success"></i>';
+			}
+			// Generate clean data for table
+			var site = '';
+			if (this['site']) site = this['site'];
+			var health = '';
+			if (this['health']) health = this['health'];
+			var associatedDevice_name = '';
+			var associatedDevice = findDeviceInMonitoring(this['associated_device']);
+			if (associatedDevice) associatedDevice_name = associatedDevice.name;
+			var ip_address = '';
+			if (this['ip_address']) ip_address = this['ip_address'];
+			var vlan = '';
+			if (this['vlan']) vlan = this['vlan'];
+			var os_type = '';
+			if (this['os_type']) os_type = this['os_type'];
+			var client_name = '';
+			if (this['name']) client_name = this['name'];
+	
+			// Make link to Central
+			name = encodeURI(client_name);
+			var apiURL = localStorage.getItem('base_url');
+			var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+	
+			// Add row to table
+			table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
+		});
+		$('#selected-client-table')
+			.DataTable()
+			.rows()
+			.draw();
+		$('#SelectedClientModalLink').trigger('click');
+	});
 	$('[data-toggle="tooltip"]').tooltip();
+	
+	
+	
 }
 
 

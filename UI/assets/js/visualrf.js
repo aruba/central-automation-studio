@@ -49,6 +49,9 @@ var clientImage;
 function loadCurrentPageAP() {
 	apImage = new Image();
 	apImage.src = 'assets/img/ap-icon.svg';
+	
+	apFrameImage = new Image();
+	apFrameImage.src = 'assets/img/ap-frame.svg';
 
 	clientImage = new Image();
 	clientImage.src = 'assets/img/client-icon.svg';
@@ -236,6 +239,10 @@ function getBuildings(offset, campusId) {
 
 function getFloors(offset) {
 	vrfBuildingId = document.getElementById('buildingselector').value;
+	getFloorsForBuilding(vrfBuildingId, offset);
+}
+
+function getFloorsForBuilding(buildingId, offset) {
 	if (offset == 0) {
 		resetCanvases();
 		vrfFloors = [];
@@ -248,7 +255,7 @@ function getFloors(offset) {
 			'Content-Type': 'application/json',
 		},
 		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/visualrf_api/v1/building/' + vrfBuildingId + '?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
+			url: localStorage.getItem('base_url') + '/visualrf_api/v1/building/' + buildingId + '?offset=' + offset + '&limit=' + apiVRFLimit + '&units=' + vrfUnits,
 			access_token: localStorage.getItem('access_token'),
 		}),
 	};
@@ -272,8 +279,7 @@ function getFloors(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getFloors(offset);
@@ -293,7 +299,7 @@ function getFloors(offset) {
 				vrfFloors = vrfFloors.concat(response['floors']);
 
 				offset += apiVRFLimit;
-				if (offset < response['floor_count']) getFloors(offset);
+				if (offset < response['floor_count']) getFloorsForBuilding(buildingId, offset);
 				else {
 					// maybe save to indexedDB...
 					loadFloorSelector();
@@ -303,9 +309,13 @@ function getFloors(offset) {
 	});
 }
 
-function getFloorData(floorId) {
+function getFloorData() {
 	vrfFloorId = document.getElementById('floorselector').value;
+	getFloorDataForId(vrfFloorId);
+}
 
+function getFloorDataForId(floorId) {
+	vrfFloorId = floorId;
 	//get Floorplan
 	if (visualRFNotification) visualRFNotification.update({ message: 'Attempting to obtain floorplan...', type: 'warning' });
 	else visualRFNotification = showNotification('ca-floors', 'Getting Floor information...', 'bottom', 'center', 'info');
@@ -364,6 +374,7 @@ function drawFloorplanImage(swap) {
 	var superView = document.getElementById('ap-visualPlan');
 	var canvas = document.getElementById('ap-floorplanCanvas');
 	var ctx = canvas.getContext('2d');
+	ctx.willReadFrequently = true;
 
 	var floorplanImg = new Image();
 	floorplanImg.src = 'data:image/png;base64,' + vrfFloorplan;
@@ -374,7 +385,7 @@ function drawFloorplanImage(swap) {
 		ctx.drawImage(floorplanImg, 0, 0, normalWidth, normalHeight);
 		ctx.textBaseline = 'middle';
 		ctx.textAlign = 'center';
-		if (!document.getElementById('colourFloorplan').checked) {
+		if (!document.getElementById('colourFloorplan') || !document.getElementById('colourFloorplan').checked) {
 			var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 			var dataArray = imageData.data;
 
@@ -622,7 +633,6 @@ function drawAPsOnFloorplan() {
 			ctx.fillStyle = '#447DF7';
 		}  else if (document.getElementById('visualizationselector').value === 'bandwidth') {
 			$.each(thisAP.radios, function() {
-				console.log(this)
 				var currentChannel = this.channel.replace(/\D/g, '');
 				var currentWidth = this.channel.replace(/\d/g, '');
 				if (currentChannel !== '') {
@@ -683,11 +693,42 @@ function drawAPsOnFloorplan() {
 			ctx.shadowColor = 'white';
 			ctx.shadowBlur = 14;
 		}
-		ctx.roundRect(x - 8, y - 8, 16, 16, 1);
-		ctx.fill();
-		ctx.drawImage(apImage, x - 10, y - 10, 20, 20);
+		
+		if (document.getElementById('visualizationselector').value === 'clientcount') {
+			// based on client count - white = down AP
+			if (thisAP['client_count'] > 50) ctx.fillStyle = '#FB404B';
+			else if (thisAP['client_count'] > 25) ctx.fillStyle = '#FFA534';
+			else ctx.fillStyle = '#87CB16';
+			if (thisAP['status'] === 'Down') ctx.fillStyle = 'white';
+			
+			// Draw empty AP frame (no Wi-Fi Signal)
+			ctx.roundRect(x - 8, y - 8, 16, 16, 1);
+			ctx.fill();
+			ctx.drawImage(apFrameImage, x - 10, y - 10, 20, 20);
+			
+			if (thisAP['status'] === 'Up') {
+				// Draw client count in bold
+				ctx.font = 'bold 10px sans-serif';
+				countLabel_size = ctx.measureText(thisAP['client_count']);
+				ctx.shadowBlur = 0;
+				ctx.fillStyle = 'black';
+				ctx.fillText(thisAP['client_count'], x - countLabel_size.width / 2, y+4);
+			} else {
+				// Draw client count in bold
+				ctx.font = 'bold 10px sans-serif';
+				countLabel_size = ctx.measureText('-');
+				ctx.shadowBlur = 0;
+				ctx.fillStyle = 'black';
+				ctx.fillText('-', x - countLabel_size.width / 2, y+4);
+			}
+		} else {
+			ctx.roundRect(x - 8, y - 8, 16, 16, 1);
+			ctx.fill();
+			ctx.drawImage(apImage, x - 10, y - 10, 20, 20);
+		}
 
 		// Create Labels
+		ctx.font = 'bold 10px sans-serif';
 		if (apLabel2) {
 			apLabel1_size = ctx.measureText(apLabel1);
 			apLabel2_size = ctx.measureText(apLabel2);
@@ -1084,6 +1125,10 @@ function changeFloorplanData() {
 		document.getElementById('secondaryFilter').style.display = 'none';
 		document.getElementById('timeFilter').style.display = 'none';
 		drawAPsOnFloorplan();
+	} else if (document.getElementById('visualizationselector').value === 'clientcount') {
+		document.getElementById('secondaryFilter').style.display = 'none';
+		document.getElementById('timeFilter').style.display = 'none';
+		drawAPsOnFloorplan();
 	} else if (document.getElementById('visualizationselector').value === 'bandwidth') {
 		document.getElementById('secondaryFilter').style.display = 'none';
 		document.getElementById('timeFilter').style.display = 'none';
@@ -1250,29 +1295,31 @@ function updateChannelSelector() {
 
 function loadBuildingSelector() {
 	// remove old data from the selector
-	select = document.getElementById('buildingselector');
-	select.options.length = 0;
-
-	vrfBuildings.sort((a, b) => {
-		const siteA = a.building_name.toUpperCase(); // ignore upper and lowercase
-		const siteB = b.building_name.toUpperCase(); // ignore upper and lowercase
-		// Sort on Site Name
-		if (siteA < siteB) {
-			return -1;
-		}
-		if (siteA > siteB) {
-			return 1;
-		}
-		return 0;
-	});
-
-	$.each(vrfBuildings, function() {
-		// Add group to the dropdown selector
-		$('#buildingselector').append($('<option>', { value: this['building_id'], text: this['building_name'] }));
-		if ($('#buildingselector').length != 0) {
-			$('#buildingselector').selectpicker('refresh');
-		}
-	});
+	if (document.getElementById('buildingselector')) {
+		select = document.getElementById('buildingselector');
+		select.options.length = 0;
+	
+		vrfBuildings.sort((a, b) => {
+			const siteA = a.building_name.toUpperCase(); // ignore upper and lowercase
+			const siteB = b.building_name.toUpperCase(); // ignore upper and lowercase
+			// Sort on Site Name
+			if (siteA < siteB) {
+				return -1;
+			}
+			if (siteA > siteB) {
+				return 1;
+			}
+			return 0;
+		});
+	
+		$.each(vrfBuildings, function() {
+			// Add group to the dropdown selector
+			$('#buildingselector').append($('<option>', { value: this['building_id'], text: this['building_name'] }));
+			if ($('#buildingselector').length != 0) {
+				$('#buildingselector').selectpicker('refresh');
+			}
+		});
+	}
 }
 
 function loadFloorSelector() {

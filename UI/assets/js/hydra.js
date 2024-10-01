@@ -1,7 +1,7 @@
 /*
 Central Automation v1.6.0
 Updated: 1.8.2
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var centralCredentials = [];
@@ -46,6 +46,22 @@ function getAccessTokenforClientID(client_id) {
 		if (centralCredentials[i].client_id === client_id) accessToken = centralCredentials[i].access_token;
 	}
 	return accessToken;
+}
+
+function isAccessTokenExpiredForClientID(client_id) {
+	
+	expiry = true;
+	loadCentralVCredentials();
+	for (i = 0; i < centralCredentials.length; i++) {
+		if (centralCredentials[i].client_id === client_id) {
+			expiryTimestamp = centralCredentials[i].expires_at;
+			if (expiryTimestamp) {
+				var nowTimestamp = Date.now();
+				expiry = (expiryTimestamp < nowTimestamp + 300000)
+			}
+		}
+	}
+	return expiry;
 }
 
 function getRefreshTokenforClientID(client_id) {
@@ -115,6 +131,8 @@ function addAccount() {
 	document.getElementById('client_id').disabled = false;
 	document.getElementById('client_secret').value = '';
 	document.getElementById('access_token').value = '';
+	document.getElementById('expires_at').value = '';
+	document.getElementById('expires_at').name = '';
 	document.getElementById('refresh_token').value = '';
 	isCOPSelected();
 	$('#AccountModalLink').trigger('click');
@@ -126,13 +144,13 @@ function saveAccount() {
 	var currentAccount = checkForDuplicateAccount($('#client_id').val());
 
 	if (currentAccount == -1) {
-		centralCredentials.push({ account_name: $('#account_name').val(), central_id: $('#central_id').val().trim(), client_id: $('#client_id').val().trim(), client_secret: $('#client_secret').val().trim(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val().trim(), access_token: $('#access_token').val().trim() });
+		centralCredentials.push({ account_name: $('#account_name').val(), central_id: $('#central_id').val().trim(), client_id: $('#client_id').val().trim(), client_secret: $('#client_secret').val().trim(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val().trim(), access_token: $('#access_token').val().trim(), expires_at: document.getElementById('expires_at').name.trim() });
 
 		// save array to localStorage
 		localStorage.setItem('account_details', JSON.stringify(centralCredentials));
 	} else {
 		//modify existing account
-		centralCredentials[currentAccount] = { account_name: $('#account_name').val(), central_id: $('#central_id').val().trim(), client_id: $('#client_id').val().trim(), client_secret: $('#client_secret').val().trim(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val().trim(), access_token: $('#access_token').val().trim() };
+		centralCredentials[currentAccount] = { account_name: $('#account_name').val(), central_id: $('#central_id').val().trim(), client_id: $('#client_id').val().trim(), client_secret: $('#client_secret').val().trim(), base_url: document.getElementById('clusterselector').value, cop_address: $('#cop_address').val(), refresh_token: $('#refresh_token').val().trim(), access_token: $('#access_token').val().trim(), expires_at: document.getElementById('expires_at').name.trim() };
 		localStorage.setItem('account_details', JSON.stringify(centralCredentials));
 	}
 
@@ -156,7 +174,10 @@ function editAccount(clientID) {
 	document.getElementById('clusterselector').value = account.base_url;
 	document.getElementById('cop_address').value = account.cop_address ? account.cop_address : '';
 	document.getElementById('access_token').value = account.access_token;
+	document.getElementById('expires_at').value = account.expires_at;
+	document.getElementById('expires_at').name = account.expires_at;
 	document.getElementById('refresh_token').value = account.refresh_token;
+	
 	isCOPSelected();
 	$('#AccountModalLink').trigger('click');
 }
@@ -248,7 +269,6 @@ function testToken() {
 
 	return $.ajax(settings)
 		.done(function(response, textStatus, jqXHR) {
-			//console.log(response);
 			if (response.hasOwnProperty('status')) {
 				if (response.status === '503') {
 					logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
@@ -264,6 +284,12 @@ function testToken() {
 			} else {
 				document.getElementById('access_token').value = response.access_token;
 				document.getElementById('refresh_token').value = response.refresh_token;
+				
+				var nowDatestamp = Date.now();
+				nowDatestamp = nowDatestamp + (response.expires_in*1000)
+				document.getElementById('expires_at').value = nowDatestamp;
+				document.getElementById('expires_at').name = nowDatestamp;
+				
 				showNotification('ca-padlock', '"' + $('#account_name').val() + '" Authenticated with Central', 'bottom', 'center', 'success');
 				saveAccount();
 			}
@@ -294,8 +320,10 @@ function exportSettings() {
 	exportData['qr_color'] = localStorage.getItem('qr_color');
 	exportData['qr_logo'] = localStorage.getItem('qr_logo');
 	exportData['load_clients'] = localStorage.getItem('load_clients');
-	exportData['load_group_properties'] = localStorage.getItem('load_group_properties');
+	exportData['load_devices'] = localStorage.getItem('load_devices');
+	exportData['load_gateways'] = localStorage.getItem('load_gateways');
 	exportData['load_gateway_details'] = localStorage.getItem('load_gateway_details');
+	exportData['load_group_properties'] = localStorage.getItem('load_group_properties');
 	exportData['load_airmatch_events'] = localStorage.getItem('load_airmatch_events');
 	exportData['load_vc_config'] = localStorage.getItem('load_vc_config');
 	
@@ -354,8 +382,10 @@ function importConfirmed() {
 			if (importData['qr_logo']) localStorage.setItem('qr_logo', importData['qr_logo']);
 			else localStorage.setItem('qr_logo', '');
 			if (importData['load_clients']) localStorage.setItem('load_clients', importData['load_clients']);
-			if (importData['load_group_properties']) localStorage.setItem('load_group_properties', importData['load_group_properties']);
+			if (importData['load_devices']) localStorage.setItem('load_devices', importData['load_devices']);
+			if (importData['load_gateways']) localStorage.setItem('load_gateways', importData['load_gateways']);
 			if (importData['load_gateway_details']) localStorage.setItem('load_gateway_details', importData['load_gateway_details']);
+			if (importData['load_group_properties']) localStorage.setItem('load_group_properties', importData['load_group_properties']);
 			if (importData['load_airmatch_events']) localStorage.setItem('load_airmatch_events', importData['load_airmatch_events']);
 			if (importData['load_vc_config']) localStorage.setItem('load_vc_config', importData['load_vc_config']);
 			

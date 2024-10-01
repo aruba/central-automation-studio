@@ -1,7 +1,7 @@
 /*
 Central Automation v1.20
 Updated: 1.36.7
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 const RapidsType = { All: 0, Rogues: 1, SuspectedRogues: 2, Interfering: 3, Neighbours: 4, Contained: 5};
@@ -39,7 +39,7 @@ function loadCurrentPageAP() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getRapidsData() {
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		rapidNotification = showLongNotification('ca-rapids', 'Obtaining RAPIDS information...', 'bottom', 'center', 'info');
 
 		totalAPs = [];
@@ -133,8 +133,7 @@ function getRogues(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getRogues(offset);
@@ -206,8 +205,7 @@ function getSuspect(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getSuspect(offset);
@@ -279,8 +277,7 @@ function getInterfering(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getInterfering(offset);
@@ -352,8 +349,7 @@ function getNeighbours(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getNeighbours(offset);
@@ -424,8 +420,7 @@ function getContained(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getContained(offset);
@@ -702,8 +697,7 @@ function getWIDSEvents(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getWIDSEvents(offset);
@@ -939,8 +933,7 @@ function exportRules() {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getWIDSEvents(offset);

@@ -18,7 +18,7 @@ var variableCounter = 0;
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getSwitchStacks() {
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		stacksPromise = new $.Deferred();
 		$('#stacks-table')
 			.DataTable()

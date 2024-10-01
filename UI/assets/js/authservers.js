@@ -1,7 +1,7 @@
 /*
 Central Automation v1.3
 Updated: 1.8.2
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var configGroups = [];
@@ -49,7 +49,7 @@ Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getAuthServers() {
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
 		$.when(getGroupData(0)).then(function() {
 			// Clearing old data

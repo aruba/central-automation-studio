@@ -1,14 +1,10 @@
 /*
 Central Automation v1.x
-Last Updated 1.37.5
+Last Updated 1.41.6
 Aaron Scott (WiFi Downunder) 2023-2024
 */
 
-const CASVersion = "1.37.6";
-function getCASVersion() {
-	var versionP = document.getElementById('cas-version');
-	if (versionP) versionP.innerHTML = 'Version: ' + CASVersion;
-}
+var showTimingData = false;
 
 var centralURLs = 
 	{
@@ -30,6 +26,7 @@ var centralURLs =
 		'https://apigw-cordelia.arubadev.cloud.hpe.com': 'https://app-cordelia.arubadev.cloud.hpe.com',
 		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'https://cmcsa1.aruba.b4b.comcast.net',
 		'https://apigw-stgthdnaas.central.arubanetworks.com': 'https://app-stgthdnaas.central.arubanetworks.com',
+		'https://apigw-thdnaas.central.arubanetworks.com': 'https://app-thdnaas.central.arubanetworks.com',
 		COP: 'COP',
 	};
 
@@ -57,6 +54,7 @@ var centralClusters =
 		'Cordelia':{url: 'https://apigw-cordelia.arubadev.cloud.hpe.com', type: 'Private'},
 		'CMCSA1': {url: 'https://apigw-cmcsa1api.aruba.b4b.comcast.net', type: 'Private'},
 		'STGTHDNAAS':{url: 'https://apigw-stgthdnaas.central.arubanetworks.com', type: 'Private'},
+		'THDNAAS':{url: 'https://apigw-thdnaas.central.arubanetworks.com', type: 'Private'},
 		'Central On-Prem': {url: 'COP', type: 'Private'},
 	};
 
@@ -80,6 +78,7 @@ var clusterNames =
 		'https://apigw-cordelia.arubadev.cloud.hpe.com': 'Cordelia',
 		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'CMCSA1',
 		'https://apigw-stgthdnaas.central.arubanetworks.com':'STGTHDNAAS',
+		'https://apigw-thdnaas.central.arubanetworks.com':'THDNAAS',
 		COP: 'Central On-Prem',
 	};
 
@@ -125,9 +124,12 @@ var antennas = {
 	'ANT-2X2-2714': { type: "Outdoor", two: 14, description:"2.4GHz 70°H x 23°V 2x2 Directional" },
 };
 
+const networkProtocols = ['HOPOPT','ICMP','IGMP','GGP','IPv4','ST','TCP','CBT','EGP','IGP','BBN-RCC-MON','NVP-II','PUP','ARGUS','EMCON','XNET','CHAOS','UDP','MUX','DCN-MEAS','HMP','PRM','XNS-IDP','TRUNK-1','TRUNK-2','LEAF-1','LEAF-2','RDP','IRTP','ISO-TP4','NETBLT','MFE-NSP','MERIT-INP','DCCP','3PC','IDPR','XTP','DDP','IDPR-CMTP','TP++','IL','IPv6','SDRP','IPv6-Route','IPv6-Frag','IDRP','RSVP','GRE','DSR','BNA','ESP','AH','I-NLSP','SWIPE (deprecated)','NARP','Min-IPv4','TLSP','SKIP','IPv6-ICMP','IPv6-NoNxt','IPv6-Opts','','CFTP','','SAT-EXPAK','KRYPTOLAN','RVD','IPPC','','SAT-MON','VISA','IPCV','CPNX','CPHB','WSN','PVP','BR-SAT-MON','SUN-ND','WB-MON','WB-EXPAK','ISO-IP','VMTP','SECURE-VMTP','VINES','IPTM','NSFNET-IGP','DGP','TCF','EIGRP','OSPFIGP','Sprite-RPC','LARP','MTP','AX.25','IPIP','MICP','SCC-SP','ETHERIP','ENCAP','','GMTP','IFMP','PNNI','PIM','ARIS','SCPS','QNX','A/N','IPComp','SNP','Compaq-Peer','IPX-in-IP','VRRP','PGM','','L2TP','DDX','IATP','STP','SRP','UTI','SMP','SM','PTP','ISIS over IPv4','FIRE','CRTP','CRUDP','SSCOPMCE','IPLT','SPS','PIPE','SCTP','FC','RSVP-E2E-IGNORE','Mobility Header','UDPLite','MPLS-in-IP','manet','HIP','Shim6','WESP','ROHC','Ethernet','AGGFRAG','NSH'];
+
 // Constants
+const DeviceType = { AP: 0, Switch: 1, Gateway: 2, Controller: 3};
 const ConfigType = { All: 0, IP: 1, Antenna: 2 };
-const ScaleType = { Full: 0, Scale: 1, Custom: 2};
+const ScaleType = { Full: 0, Scale: 1, Custom: 2, Group: 3};
 const vrfUnits = 'FEET';
 const ratio = window.devicePixelRatio;
 const colorArray = ['text-info', 'text-danger', 'text-warning', 'text-purple', 'text-success', 'text-primary', 'text-series7', 'text-series8'];
@@ -135,6 +137,14 @@ const apColors = ['#23CCEF', '#FB404B', '#FFA534', '#9368E9', '#87CB16', '#1D62F
 const labels2 = ['1', '6', '11'];
 const labels5 = ['36', '40', '44', '48', '52', '56', '60', '64', '100', '104', '108', '112', '116', '120', '124', '128', '132', '136', '140', '144', '149', '153', '157', '161', '165', '169', '173', '177'];
 const labels6 = ['5', '21', '37', '53', '69', '85', '101', '117', '133', '149', '165', '181', '197', '213', '229'];
+
+const class1Switches = ['R8Q72A', 'JL258A', 'JL693A', 'JL692A'];
+const class2Switches = ['S3L77A', 'S3L75A', 'S3L76A'];
+const class3Switches = [];
+const class4Switches = [];
+const class5Switches = [];
+
+var DateTime = luxon.DateTime;
 
 // COP Specific variables
 var cop_url = 'https://apigw-';
@@ -166,15 +176,21 @@ var swarmCounter = 0;
 var poeCounter = 0;
 var radioCounter = 0;
 var antennaCounter = 0;
+var ap1xCounter = 0;
 var installCounter = 0;
+var ledCounter = 0;
 var ipCounter = 0;
 var rebootCounter = 0;
 var checkedCounter = 0;
 var updateVariablesCounter = 0;
 var visitorCounter = 0;
 var labelCounter = 0;
+var gatewayCounter = 0;
 var inventoryProgress = 0;
 var inventoryAPProgress = 0;
+var inventorySwitchProgress = 0;
+var inventoryGatewayProgress = 0;
+
 
 var authPromise;
 var inventoryPromise;
@@ -190,6 +206,7 @@ var zonePromise;
 var rfPromise;
 var bssidPromise;
 var mspPromise;
+var autoLicenseCheckPromise;
 
 var updateCounter = 0;
 var updateCount = 0;
@@ -306,6 +323,7 @@ var inventoryNotification;
 var expiryNotification;
 var customerNotification;
 var neighbourNotification
+var toolNotification
 
 var automationNotification;
 var addNotification;
@@ -317,6 +335,7 @@ var installNotification;
 var radioNotification;
 var antennaNotification;
 var licenseNotification;
+var ap1xNotification;
 var moveNotification;
 var renameNotification;
 var rebootNotification;
@@ -325,6 +344,11 @@ var ipNotification;
 var visitorNotification;
 var siteNotification;
 var labelNotification;
+
+var appIDMappings = {};
+var webCatMappings = {};
+
+var autoLicenseState = false;
 
 var indexedDB;
 var dbRequest;
@@ -382,8 +406,8 @@ function checkUIForCOP() {
 		if (x) x.hidden = true;
 		x = document.getElementById('clientmatch_card');
 		if (x) x.hidden = true;
-		x = document.getElementById('ipam_card');
-		if (x) x.hidden = true;
+		/*x = document.getElementById('ipam_card');
+		if (x) x.hidden = true;*/
 		x = document.getElementById('gateway_card');
 		if (x) x.hidden = true;
 		x = document.getElementById('gateway_stats');
@@ -395,8 +419,8 @@ function checkUIForCOP() {
 		if (x) x.hidden = false;
 		x = document.getElementById('clientmatch_card');
 		if (x) x.hidden = false;
-		x = document.getElementById('ipam_card');
-		if (x) x.hidden = false;
+		/*x = document.getElementById('ipam_card');
+		if (x) x.hidden = false;*/
 		x = document.getElementById('gateway_card');
 		if (x) x.hidden = false;
 		x = document.getElementById('gateway_stats');
@@ -417,7 +441,7 @@ function openIndexedDB() {
 		console.log('IndexedDB could not be found in this browser.');
 	}
 
-	dbRequest = indexedDB.open('Central-Automation-Studio-DB', 2);
+	dbRequest = indexedDB.open('Central-Automation-Studio-DB', 3);
 
 	dbRequest.onerror = function(event) {
 		console.error('An error occurred with IndexedDB');
@@ -502,6 +526,74 @@ function loadMonitoringData(refreshrate) {
 				$(document.getElementById('client_icon')).removeClass('text-success');
 				$(document.getElementById('client_icon')).removeClass('text-neutral');
 			}
+			
+			var loadDevices = localStorage.getItem('load_devices');
+			if (loadDevices === null || loadDevices === '') {
+				loadDevices = true;
+			} else {
+				loadDevices = JSON.parse(loadDevices);
+			}
+			console.log('AP & Switch Monitoring: ' + loadDevices);
+			if (!loadDevices) {
+				// Mark the Devices tiles in Grey
+				if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
+				$(document.getElementById('ap_icon')).removeClass('text-warning');
+				$(document.getElementById('ap_icon')).removeClass('text-danger');
+				$(document.getElementById('ap_icon')).removeClass('text-success');
+				$(document.getElementById('ap_icon')).addClass('text-neutral');
+				
+				if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '-';
+				$(document.getElementById('switch_icon')).removeClass('text-warning');
+				$(document.getElementById('switch_icon')).removeClass('text-danger');
+				$(document.getElementById('switch_icon')).removeClass('text-success');
+				$(document.getElementById('switch_icon')).addClass('text-neutral');
+			} else {
+				if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
+				$(document.getElementById('ap_icon')).addClass('text-warning');
+				$(document.getElementById('ap_icon')).removeClass('text-danger');
+				$(document.getElementById('ap_icon')).removeClass('text-success');
+				$(document.getElementById('ap_icon')).removeClass('text-neutral');
+				
+				if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '-';
+				$(document.getElementById('switch_icon')).addClass('text-warning');
+				$(document.getElementById('switch_icon')).removeClass('text-danger');
+				$(document.getElementById('switch_icon')).removeClass('text-success');
+				$(document.getElementById('switch_icon')).removeClass('text-neutral');
+			}
+			
+			var loadGateways = localStorage.getItem('load_gateways');
+			if (loadGateways === null || loadGateways === '') {
+				loadGateways = true;
+			} else {
+				loadGateways = JSON.parse(loadGateways);
+			}
+			console.log('Gateway Monitoring: ' + loadGateways);
+			if (!loadGateways) {
+				// Mark the Devices tiles in Grey				
+				if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '-';
+				$(document.getElementById('gateway_icon')).removeClass('text-warning');
+				$(document.getElementById('gateway_icon')).removeClass('text-danger');
+				$(document.getElementById('gateway_icon')).removeClass('text-success');
+				$(document.getElementById('gateway_icon')).addClass('text-neutral');
+				
+				if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '-';
+				$(document.getElementById('controller_icon')).removeClass('text-warning');
+				$(document.getElementById('controller_icon')).removeClass('text-danger');
+				$(document.getElementById('controller_icon')).removeClass('text-success');
+				$(document.getElementById('controller_icon')).addClass('text-neutral');
+			} else {				
+				if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '-';
+				$(document.getElementById('gateway_icon')).addClass('text-warning');
+				$(document.getElementById('gateway_icon')).removeClass('text-danger');
+				$(document.getElementById('gateway_icon')).removeClass('text-success');
+				$(document.getElementById('gateway_icon')).removeClass('text-neutral');
+				
+				if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '-';
+				$(document.getElementById('controller_icon')).addClass('text-warning');
+				$(document.getElementById('controller_icon')).removeClass('text-danger');
+				$(document.getElementById('controller_icon')).removeClass('text-success');
+				$(document.getElementById('controller_icon')).removeClass('text-neutral');
+			}
 
 			clients = [];
 			downAPCount = 0;
@@ -519,29 +611,37 @@ function loadMonitoringData(refreshrate) {
 				if (allQuery.result) {
 					$.each(allQuery.result, function() {
 						if (this.key === 'monitoring_aps') {
-							aps = JSON.parse(this.data);
-							$.each(aps, function() {
-								loadAPUI(this);
-							});
-							updateAPUI();
+							if (loadDevices) {
+								aps = JSON.parse(this.data);
+								$.each(aps, function() {
+									loadAPUI(this);
+								});
+								updateAPUI();
+							}
 						} else if (this.key === 'monitoring_switches') {
-							switches = JSON.parse(this.data);
-							$.each(switches, function() {
-								loadSwitchUI(this);
-							});
-							updateSwitchUI();
+							if (loadDevices) {
+								switches = JSON.parse(this.data);
+								$.each(switches, function() {
+									loadSwitchUI(this);
+								});
+								updateSwitchUI();
+							}
 						} else if (this.key === 'monitoring_gateways') {
-							gateways = JSON.parse(this.data);
-							$.each(gateways, function() {
-								loadGatewayUI(this);
-							});
-							updateGatewayUI();
+							if (loadGateways) {
+								gateways = JSON.parse(this.data);
+								$.each(gateways, function() {
+									loadGatewayUI(this);
+								});
+								updateGatewayUI();
+							}
 						} else if (this.key === 'monitoring_controllers') {
-							controllers = JSON.parse(this.data);
-							$.each(controllers, function() {
-								loadControllerUI(this);
-							});
-							updateControllerUI();
+							if (loadGateways) {
+								controllers = JSON.parse(this.data);
+								$.each(controllers, function() {
+									loadControllerUI(this);
+								});
+								updateControllerUI();
+							}
 						} else if (this.key === 'monitoring_sites') {
 							sites = JSON.parse(this.data);
 							$.each(sites, function() {
@@ -592,6 +692,12 @@ function loadMonitoringData(refreshrate) {
 									updateClientUI();
 								}
 							}
+						} else if (this.key === 'inventory_ap') {
+							apInventory = JSON.parse(this.data);
+						} else if (this.key === 'inventory_switch') {
+							switchInventory = JSON.parse(this.data);
+						} else if (this.key === 'inventory_gateway') {
+							gatewayInventory = JSON.parse(this.data);
 						}
 					});
 				}
@@ -616,6 +722,10 @@ function titleCase(str) {
 
 function noUnderscore(str) {
 	return str.replace(/_/g, ' ');
+}
+
+function noDash(str) {
+	return str.replace(/-/g, ' ');
 }
 
 function cleanMACAddress(mac) {
@@ -687,7 +797,7 @@ function showLongNotification(icon, message, from, align, color) {
 		},
 		{
 			type: color,
-			delay: 30000,
+			delay: 50000,
 			placement: {
 				from: from,
 				align: align,
@@ -810,7 +920,7 @@ function processCSV(results) {
 	csvData = results.data;
 	csvDataCount = csvData.length;
 	forcedTokenRefresh = false;
-	tokenRefresh();
+	authRefresh();
 }
 
 function loadCSVFile(clickedRow) {
@@ -821,7 +931,7 @@ function loadCSVFile(clickedRow) {
 			complete: processCSV,
 			skipEmptyLines: 'greedy',
 			transformHeader: function(h) {
-				return h.trim();
+				return h.toUpperCase().trim();
 			},
 		},
 		before: function(file, inputElem) {
@@ -843,6 +953,8 @@ function loadCSVFile(clickedRow) {
 				$('#AddCustomerModalLink').trigger('click');
 			} else if (clickedRow === 'mgmt-inventory') {
 				downloadMSPInventory();
+			} else if (clickedRow === 'mgmt-expiring-inventory') {
+				downloadMSPExpiringInventory();
 			} else if (!csvData) {
 				showNotification('ca-c-warning', 'No CSV data found. Try selecting a CSV document.', 'bottom', 'center', 'danger');
 				return false;
@@ -939,6 +1051,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Configuring Swarm Mode...');
 				currentWorkflow = '';
 				setSwarmMode();
+			} else if (clickedRow === 'setAP1XCredentials') {
+				logStart('Configuring AP1X PEAP credentials...');
+				currentWorkflow = '';
+				setAP1XCredentials();
 			} else if (clickedRow === 'devicevariables') {
 				logStart('Updating device variables...');
 				currentWorkflow = '';
@@ -965,10 +1081,22 @@ function loadCSVFile(clickedRow) {
 				logStart('Configuring AP Installation Type...');
 				currentWorkflow = '';
 				setInstallationType();
+			} else if (clickedRow === 'ledOff') {
+				logStart('Turning off AP LEDs...');
+				currentWorkflow = '';
+				setLEDOff();
+			} else if (clickedRow === 'ledOn') {
+				logStart('Turning on AP LEDs...');
+				currentWorkflow = '';
+				setLEDOn();
 			} else if (clickedRow === 'rebootDevices') {
 				logStart('Rebooting devices...');
 				currentWorkflow = '';
 				rebootDevices();
+			} else if (clickedRow === 'gatewayTimezones') {
+				logStart('Configuring Gateway Timezones...');
+				currentWorkflow = '';
+				setGatewayTimezones();
 			} else if (clickedRow === 'auto-add-license') {
 				logStart('Adding devices and licensing...');
 				currentWorkflow = 'auto-add-license';
@@ -1271,37 +1399,42 @@ function isAuthInProgress() {
 	return authInProgress;	
 }
 
-function tokenRefresh() {
-	authInProgress = true;
-	if (authNotification) authNotification.close();
-	authNotification = showLongNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
-	var settings = {
-		url: getAPIURL() + '/auth/refreshwHeaders',
-		method: 'POST',
-		timeout: 0,
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify({
-			client_id: localStorage.getItem('client_id'),
-			client_secret: localStorage.getItem('client_secret'),
-			access_token: localStorage.getItem('access_token'),
-			refresh_token: localStorage.getItem('refresh_token'),
-			base_url: localStorage.getItem('base_url'),
-		}),
-	};
-
-	return $.ajax(settings)
-		.done(function(commandResults, statusText, jqXHR) {
+function authRefresh() {
+	authPromise = new $.Deferred();
+	
+	var expiryTimestamp = localStorage.getItem('expires_at');
+	var nowTimestamp = Date.now();
+	
+	if (expiryTimestamp == null || expiryTimestamp == 'undefined' || (expiryTimestamp < nowTimestamp + 300000)) {
+		if (authNotification) authNotification.close();
+		authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
+		authInProgress = true;
+		var settings = {
+			url: getAPIURL() + '/auth/refreshwHeaders',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				client_id: localStorage.getItem('client_id'),
+				client_secret: localStorage.getItem('client_secret'),
+				access_token: localStorage.getItem('access_token'),
+				refresh_token: localStorage.getItem('refresh_token'),
+				base_url: localStorage.getItem('base_url'),
+			}),
+		};
+	
+		$.ajax(settings).done(function(commandResults, statusText, jqXHR) {
+			//console.log(commandResults)
 			if (commandResults.hasOwnProperty('headers')) {
 				updateAPILimits(JSON.parse(commandResults.headers));
 			}
-
+	
 			var response = JSON.parse(commandResults.responseBody);
 			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-				apiErrorCount++;
 				logError('Central Server Error (503): ' + commandResults.reason + ' (/auth/refresh)');
-			} else if (commandResults.hasOwnProperty('error')) {
+			} else if (response.hasOwnProperty('error')) {
 				Swal.fire({
 					title: 'Central API connection failed',
 					text: response.error_description.replace('refresh_token', 'Refresh Token'),
@@ -1311,16 +1444,22 @@ function tokenRefresh() {
 					authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
 					setTimeout(authNotification.close, 2000);
 				}
-			} else if (commandResults.responseBody) {
+			} else if (response) {
+				//console.log(response)
 				if (response.refresh_token) {
 					localStorage.setItem('refresh_token', response.refresh_token);
 					localStorage.setItem('access_token', response.access_token);
-	
+		
+					// Create timestamp for access token expiry
+					var nowDatestamp = Date.now();
+					nowDatestamp = nowDatestamp + (response.expires_in*1000)
+					localStorage.setItem('expires_at', nowDatestamp);
+					
 					var cluster = getAccountforClientID(localStorage.getItem('client_id'));
 					cluster['refresh_token'] = response.refresh_token;
 					cluster['access_token'] = response.access_token;
+					
 					updateAccountDetails(cluster);
-	
 					var path = window.location.pathname;
 					var page = path.split('/').pop();
 					if (page.includes('settings')) {
@@ -1341,18 +1480,22 @@ function tokenRefresh() {
 							authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
 							setTimeout(authNotification.close, 1000);
 						}
+						console.log('Authentication Tokens Updated');
+						var d = new Date(nowDatestamp);
+						console.log('Access Token is valid until ' + d.toTimeString());
 					}
 				} else {
 					if (authNotification) {
 						authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
 						setTimeout(authNotification.close, 1000);
 					}
+					console.log('Authentication Tokens Failed to be Updated');
 				}
 			}
 			authInProgress = false;
-		})
-		.fail(function(XMLHttpRequest, textStatus, errorThrown) {
-			console.log('error');
+			authPromise.resolve();
+		}).fail(function(XMLHttpRequest, textStatus, errorThrown) {
+			console.log('Auth Error');
 			if (XMLHttpRequest.readyState == 4) {
 				// HTTP error (can be checked by XMLHttpRequest.status and XMLHttpRequest.statusText)
 				showNotification('ca-globe', XMLHttpRequest.statusText.replace('refresh_token', 'Refresh Token'), 'bottom', 'center', 'danger');
@@ -1364,72 +1507,12 @@ function tokenRefresh() {
 			}
 			authInProgress = false;
 		});
-}
-
-// Added in 1.13 for simple re-auth
-function authRefresh(refreshPromise) {
-	if (authNotification) authNotification.close();
-	authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
-	authInProgress = true;
-	var settings = {
-		url: getAPIURL() + '/auth/refreshwHeaders',
-		method: 'POST',
-		timeout: 0,
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify({
-			client_id: localStorage.getItem('client_id'),
-			client_secret: localStorage.getItem('client_secret'),
-			access_token: localStorage.getItem('access_token'),
-			refresh_token: localStorage.getItem('refresh_token'),
-			base_url: localStorage.getItem('base_url'),
-		}),
-	};
-
-	$.ajax(settings).done(function(commandResults, statusText, jqXHR) {
-		//console.log(commandResults)
-		if (commandResults.hasOwnProperty('headers')) {
-			updateAPILimits(JSON.parse(commandResults.headers));
-		}
-
-		var response = JSON.parse(commandResults.responseBody);
-		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-			logError('Central Server Error (503): ' + commandResults.reason + ' (/auth/refresh)');
-		} else if (response.hasOwnProperty('error')) {
-			Swal.fire({
-				title: 'Central API connection failed',
-				text: response.error_description.replace('refresh_token', 'Refresh Token'),
-				icon: 'error',
-			});
-			if (authNotification) {
-				authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
-				setTimeout(authNotification.close, 2000);
-			}
-		} else if (response) {
-			if (response.refresh_token) {
-				localStorage.setItem('refresh_token', response.refresh_token);
-				localStorage.setItem('access_token', response.access_token);
-	
-				var cluster = getAccountforClientID(localStorage.getItem('client_id'));
-				cluster['refresh_token'] = response.refresh_token;
-				cluster['access_token'] = response.access_token;
-				updateAccountDetails(cluster);
-				if (authNotification) {
-					authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
-					setTimeout(authNotification.close, 1000);
-				}
-			} else {
-				if (authNotification) {
-					authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
-					setTimeout(authNotification.close, 1000);
-				}
-			}
-		}
-		authInProgress = false;
-		refreshPromise.resolve();
-	});
-	return refreshPromise.promise();
+		return authPromise.promise();
+	} else {
+		var d = new Date(parseInt(expiryTimestamp)); // The 0 there is the key, which sets the date to the epoch
+		console.log('Access Token is valid until ' + d.toTimeString());
+		return authPromise.resolve().promise();
+	}
 }
 
 function updateAPILimits(headers) {
@@ -1461,7 +1544,7 @@ function loadAccountList() {
 			centralCredentials.sort((a,b) => (a.account_name > b.account_name) ? 1 : ((b.account_name > a.account_name) ? -1 : 0))
 			$.each(centralCredentials, function() {
 				if (localStorage.getItem('client_id') === this.client_id) {
-					document.getElementById('accountDropdownList').innerHTML += '<a class="dropdown-item"><i class="fa-solid fa-check text-muted"></i> '+this.account_name+'</a>'
+					document.getElementById('accountDropdownList').innerHTML += '<a href="javascript:switchAccount(\''+this.client_id+'\', 1);" class="dropdown-item"><i class="fa-solid fa-check text-muted"></i> '+this.account_name+'</a>'
 				} else {
 					document.getElementById('accountDropdownList').innerHTML += '<a href="javascript:switchAccount(\''+this.client_id+'\', 1);" class="dropdown-item"><i class="fa-solid fa-minus text-transparent"></i> '+this.account_name+'</a>'
 				} 
@@ -1480,31 +1563,45 @@ function switchAccount(client_id, hydra) {
 	} else {
 		// get account details and save them out
 		var account = getAccountforClientID(client_id);
-	
-		// If COP account - write the base_url with the COP address
-		var baseURL = account.base_url;
-		if (baseURL === getAPIGateway('Central On-Prem')) {
-			console.log('Setting COP address');
-			baseURL = cop_url + account.cop_address;
-			localStorage.setItem('is_cop', '1');
+		
+		if (account.client_id === localStorage.getItem('client_id')) {
+			console.log('No need to switch accounts, copying access token to clipboard')
+			navigator.clipboard.writeText(localStorage.getItem('access_token'));
+			showNotification('ca-document-copy', 'Access Token for account copied to clipboard', 'top', 'center', 'success');
 		} else {
-			localStorage.removeItem('is_cop');
+	
+			// If COP account - write the base_url with the COP address
+			var baseURL = account.base_url;
+			if (baseURL === getAPIGateway('Central On-Prem')) {
+				console.log('Setting COP address');
+				baseURL = cop_url + account.cop_address;
+				localStorage.setItem('is_cop', '1');
+			} else {
+				localStorage.removeItem('is_cop');
+			}
+		
+			localStorage.setItem('central_id', account.central_id);
+			localStorage.setItem('client_id', account.client_id);
+			localStorage.setItem('client_secret', account.client_secret);
+			localStorage.setItem('base_url', baseURL);
+			localStorage.setItem('refresh_token', account.refresh_token);
+			localStorage.setItem('access_token', account.access_token);
+			localStorage.setItem('expires_at', account.expires_at);
+		
+			// Jump to individual dashboard and refresh data
+			if (hydra == 1) localStorage.setItem('from_hydra', hydra);
+			else localStorage.removeItem('from_hydra');
+		
+			localStorage.removeItem('monitoring_update');
+			localStorage.removeItem('inventory_update');
+			
+			apInventory = [];
+			switchInventory = [];
+			gatewayInventory = [];
+			
+			deleteDataFomDB('monitoring_bssids');
+			location.reload();
 		}
-	
-		localStorage.setItem('central_id', account.central_id);
-		localStorage.setItem('client_id', account.client_id);
-		localStorage.setItem('client_secret', account.client_secret);
-		localStorage.setItem('base_url', baseURL);
-		localStorage.setItem('refresh_token', account.refresh_token);
-		localStorage.setItem('access_token', account.access_token);
-	
-		// Jump to individual dashboard and refresh data
-		if (hydra == 1) localStorage.setItem('from_hydra', hydra);
-		else localStorage.removeItem('from_hydra');
-	
-		localStorage.removeItem('monitoring_update');
-		deleteDataFomDB('monitoring_bssids');
-		location.reload();
 	}
 }
 
@@ -1553,17 +1650,12 @@ function loadCurrentPageVisitors() {
 }
 
 function goToDashboard(event) {
-	if (event.metaKey && event.altKey) {
+	if (event.altKey) {
 		navigator.clipboard.writeText(localStorage.getItem('access_token'));
 		showNotification('ca-document-copy', 'Access Token for account copied to clipboard', 'top', 'center', 'success');
 	} else location.href = 'dashboard.html';
 }
 
-document.onkeyup = function(e) {
-	if (e.shiftKey && e.which == 82) {
-		getMonitoringData();
-	}
-};
 
 // Updated: 1.6.0
 function getMonitoringData() {
@@ -1600,6 +1692,75 @@ function getMonitoringData() {
 		$(document.getElementById('client_icon')).removeClass('text-success');
 		$(document.getElementById('client_icon')).removeClass('text-neutral');
 	}
+	
+	var loadDevices = localStorage.getItem('load_devices');
+	if (loadDevices === null || loadDevices === '') {
+		loadDevices = true;
+	} else {
+		loadDevices = JSON.parse(loadDevices);
+	}
+	console.log('AP & Switch Monitoring: ' + loadDevices);
+	if (!loadDevices) {
+		// Mark the Devices tiles in Grey
+		if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
+		$(document.getElementById('ap_icon')).removeClass('text-warning');
+		$(document.getElementById('ap_icon')).removeClass('text-danger');
+		$(document.getElementById('ap_icon')).removeClass('text-success');
+		$(document.getElementById('ap_icon')).addClass('text-neutral');
+		
+		if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '-';
+		$(document.getElementById('switch_icon')).removeClass('text-warning');
+		$(document.getElementById('switch_icon')).removeClass('text-danger');
+		$(document.getElementById('switch_icon')).removeClass('text-success');
+		$(document.getElementById('switch_icon')).addClass('text-neutral');
+	} else {
+		if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '-';
+		$(document.getElementById('ap_icon')).addClass('text-warning');
+		$(document.getElementById('ap_icon')).removeClass('text-danger');
+		$(document.getElementById('ap_icon')).removeClass('text-success');
+		$(document.getElementById('ap_icon')).removeClass('text-neutral');
+		
+		if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '-';
+		$(document.getElementById('switch_icon')).addClass('text-warning');
+		$(document.getElementById('switch_icon')).removeClass('text-danger');
+		$(document.getElementById('switch_icon')).removeClass('text-success');
+		$(document.getElementById('switch_icon')).removeClass('text-neutral');
+	}
+	
+	var loadGateways = localStorage.getItem('load_gateways');
+	if (loadGateways === null || loadGateways === '') {
+		loadGateways = true;
+	} else {
+		loadGateways = JSON.parse(loadGateways);
+	}
+	console.log('Gateway Monitoring: ' + loadGateways);
+	if (!loadGateways) {
+		// Mark the Devices tiles in Grey		
+		if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '-';
+		$(document.getElementById('gateway_icon')).removeClass('text-warning');
+		$(document.getElementById('gateway_icon')).removeClass('text-danger');
+		$(document.getElementById('gateway_icon')).removeClass('text-success');
+		$(document.getElementById('gateway_icon')).addClass('text-neutral');
+		
+		if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '-';
+		$(document.getElementById('controller_icon')).removeClass('text-warning');
+		$(document.getElementById('controller_icon')).removeClass('text-danger');
+		$(document.getElementById('controller_icon')).removeClass('text-success');
+		$(document.getElementById('controller_icon')).addClass('text-neutral');
+	} else {		
+		if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '-';
+		$(document.getElementById('gateway_icon')).addClass('text-warning');
+		$(document.getElementById('gateway_icon')).removeClass('text-danger');
+		$(document.getElementById('gateway_icon')).removeClass('text-success');
+		$(document.getElementById('gateway_icon')).removeClass('text-neutral');
+		
+		if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '-';
+		$(document.getElementById('controller_icon')).addClass('text-warning');
+		$(document.getElementById('controller_icon')).removeClass('text-danger');
+		$(document.getElementById('controller_icon')).removeClass('text-success');
+		$(document.getElementById('controller_icon')).removeClass('text-neutral');
+	}
+	
 	loadCurrentPageCleanup();
 	updateMonitoringWithClients(loadClients);
 }
@@ -1607,8 +1768,7 @@ function getMonitoringData() {
 function getNonInfrastructureData() {
 	apiMessage = false;
 	showNotification('ca-dashboard', 'Updating Monitoring Data...', 'bottom', 'center', 'primary');
-	authPromise = new $.Deferred();
-	$.when(authRefresh(authPromise)).then(function() {
+	$.when(authRefresh()).then(function() {
 		// Empty clients array
 		clients = [];
 		wiredClients = [];
@@ -1653,160 +1813,93 @@ function updateMonitoringWithClients(needClients) {
 
 	// Try and refresh the token
 	showNotification('ca-dashboard', 'Updating Monitoring Data...', 'bottom', 'center', 'primary');
-	if (authNotification) authNotification.close();
-	authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
-	authInProgress = true;
-	var settings = {
-		url: getAPIURL() + '/auth/refreshwHeaders',
-		method: 'POST',
-		timeout: 0,
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify({
-			client_id: localStorage.getItem('client_id'),
-			client_secret: localStorage.getItem('client_secret'),
-			access_token: localStorage.getItem('access_token'),
-			refresh_token: localStorage.getItem('refresh_token'),
-			base_url: localStorage.getItem('base_url'),
-		}),
-	};
+	
+	$.when(authRefresh()).then(function() {
 
-	$.ajax(settings)
-		.done(function(commandResults, statusText, jqXHR) {
-			//console.log(commandResults);
+		// Empty universal search table
+		$('#universal-table')
+			.DataTable()
+			.rows()
+			.remove();
 
-			var response = JSON.parse(commandResults.responseBody);
-			if (commandResults.hasOwnProperty('headers')) {
-				updateAPILimits(JSON.parse(commandResults.headers));
-			}
-			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-				logError('Central Server Error (503): ' + commandResults.reason + ' (/auth/refresh)');
-				Swal.fire({
-					title: 'Central API connection failed',
-					text: response.error_description.replace('refresh_token', 'Refresh Token'),
-					icon: 'error',
-				});
-				if (authNotification) {
-					authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
-					setTimeout(authNotification.close, 2000);
-				}
-				authInProgress = false;
-			} else if (response.hasOwnProperty('error')) {
-				Swal.fire({
-					title: 'Central API connection failed',
-					text: response.error_description.replace('refresh_token', 'Refresh Token'),
-					icon: 'error',
-				});
-				if (authNotification) {
-					authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
-					setTimeout(authNotification.close, 2000);
-				}
-				authInProgress = false;
-			} else if (commandResults.responseBody) {
-				if (response.refresh_token) {
-					localStorage.setItem('refresh_token', response.refresh_token);
-					localStorage.setItem('access_token', response.access_token);
-	
-					var cluster = getAccountforClientID(localStorage.getItem('client_id'));
-					cluster['refresh_token'] = response.refresh_token;
-					cluster['access_token'] = response.access_token;
-					updateAccountDetails(cluster);
-	
-					if (authNotification) {
-						authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
-						setTimeout(authNotification.close, 1000);
-					}
-					authInProgress = false;
-					
-	
-					// Empty universal search table
-					$('#universal-table')
-						.DataTable()
-						.rows()
-						.remove();
-	
-					// Empty clients array
-					clients = [];
-					wiredClients = [];
-					wirelessClients = [];
-					if (document.getElementById('client_count')) document.getElementById('client_count').innerHTML = '0';
-					$('#client-table')
-						.DataTable()
-						.rows()
-						.remove();
-	
-					downAPCount = 0;
-					downSwitchCount = 0;
-					downGatewayCount = 0;
-					downControllerCount = 0;
-					siteIssues = 4;
-	
-					var isCOP = localStorage.getItem('is_cop');
-					if (!isCOP) {
-						// Are we including Detailed Gateway Information in the monitoring data calls?
-						needGatewayDetails = localStorage.getItem('load_gateway_details');
-						if (needGatewayDetails === null || needGatewayDetails === '') {
-							needGatewayDetails = true;
-						} else {
-							needGatewayDetails = JSON.parse(needGatewayDetails);
-						}
-						//console.log('Gateway Details: ' + needGatewayDetails);
-					}
-					updateCounter = 0;
-					updateCount = 7;
-	
-					// Refresh card data
-					if (licenseNotification) licenseNotification.close();
-					licenseNotification = showNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
-					setTimeout(getLicensingStats, 1000); // As to not go over the 7 calls/sec speed limit();
-	
-					if (apNotification) apNotification.close();
-					apNotification = showProgressNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
-					getAPData(0, needClients);
-	
-					if (switchNotification) switchNotification.close();
-					switchNotification = showProgressNotification('ca-switch-stack', 'Obtaining Switches...', 'bottom', 'center', 'info');
-					getSwitchData(0, needClients);
-	
-					if (gatewayNotification) gatewayNotification.close();
-					if (!isCOP) {
-						gatewayNotification = showProgressNotification('ca-gateway', 'Obtaining Gateways...', 'bottom', 'center', 'info');
-						getGatewayData(0);
-					} else {
-						gatewayNotification = showProgressNotification('ca-controller', 'Obtaining Controllers...', 'bottom', 'center', 'info');
-						getControllerData(0);
-					}
-	
-					if (siteNotification) siteNotification.close();
-					siteNotification = showProgressNotification('ca-world-pin', 'Obtaining Sites...', 'bottom', 'center', 'info');
-					getSiteData(0);
-	
-					setTimeout(updateGroupData, 4000);
-					setTimeout(updateSwarmData, 4000);
-	
-					localStorage.setItem('monitoring_update', +new Date());
-				} else {
-					if (authNotification) {
-						authNotification.update({ type: 'danger', message: 'Authentication Tokens Failed to be Updated' });
-						setTimeout(authNotification.close, 1000);
-					}
-				}
-			}
-			authInProgress = false;
-		})
-		.fail(function(XMLHttpRequest, textStatus, errorThrown) {
-			if (XMLHttpRequest.readyState == 4) {
-				// HTTP error (can be checked by XMLHttpRequest.status and XMLHttpRequest.statusText)
-				showNotification('ca-globe', XMLHttpRequest.statusText, 'bottom', 'center', 'danger');
-			} else if (XMLHttpRequest.readyState == 0) {
-				// Network error (i.e. connection refused, access denied due to CORS, etc.)
-				showNotification('ca-globe', 'Can not connect to API server', 'bottom', 'center', 'danger');
+		// Empty clients array
+		clients = [];
+		wiredClients = [];
+		wirelessClients = [];
+		if (document.getElementById('client_count')) document.getElementById('client_count').innerHTML = '0';
+		$('#client-table')
+			.DataTable()
+			.rows()
+			.remove();
+
+		downAPCount = 0;
+		downSwitchCount = 0;
+		downGatewayCount = 0;
+		downControllerCount = 0;
+		siteIssues = 4;
+
+		var isCOP = localStorage.getItem('is_cop');
+		if (!isCOP) {
+			// Are we including Detailed Gateway Information in the monitoring data calls?
+			needGatewayDetails = localStorage.getItem('load_gateway_details');
+			if (needGatewayDetails === null || needGatewayDetails === '') {
+				needGatewayDetails = true;
 			} else {
-				// something weird is happening
+				needGatewayDetails = JSON.parse(needGatewayDetails);
 			}
-			authInProgress = false;
-		});
+			//console.log('Gateway Details: ' + needGatewayDetails);
+		}
+		updateCounter = 0;
+		updateCount = 7;
+		
+		var loadDevices = localStorage.getItem('load_devices');
+		if (loadDevices === null || loadDevices === '') {
+			loadDevices = true;
+		} else {
+			loadDevices = JSON.parse(loadDevices);
+		}
+		
+		var loadGateways = localStorage.getItem('load_gateways');
+		if (loadGateways === null || loadGateways === '') {
+			loadGateways = true;
+		} else {
+			loadGateways = JSON.parse(loadGateways);
+		}
+
+		// Refresh card data
+		if (licenseNotification) licenseNotification.close();
+		licenseNotification = showNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
+		setTimeout(getLicensingStats, 1000); // As to not go over the 7 calls/sec speed limit();
+		
+		if (loadDevices) {
+			if (apNotification) apNotification.close();
+			apNotification = showProgressNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
+			getAPData(0, needClients);
+
+			if (switchNotification) switchNotification.close();
+			switchNotification = showProgressNotification('ca-switch-stack', 'Obtaining Switches...', 'bottom', 'center', 'info');
+			getSwitchData(0, needClients);
+		}
+		if (loadGateways) {
+			if (gatewayNotification) gatewayNotification.close();
+			if (!isCOP) {
+				gatewayNotification = showProgressNotification('ca-gateway', 'Obtaining Gateways...', 'bottom', 'center', 'info');
+				getGatewayData(0);
+			} else {
+				gatewayNotification = showProgressNotification('ca-controller', 'Obtaining Controllers...', 'bottom', 'center', 'info');
+				getControllerData(0);
+			}
+		}
+
+		if (siteNotification) siteNotification.close();
+		siteNotification = showProgressNotification('ca-world-pin', 'Obtaining Sites...', 'bottom', 'center', 'info');
+		getSiteData(0);
+
+		setTimeout(updateGroupData, 4000);
+		setTimeout(updateSwarmData, 4000);
+
+		localStorage.setItem('monitoring_update', +new Date());
+	});			
 }
 
 function updateInfrastructure() {
@@ -1926,8 +2019,7 @@ function getLicensingData() {
 			return;
 		} else if (commandResults.hasOwnProperty('status') && commandResults.status === '401') {
 			// Access Token expired - get a new one and try again.
-			authPromise = new $.Deferred();
-			$.when(authRefresh(authPromise)).then(function() {
+			$.when(authRefresh()).then(function() {
 				if (!failedAuth) {
 					failedAuth = true;
 					getLicensingData();
@@ -2024,13 +2116,6 @@ function updateClientUI() {
 		.rows()
 		.draw();
 
-	var path = window.location.pathname;
-	var page = path.split('/').pop();
-	if (page.includes('clients') && !page.includes('troubleshooting')) {
-		//console.log("loading Client Graphs")
-		updateClientGraphs();
-	}
-
 	if (document.getElementById('client_count')) document.getElementById('client_count').innerHTML = '' + clients.length + '';
 
 	$(document.getElementById('client_icon')).removeClass('text-warning');
@@ -2043,6 +2128,11 @@ function updateClientUI() {
 }
 
 function getWirelessClientData(lastMac) {
+	if (showTimingData) {
+		var wirelessDate = Date.now();
+		console.log('Requesting Wired Clients :' + lastMac)
+	}
+	
 	//console.log('Getting Client block:' + offset);
 	var clientsURL = '';
 	if (!lastMac) {
@@ -2068,6 +2158,7 @@ function getWirelessClientData(lastMac) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData) console.log((Date.now()-wirelessDate)/1000 + ' - received Wireless Clients: ' + lastMac)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -2126,6 +2217,10 @@ function getWirelessClientData(lastMac) {
 }
 
 function getWiredClientData(lastMac) {
+	if (showTimingData) {
+		var wiredDate = Date.now();
+		console.log('Requesting Wired Clients :' + lastMac)
+	}
 	var clientsURL = '';
 	if (!lastMac) {
 		if (wiredNotification) wiredNotification.close();
@@ -2149,6 +2244,7 @@ function getWiredClientData(lastMac) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData) console.log((Date.now()-wiredDate)/1000 + ' - received Wired Clients: ' + lastMac)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -2210,12 +2306,15 @@ function getWiredClientData(lastMac) {
 
 function refreshClientData() {
 	apiMessage = false;
-	authPromise = new $.Deferred();
-	$.when(authRefresh(authPromise)).then(function() {
+	$.when(authRefresh()).then(function() {
 		clients = [];
 		wiredClients = [];
 		wirelessClients = [];
 		if (document.getElementById('client_count')) document.getElementById('client_count').innerHTML = '0';
+		$('#client-table')
+			.DataTable()
+			.rows()
+			.remove();
 		getWirelessClientData(null);
 		getWiredClientData(null);
 	});
@@ -2302,6 +2401,10 @@ function updateAPUI() {
 }
 
 function getAPData(offset, needClients) {
+	if (showTimingData) {
+		var apDate = Date.now();
+		console.log('Requesting APs offset: ' + offset)
+	}
 	if (offset == 0) apPromise = new $.Deferred();
 	//console.log('Asking for AP block: ' + offset);
 	var settings = {
@@ -2319,6 +2422,7 @@ function getAPData(offset, needClients) {
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
 		//console.log('processing AP block: ' + offset);
+		if (showTimingData) console.log((Date.now()-apDate)/1000 + ' - received APs offset: ' + offset)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -2398,8 +2502,8 @@ function refreshAPData() {
 	apiMessage = false;
 	if (apNotification) apNotification.close();
 	apNotification = showProgressNotification('ca-wifi', 'Obtaining APs...', 'bottom', 'center', 'info');
-	authPromise = new $.Deferred();
-	$.when(authRefresh(authPromise)).then(function() {
+	
+	$.when(authRefresh()).then(function() {
 		if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '0';
 		getAPData(0, false);
 	});
@@ -2552,6 +2656,10 @@ function updateSwitchUI() {
 }
 
 function getSwitchData(offset, needClients) {
+	if (showTimingData) {
+		var switchDate = Date.now();
+		console.log('Requesting Switches offset: ' + offset)
+	}
 	if (offset == 0) switchPromise = new $.Deferred();
 
 	var settings = {
@@ -2568,6 +2676,7 @@ function getSwitchData(offset, needClients) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData) console.log((Date.now()-switchDate)/1000 + ' - received Switches offset: ' + offset)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -2653,8 +2762,7 @@ function refreshSwitchData() {
 	apiMessage = false;
 	if (switchNotification) switchNotification.close();
 	switchNotification = showProgressNotification('ca-switch-stack', 'Obtaining Switches...', 'bottom', 'center', 'info');
-	authPromise = new $.Deferred();
-	$.when(authRefresh(authPromise)).then(function() {
+	$.when(authRefresh()).then(function() {
 		if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '0';
 		getSwitchData(0, false);
 	});
@@ -2768,6 +2876,11 @@ function updateGatewayUI() {
 }
 
 function getGatewayData(offset) {
+	if (showTimingData) {
+		var gwDate = Date.now();
+		console.log('Requesting Gateways offset: ' + offset)
+	}
+	
 	if (offset == 0) gatewayPromise = new $.Deferred();
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -2783,6 +2896,7 @@ function getGatewayData(offset) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData) console.log((Date.now()-gwDate)/1000 + ' - received Gateways offset: ' + offset)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -2861,6 +2975,10 @@ function getGatewayData(offset) {
 }
 
 function getGatewayDetails(gatewayIndex) {
+	if (showTimingData) {
+		var gwDetailsDate = Date.now();
+		console.log('Requesting Gateway Detail (index: ' + gatewayIndex + ')');
+	}
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -2875,6 +2993,7 @@ function getGatewayDetails(gatewayIndex) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData)	console.log((Date.now()-gwDetailsDate)/1000 + ' - received Gateway Detail (index: ' + gatewayIndex + ')');
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -2951,8 +3070,7 @@ function refreshGatewayData() {
 	apiMessage = false;
 	if (gatewayNotification) gatewayNotification.close();
 	gatewayNotification = showProgressNotification('ca-gateway', 'Obtaining Gateways...', 'bottom', 'center', 'info');
-	authPromise = new $.Deferred();
-	$.when(authRefresh(authPromise)).then(function() {
+	$.when(authRefresh()).then(function() {
 		if (document.getElementById('gateway_count')) document.getElementById('gateway_count').innerHTML = '0';
 		$('#gateway-table')
 			.DataTable()
@@ -2994,7 +3112,6 @@ function getGatewaysForGroup(group) {
 // Controllers
 // Added: 1.30
 function loadControllerUI(device) {
-	console.log(device);
 	var memoryUsage = '0';
 	if (device['mem_total'] > 0) {
 		memoryUsage = (((device['mem_total'] - device['mem_free']) / device['mem_total']) * 100).toFixed(0).toString();
@@ -3226,8 +3343,7 @@ function refreshControllerData() {
 	apiMessage = false;
 	if (gatewayNotification) gatewayNotification.close();
 	gatewayNotification = showProgressNotification('ca-controller', 'Obtaining Controllers...', 'bottom', 'center', 'info');
-	authPromise = new $.Deferred();
-	$.when(authRefresh(authPromise)).then(function() {
+	$.when(authRefresh()).then(function() {
 		if (document.getElementById('controller_count')) document.getElementById('controller_count').innerHTML = '0';
 		$('#controller-table')
 			.DataTable()
@@ -3435,6 +3551,10 @@ function updateSiteUI() {
 }
 
 function getSiteData(offset) {
+	if (showTimingData) {
+		var siteDate = Date.now();
+		console.log('Requesting Sites offset: ' + offset)
+	}
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -3449,6 +3569,7 @@ function getSiteData(offset) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData) console.log((Date.now()-siteDate)/1000 + ' - received Sites offset: ' + offset)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -3614,6 +3735,11 @@ function updateGroupUI() {
 }
 
 function getGroupData(offset) {
+	if (showTimingData) {
+		var groupDate = Date.now();
+		console.log('Requesting Groups offset: ' + offset)
+	}
+	
 	if (offset == 0) groupPromise = new $.Deferred();
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -3629,6 +3755,7 @@ function getGroupData(offset) {
 	};
 
 	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (showTimingData) console.log((Date.now()-groupDate)/1000 + ' - received Groups offset: ' + offset)
 		if (commandResults.hasOwnProperty('headers')) {
 			updateAPILimits(JSON.parse(commandResults.headers));
 		}
@@ -3647,8 +3774,7 @@ function getGroupData(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getGroupData(0);
@@ -3702,7 +3828,7 @@ function getGroupData(offset) {
 function updateGroupData() {
 	groups = [];
 	if (groupNotification) groupNotification.close();
-	groupNotification = showNotification('ca-folder-settings', 'Obtaining Groups...', 'bottom', 'center', 'info');
+	groupNotification = showLongNotification('ca-folder-settings', 'Obtaining Groups...', 'bottom', 'center', 'info');
 	getGroupData(0);
 }
 
@@ -3801,7 +3927,10 @@ function getGroupTemplateInfo(currentGroups, last) {
 				if (last) {
 					updateGroupUI();
 					saveDataToDB('monitoring_groups', JSON.stringify(groups));
-					if (groupNotification) groupNotification.close();
+					if (groupNotification) {
+						groupNotification.update({ message: 'Group information obtained', type: 'success' });
+						setTimeout(groupNotification.close, 1000);
+					}
 					groupPromise.resolve();
 					checkForMonitoringUpdateCompletion();
 				}
@@ -3882,7 +4011,10 @@ function getGroupProperties(groupList, last) {
 			if (last) {
 				updateGroupUI();
 				saveDataToDB('monitoring_groups', JSON.stringify(groups));
-				if (groupNotification) groupNotification.close();
+				if (groupNotification) {
+					groupNotification.update({ message: 'Group information obtained', type: 'success' });
+					setTimeout(groupNotification.close, 1000);
+				}
 				groupPromise.resolve();
 				checkForMonitoringUpdateCompletion();
 			}
@@ -3946,8 +4078,7 @@ function getSwarmData(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getSwarmData(offset);
@@ -4009,7 +4140,7 @@ function getSwarms() {
 // Updated version 1.9.1
 // now pulling from inventory instead of monitoring - bug fix
 function downloadDeviceInventory() {
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		csvNotification = showNotification('ca-cloud-data-download', 'Preparing CSV file...', 'bottom', 'center', 'info');
 
 		//CSV header
@@ -4061,29 +4192,57 @@ function downloadDeviceInventory() {
 		if (csvNotification) csvNotification.close();
 	});
 }
-function updateInventory() {
+function updateInventory(forceUpdate) {
 	/*  
 		Grab all inventories 
 		after complete trigger promise
 	*/
 	inventoryPromise = new $.Deferred();
-	if (inventoryNotification) inventoryNotification.close();
- 	inventoryNotification = showProgressNotification('ca-stock-2', 'Obtaining device inventory...', 'bottom', 'center', 'info');
-	// Get the device inventories (IAP, Switch, Gateway) to determine device type
-	apPromise = new $.Deferred();
-	switchPromise = new $.Deferred();
-	gatewayPromise = new $.Deferred();
-	inventoryProgress = 0;
-	inventoryAPProgress = 0;
-	$.when(getAPInventory(0), getSwitchInventory(0), getGatewayInventory(0)).then(function() {
-		//console.log('Got ALL Inventories');
-		if (inventoryNotification) {
-			inventoryNotification.update({ message: 'Device Inventory updated', type: 'success' });
-			setTimeout(inventoryNotification.close, 1000);
-		}
-		inventoryPromise.resolve();
-	});
+	
+	var refreshrate = localStorage.getItem('refresh_rate');
+	if (refreshrate === null || refreshrate === "") {
+		refreshrate = "30";
+	}
+	var diffMinutes = refreshrate + 1;
+	if (localStorage.getItem('inventory_update')) {
+		var lastRefresh = new Date(parseInt(localStorage.getItem('inventory_update')));
+		var now = new Date();
+		var diffTime = Math.abs(now - lastRefresh);
+		diffMinutes = Math.ceil(diffTime / (1000 * 60));
+	}
+
+	if (forceUpdate) diffMinutes = refreshrate + 1;
+	else if (apInventory.length == 0 && switchInventory.length == 0 && gatewayInventory.length == 0) diffMinutes = refreshrate + 1;
+	
+	if (diffMinutes > refreshrate) {
+		if (inventoryNotification) inventoryNotification.close();
+ 		inventoryNotification = showProgressNotification('ca-stock-2', 'Obtaining device inventory...', 'bottom', 'center', 'info');
+		// Get the device inventories (IAP, Switch, Gateway) to determine device type
+		apPromise = new $.Deferred();
+		switchPromise = new $.Deferred();
+		gatewayPromise = new $.Deferred();
+		inventoryProgress = 0;
+		inventoryAPProgress = 0;
+		inventorySwitchProgress = 0;
+		inventoryGatewayProgress = 0;
+		$.when(getAPInventory(0), getSwitchInventory(0), getGatewayInventory(0)).then(function() {
+			//console.log('Got ALL Inventories');
+			if (inventoryNotification) {
+				inventoryNotification.update({ message: 'Device Inventory updated', type: 'success' });
+				setTimeout(inventoryNotification.close, 1000);
+			}
+			localStorage.setItem('inventory_update', +new Date());
+			inventoryPromise.resolve();
+		});
+	} else {
+		console.log('Loading existing Inventory data')
+		setTimeout(inventoryUpdated, 10);
+	}
 	return inventoryPromise.promise();
+}
+
+function inventoryUpdated() {
+	inventoryPromise.resolve();
 }
 
 // Updated version 1.9.1
@@ -4106,8 +4265,11 @@ function getAPInventory(offset) {
 		}),
 		complete: function() {
 			if (apInventory.length == apInventoryCount) {
-				inventoryProgress += 100/3;
-				inventoryNotification.update({ progress: inventoryProgress });
+				inventoryAPProgress = 100;
+				console.log('AP Inventory Complete');
+				inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
+				inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+				saveDataToDB('inventory_ap', JSON.stringify(apInventory));
 				apPromise.resolve();
 			}
 		},
@@ -4143,6 +4305,11 @@ function getAPInventory(offset) {
 			apInventory = apInventory.concat(response.devices);
 
 			offset += apiLimit / 2;
+			inventoryAPProgress = (apInventory.length/response.total)*100;
+			console.log('AP Inventory Progress: '+inventoryAPProgress.toFixed(2) +'%')
+			inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
+			console.log('Total Inventory Progress: '+inventoryProgress.toFixed(2) +'%')
+			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 			if (offset < response.total) getAPInventory(offset); // if there are still objects to get
 			//console.log(response.devices);
 		}
@@ -4172,8 +4339,11 @@ function getSwitchInventory(offset) {
 				/*$.each(switchInventory, function(){
 					console.log(this.serial+","+this.macaddr);
 				})*/
-				inventoryProgress += 100/3;
-				inventoryNotification.update({ progress: inventoryProgress });
+				inventorySwitchProgress = 100;
+				console.log('Switch Inventory Complete');
+				inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
+				inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+				saveDataToDB('inventory_switch', JSON.stringify(switchInventory));
 				switchPromise.resolve();
 			}
 		},
@@ -4209,6 +4379,11 @@ function getSwitchInventory(offset) {
 			switchInventory = switchInventory.concat(response.devices);
 
 			offset += apiLimit / 2;
+			inventorySwitchProgress = (switchInventory.length/response.total)*100;
+			console.log('Switch Inventory Progress: '+inventorySwitchProgress.toFixed(2) +'%')
+			inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
+			console.log('Total Inventory Progress: '+inventoryProgress.toFixed(2) +'%')
+			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 			if (offset < response.total) getSwitchInventory(offset); // if there are still objects to get
 		}
 	});
@@ -4237,8 +4412,11 @@ function getGatewayInventory(offset) {
 				/*$.each(gatewayInventory, function(){
 					console.log(this.serial+","+this.macaddr);
 				})*/
-				inventoryProgress += 100/3;
-				inventoryNotification.update({ progress: inventoryProgress });
+				inventoryGatewayProgress = 100;
+				console.log('Gateway Inventory Complete')
+				inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
+				inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+				saveDataToDB('inventory_gateway', JSON.stringify(gatewayInventory));
 				gatewayPromise.resolve();
 			}
 		},
@@ -4274,6 +4452,11 @@ function getGatewayInventory(offset) {
 			gatewayInventory = gatewayInventory.concat(response.devices);
 
 			offset += apiLimit / 2;
+			inventoryGatewayProgress = (gatewayInventory.length/response.total)*100;
+			console.log('Gateway Inventory Progress: '+inventoryGatewayProgress.toFixed(2) +'%')
+			inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
+			console.log('Total Inventory Progress: '+inventoryProgress.toFixed(2) +'%')
+			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 			if (offset < response.total) getGatewayInventory(offset); // if there are still objects to get
 			//console.log(apInventory)
 		}
@@ -4301,7 +4484,7 @@ function findDeviceInInventory(currentSerial) {
 	deviceType = '';
 	var foundDevice = null;
 	$.each(apInventory, function() {
-		if (this['serial'] === currentSerial) {
+		if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 			foundDevice = this;
 			deviceType = 'IAP';
 			return false; // break  out of the for loop
@@ -4311,7 +4494,7 @@ function findDeviceInInventory(currentSerial) {
 	// Check Switches
 	if (!foundDevice) {
 		$.each(switchInventory, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'SWITCH';
 				return false; // break  out of the for loop
@@ -4322,7 +4505,7 @@ function findDeviceInInventory(currentSerial) {
 	// Check Gateways
 	if (!foundDevice) {
 		$.each(gatewayInventory, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'CONTROLLER';
 				return false; // break  out of the for loop
@@ -4343,7 +4526,7 @@ function findDeviceInMSPInventory(currentSerial) {
 	deviceType = '';
 	var foundDevice = null;
 	$.each(mspAPs, function() {
-		if (this['serial'] === currentSerial) {
+		if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 			foundDevice = this;
 			deviceType = 'IAP';
 			return false; // break  out of the for loop
@@ -4353,7 +4536,7 @@ function findDeviceInMSPInventory(currentSerial) {
 	// Check Switches
 	if (!foundDevice) {
 		$.each(mspSwitches, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'SWITCH';
 				return false; // break  out of the for loop
@@ -4364,7 +4547,7 @@ function findDeviceInMSPInventory(currentSerial) {
 	// Check Gateways
 	if (!foundDevice) {
 		$.each(mspGateways, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'CONTROLLER';
 				return false; // break  out of the for loop
@@ -4385,7 +4568,7 @@ function findDeviceInMonitoring(currentSerial) {
 	deviceType = '';
 	var foundDevice = null;
 	$.each(aps, function() {
-		if (this['serial'] === currentSerial) {
+		if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 			foundDevice = this;
 			deviceType = 'IAP';
 			return false; // break  out of the for loop
@@ -4395,7 +4578,7 @@ function findDeviceInMonitoring(currentSerial) {
 	// Check Switches
 	if (!foundDevice) {
 		$.each(switches, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'SWITCH';
 				return false; // break  out of the for loop
@@ -4406,7 +4589,7 @@ function findDeviceInMonitoring(currentSerial) {
 	// Check Gateways
 	if (!foundDevice) {
 		$.each(gateways, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'CONTROLLER';
 				return false; // break  out of the for loop
@@ -4416,7 +4599,7 @@ function findDeviceInMonitoring(currentSerial) {
 
 	if (!foundDevice) {
 		$.each(mspAPs, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'IAP';
 				return false; // break  out of the for loop
@@ -4426,7 +4609,7 @@ function findDeviceInMonitoring(currentSerial) {
 
 	if (!foundDevice) {
 		$.each(mspSwitches, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'SWITCH';
 				return false; // break  out of the for loop
@@ -4436,7 +4619,7 @@ function findDeviceInMonitoring(currentSerial) {
 
 	if (!foundDevice) {
 		$.each(mspGateways, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'CONTROLLER';
 				return false; // break  out of the for loop
@@ -4459,6 +4642,7 @@ function findDeviceInMonitoringForMAC(currentMAC) {
 	$.each(clients, function() {
 		if (cleanMACAddress(this['macaddr']) === cleanMACAddress(currentMAC)) {
 			foundDevice = this;
+			deviceType = 'CLIENT'
 			return false; // break  out of the for loop
 		}
 	});
@@ -4529,6 +4713,89 @@ function findDeviceInMonitoringForMAC(currentMAC) {
 	return foundDevice;
 }
 
+function findDeviceInMonitoringForName(clientName) {
+	/*  
+		Search through all monitoring data 
+		return the device if found, along with storing the device type
+	*/
+	var found = false;
+	// Check Clients
+	deviceType = '';
+	var foundDevice = null;
+	$.each(clients, function() {
+		if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+			foundDevice = this;
+			deviceType = 'CLIENT'
+			return false; // break  out of the for loop
+		}
+	});
+
+	// Check APs
+	if (!foundDevice) {
+		$.each(aps, function() {
+			if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+				foundDevice = this;
+				deviceType = 'IAP';
+				return false; // break  out of the for loop
+			}
+		});
+	}
+
+	// Check Switches
+	if (!foundDevice) {
+		$.each(switches, function() {
+			if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+				foundDevice = this;
+				deviceType = 'SWITCH';
+				return false; // break  out of the for loop
+			}
+		});
+	}
+
+	// Check Gateways
+	if (!foundDevice) {
+		$.each(gateways, function() {
+			if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+				foundDevice = this;
+				deviceType = 'CONTROLLER';
+				return false; // break  out of the for loop
+			}
+		});
+	}
+
+	if (!foundDevice) {
+		$.each(mspAPs, function() {
+			if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+				foundDevice = this;
+				deviceType = 'IAP';
+				return false; // break  out of the for loop
+			}
+		});
+	}
+
+	if (!foundDevice) {
+		$.each(mspSwitches, function() {
+			if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+				foundDevice = this;
+				deviceType = 'SWITCH';
+				return false; // break  out of the for loop
+			}
+		});
+	}
+
+	if (!foundDevice) {
+		$.each(mspGateways, function() {
+			if (this['name'].toLowerCase() === clientName.toLowerCase()) {
+				foundDevice = this;
+				deviceType = 'CONTROLLER';
+				return false; // break  out of the for loop
+			}
+		});
+	}
+
+	return foundDevice;
+}
+
 function findDeviceInMSPMonitoring(currentSerial) {
 	/*  
 		Search through all MSP monitoring data 
@@ -4539,7 +4806,7 @@ function findDeviceInMSPMonitoring(currentSerial) {
 	deviceType = '';
 	var foundDevice = null;
 	$.each(mspAPMonitoring, function() {
-		if (this['serial'] === currentSerial) {
+		if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 			foundDevice = this;
 			deviceType = 'IAP';
 			return false; // break  out of the for loop
@@ -4549,7 +4816,7 @@ function findDeviceInMSPMonitoring(currentSerial) {
 	// Check Switches
 	if (!foundDevice) {
 		$.each(mspSwitchMonitoring, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'.toLowerCase()] === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'SWITCH';
 				return false; // break  out of the for loop
@@ -4560,7 +4827,7 @@ function findDeviceInMSPMonitoring(currentSerial) {
 	// Check Gateways
 	if (!foundDevice) {
 		$.each(mspGatewayMonitoring, function() {
-			if (this['serial'] === currentSerial) {
+			if (this['serial'].toLowerCase() === currentSerial.toLowerCase()) {
 				foundDevice = this;
 				deviceType = 'CONTROLLER';
 				return false; // break  out of the for loop
@@ -4640,7 +4907,7 @@ function addDevices() {
 				// invalid device - log reason
 				$.each(response.extra.message.invalid_device, function() {
 					if (this.status === 'ATHENA_ERROR_DEVICE_ALREADY_EXIST') {
-						logError('Device with Serial number "' + this.serial + '" is already added to Central or is an invalid MAC address');
+						logInformation('Device with Serial number "' + this.serial + '" is already added to your GreenLake account');
 					} else if (this.status === 'INVALID_MAC_SN') {
 						logError('Device with Serial number "' + this.serial + '" is invalid');
 					} else {
@@ -4653,9 +4920,11 @@ function addDevices() {
 				// invalid device - log reason
 				$.each(response.extra.message.blocked_device, function() {
 					if (this.status === 'ATHENA_ERROR_DEVICE_ALREADY_EXIST') {
-						logError('Device with Serial number "' + this.serial + '" is already added to your Central account');
+						logInformation('Device with Serial number "' + this.serial + '" is already added to your GreenLake account');
+					} else if (this.status === 'ALREADY_PROVISIONED_TO_ANOTHER_CUSTOMER') {
+						logError('Device with Serial number "' + this.serial + '" is already claimed by a different GreenLake Customer');
 					} else {
-						logError('Device with Serial number "' + this.serial + '" is blocked from being added to your Central account');
+						logError('Device with Serial number "' + this.serial + '" is blocked from being added to your GreenLake account');
 					}
 					apiErrorCount++;
 				});
@@ -4665,6 +4934,7 @@ function addDevices() {
 		//addCounter = addCounter + 1;
 		addCounter = addCounter + devices.length;
 		if (addCounter == devices.length) {
+			if (addNotification) addNotification.close();
 			if (currentWorkflow === '') {
 				if (apiErrorCount != 0) {
 					showLog();
@@ -4681,10 +4951,23 @@ function addDevices() {
 					});
 				}
 			} else {
-				// complete the Add part of the automation
-				logEnd('Automation: Adding devices complete');
-				addNotification.close();
-				autoAddPromise.resolve();
+				if (apiErrorCount != 0) {
+					showLog();
+					Swal.fire({
+						title: 'Add Failure',
+						text: 'Some or all devices failed to be added to Central',
+						icon: 'error',
+					});
+					if (automationNotification) {
+						automationNotification.update({ message: 'Unable to add all Devices', type: 'danger' });
+						setTimeout(automationNotification.close, 1000);
+					}
+				} else {
+					// complete the Add part of the automation
+					logEnd('Automation: Adding devices complete');
+					autoAddPromise.resolve();
+				}
+				
 			}
 		}
 	});
@@ -4988,99 +5271,101 @@ function licenseDevicesFromCSV(msp) {
 			if (msp) {
 				foundDevice = findDeviceInMSPInventory(currentSerial);
 			}
-			console.log(foundDevice)
-			var arubaPart = foundDevice['aruba_part_no'];
-			if (arubaPart.startsWith('J')) arubaPart = foundDevice['model'];
-			else if (arubaPart.startsWith('R')) arubaPart = foundDevice['model'];
-			else if (arubaPart.startsWith('Q')) arubaPart = foundDevice['model'];
-			else if (arubaPart.startsWith('S')) arubaPart = foundDevice['model'];
-
-			if (deviceType === 'IAP') {
-				if (requestedLicense.toLowerCase().includes('foundation')) {
-					license = 'foundation_ap';
-				} else {
-					license = 'advanced_ap';
-				}
-			} else if (deviceType === 'SWITCH') {
-				// Check Switches
-				if (requestedLicense.toLowerCase().includes('foundation')) {
-					license = 'foundation_switch_';
-				} else {
-					license = 'advanced_switch_';
-				}
-				// check the license skus at https://internal-apigw.central.arubanetworks.com/platform/licensing/v1/services/config
-				
-
-				if (arubaPart.includes('6400') || arubaPart.includes('54')) {
-					license = license + '6400';
-				} else if (arubaPart.includes('6300') || arubaPart.includes('38')) {
-					license = license + '6300';
-				} else if (arubaPart.includes('6100') || arubaPart.includes('6000') || arubaPart.includes('25')) {
-					license = license + '6100';
-				} else if (arubaPart.includes('6200') || arubaPart.includes('29')) {
-					license = license + '6200';
-				} else if ((arubaPart.includes('83') || arubaPart.includes('84') || arubaPart.includes('93') || arubaPart.includes('10000')) && requestedLicense.toLowerCase().includes('advanced')) {
-					license = license + '8xxx_9xxx_10xxx';
-				} else if (arubaPart.includes('83') || arubaPart.includes('84')) {
-					license = license + '8400';
-				}
-			} else if (deviceType === 'CONTROLLER') {
-				// Check Gateways
-				if (requestedLicense.toLowerCase().includes('wlan')) {
-					license = 'foundation_wlan_gw';
-				} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('90')) {
-					license = 'wlan_advanced_90xx';
-				} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && requestedLicense.toLowerCase().includes('security') && arubaPart.includes('90')) {
-					license = 'wlan_advanced_90xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('91')) {
-					license = 'wlan_advanced_91xx';
-				} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && requestedLicense.toLowerCase().includes('security') && arubaPart.includes('91')) {
-					license = 'wlan_advanced_91xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && requestedLicense.toLowerCase().includes('security') && arubaPart.includes('92')) {
-					license = 'wlan_advanced_92xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('foundation-base')) {
-					license = 'foundation_base_90xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('foundation-base')) {
-					license = 'foundation_base_7005';
-				} else if (requestedLicense.toLowerCase().includes('advance-base')) {
-					license = 'advance_base_7005';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('foundation') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
-					license = 'foundation_90xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
-					license = 'advance_90xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('91')) {
-					license = 'advanced_91xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('92')) {
-					license = 'advanced_92xx_sec';
-				} else if (requestedLicense.toLowerCase().includes('foundation') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
-					license = 'foundation_70xx';
-				} else if (requestedLicense.toLowerCase().includes('advanced') && (arubaPart.includes('70') || arubaPart.includes('90'))) {
-					license = 'advance_70xx';
-				} else if (requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('91')) {
-					license = 'advanced_91xx';
-				} else if (requestedLicense.toLowerCase().includes('foundation') && arubaPart.includes('72')) {
-					license = 'foundation_72xx';
-				} else if (requestedLicense.toLowerCase().includes('advanced') && arubaPart.includes('72')) {
-					license = 'advance_72xx';
-				}
-			}
-			console.log(arubaPart)
-			console.log(license)
-
+			
 			if (!foundDevice) {
 				logError('Device with Serial Number: ' + currentSerial + ' was not found in the device inventory');
 				licenseCounter = licenseCounter + 1;
 				checkForLicensingCompletion();
-			} else {
-				// check if other devices have the same services assigned
-				if (!serviceList[license]) {
-					serviceList[license] = [];
+			} else {	
+				var arubaPart = foundDevice['aruba_part_no'];
+				var arubaModel = foundDevice['aruba_part_no'];
+				if (arubaModel.startsWith('J') || arubaModel.startsWith('R') || arubaModel.startsWith('Q') || arubaModel.startsWith('S')) {
+					arubaModel = foundDevice['model'];
 				}
-
-				// Add serial to the list that matches the services.
-				var serials = serviceList[license];
-				serials.push(currentSerial);
-				serviceList[license] = serials;
+	
+				if (deviceType === 'IAP') {
+					if (requestedLicense.toLowerCase().includes('foundation')) {
+						license = 'foundation_ap';
+					} else {
+						license = 'advanced_ap';
+					}
+				} else if (deviceType === 'SWITCH') {
+					// Check Switches
+					if (requestedLicense.toLowerCase().includes('foundation')) {
+						license = 'foundation_switch_';
+					} else {
+						license = 'advanced_switch_';
+					}
+					// check the license skus at https://internal-apigw.central.arubanetworks.com/platform/licensing/v1/services/config
+					if (arubaModel.includes('6100') || arubaModel.includes('6000') || arubaModel.includes('4100') || arubaModel.startsWith('25') || class1Switches.includes(arubaPart)) {
+						license = license + '6100';
+					} else if (arubaModel.includes('6200') || arubaModel.includes('6300L') || arubaModel.includes('29') || class2Switches.includes(arubaPart)) {
+						license = license + '6200';
+					} else if (arubaModel.includes('6300') || arubaModel.startsWith('38') || class3Switches.includes(arubaPart)) {
+						license = license + '6300';
+					} else if (arubaModel.startsWith('64') || arubaModel.startsWith('54') || class4Switches.includes(arubaPart)) {
+						license = license + '6400';
+					} else if (arubaModel.startsWith('81') || arubaModel.startsWith('83') || arubaModel.startsWith('84') || arubaModel.startsWith('93') || arubaModel.includes('10000') || class5Switches.includes(arubaPart)) {
+						license = license + '8xxx_9xxx_10xxx';
+					}
+				} else if (deviceType === 'CONTROLLER') {
+					// Check Gateways
+					if (requestedLicense.toLowerCase().includes('wlan')) {
+						license = 'foundation_wlan_gw';
+					} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && arubaModel.includes('90')) {
+						license = 'wlan_advanced_90xx';
+					} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && requestedLicense.toLowerCase().includes('security') && arubaModel.includes('90')) {
+						license = 'wlan_advanced_90xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && arubaModel.includes('91')) {
+						license = 'wlan_advanced_91xx';
+					} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && requestedLicense.toLowerCase().includes('security') && arubaModel.includes('91')) {
+						license = 'wlan_advanced_91xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('wlan') && requestedLicense.toLowerCase().includes('advanced') && requestedLicense.toLowerCase().includes('security') && arubaModel.includes('92')) {
+						license = 'wlan_advanced_92xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('foundation-base')) {
+						license = 'foundation_base_90xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('foundation-base')) {
+						license = 'foundation_base_7005';
+					} else if (requestedLicense.toLowerCase().includes('advance-base')) {
+						license = 'advance_base_7005';
+					} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('foundation') && (arubaModel.includes('70') || arubaModel.includes('90'))) {
+						license = 'foundation_90xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && (arubaModel.includes('70') || arubaModel.includes('90'))) {
+						license = 'advance_90xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && arubaModel.includes('91')) {
+						license = 'advanced_91xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('security') && requestedLicense.toLowerCase().includes('advanced') && arubaModel.includes('92')) {
+						license = 'advanced_92xx_sec';
+					} else if (requestedLicense.toLowerCase().includes('foundation') && (arubaModel.includes('70') || arubaModel.includes('90'))) {
+						license = 'foundation_70xx';
+					} else if (requestedLicense.toLowerCase().includes('advanced') && (arubaModel.includes('70') || arubaModel.includes('90'))) {
+						license = 'advance_70xx';
+					} else if (requestedLicense.toLowerCase().includes('advanced') && arubaModel.includes('91')) {
+						license = 'advanced_91xx';
+					} else if (requestedLicense.toLowerCase().includes('foundation') && arubaModel.includes('72')) {
+						license = 'foundation_72xx';
+					} else if (requestedLicense.toLowerCase().includes('advanced') && arubaModel.includes('72')) {
+						license = 'advance_72xx';
+					}
+				}
+				//console.log(arubaModel)
+				//console.log(license)
+				if (!foundDevice.services.includes(license.toUpperCase())) {
+			
+					// check if other devices have the same services assigned
+					if (!serviceList[license]) {
+						serviceList[license] = [];
+					}
+	
+					// Add serial to the list that matches the services.
+					var serials = serviceList[license];
+					serials.push(currentSerial);
+					serviceList[license] = serials;
+				} else {
+					logInformation(currentSerial + ' is already assigned the correct license');
+					licenseCounter++;
+					checkForLicensingCompletion();
+				}
 			}
 		} else {
 			// Empty Row
@@ -5089,18 +5374,18 @@ function licenseDevicesFromCSV(msp) {
 		}
 	});
 
+	var timeoutCounter = 0;
 	for (const [key, value] of Object.entries(serviceList)) {
 		var serials = value;
 		
-		// Need to split up into 50 device blocks (API limitation)
+		// Need to split up into 100 device blocks (API limitation)
 		while (serials.length > 0) {
 			var serialBlock = [];
 			serialBlock = serials.splice(0, 100);
 			
 			// Update licensing
-			$.when(licenseDeviceBlock(key, serialBlock, new $.Deferred())).then(function() {
-				checkForLicensingCompletion();
-			});
+			setTimeout(licenseDeviceBlock, apiDelay * timeoutCounter, key, serialBlock);
+			timeoutCounter++;
 		}
 	}
 
@@ -5109,7 +5394,7 @@ function licenseDevicesFromCSV(msp) {
 	}
 }
 
-function licenseDeviceBlock(licenseType, serialNumbers, licensePromiseVar) {
+function licenseDeviceBlock(licenseType, serialNumbers) {
 	// Update licensing
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -5124,9 +5409,17 @@ function licenseDeviceBlock(licenseType, serialNumbers, licensePromiseVar) {
 			data: JSON.stringify({ serials: serialNumbers, services: [licenseType] }),
 		}),
 	};
-	logInformation('Licensing with ' + licenseType + ': ' + serialNumbers.join(', '));
+	//logInformation('Licensing with ' + licenseType + ': ' + serialNumbers.join(', '));
 	
 	$.ajax(settings).done(function(response, textStatus, jqXHR) {
+		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/platform/licensing/v1/subscriptions/assign)');
+			}
+		}
+		
 		if (Array.isArray(response.status)) {
 			if (response.status[0].message.msg) {
 				logError(response.status[0].message.msg);
@@ -5141,34 +5434,158 @@ function licenseDeviceBlock(licenseType, serialNumbers, licensePromiseVar) {
 			}
 		}
 	
-		if (response.hasOwnProperty('status')) {
-			if (response.status === '503') {
-				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/platform/licensing/v1/subscriptions/assign)');
-			}
-		}	
+		if (response.hasOwnProperty('detail')) {
+			logError('Licensing failed for ' + licenseType + ': ' + serialNumbers.join(', ') + '. Reason: ' + response.detail);
+		}
+		
+		if (response.hasOwnProperty('response') && response.response == 'success') {
+			logInformation('Licensing successful for ' + licenseType + ': ' + serialNumbers.join(', '));	
+		} else {
+			apiErrorCount++;
+			logError('Licensing failed for ' + licenseType + ': ' + serialNumbers.join(', '));
+		}
 		licenseCounter = licenseCounter + serialNumbers.length;
-		licensePromiseVar.resolve();
+		
+		checkForLicensingCompletion();
 	});
-	return licensePromiseVar.promise();
 }
 
 function licenseDevices() {
-	/*  
-		Grab all 3 inventories from API.  
-		Scan though  each inventory to find the device.
-		Generate the require license string
-		Assign license.
-	*/
-	licenseCounter = 0;
-
-	// Get the device inventories (IAP, Switch, Gateway) to determine device type
-	$.when(updateInventory()).then(function() {
-		licenseDevicesFromCSV(false);
+	// Check if auto-licensing is disabled
+	$.when(checkAutoLicenseState()).then(function() {
+		if (autoLicenseState) {
+			Swal.fire({
+				title: 'License Failure',
+				text: 'Auto-Subscribe is enabled in GreenLake. Please disable this to use this task',
+				icon: 'error',
+			});
+		} else {
+			/*  
+				Grab all 3 inventories from API.  
+				Scan though  each inventory to find the device.
+				Generate the require license string
+				Assign license.
+			*/
+			licenseCounter = 0;
+			
+			// Get the device inventories (IAP, Switch, Gateway) to determine device type
+			$.when(updateInventory(false)).then(function() {
+				licenseDevicesFromCSV(false);
+			});
+			if (currentWorkflow !== '') {
+				return autoLicensePromise.promise();
+			}
+		}
 	});
-	if (currentWorkflow !== '') {
-		return autoLicensePromise.promise();
-	}
+}
+
+function checkAutoLicenseState() {
+	licenseNotification = showNotification('ca-license-key', 'Checking Auto-Subscribe state...', 'bottom', 'center', 'info');
+	autoLicenseCheckPromise = new $.Deferred();
+	
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/platform/licensing/v1/customer/settings/autolicense',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/central/v1/labels)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		//console.log(response.services)
+		
+		var reasonArray = [];
+		$.each(response.services, function() {
+			if (this.includes('_ap') && !reasonArray.includes('APs')) reasonArray.push('APs');
+			else if (this.includes('_switch') && !reasonArray.includes('Switches')) reasonArray.push('Switches');
+			else if ((this.includes('wlan_') || this.includes('70xx') || this.includes('90xx') || this.includes('91xx') || this.includes('92xx')) && !reasonArray.includes('Gateways')) reasonArray.push('Gateways');
+		});
+		
+		if (reasonArray.length > 0) {
+			
+			var reasonString = reasonArray.join(', ');
+			var pos = reasonString.lastIndexOf(',');
+			if (pos != -1) reasonString = reasonString.substring(0,pos) + ' &' + reasonString.substring(pos+1);
+			var buttonText = "I'm not assigning licenses to those device types";
+			if (reasonArray.length = 1) buttonText = "I'm not assigning licenses for that device type";
+			Swal.fire({
+				title: 'Auto-Subscribe is enabled',
+				text: 'Auto-Subscribe is enabled for '+reasonString+'. To assign licenses for these device types it needs to be disabled. Would you like to disable it?',
+				icon: 'warning',
+				showCancelButton: true,
+				cancelButtonColor: '#d33',
+				cancelButtonText: "I'll go do it in GreenLake",
+				confirmButtonColor: '#3085d6',
+				confirmButtonText: buttonText,
+			}).then(result => {
+				if (result.isConfirmed) {
+					autoLicenseState = false;
+					autoLicenseCheckPromise.resolve();
+					
+					/*// go through services in response to determine the types enabled
+					var disableServices = [];
+					if (response.services.includes('advance_70xx/90xx')) disableServices.push('advance_70xx/90xx');
+					if (response.services.includes('foundation_70xx/90xx')) disableServices.push('foundation_70xx/90xx');
+					if (response.services.includes('advance_ap')) disableServices.push('advance_ap');
+					if (response.services.includes('foundation_ap')) disableServices.push('foundation_ap');
+					if (response.services.includes('advance_switch_6100')) disableServices.push('advance_switch_6100');
+					if (response.services.includes('foundation_switch_6100')) disableServices.push('foundation_switch_6100');
+					
+					var settings2 = {
+						url: getAPIURL() + '/tools/deleteCommand',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/platform/licensing/v1/customer/settings/autolicense',
+							access_token: localStorage.getItem('access_token'),
+							data: JSON.stringify({ services: disableServices }),
+						}),
+					};
+					console.log(settings2.data)
+					$.ajax(settings2).done(function(response) {
+						console.log(response)
+						if (response.response && response.response === 'success') {
+							showNotification('ca-license-key', 'Auto Licensing disabled', 'bottom', 'center', 'success');
+							autoLicenseState = false;
+						} else {
+							showNotification('ca-license-key', 'Failed to disable Auto Licensing', 'bottom', 'center', 'danger');
+							autoLicenseState = true;
+						}
+						autoLicenseCheckPromise.resolve();
+					});*/
+				} else {
+					autoLicenseState = true;
+					autoLicenseCheckPromise.resolve();
+				}
+			});
+		} else {
+			autoLicenseState = false;
+			autoLicenseCheckPromise.resolve();
+		}
+		licenseNotification.close();
+	});
+	return autoLicenseCheckPromise.promise();
 }
 
 // Added in 1.5.2
@@ -5291,7 +5708,7 @@ function unlicenseDevices() {
 	licenseCounter = 0;
 
 	// Get the device inventories (IAP, Switch, Gateway) to determine device type
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		unlicenseDevicesFromCSV(false);
 	});
 	if (currentWorkflow !== '') {
@@ -5584,7 +6001,7 @@ function createSiteFromCSV() {
 			complete: processCSV,
 			skipEmptyLines: 'greedy',
 			transformHeader: function(h) {
-				return h.trim();
+				return h.toUpperCase().trim();
 			},
 		},
 		before: function(file, inputElem) {
@@ -6149,7 +6566,7 @@ function assignLabelsToDevices() {
 	var labelSuccessCount = 0;
 	var labelFailedCount = 0;
 	var labelTotalCount = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		labelNotification = showProgressNotification('ca-tag-add', 'Assigning devices to labels...', 'bottom', 'center', 'info');
 		labelCounter = 0;
 		// Get all the Labels
@@ -6265,7 +6682,7 @@ function removeLabelsFromDevices() {
 	var labelSuccessCount = 0;
 	var labelFailedCount = 0;
 	var labelTotalCount = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		labelNotification = showProgressNotification('ca-tag-remove', 'Removing labels from devices...', 'bottom', 'center', 'info');
 		labelCounter = 0;
 		// Get all the Labels
@@ -6417,7 +6834,7 @@ function renameDevices() {
 	*/
 
 	renameCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		renameNotification = showProgressNotification('ca-card-update', 'Renaming devices...', 'bottom', 'center', 'info');
 
 		var hostnameVariable = localStorage.getItem('hostname_variable');
@@ -6577,7 +6994,7 @@ function magicRenameDevices() {
 	renameCounter = 0;
 	renamingCounters = {};
 	magicNames = {};
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		renameNotification = showProgressNotification('ca-pattern-recognition', 'Renaming devices...', 'bottom', 'center', 'info');
 
 		var hostnameVariable = localStorage.getItem('hostname_variable');
@@ -6783,7 +7200,7 @@ function magicRenameDevices() {
 						};
 
 						$.ajax(settings).done(function(response, textStatus, jqXHR) {
-							console.log(response);
+							//console.log(response);
 							if (response.hasOwnProperty('status')) {
 								if (response.status === '503') {
 									apiErrorCount++;
@@ -7264,7 +7681,7 @@ function setAPZone() {
 	*/
 
 	zoneCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		zoneNotification = showProgressNotification('ca-setup-tools', 'Setting AP Zones/SSIDs...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
@@ -7482,7 +7899,7 @@ function setRFProfile() {
 	*/
 
 	rfCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		profileNotification = showProgressNotification('ca-antenna', 'Setting RF Zones/Profiles...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
@@ -7769,6 +8186,155 @@ function processSwarmMode(currentSerial, newMode) {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		AP1X functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function checkForAP1XCompletion() {
+	var ap1xProgress = (ap1xCounter / csvData.length) * 100;
+	ap1xNotification.update({ progress: ap1xProgress });
+
+	if (ap1xCounter == csvData.length) {
+		if (ap1xNotification) ap1xNotification.close();
+		if (currentWorkflow === '') {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'AP1X PEAP Credentials Configuration Failure',
+					text: 'Some or all devices failed to be set to the correct AP1X credentials',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'AP1X PEAP Configuration Success',
+					text: 'All devices were set to the correct AP1X credentials',
+					icon: 'success',
+				});
+			}
+		}
+	}
+}
+
+function setAP1XCredentials() {
+	/*  
+		if AP - grab ap settings via API, then update the ap1x-peap-user line
+	*/
+
+	ap1xCounter = 0;
+	
+	ap1xNotification = showProgressNotification('ca-ap1x', 'Configuring AP1X PEAP Credentials...', 'bottom', 'center', 'info');
+
+	for (var i=0; i<csvData.length; i++) {
+		var currentDevice = csvData[i];
+		// find device in inventory to get device type
+		if (currentDevice['SERIAL'] && currentDevice['AP1X USERNAME'] && currentDevice['AP1X PASSWORD']) {
+			var currentSerial = currentDevice['SERIAL'].trim();
+			var newUsername = currentDevice['AP1X USERNAME'];
+			var newPassword = currentDevice['AP1X PASSWORD'];
+			setTimeout(processAP1XCredentials, apiDelay*i, currentSerial, newUsername, newPassword);
+		} else {
+			if (currentDevice['SERIAL']) logInformation('No PEAP Credentials were found in the CSV for '+ currentDevice['SERIAL'])
+			ap1xCounter++;
+			checkForAP1XCompletion();
+		}
+	}
+}
+
+function processAP1XCredentials(currentSerial, newUsername, newPassword) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		if (response.hasOwnProperty('error_code')) {
+			logError(response.description);
+			apiErrorCount++;
+			ap1xCounter++;
+			checkForAP1XCompletion();
+		} else {
+			var apCLIResponse = response;
+			
+			// Look for existing config
+			for (var i=0;i<apCLIResponse.length;i++) {
+				if (apCLIResponse[i].includes('ap1x-peap-user')) commandLocation = i
+			}
+			
+			var needsUpdate = false;
+			// check if we need to add the command or replace the current command
+			if (commandLocation == -1) {
+				apCLIResponse.push('  ap1x-peap-user '+newUsername+' '+newPassword);
+				needsUpdate = true;
+			} else if (!apCLIResponse[commandLocation].includes(newUsername) || !apCLIResponse[commandLocation].includes(newPassword)) {
+				apCLIResponse.splice(commandLocation, 1, '  ap1x-peap-user '+newUsername+' '+newPassword);
+				needsUpdate = true;
+			}
+
+			// Only push back changes if it was updated.
+			if (needsUpdate) {
+				// Update ap settings
+				var settings = {
+					url: getAPIURL() + '/tools/postCommand',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+						access_token: localStorage.getItem('access_token'),
+						data: JSON.stringify({ clis: apCLIResponse }),
+					}),
+				};
+	
+				$.ajax(settings).done(function(response, statusText, xhr) {
+					if (response.hasOwnProperty('status')) {
+						if (response.status === '503') {
+							apiErrorCount++;
+							logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+						}
+					}
+					if (response !== currentSerial) {
+						logError(currentSerial + ' was not configured with the new AP1X PEAP credentials. Reason: ' + response.reason);
+						//console.log(response.reason);
+						apiErrorCount++;
+					} else {
+						logInformation(currentSerial + ' was configured with the new AP1X PEAP credentials');
+					}
+					ap1xCounter++;
+					checkForAP1XCompletion();
+				});
+			} else {
+				logInformation(currentSerial + ' was already configured with the AP1X PEAP credentials');
+				ap1xCounter++;
+				checkForAP1XCompletion();
+			}
+		}
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		POE Optimization functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -7949,7 +8515,7 @@ function setRadioMode(specificMode) {
 	*/
 	var settingsList = {};
 	radioModeCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		radioNotification = showProgressNotification('ca-router', 'Setting Radio Mode...', 'bottom', 'center', 'info');
 		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
 		$.each(csvData, function() {
@@ -8184,7 +8750,7 @@ function setFlexRadioMode() {
 	*/
 	var settingsList = {};
 	radioModeCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		radioNotification = showProgressNotification('ca-router', 'Setting Radio Mode...', 'bottom', 'center', 'info');
 		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
 		$.each(csvData, function() {
@@ -8475,7 +9041,7 @@ function setAntennaGain() {
 	*/
 	var settingsList = {};
 	antennaCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		antennaNotification = showProgressNotification('ca-antenna', 'Setting Antenna Gains...', 'bottom', 'center', 'info');
 		if (csvData.length == 0) antennaNotification.update({ message: 'No external antenna APs available', type: 'warning' });
 		$.each(csvData, function() {
@@ -8813,7 +9379,7 @@ function disable24radios() {
 	*/
 
 	radioCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		radioNotification = showProgressNotification('ca-wifi-off', 'Disabling 2.4GHz radios...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
@@ -8924,7 +9490,7 @@ function enable24radios() {
 	*/
 
 	radioCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		radioNotification = showProgressNotification('ca-wifi', 'Enabling 2.4GHz radios...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
@@ -9037,7 +9603,7 @@ function checkForInstallationCompletion() {
 	installNotification.update({ progress: installProgress });
 
 	if (installCounter == csvData.length) {
-		if (installProgress) installNotification.close();
+		if (installNotification) installNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {
 				showLog();
@@ -9089,7 +9655,7 @@ function setInstallationType() {
 	*/
 
 	installCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		installNotification = showProgressNotification('ca-globe', 'Setting Installation Type...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
@@ -9206,6 +9772,150 @@ function setInstallationType() {
 				checkForInstallationCompletion();
 			}
 		});
+	});
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		LED functions
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function checkForLEDCompletion() {
+	var ledProgress = (ledCounter / csvData.length) * 100;
+	ledNotification.update({ progress: ledProgress });
+
+	if (ledCounter == csvData.length) {
+		if (ledNotification) ledNotification.close();
+		if (currentWorkflow === '') {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'AP LED Configuration Failure',
+					text: 'Some or all devices failed to have the LEDs configured',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'AP LED Configuration Success',
+					text: 'All devices LEDs were configured',
+					icon: 'success',
+				});
+			}
+		}
+	}
+}
+
+function setLEDOff() {
+	/*  
+		if AP - grab ap config via API, then update the led-off line
+	*/
+	ledCounter = 0;
+	ledNotification = showProgressNotification('ca-bulb-61', 'Turning Off LEDs...', 'bottom', 'center', 'info');
+	for (let i = 0; i < csvData.length; i++) {
+		var device = csvData[i];
+		if (device['SERIAL']) setTimeout(setLEDState, apiDelay * i, device['SERIAL'], false); // As to not go over the 7 calls/sec speed limit
+	}
+}
+
+function setLEDOn() {
+	/*  
+		if AP - grab ap config via API, then update the led-off line
+	*/
+
+	ledCounter = 0;
+	ledNotification = showProgressNotification('ca-bulb-63', 'Turning On LEDs...', 'bottom', 'center', 'info');
+	for (let i = 0; i < csvData.length; i++) {
+		var device = csvData[i];
+		if (device['SERIAL']) setTimeout(setLEDState, apiDelay * i, device['SERIAL'], true); // As to not go over the 7 calls/sec speed limit
+	}
+}
+
+function setLEDState(serial, ledState) {
+	var currentSerial = serial.trim();
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentSerial,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {	
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+	
+		var apCLIResponse = response;
+		// Check if led-off command exists in the config
+		var ledIndex = apCLIResponse.indexOf('led-off')
+		var postRequired = false;
+		if (ledState) {
+			if (ledIndex != -1) {
+				// LED is currently disabled - need to turn on
+				apCLIResponse.splice(ledIndex,1);
+				postRequired = true;
+			}
+		} else {
+			if (ledIndex == -1) {
+				// LED is currently enabled - need to turn off
+				apCLIResponse.push('led-off');
+				postRequired = true;
+			}
+		}
+		
+		if (postRequired) {	
+			// Update ap cli as the LED state is altered
+			var settings = {
+				url: getAPIURL() + '/tools/postCommand',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentSerial,
+					access_token: localStorage.getItem('access_token'),
+					data: JSON.stringify({ clis: apCLIResponse }),
+				}),
+			};
+		
+			$.ajax(settings).done(function(response, statusText, xhr) {
+				if (response.hasOwnProperty('status')) {
+					if (response.status === '503') {
+						apiErrorCount++;
+						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<SERIAL>)');
+					}
+				}
+				if (response !== currentSerial) {
+					logError('LED Mode on ' + currentSerial + ' was not correctly configured. Reason: ' + response.reason);
+					//console.log(response.reason);
+					apiErrorCount++;
+				} else {
+					if (ledState) logInformation('LED Mode on ' + currentSerial + ' was enabled');
+					else logInformation('LED Mode on ' + currentSerial + ' was disabled');
+				}
+				ledCounter++;
+				checkForLEDCompletion();
+			});
+		} else {
+			logInformation('LED Mode on ' + currentSerial + ' was already configured correctly');
+			ledCounter++;
+			checkForLEDCompletion();
+		}
 	});
 }
 
@@ -9569,7 +10279,7 @@ function renameAndRadioMode() {
 	*/
 	var settingsList = {};
 	radioModeCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		showNotification('ca-contactless-card', 'Setting Hostname and Radio Mode...', 'bottom', 'center', 'info');
 
 		$.each(csvData, function() {
@@ -9992,6 +10702,8 @@ function processAPPortData(siteAPs, currentIndex) {
 }
 
 function poeBounce(switchSerial, switchPort) {
+	
+	toolNotification = showLongNotification('ca-switch-stack', 'Attemping to bounce PoE on interface '+switchPort+'...', 'bottom', 'center', 'info');
 	var data;
 	if (getSwitchType(switchSerial) === 'AOS-S') {
 		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 1050, arguments: [{ name: 'Port', value: switchPort }] }] });
@@ -10027,13 +10739,13 @@ function poeBounce(switchSerial, switchPort) {
 }
 
 function interfaceBounce(switchSerial, switchPort) {
+	toolNotification = showLongNotification('ca-switch-stack', 'Attemping to bounce interface '+switchPort+'...', 'bottom', 'center', 'info');
 	var data;
 	if (getSwitchType(switchSerial) === 'AOS-S') {
 		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 1051, arguments: [{ name: 'Port', value: switchPort }] }] });
 	} else {
 		data = JSON.stringify({ device_type: 'CX', commands: [{ command_id: 6004, arguments: [{ name: 'Port', value: switchPort }] }] });
 	}
-	console.log(data)
 
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -10049,7 +10761,6 @@ function interfaceBounce(switchSerial, switchPort) {
 		}),
 	};
 	$.ajax(settings).done(function(response, textStatus, jqXHR) {
-		console.log(response);
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else if (response.status === 'QUEUED') {
@@ -10078,6 +10789,8 @@ function cableTest(switchSerial, switchPort) {
 }
 
 function confirmCableTest(switchSerial, switchPort) {
+	
+	toolNotification = showLongNotification('ca-switch-stack', 'Running cable test on interface '+switchPort+'...', 'bottom', 'center', 'info');
 	var data;
 	if (getSwitchType(switchSerial) === 'AOS-S') {
 		data = JSON.stringify({ device_type: 'switch', commands: [{ command_id: 1205, arguments: [{ name: 'Port', value: switchPort }] }] });
@@ -10175,6 +10888,10 @@ function checkTroubleshootingResult(session_id, deviceSerial, switchPort) {
 					});
 				}
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
+				if (toolNotification) {
+					toolNotification.update({ message: 'Switch Troubleshooting Action Completed', type: 'success' });
+					setTimeout(toolNotification.close, 1000);
+				}
 			} else {
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'danger');
 			}
@@ -10751,7 +11468,7 @@ function setStaticIPConfig() {
 	var settingsList = {};
 	devicesToReboot = [];
 	ipCounter = 0;
-	$.when(updateInventory()).then(function() {
+	$.when(updateInventory(false)).then(function() {
 		ipNotification = showProgressNotification('ca-square-pin', 'Setting static IP addresses...', 'bottom', 'center', 'info');
 		$.each(csvData, function() {
 			// find device in inventory to get device type
@@ -10938,13 +11655,11 @@ function checkForVisitorCompletion() {
 
 function createVisitors() {
 	vistorCounter = 0;
-	var apiDelay = 0;
 	if (csvData.length == 0) showNotification('ca-multiple-11', 'No visitors in the CSV file', 'bottom', 'center', 'warning');
 	else visitorNotification = showProgressNotification('ca-multiple-11', 'Creating Visitors...', 'bottom', 'center', 'info');
-	$.each(csvData, function() {
-		setTimeout(createVisitor, 250 * apiDelay, this);
-		apiDelay++;
-	});
+	for (var i=0;i<csvData.length;i++) {
+		setTimeout(createVisitor, apiDelay * i, csvData[i]);
+	}
 }
 
 function createVisitor(visitor) {
@@ -11022,7 +11737,7 @@ function createVisitor(visitor) {
 		};
 
 		$.ajax(settings).done(function(response, statusText, xhr) {
-			console.log(response);
+			//console.log(response);
 			if (response.hasOwnProperty('error_code')) {
 				if (response.error_code == 400) {
 					apiErrorCount++;
@@ -11078,4 +11793,303 @@ function confirmTopologyReset(siteID) {
 	
 	var resetURL = centralBaseURL + '/topology/debug/'+siteID+'/reset';
 	window.open(resetURL, '_blank');
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	AppRF Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+function getAppRFMappings() {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/apprf/v1/metainfo/iap/application/id_to_name',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/apprf/v1/metainfo/iap/application/id_to_name)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		appIDMappings = response;
+	});
+	
+	var settings2 = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/apprf/v1/metainfo/iap/webcategory/id_to_name',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings2).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/apprf/v1/metainfo/iap/webcategory/id_to_name)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		webCatMappings = response;
+	});
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Gateway CSV Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+
+function checkForGatewayCompletion() {
+	var gatewayProgress = (gatewayCounter / csvData.length) * 100;
+	automationNotification.update({ progress: gatewayProgress });
+	if (gatewayCounter >= csvData.length) {
+		if (automationNotification) automationNotification.close();
+		if (currentWorkflow === '') {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'Gateway Config Failure',
+					text: 'Some or all gateways failed to be updated.',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'Gateway Config Success',
+					text: 'All Gateways have been updated.',
+					icon: 'success',
+				});
+			}
+			logEnd('Gateway Timezone update complete')
+		}
+	}
+}
+
+function setGatewayTimezones() {
+	if (csvData.length == 0) showNotification('ca-config-gateway', 'No Gateways in the CSV file', 'bottom', 'center', 'warning');
+	else automationNotification = showProgressNotification('ca-config-gateway', 'Setting Gateway Timezones...', 'bottom', 'center', 'info');
+	
+	// Build Device List to obtain the full path
+	var groupList = getGroups();
+	var gatewayList = getGateways();
+	var groupDeviceList = {};
+	$.each(groupList, function() {
+		if (this.group !== 'unprovisioned') {
+			var groupName = this.group;	
+			$.each(gatewayList, function() {
+				if (this.group_name === groupName) {
+					var visibleName = this.macaddr;
+					groupDeviceList[this.macaddr] = encodeURI(groupName) + '/' + this.macaddr;
+				}
+			});
+		}
+	});
+	
+	for (var i=0;i<csvData.length;i++) {
+		var currentRow = csvData[i];
+		var currentMac = currentRow['MAC'];
+		if (!currentMac) currentMac = currentRow['MAC ADDRESS'];
+		if (currentMac) {
+			if (currentRow['TIMEZONE']) {
+				if (groupDeviceList[currentMac]) {
+					currentMac = groupDeviceList[currentMac]
+					currentTz = currentRow['TIMEZONE'].trim().replace(' ', '_');
+					destTZ = DateTime.local().setZone(currentTz);
+					if (destTZ.isValid) {
+						currentCommand = [];
+						currentCommand.push('clock timezone '+currentTz+ ' ' +destTZ.toFormat('ZZ').replace(':', ' '));
+						setTimeout(applyCLICommandsForGateway, apiDelay*i, currentMac, currentCommand);
+					} else {
+						logError('Invalid Timezone for Gateway (' + currentRow['SERIAL'] +'): '+ currentTz);
+						gatewayCounter++;
+						checkForGatewayCompletion();
+					}
+				} else {
+					logError('Unable to find Gateway with serial: ' + currentRow['SERIAL']);
+					gatewayCounter++;
+					checkForGatewayCompletion();
+				}
+			} else {
+				logError('Missing Timezone for ' + currentRow['SERIAL']);
+				gatewayCounter++;
+				checkForGatewayCompletion();
+			}
+		}
+	}
+}
+
+function applyCLICommandsForGateway(currentGroup, currentConfig) {
+	
+	// need to push config back to Central.
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/caasapi/v1/exec/cmd?group_name=' + currentGroup,
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify({ cli_cmds: currentConfig }),
+		}),
+	};
+
+	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/caasapi/v1/exec/cmd)');
+				return;
+			}
+		}
+		var result = response['_global_result'];
+		if (result['status_str'] === 'Success') {
+			logInformation('Gateway config for ' + currentGroup + ' was successfully updated');
+		} else {
+			logError('Config for ' + currentGroup + ' failed to be applied: ' + result['status_str']);
+		}
+		gatewayCounter++;
+		checkForGatewayCompletion();
+	});
+}
+
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Generic Device Download Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function downloadDeviceCSV(downloadType) {
+
+	var table = $('#ap-table').DataTable();	
+	var filename = 'ap';
+	if (downloadType == DeviceType.AP) {
+		table = $('#ap-table').DataTable();
+		filename = 'ap';
+	} else if (downloadType == DeviceType.Switch) {
+		table = $('#switch-table').DataTable();
+		filename = 'switch';
+	} else if (downloadType == DeviceType.Gateway) {
+		table = $('#gateway-table').DataTable();
+		filename = 'gateway';
+	} else if (downloadType == DeviceType.Controller) {
+		table = $('#controller-table').DataTable();
+		filename = 'controller';
+	}
+	
+	$.when(updateInventory(false)).then(function() {
+		csvData = buildDeviceCSVData(downloadType);
+		var csv = Papa.unparse(csvData);
+		var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		var csvURL = window.URL.createObjectURL(csvBlob);
+		var csvLink = document.createElement('a');
+		csvLink.href = csvURL;
+		
+		var filter = table.search();
+		if (filter !== '') csvLink.setAttribute('download', filename + '-' + filter.replace(/ /g, '_') + '.csv');
+		else csvLink.setAttribute('download', filename+'.csv');
+		csvLink.click();
+		window.URL.revokeObjectURL(csvLink);
+	});
+}
+
+function buildDeviceCSVData(downloadType) {
+	
+	var table = $('#ap-table').DataTable();	
+	var filename = 'ap';
+	var deviceDisplay = [];
+	if (downloadType == DeviceType.AP) {
+		table = $('#ap-table').DataTable();
+		filename = 'ap';
+		deviceDisplay = getAPs();
+	} else if (downloadType == DeviceType.Switch) {
+		table = $('#switch-table').DataTable();
+		filename = 'switch';
+		deviceDisplay = getSwitches();
+	} else if (downloadType == DeviceType.Gateway) {
+		table = $('#gateway-table').DataTable();
+		filename = 'gateway';
+		deviceDisplay = getGateways();
+	} else if (downloadType == DeviceType.Controller) {
+		table = $('#controller-table').DataTable();
+		filename = 'controller';
+		deviceDisplay = getControllers();
+	}
+	
+	//CSV header
+	var nameKey = 'DEVICE NAME';
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var groupKey = 'GROUP';
+	var siteKey = 'SITE';
+	var labelKey = 'LABELS';
+	var licenseKey = 'LICENSE';
+	var zoneKey = 'ZONE';
+	var swarmKey = 'SWARM MODE';
+	var rfKey = 'RF PROFILE';
+	var installationKey = 'INSTALLATION TYPE';
+	var radio0Key = 'RADIO 0 MODE';
+	var radio1Key = 'RADIO 1 MODE';
+	var radio2Key = 'RADIO 2 MODE';
+	var dualKey = 'DUAL 5GHZ MODE';
+	var splitKey = 'SPLIT 5GHZ MODE';
+	var flexKey = 'FLEX DUAL BAND';
+	var ipKey = 'IP ADDRESS';
+	var smKey = 'SUBNET MASK';
+	var dgwKey = 'DEFAULT GATEWAY';
+	var dnsKey = 'DNS SERVER';
+	var domainKey = 'DOMAIN NAME';
+	var timezoneKey = 'TIMEZONE';
+
+	var csvDataBuild = [];
+
+	var filteredRows = table.rows({ filter: 'applied' });
+
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var device = deviceDisplay[this];
+		// Find monitoring data if there is any
+		var inventoryInfo = findDeviceInInventory(device.serial);
+		var groupToUse = device['group_name'] ? device['group_name'] : '';
+		var siteToUse = device['site'] ? device['site'] : '';
+		
+		var labels = '';
+		if (device.labels) labels = device.labels.join(', ');
+		
+		var swarmMode = '';
+		if (downloadType == DeviceType.AP) swarmMode = device['swarm_id'] ? 'Cluster':'Standalone';
+		
+		var licenseString = '';
+		if (inventoryInfo) {
+			if (inventoryInfo['tier_type'] && inventoryInfo['tier_type'] === 'other') licenseString = inventoryInfo['services'][0];
+			else if (inventoryInfo['tier_type']) licenseString = titleCase(inventoryInfo['tier_type']);
+		}
+
+		csvDataBuild.push({ [nameKey]: device['name'] ? device['name'] : device['macaddr'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [licenseKey]: licenseString, [zoneKey]:'', [swarmKey]:swarmMode, [rfKey]:'', [installationKey]:'', [radio0Key]:'', [radio1Key]:'', [radio2Key]:'', [dualKey]:'', [splitKey]:'', [flexKey]:'', [ipKey]:device['ip_address'] ? device['ip_address']:'', [smKey]:device['subnet_mask'] ? device['subnet_mask']:'', [dgwKey]:'', [dnsKey]:'', [domainKey]:'', [timezoneKey]:'' });
+	});
+
+	return csvDataBuild;
 }

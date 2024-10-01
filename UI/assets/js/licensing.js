@@ -1,7 +1,7 @@
 /*
 Central Automation v1.13
 Updated: 1.28.1
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var keys = [];
@@ -77,8 +77,7 @@ function getLicensingData() {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getLicensingData();
@@ -167,8 +166,7 @@ function getLicensingData() {
 			return;
 		} else if (commandResults.hasOwnProperty('status') && commandResults.status === '401') {
 			// Access Token expired - get a new one and try again.
-			authPromise = new $.Deferred();
-			$.when(authRefresh(authPromise)).then(function() {
+			$.when(authRefresh()).then(function() {
 				if (!failedAuth) {
 					failedAuth = true;
 					getLicensingData();
@@ -246,7 +244,7 @@ function getLicensingData() {
 
 		$('[data-toggle="tooltip"]').tooltip();
 
-		$.when(updateInventory()).then(function() {
+		$.when(updateInventory(false)).then(function() {
 			loadMonitoringData();
 		});
 	});

@@ -241,7 +241,7 @@ def putCommand():
     
 	response = requests.request("PUT", url, data=payload, headers=headers);
 	
-	app.logger.debug(response.text)
+	#app.logger.debug(response.text)
 	try:
 		result = jsonify(json.loads(response.text));
 		# ...
@@ -315,7 +315,6 @@ def patchCommand():
     
 	response = requests.request("PATCH", url, data=payload, headers=headers);
 	
-	app.logger.debug(response.text)
 	try:
 		result = jsonify(json.loads(response.text));
 		# ...
@@ -350,7 +349,6 @@ def deleteCommand():
 	else:
 		response = requests.request("DELETE", url, headers=headers);
 	
-	app.logger.debug(response.status_code)
 	try:
 		result = jsonify(json.loads(response.text)), response.status_code;
 	except ValueError:

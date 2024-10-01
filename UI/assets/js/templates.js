@@ -50,7 +50,7 @@ function loadCurrentPageSwitch() {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getSwitchStacks() {
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		getSwitchVariables();
 		stacksPromise = new $.Deferred();
 		$('#stacks-table')

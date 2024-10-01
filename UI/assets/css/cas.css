@@ -1,7 +1,7 @@
   /*
 Central Automation v1
-Updated: 1.30
-Copyright Aaron Scott (WiFi Downunder) 2023-2024
+Updated: 1.37
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 
@@ -12,21 +12,21 @@ Generated using nucleoapp.com
 
 -------------------------------- */
 @font-face {
-  font-family: 'central';
-  src: url('../fonts/central.eot');
-  src: url('../fonts/central.eot') format('embedded-opentype'), url('../fonts/central.woff2') format('woff2'), url('../fonts/central.woff') format('woff'), url('../fonts/central.ttf') format('truetype'), url('../fonts/central.svg') format('svg');
-  font-weight: normal;
-  font-style: normal;
+  font-family: 'Central';
+  src: url('../fonts/Central.eot');
+  src: url('../fonts/Central.eot') format('embedded-opentype'),
+       url('../fonts/Central.woff2') format('woff2'),
+       url('../fonts/Central.woff') format('woff'),
+       url('../fonts/Central.ttf') format('truetype'),
+       url('../fonts/Central.svg') format('svg');
 }
-/*------------------------
-	base class definition
--------------------------*/
+
+/* base class */
 .central-icon {
   display: inline-block;
-  font: normal normal normal 1em/1 'central';
-  speak: none;
-  text-transform: none;
-  /* Better Font Rendering */
+  font: normal normal normal 1em/1 'Central';
+  color: inherit;
+  flex-shrink: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -125,85 +125,39 @@ Generated using nucleoapp.com
   spinning icons
 -------------------------*/
 
+/* rotate the icon infinitely */
 .central-icon-is-spinning {
-  -webkit-animation: central-icon-spin 1s infinite linear;
-  -moz-animation: central-icon-spin 1s infinite linear;
   animation: central-icon-spin 1s infinite linear;
 }
-@-webkit-keyframes central-icon-spin {
-  0% {
-    -webkit-transform: rotate(0deg);
-  }
-  100% {
-    -webkit-transform: rotate(360deg);
-  }
-}
-@-moz-keyframes central-icon-spin {
-  0% {
-    -moz-transform: rotate(0deg);
-  }
-  100% {
-    -moz-transform: rotate(360deg);
-  }
-}
+
 @keyframes central-icon-spin {
   0% {
-    -webkit-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -ms-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   100% {
-    -webkit-transform: rotate(360deg);
-    -moz-transform: rotate(360deg);
-    -ms-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
     transform: rotate(360deg);
   }
 }
-/*------------------------
-  rotated/flipped icons
--------------------------*/
+
+/* transform */
 .central-icon-rotate-90 {
-  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
-  -webkit-transform: rotate(90deg);
-  -moz-transform: rotate(90deg);
-  -ms-transform: rotate(90deg);
-  -o-transform: rotate(90deg);
   transform: rotate(90deg);
 }
+
 .central-icon-rotate-180 {
-  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
-  -webkit-transform: rotate(180deg);
-  -moz-transform: rotate(180deg);
-  -ms-transform: rotate(180deg);
-  -o-transform: rotate(180deg);
   transform: rotate(180deg);
 }
+
 .central-icon-rotate-270 {
-  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
-  -webkit-transform: rotate(270deg);
-  -moz-transform: rotate(270deg);
-  -ms-transform: rotate(270deg);
-  -o-transform: rotate(270deg);
   transform: rotate(270deg);
 }
+
 .central-icon-flip-y {
-  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=0);
-  -webkit-transform: scale(-1, 1);
-  -moz-transform: scale(-1, 1);
-  -ms-transform: scale(-1, 1);
-  -o-transform: scale(-1, 1);
-  transform: scale(-1, 1);
+  transform: scaleY(-1);
 }
+
 .central-icon-flip-x {
-  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
-  -webkit-transform: scale(1, -1);
-  -moz-transform: scale(1, -1);
-  -ms-transform: scale(1, -1);
-  -o-transform: scale(1, -1);
-  transform: scale(1, -1);
+  transform: scaleX(-1);
 }
 
 
@@ -882,11 +836,116 @@ Generated using nucleoapp.com
   content: "\eaab";
 }
 
+.ca-scan::before {
+  content: "\eaac";
+}
+
+.ca-bulb-61::before {
+  content: "\eaaf";
+}
+
+.ca-bulb-63::before {
+  content: "\eab0";
+}
+
+.ca-folder-alert::before {
+  content: "\eab1";
+}
+
+.ca-user-list::before {
+  content: "\eab2";
+}
+
+.ca-config-switch::before {
+  content: "\eab3";
+}
+
+.ca-config-ap::before {
+  content: "\eab4";
+}
+
+.ca-config-client::before {
+  content: "\eab5";
+}
+
+.ca-stats-ap::before {
+  content: "\eab6";
+}
+
+.ca-stats-client::before {
+  content: "\eab7";
+}
+
+.ca-reboot-ap::before {
+  content: "\eab8";
+}
+
+.ca-bulk-ap::before {
+  content: "\eab9";
+}
+
+.ca-tshoot-switch::before {
+  content: "\eaba";
+}
+
+.ca-tshoot-client::before {
+  content: "\eabb";
+}
+
+.ca-tshoot-ap::before {
+  content: "\eabc";
+}
+
+.ca-config-gateway::before {
+  content: "\eabd";
+}
+
+.ca-config-site::before {
+  content: "\eabe";
+}
+
+.ca-config-visitor::before {
+  content: "\eabf";
+}
+
+.ca-tshoot-gateway::before {
+  content: "\eac0";
+}
+
+.ca-pin-time::before {
+  content: "\eac1";
+}
+
+.ca-ventilation::before {
+  content: "\eac2";
+}
+
+.ca-stats-switch::before {
+  content: "\eac3";
+}
+
+.ca-ap1x::before {
+  content: "\eac4";
+}
+
 
 
 /*------------------------
 	Extra Styling
 -------------------------*/
+
+svg.ct-chart-bar, svg.ct-chart-line{
+  overflow: visible;
+}
+
+#chartNeighbours .ct-label.ct-label.ct-horizontal.ct-end {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: block;
+  width: 120px !important;
+}
+
 
 .graphLabel {
   font-size: 0.875rem;
@@ -897,12 +956,32 @@ Generated using nucleoapp.com
   text-align: center;
 }
 
+.col-100 {
+  word-wrap: break-word;
+  max-width: 250px;
+}
+
+.maxWidth-150 {
+ white-space: nowrap;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ max-width: 150px;
+}
+
 .extra-h5-padding {
   margin-top: 30px;
 }
 
 .textarea {
   height: 400px !important;
+}
+
+.textarea-600 {
+  height: 600px !important;
+}
+
+.textarea-170 {
+  height: 170px !important;
 }
 
 .card {
@@ -938,6 +1017,26 @@ Generated using nucleoapp.com
 
 .me-2 {
   margin-right: 0.5rem !important;
+}
+
+.p-0 {
+  padding: 0px;
+}
+
+.pe-0 {
+  padding-right: 0 !important;
+}
+
+.pe-1 {
+  padding-right: 0.25rem !important;
+}
+
+.pe-2 {
+  padding-right: 0.5rem !important;
+}
+
+.pe-3 {
+  padding-right: 1rem !important;
 }
 
 .fa-fw {
@@ -987,9 +1086,6 @@ Generated using nucleoapp.com
     padding: 4px;
     border-radius: 4px;
 }
-
-
-
 
 .card .table tbody td:last-child,
 .card .table thead th:last-child {
@@ -1069,6 +1165,16 @@ Generated using nucleoapp.com
   margin-top: 5px !important;
 }
 
+.btn-dropdown {
+  margin-top: 7px !important;
+}
+
+.cli-output 
+{  
+   font-family:"Menlo", "Roboto Mono", 'Courier' !important;
+   font-size: 12px;   
+}
+
 .clickable-row{
 	cursor:pointer;
 }
@@ -1125,6 +1231,17 @@ Generated using nucleoapp.com
     text-transform: capitalize;
 }
 
+.form-check .form-check-label-usernames {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    padding-left: 35px;
+    padding-top: 0ps;
+    line-height: 26px;
+    margin-bottom: 0;
+    text-transform: capitalize;
+}
+
 .form-check .form-check-label-options {
     display: inline-block;
     position: relative;
@@ -1163,6 +1280,11 @@ Generated using nucleoapp.com
 	width: 90%;
 }
 
+.floatRight {
+  display: flex;
+  justify-content: flex-end;
+}
+
 
 .nav .navbar-search-form .input-group  {
 	float: right;
@@ -1194,6 +1316,10 @@ Generated using nucleoapp.com
     color: #ff8500;
 }
 
+.float-right {
+  float: right;
+}
+
 .reload-link {
   float: right;
 }
@@ -1210,6 +1336,16 @@ Generated using nucleoapp.com
 
 .refresh-link:hover {
   color: #ff8500 !important;
+}
+
+.right-date {
+  color: #9A9A9A;
+  padding-top: 8px;
+  height: 28px;
+  width: 200px;
+  float: right;
+  padding-right: 10px;
+  font-size: 12px;
 }
 
 .right-link {

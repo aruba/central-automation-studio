@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240817" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -173,6 +173,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 												<select id="scaleselector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-blue"  onchange="updateScaleSettings()">
 													<option value="full">Full Details</option>
 													<option value="scale">Large Scale Deployment</option>
+													<option value="group">Group Config Only</option>
 													<option value="custom">Custom (Use settings below)</option>
 												</select>
 												</div>
@@ -191,8 +192,16 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 											<div class="col-md-3 mx-auto">
 												<div class="form-check">
 													<label class="form-check-label-options">
-														<input class="form-check-input" type="checkbox" value="" id="load_group_properties" checked="true" onclick="saveGlobalSettings();" />
-														<span class="form-check-sign"></span>Group Properties
+														<input class="form-check-input" type="checkbox" value="" id="load_devices" checked="true" onclick="saveGlobalSettings();" />
+														<span class="form-check-sign"></span>AP & Switch Monitoring
+													</label>
+												</div>
+											</div>
+											<div class="col-md-3 mx-auto">
+												<div class="form-check">
+													<label class="form-check-label-options">
+														<input class="form-check-input" type="checkbox" value="" id="load_gateways" checked="false" onclick="saveGlobalSettings();" />
+														<span class="form-check-sign"></span>Gateway Monitoring
 													</label>
 												</div>
 											</div>
@@ -200,12 +209,20 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 												<div class="form-check">
 													<label class="form-check-label-options">
 														<input class="form-check-input" type="checkbox" value="" id="load_gateway_details" checked="false" onclick="saveGlobalSettings();" />
-														<span class="form-check-sign"></span>Gateway Details
+														<span class="form-check-sign"></span>Gateway Extra Details
 													</label>
 												</div>
 											</div>
 										</div>
 										<div class="row">
+											<div class="col-md-3 mx-auto">
+												<div class="form-check">
+													<label class="form-check-label-options">
+														<input class="form-check-input" type="checkbox" value="" id="load_group_properties" checked="true" onclick="saveGlobalSettings();" />
+														<span class="form-check-sign"></span>Group Properties
+													</label>
+												</div>
+											</div>
 											<div class="col-md-3 mx-auto">
 												<div class="form-check">
 													<label class="form-check-label-options">
@@ -391,6 +408,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 													</div>
 												</div>
 											</div>
+											<div class="form-group" hidden>
+												<div class="row">
+													<label class="col-md-4">Token Expiry</label>
+													<div class="col-md-8">
+														<input type="text" placeholder="Access Token Expiry" class="form-control" id="expires_at" readonly/>
+													</div>
+												</div>
+											</div>
 											<div class="form-group">
 												<div class="row">
 													<label class="col-md-4">Refresh Token</label>
@@ -399,6 +424,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 													</div>
 												</div>
 											</div>
+											
 										</form>
 										<br />
 										<button type="submit" class="btn btn-fill btn-neutral btn-wd" onclick="cancelAccount()">Cancel</button>
@@ -462,6 +488,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
 	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
 	<script src="assets/js/plugins/moment.min.js"></script>
+	<script src="assets/js/plugins/luxon.min.js"></script>
 	<!--  DatetimePicker   -->
 	<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
 	<!--  Sweet Alert  -->
@@ -631,7 +658,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 			} else {
 				document.getElementById("qr_logo").value = "";
 			}
-	
+			
 			var loadClients = localStorage.getItem('load_clients');
 			if (loadClients === null || loadClients === "") {
 				loadClients = true;
@@ -639,6 +666,30 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 				loadClients = JSON.parse(loadClients)
 			}
 			document.getElementById("load_clients").checked = loadClients;
+			
+			var loadDevices = localStorage.getItem('load_devices');
+			if (loadDevices === null || loadDevices === "") {
+				loadDevices = true;
+			} else {
+				loadDevices = JSON.parse(loadDevices)
+			}
+			document.getElementById("load_devices").checked = loadDevices;
+			
+			var loadGateways = localStorage.getItem('load_gateways');
+			if (loadGateways === null || loadGateways === "") {
+				loadGateways = true;
+			} else {
+				loadGateways = JSON.parse(loadGateways)
+			}
+			document.getElementById("load_gateways").checked = loadGateways;
+			
+			var loadGatewayDetails = localStorage.getItem('load_gateway_details');
+			if (loadGatewayDetails === null || loadGatewayDetails === "") {
+				loadGatewayDetails = false;
+			} else {
+				loadGatewayDetails = JSON.parse(loadGatewayDetails)
+			}
+			document.getElementById("load_gateway_details").checked = loadGatewayDetails;
 	
 			var loadGroupProperties = localStorage.getItem('load_group_properties');
 			if (loadGroupProperties === null || loadGroupProperties === "") {
@@ -647,14 +698,6 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 				loadGroupProperties = JSON.parse(loadGroupProperties)
 			}
 			document.getElementById("load_group_properties").checked = loadGroupProperties;
-	
-			var loadGatewayDetails = localStorage.getItem('load_gateway_details');
-			if (loadGatewayDetails === null || loadGatewayDetails === "") {
-				loadGatewayDetails = false;
-			} else {
-				loadGatewayDetails = JSON.parse(loadGatewayDetails)
-			}
-			document.getElementById("load_gateway_details").checked = loadGatewayDetails;
 	
 			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
 			if (loadAirMatchEvents === null || loadAirMatchEvents === "") {
@@ -689,8 +732,9 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240525"></script>
-	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra-main.js?v=231208"></script>
-	<script src="assets/js/hydra.js?v=231106"></script>
+	<script src="assets/js/version.js?v=240919"></script>
+	<script src="assets/js/main.js?v=240919"></script>
+	<script src="assets/js/proxy.js?v=240920"></script>
+	<script src="assets/js/hydra-main.js?v=240831"></script>
+	<script src="assets/js/hydra.js?v=240831"></script>
 </html>

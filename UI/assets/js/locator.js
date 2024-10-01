@@ -1,7 +1,7 @@
 /*
 Central Automation v1.30
 Updated:
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 
@@ -204,7 +204,7 @@ function locateClient(clientMac) {
 			return;
 		}
 		var response = JSON.parse(commandResults.responseBody);
-		console.log(response);
+		//console.log(response);
 		var trail = response.trails;
 		trail = trail.slice(0,10);
 		$('#roamingList').empty();
@@ -253,8 +253,7 @@ function getFloor(floorId) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getFloor(floorId);

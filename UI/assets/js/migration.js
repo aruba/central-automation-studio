@@ -428,7 +428,7 @@ function migrateSelectedOptions() {
 		if (document.getElementById('siteDeviceCheckbox').checked && document.getElementById('siteCheckbox').checked) {
 			$.when(migrateSites()).then(function() {
 				getGroupInformation();
-				$.when(updateInventory()).then(function() {
+				$.when(updateInventory(false)).then(function() {
 					assignDevicesToSites();
 				});
 			});
@@ -440,7 +440,7 @@ function migrateSelectedOptions() {
 
 		if (document.getElementById('siteDeviceCheckbox').checked) {
 			getGroupInformation();
-			$.when(updateInventory()).then(function() {
+			$.when(updateInventory(false)).then(function() {
 				assignDevicesToSites();
 			});
 		}
@@ -460,7 +460,7 @@ function migrateSelectedOptions() {
 
 				// Grab full group details and device inventory - since its used by config migrations
 				getGroupInformation();
-				$.when(updateInventory()).then(function() {
+				$.when(updateInventory(false)).then(function() {
 					// unassign licenses from devices in source account
 					sourceLicensingPromise = new $.Deferred();
 					var devicesToUnLicense = devicesToMigrate;
@@ -477,7 +477,7 @@ function migrateSelectedOptions() {
 			// No device migration, so no need to touch the licensing at all.
 			// Grab full group details and device inventory - since its used by config migrations
 			getGroupInformation();
-			$.when(updateInventory()).then(function() {
+			$.when(updateInventory(false)).then(function() {
 				coreMigration();
 			});
 		}

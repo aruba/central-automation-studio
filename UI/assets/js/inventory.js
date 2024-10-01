@@ -1,8 +1,10 @@
 /*
 Central Automation v1.10
-Updated: v1.31
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Updated: v1.38
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
+
+const InventoryType = { All: 0, Unlicensed: 1, Group: 2, Site: 3, Offline: 4, Expiring: 5};
 
 var deviceList = [];
 var deviceDisplay = []; // used to store devices in the unfiltered table (depending on the empty group toggle)
@@ -26,32 +28,136 @@ function getInventoryData() {
 
 function loadCurrentPageAP() {
 	gotAPs = true;
-	loadFullInventory();
+	loadFullInventory(false);
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function loadCurrentPageSwitch() {
 	gotSwitches = true;
-	loadFullInventory();
+	loadFullInventory(false);
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function loadCurrentPageGateway() {
 	gotGateways = true;
-	loadFullInventory();
+	loadFullInventory(false);
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
-function loadFullInventory() {
+function refreshFullInventory() {
+	gotAPs = true;
+	gotSwitches = true;
+	gotGateways = true;
+	loadFullInventory(true);
+}
+
+function loadFullInventory(forceUpdate) {
+	document.getElementById('total_count').innerHTML = '0';
+	$(document.getElementById('total_icon')).addClass('text-muted');
+	$(document.getElementById('total_icon')).removeClass('text-success');
+	$(document.getElementById('total_icon')).removeClass('text-warning');
+	$(document.getElementById('total_icon')).removeClass('text-danger');
+	$(document.getElementById('total_icon')).removeClass('text-purple');
+	$(document.getElementById('total_icon')).removeClass('text-info');
+	
+	document.getElementById('unlicensed_count').innerHTML = '0';
+	$(document.getElementById('unlicensed_icon')).addClass('text-muted');
+	$(document.getElementById('unlicensed_icon')).removeClass('text-warning');
+	$(document.getElementById('unlicensed_icon')).removeClass('text-danger');
+	
+	document.getElementById('expiring_count').innerHTML = '0';
+	$(document.getElementById('expiring_icon')).addClass('text-muted');
+	$(document.getElementById('expiring_icon')).removeClass('text-warning');
+	$(document.getElementById('expiring_icon')).removeClass('text-danger');
+	
+	document.getElementById('no_group_count').innerHTML = '0';
+	$(document.getElementById('no_group_icon')).addClass('text-muted');
+	$(document.getElementById('no_group_icon')).removeClass('text-warning');
+	
+	document.getElementById('no_site_count').innerHTML = '0';
+	$(document.getElementById('no_site_icon')).addClass('text-muted');
+	$(document.getElementById('no_site_icon')).removeClass('text-warning');
+	$(document.getElementById('no_site_icon')).removeClass('text-purple');
+	
+	document.getElementById('offline_count').innerHTML = '0';
+	$(document.getElementById('offline_icon')).addClass('text-muted');
+	$(document.getElementById('offline_icon')).removeClass('text-info');
+	$(document.getElementById('offline_icon')).removeClass('text-warning');
+	
 	if (gotAPs && gotSwitches && gotGateways) {
-		$.when(updateInventory(), getLicensingData()).then(function() {
-			loadTable();
+		$.when(updateInventory(forceUpdate), getLicensingData()).then(function() {
+			// Update date string
+			var lastRefresh = new Date(parseInt(localStorage.getItem('inventory_update')));
+			document.getElementById('lastUpdateDate').innerHTML = 'Updated: '+ lastRefresh.toLocaleString();
+			
+			updateTotal();
+			loadTable(InventoryType.All);
 		});
 	}
 }
-	
 
-function loadTable() {
+function updateTotal() {
+	deviceList = getFullInventory();
+	
+	var unlicensedCount = 0;
+	var expiringCount = 0;
+	var noGroupCount = 0;
+	var noSiteCount = 0;
+	var offlineCount = 0;
+	
+	$.each(deviceList, function() {
+		var monitoringInfo = findDeviceInMonitoring(this.serial);
+		if (!this.subscription_key) unlicensedCount++;
+		
+		var daysRemaining = -1;
+		if (this.subscription_key) {
+			var today = moment();
+			var endDate = moment(subscriptionKeys[this.subscription_key]['end_date']);
+			if (today.isBefore(endDate)) {
+				daysRemaining = endDate.diff(today, 'days');
+			}
+		}
+		if (daysRemaining > 0 && daysRemaining < 90) expiringCount++;
+		
+		if (!monitoringInfo) {
+			noGroupCount++;
+			noSiteCount++;
+			offlineCount++;
+		} else if (monitoringInfo.group_name === '') noGroupCount++;
+		else if (monitoringInfo.site === '') noSiteCount++;
+		else if (monitoringInfo.status !== 'Up') offlineCount++;
+	})
+	
+	document.getElementById('total_count').innerHTML = deviceList.length;
+	if (unlicensedCount > 0) $(document.getElementById('total_icon')).addClass('text-danger');
+	else if (noGroupCount > 0) $(document.getElementById('total_icon')).addClass('text-warning');
+	else if (noSiteCount > 0) $(document.getElementById('total_icon')).addClass('text-purple');
+	else if (expiringCount > 0) $(document.getElementById('total_icon')).addClass('text-warning');
+	else if (offlineCount > 0) $(document.getElementById('total_icon')).addClass('text-info');
+	else $(document.getElementById('total_icon')).addClass('text-success');
+	
+	document.getElementById('unlicensed_count').innerHTML = unlicensedCount;
+	$(document.getElementById('unlicensed_icon')).removeClass('text-muted');
+	$(document.getElementById('unlicensed_icon')).addClass('text-danger');
+	
+	document.getElementById('expiring_count').innerHTML = expiringCount;
+	$(document.getElementById('expiring_icon')).removeClass('text-muted');
+	$(document.getElementById('expiring_icon')).addClass('text-warning');
+	
+	document.getElementById('no_group_count').innerHTML = noGroupCount;
+	$(document.getElementById('no_group_icon')).removeClass('text-muted');
+	$(document.getElementById('no_group_icon')).addClass('text-warning');
+	
+	document.getElementById('no_site_count').innerHTML = noSiteCount;
+	$(document.getElementById('no_site_icon')).removeClass('text-muted');
+	$(document.getElementById('no_site_icon')).addClass('text-purple');
+	
+	document.getElementById('offline_count').innerHTML = offlineCount;
+	$(document.getElementById('offline_icon')).addClass('text-info');
+	$(document.getElementById('offline_icon')).removeClass('text-muted');
+}
+
+function loadTable(inventoryFilter) {
 	// Empty the table
 	$('#inventory-table')
 		.DataTable()
@@ -63,46 +169,115 @@ function loadTable() {
 	deviceDisplay = [];
 
 	var table = $('#inventory-table').DataTable();
+	var column;
+	if (!document.getElementById('showColumns').checked) {
+		column = table.column(17);
+		column.visible(false);
+		column = table.column(18);
+		column.visible(false);
+	}
+	column = table.column(19);
+	column.visible(false);
+	
+	if (inventoryFilter == InventoryType.All) {
+		$(document.getElementById('inventoryAll')).removeClass('no-focus');
+		$(document.getElementById('inventoryUnlicensed')).addClass('no-focus');
+		$(document.getElementById('inventoryExpiring')).addClass('no-focus');
+		$(document.getElementById('inventoryGroup')).addClass('no-focus');
+		$(document.getElementById('inventorySite')).addClass('no-focus');
+		$(document.getElementById('inventoryOffline')).addClass('no-focus');
+		let column = table.column(19);
+		column.visible(false);
+	} else if (inventoryFilter == InventoryType.Unlicensed) {
+		$(document.getElementById('inventoryAll')).addClass('no-focus');
+		$(document.getElementById('inventoryUnlicensed')).removeClass('no-focus');
+		$(document.getElementById('inventoryExpiring')).addClass('no-focus');
+		$(document.getElementById('inventoryGroup')).addClass('no-focus');
+		$(document.getElementById('inventorySite')).addClass('no-focus');
+		$(document.getElementById('inventoryOffline')).addClass('no-focus');
+	} else if (inventoryFilter == InventoryType.Group) {
+		$(document.getElementById('inventoryAll')).addClass('no-focus');
+		$(document.getElementById('inventoryUnlicensed')).addClass('no-focus');
+		$(document.getElementById('inventoryExpiring')).addClass('no-focus');
+		$(document.getElementById('inventoryGroup')).removeClass('no-focus');
+		$(document.getElementById('inventorySite')).addClass('no-focus');
+		$(document.getElementById('inventoryOffline')).addClass('no-focus');
+	} else if (inventoryFilter == InventoryType.Site) {
+		$(document.getElementById('inventoryAll')).addClass('no-focus');
+		$(document.getElementById('inventoryUnlicensed')).addClass('no-focus');
+		$(document.getElementById('inventoryExpiring')).addClass('no-focus');
+		$(document.getElementById('inventoryGroup')).addClass('no-focus');
+		$(document.getElementById('inventorySite')).removeClass('no-focus');
+		$(document.getElementById('inventoryOffline')).addClass('no-focus');
+	} else if (inventoryFilter == InventoryType.Offline) {
+		$(document.getElementById('inventoryAll')).addClass('no-focus');
+		$(document.getElementById('inventoryUnlicensed')).addClass('no-focus');
+		$(document.getElementById('inventoryExpiring')).addClass('no-focus');
+		$(document.getElementById('inventoryGroup')).addClass('no-focus');
+		$(document.getElementById('inventorySite')).addClass('no-focus');
+		$(document.getElementById('inventoryOffline')).removeClass('no-focus');
+	} else if (inventoryFilter == InventoryType.Expiring) {
+		$(document.getElementById('inventoryAll')).addClass('no-focus');
+		$(document.getElementById('inventoryUnlicensed')).addClass('no-focus');
+		$(document.getElementById('inventoryExpiring')).removeClass('no-focus');
+		$(document.getElementById('inventoryGroup')).addClass('no-focus');
+		$(document.getElementById('inventorySite')).addClass('no-focus');
+		$(document.getElementById('inventoryOffline')).addClass('no-focus');
+		column = table.column(17);
+		column.visible(true);
+		column = table.column(18);
+		column.visible(true);
+		column = table.column(19);
+		column.visible(true);
+	}
+	
+	
 	$.each(deviceList, function() {
-		var monitoringInfo = findDeviceInMonitoring(this.serial);
-
-		// Add row to table
 		
-		if (monitoringInfo) {
-			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
-			var duration = moment.duration(uptime * 1000);
-			var uptimeString = '';
-			
-			var clientCount = '';
-			
-			var status = '<i class="fa-solid fa-circle text-danger"></i>';
-			if (monitoringInfo.status == 'Up') {
-				status = '<i class="fa-solid fa-circle text-success"></i>';
-				uptimeString = duration.humanize();
-				if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
-				if (monitoringInfo['client_count'] == 0) clientCount = '0';
+		var daysRemaining = -1;
+		if (this.subscription_key) {
+			var today = moment();
+			var endDate = moment(subscriptionKeys[this.subscription_key]['end_date']);
+			if (today.isBefore(endDate)) {
+				daysRemaining = endDate.diff(today, 'days');
 			}
+		}
+		
+		var monitoringInfo = findDeviceInMonitoring(this.serial);
+		// Filter table based on the Selected tile
+		if ((inventoryFilter == InventoryType.All) || (inventoryFilter == InventoryType.Unlicensed && !this.subscription_key) || (inventoryFilter == InventoryType.Expiring && daysRemaining > 0 && daysRemaining <= 90) || (inventoryFilter == InventoryType.Group && (!monitoringInfo || monitoringInfo.group_name === '')) || (inventoryFilter == InventoryType.Site && (!monitoringInfo || monitoringInfo.site === '')) || (inventoryFilter == InventoryType.Offline && (!monitoringInfo || monitoringInfo.status !== 'Up'))) {
 			
-			var publicIP = '';
-			if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
-			else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
-			
-			var labels = '';
-			if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
-			
-			if (document.getElementById('emptyGroupCheckbox').checked) {
-				if (monitoringInfo.group_name === '') {
-					deviceDisplay.push(this);
-					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', uptimeString, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', labels, clientCount, monitoringInfo['firmware_version'] ? monitoringInfo['firmware_version']:'', publicIP, this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '']);
+			// Add row to table
+			if (monitoringInfo) {
+				var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
+				var duration = moment.duration(uptime * 1000);
+				var uptimeString = '';
+				
+				var clientCount = '';
+				
+				var status = '<i class="fa-solid fa-circle text-danger"></i>';
+				if (monitoringInfo.status == 'Up') {
+					status = '<i class="fa-solid fa-circle text-success"></i>';
+					uptimeString = duration.humanize();
+					if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
+					if (monitoringInfo['client_count'] == 0) clientCount = '0';
 				}
+				
+				var publicIP = '';
+				if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
+				else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
+				
+				var labels = '';
+				if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
+				
+				
+				deviceDisplay.push(this);
+					table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', uptimeString, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', labels, clientCount, monitoringInfo['firmware_version'] ? monitoringInfo['firmware_version']:'', publicIP, this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '', daysRemaining]);
 			} else {
 				deviceDisplay.push(this);
-				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', uptimeString, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', labels, clientCount, monitoringInfo['firmware_version'] ? monitoringInfo['firmware_version']:'', publicIP, this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '']);
+				var status = '<i class="fa-solid fa-circle text-muted"></i>';
+				table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', '', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '', daysRemaining]);
 			}
-		} else {
-			deviceDisplay.push(this);
-			var status = '<i class="fa-solid fa-circle text-muted"></i>';
-			table.row.add(['<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, 'Unknown', '', '', '', '', '', '', '', '', '', this.tier_type ? titleCase(this.tier_type) : '', this.subscription_key ? this.subscription_key : '', this.subscription_key ? '<span style="display:none;">' + subscriptionKeys[this.subscription_key]['end_date'] + '</span>' + moment(subscriptionKeys[this.subscription_key]['end_date']).format('L') : '']);
 		}
 	});
 

@@ -1,7 +1,7 @@
 /*
 Central Automation v1.30
 Updated: 
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var portals = [];
@@ -13,7 +13,11 @@ var apLocations = [];
 var currentAP = null;
 var requiredHeight = [[], [], []];
 
+var overallNotification;
 var meshNotifications = {};
+
+var allWiredClients = [];
+var allWirelessClients = [];
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Override functions
@@ -49,6 +53,11 @@ function loadCurrentPageAP() {
 		}
 		drawMeshTopology();
 	};
+}
+
+function loadCurrentPageClient() {
+	allWiredClients = getWiredClients();
+	allWirelessClients = getWirelessClients();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -130,7 +139,7 @@ function reloadMeshTopology() {
 }
 
 function getMeshTopology(deviceSerial) {
-	showLongNotification('ca-mesh', 'Gathering mesh topology information...', 'bottom', 'center', 'primary');
+	overallNotification = showLongNotification('ca-mesh', 'Gathering mesh topology information...', 'bottom', 'center', 'primary');
 	var selectedAP = findDeviceInMonitoring(deviceSerial);
 	document.getElementById('mesh-title').innerHTML = 'Mesh Topology: <strong>' + selectedAP.name + '</strong>';
 	meshTopologyData = {};
@@ -140,6 +149,9 @@ function getMeshTopology(deviceSerial) {
 }
 
 function getMeshLinks(deviceSerial) {
+	var selectedAP = findDeviceInMonitoring(deviceSerial);
+	var printedMessage = 'Obtaining Mesh topology information for '+selectedAP.name + '...';
+	meshNotifications[deviceSerial] = showPermanentNotification('ca-ap-icon', printedMessage, 'bottom', 'center', 'info');
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
 		method: 'POST',
@@ -165,8 +177,7 @@ function getMeshLinks(deviceSerial) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getMeshLinks(deviceSerial);
@@ -175,12 +186,6 @@ function getMeshLinks(deviceSerial) {
 			}
 		} else if (response.status === 'QUEUED') {
 			failedAuth = false;
-			var printedMessage = response.message;
-			if (printedMessage.includes('Successfully queued troubleshooting commands for session')) {
-				var selectedAP = findDeviceInMonitoring(response.serial);
-				printedMessage = 'Obtaining Mesh topology information for '+selectedAP.name;
-			}	
-			meshNotifications[response.serial] = showPermanentNotification('ca-ap-icon', printedMessage, 'bottom', 'center', 'info');
 			setTimeout(checkMeshLinkResult, 5000, response.session_id, response.serial);
 		} else {
 			failedAuth = false;
@@ -245,6 +250,8 @@ function checkMeshLinkResult(session_id, deviceSerial) {
 					delete meshNotifications[response.serial];
 				}
 			}
+			
+			if (Object.keys(meshNotifications).length == 0) overallNotification.close();
 		}
 	});
 }
@@ -430,7 +437,7 @@ function drawMeshTopology() {
 
 function drawAPAtLocation(apCtx, selectedAP, x, y) {
 	apLocations.push({ x: x, y: y, serial: selectedAP.serial });
-
+	
 	var apImage = new Image();
 	apImage.src = 'assets/img/ap-icon.svg';
 
@@ -458,8 +465,18 @@ function drawAPAtLocation(apCtx, selectedAP, x, y) {
 
 	if (document.getElementById('visualizationselector').value === 'clients') {
 		apCtx.fillStyle = 'gray';
-		client_count_size = apCtx.measureText('Clients: ' + selectedAP.client_count);
-		apCtx.fillText('Clients: ' + selectedAP.client_count, x - client_count_size.width / 2, y + 62);
+		var wiredClientCount = 0;
+		$.each(allWiredClients, function(){
+			if (this.associated_device === selectedAP.serial) wiredClientCount++;
+		});
+		var wirelessClientCount = 0;
+		$.each(allWirelessClients, function(){
+			if (this.associated_device === selectedAP.serial) wirelessClientCount++;
+		});
+		var countString = 'Clients: '+wirelessClientCount+' | '+wiredClientCount;
+		if (wirelessClientCount == 0 && wiredClientCount == 0) countString = 'Clients: 0';
+		client_count_size = apCtx.measureText(countString);
+		apCtx.fillText(countString, x - client_count_size.width / 2, y + 62);
 	}
 }
 
@@ -546,8 +563,16 @@ function drawMeshLink(fromAP, toAP, fromLocation, toLocation, fromMetrics, toMet
 		if (document.getElementById('visualizationselector').value === 'rate') fromData = 'Tx/Rx: ' + fromMetrics.rate;
 		else if (document.getElementById('visualizationselector').value === 'snr') fromData = 'SNR: ' + fromMetrics.rssi;
 		else if (document.getElementById('visualizationselector').value === 'flags') fromData = 'Flags: ' + fromMetrics.flags;
-		else if (document.getElementById('visualizationselector').value === 'channel') fromData = 'Channel: ' + fromMetrics.channel;
-		else if (document.getElementById('visualizationselector').value === 'stability') {
+		else if (document.getElementById('visualizationselector').value === 'channel') {
+			fromData = 'Channel: ' + fromMetrics.channel;
+			var radioUtil = '';
+			$.each(fromAP.radios, function() {
+				var radioName = this.radio_name;
+				radioName = radioName.replace(' GHz', 'GHz')
+				if (radioName.includes(fromMetrics.band)) radioUtil = this.utilization;
+			});
+			fromData2 = 'Utilization: ' + radioUtil + '%';
+		} else if (document.getElementById('visualizationselector').value === 'stability') {
 			fromData = 'Uptime: ' + fromMetrics.uptime;
 			fromData2 = 'Association Fails: ' + fromMetrics.afail;
 		}
@@ -587,8 +612,16 @@ function drawMeshLink(fromAP, toAP, fromLocation, toLocation, fromMetrics, toMet
 			if (document.getElementById('visualizationselector').value === 'rate') toData = 'Tx/Rx: ' + toMetrics.rate;
 			else if (document.getElementById('visualizationselector').value === 'snr') toData = 'SNR: ' + toMetrics.rssi;
 			else if (document.getElementById('visualizationselector').value === 'flags') toData = 'Flags: ' + toMetrics.flags;
-			else if (document.getElementById('visualizationselector').value === 'channel') toData = 'Channel: ' + toMetrics.channel;
-			else if (document.getElementById('visualizationselector').value === 'stability') {
+			else if (document.getElementById('visualizationselector').value === 'channel') {
+				toData = 'Channel: ' + toMetrics.channel;
+				var radioUtil = '';
+				$.each(toAP.radios, function() {
+					var radioName = this.radio_name;
+					radioName = radioName.replace(' GHz', 'GHz')
+					if (radioName.includes(toMetrics.band)) radioUtil = this.utilization;
+				});
+				toData2 = 'Utilization: ' + radioUtil + '%';
+			} else if (document.getElementById('visualizationselector').value === 'stability') {
 				toData = 'Uptime: ' + toMetrics.uptime;
 				toData2 = 'Association Fails: ' + toMetrics.afail;
 			}

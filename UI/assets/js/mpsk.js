@@ -1,7 +1,7 @@
 /*
 Central Automation v1.12
 Updated: 
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var configGroups = [];
@@ -135,7 +135,7 @@ function getGroupConfig() {
 	document.getElementById('uploadMPSKBtn').disabled = true;
 
 	if (currentGroup !== '') {
-		$.when(tokenRefresh()).then(function() {
+		$.when(authRefresh()).then(function() {
 			// Clearing old data
 			$('#mpsk-table')
 				.DataTable()

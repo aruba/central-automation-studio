@@ -14,13 +14,23 @@ var disconnectNotification;
 var disconnectingClient;
 var troubleshootingNotification;
 var cmNotification;
+var roleNotification;
 
 var currentClientMac;
 var connectedAP;
 var needAllLabels = false;
 var needClientLabel = false;
 var associateAP;
+
+var selectedClient;
+var sessionPairs;
 var ipToUsername = {};
+var ipToPAN = {};
+var includePAN = false;
+
+
+var userRolePrefix = 'wlan access-rule ';
+var userRoles = {};
 
 /*  ----------------------------------
 		Global functions
@@ -135,6 +145,7 @@ function refreshClientDataTable() {
 function loadCurrentPageClient() {
 	populateOSSelector();
 	generateIPtoUsernameMapping();
+	getAppRFMappings();
 }
 
 function populateOSSelector() {
@@ -192,6 +203,12 @@ function hideTroubleshooting() {
 	$(document.getElementById('datapathBtn')).removeClass('btn-fill');
 	$(document.getElementById('datapathBtn')).addClass('btn-outline');
 	document.getElementById('datapathCard').hidden = true;
+	
+	if ($(document.getElementById('userRoleBtn'))) {
+		$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+		$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+	}
+	document.getElementById('userRoleCard').hidden = true;
 
 	// Clear old table data
 	$('#events-table').DataTable().rows().remove();
@@ -234,8 +251,7 @@ function showWirelessClient(currentClient) {
 	connectedAP = findDeviceInMonitoring(currentClient['associated_device']);
 	var connectedRadio;
 	$.each(connectedAP.radios, function() {
-		var currentChannel = this['channel'].replace(/\D/g,'');
-		if (currentClient['channel'].includes(currentChannel)) connectedRadio = this;
+		if (currentClient['radio_mac'] === this.macaddr) connectedRadio = this;
 	});
 	var uptimeString = '-';
 	if (connectedAP['uptime'] > 0) {
@@ -263,8 +279,8 @@ function showWirelessClient(currentClient) {
 	
 	/*console.log(currentClient)
 	console.log(connectedAP)
-	console.log(connectedRadio)
-	*/
+	console.log(connectedRadio)*/
+	
 	
 	$('#wirelessInfo').append('<li>Health: '+status+'</li>');
 	$('#wirelessInfo').append('<li>Device: <strong>' + currentClient['os_type'] + '</strong></li>');
@@ -273,7 +289,7 @@ function showWirelessClient(currentClient) {
 	$('#wirelessInfo').append('<li>VLAN: <strong>' + currentClient['vlan'] + '</strong></li>');
 	$('#wirelessInfo').append('<li>User Role: <strong>' + currentClient['user_role'] + '</strong></li>');
 	$('#wirelessInfo').append('<li>Connected Since: <strong>' + moment(currentClient['last_connection_time']).toString()  + '</strong></li>');
-	$('#wirelessInfo').append('<li>Site: ' + centralURLSiteLink + '</li>');
+	if (currentClient['site']) $('#wirelessInfo').append('<li>Site: ' + centralURLSiteLink + '</li>');
 	
 	
 	
@@ -284,10 +300,10 @@ function showWirelessClient(currentClient) {
 	$('#wirelessConnection').append('<li>Auth Method: <strong>'+currentClient['authentication_type']+'</li>');
 	$('#wirelessConnection').append('<li>Encryption Method: <strong>'+currentClient['encryption_method'].replace('_', '-')+'</li>');
 	$('#wirelessConnection').append('<li>Band: <strong>' + currentClient['band'] + 'GHz</strong></li>');
-	$('#wirelessConnection').append('<li>Channel: <strong>' + currentClient['channel'] + '</strong></li>');
-	$('#wirelessConnection').append('<li>RSSI: <strong>' + currentClient['signal_db'] + 'dB</strong></li>');
-	$('#wirelessConnection').append('<li>SNR: <strong>' + currentClient['snr'] + '</strong></li>');
-	$('#wirelessConnection').append('<li>Speed: <strong>' + currentClient['speed'] + 'Mbps</strong></li>');
+	if (currentClient['channel']) $('#wirelessConnection').append('<li>Channel: <strong>' + currentClient['channel'] + '</strong></li>');
+	if (currentClient['signal_db']) $('#wirelessConnection').append('<li>RSSI: <strong>' + currentClient['signal_db'] + 'dBm</strong></li>');
+	if (currentClient['snr']) $('#wirelessConnection').append('<li>SNR: <strong>' + currentClient['snr'] + 'dB</strong></li>');
+	if (currentClient['speed']) $('#wirelessConnection').append('<li>Speed: <strong>' + currentClient['speed'] + 'Mbps</strong></li>');
 	var capabilities = currentClient['connection'] ? currentClient['connection']:'-';
 	$('#wirelessConnection').append('<li>Capabilities: <strong>' + capabilities + '</strong></li>');
 	
@@ -304,13 +320,15 @@ function showWirelessClient(currentClient) {
 	
 	if (document.getElementById('syncedAPFloorplanCard')) document.getElementById('syncedAPFloorplanCard').hidden = true;
 	if (document.getElementById('syncedAPCard')) document.getElementById('syncedAPCard').hidden = true;
-
+	
+	resetCanvases();
 	$('#WirelessClientModalLink').trigger('click');
 	
 	associatedAP = currentClient['associated_device'];
 	needAllLabels = false;
 	needClientLabel = false;
 	locateClient(currentClient.macaddr);
+	getUserRoles(connectedAP['group_name']);
 }
 
 function locateClient(clientMac) {
@@ -343,20 +361,28 @@ function locateClient(clientMac) {
 		}
 		var response = JSON.parse(commandResults.responseBody);
 		vrfClients.push(response.location);
-		if (response['location']['floor_id'] != vrfFloorId) getFloor(response['location']['floor_id']);
-		else {
-			drawFloorplan();
-		}
-	
-		if (clientNotification) {
-			clientNotification.update({ message: 'Located Client', type: 'success' });
-			setTimeout(clientNotification.close, 1000);
+		if (response['location']) {
+			if (response['location']['floor_id'] != vrfFloorId) getFloor(response['location']['floor_id']);
+			else {
+				drawFloorplan();
+			}
+		
+			if (clientNotification) {
+				clientNotification.update({ message: 'Located Client', type: 'success' });
+				setTimeout(clientNotification.close, 1000);
+			}
+		} else {
+			if (clientNotification) {
+				clientNotification.update({ message: 'Unable to locate Client', type: 'warning' });
+				setTimeout(clientNotification.close, 1000);
+			}
 		}
 	
 	});
 }
 
 function disconnectUser(clientMac) {
+	if (!clientMac) clientMac = currentClientMac;
 	disconnectingClient = findDeviceInMonitoringForMAC(clientMac);
 	
 	disconnectNotification = showLongNotification('ca-wifi-off', 'Attempting to disconnect '+ disconnectingClient.name + ' from ' + disconnectingClient.network, 'bottom', 'center', 'info');
@@ -453,6 +479,7 @@ function checkDisconnectStatus(taskID) {
 	Wired Troubleshooting functions
 ---------------------------------- */
 function showWiredClient(currentClient) {
+	currentClientMac = currentClient['macaddr'];
 	
 	connectedSwitch = findDeviceInMonitoring(currentClient['associated_device']);
 	var uptimeString = '-';
@@ -515,12 +542,14 @@ function showWiredClient(currentClient) {
 }
 
 function wiredPoeBounce(clientMac) {
+	if (!clientMac) clientMac = currentClientMac;
 	disconnectingClient = findDeviceInMonitoringForMAC(clientMac);
 	showNotification('ca-switch-stack', 'Attempting to bounce PoE on interface that '+disconnectingClient.name + ' is connected to...', 'bottom', 'center', 'info');
 	poeBounce(disconnectingClient.associated_device, disconnectingClient.interface_port);
 }
 
 function wiredInterfaceBounce(clientMac) {
+	if (!clientMac) clientMac = currentClientMac;
 	disconnectingClient = findDeviceInMonitoringForMAC(clientMac);
 	showNotification('ca-switch-stack', 'Attempting to bounce interface that '+disconnectingClient.name + ' is connected to...', 'bottom', 'center', 'info');
 	interfaceBounce(disconnectingClient.associated_device, disconnectingClient.interface_port);
@@ -556,6 +585,12 @@ function displayKeySync() {
 		$(document.getElementById('cmBtn')).removeClass('btn-fill');
 		$(document.getElementById('cmBtn')).addClass('btn-outline');
 		document.getElementById('cmCard').hidden = true;
+		
+		if ($(document.getElementById('userRoleBtn'))) {
+			$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+			$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+		}
+		document.getElementById('userRoleCard').hidden = true;
 	} else {
 		$(document.getElementById('keySyncBtn')).removeClass('btn-fill');
 		$(document.getElementById('keySyncBtn')).addClass('btn-outline');
@@ -596,6 +631,12 @@ function displayEvents() {
 		$(document.getElementById('cmBtn')).removeClass('btn-fill');
 		$(document.getElementById('cmBtn')).addClass('btn-outline');
 		document.getElementById('cmCard').hidden = true;
+		
+		if ($(document.getElementById('userRoleBtn'))) {
+			$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+			$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+		}
+		document.getElementById('userRoleCard').hidden = true;
 	} else {
 		$(document.getElementById('eventsBtn')).removeClass('btn-fill');
 		$(document.getElementById('eventsBtn')).addClass('btn-outline');
@@ -712,6 +753,12 @@ function displayMobility() {
 		$(document.getElementById('cmBtn')).removeClass('btn-fill');
 		$(document.getElementById('cmBtn')).addClass('btn-outline');
 		document.getElementById('cmCard').hidden = true;
+		
+		if ($(document.getElementById('userRoleBtn'))) {
+			$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+			$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+		}
+		document.getElementById('userRoleCard').hidden = true;
 	} else {
 		$(document.getElementById('mobilityBtn')).removeClass('btn-fill');
 		$(document.getElementById('mobilityBtn')).addClass('btn-outline');
@@ -832,6 +879,12 @@ function displayDatapath() {
 		$(document.getElementById('cmBtn')).removeClass('btn-fill');
 		$(document.getElementById('cmBtn')).addClass('btn-outline');
 		document.getElementById('cmCard').hidden = true;
+		
+		if ($(document.getElementById('userRoleBtn'))) {
+			$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+			$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+		}
+		document.getElementById('userRoleCard').hidden = true;
 	} else {
 		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
 		$(document.getElementById('datapathBtn')).addClass('btn-outline');
@@ -845,8 +898,13 @@ function refreshDatapath() {
 
 function getDatapathForClient(clientMac, deviceSerial) {
 	datapathNotification = showLongNotification('ca-firewall', 'Getting Client Datapath information...', 'bottom', 'center', 'info');
-	
+	var currentAP = findDeviceInMonitoring(deviceSerial);
 	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 45 }, { command_id: 211 }] });
+	includePAN = false;
+	if (currentAP.firmware_version.includes('10.6') || currentAP.firmware_version.includes('10.7') || currentAP.firmware_version.includes('10.8')) {
+		data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 22 }, { command_id: 45 }, { command_id: 211 }] });
+		includePAN = true;
+	}
 	
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -920,20 +978,36 @@ function checkDatapathStatus(session_id, deviceSerial) {
 			} else if (response.status === 'COMPLETED') {
 				//var results = decodeURI(response.output);
 				var results = response.output;
-				
 				// Find client in monitoring - to get current IP Address for session filtering
-				var client = findDeviceInMonitoringForMAC(currentClientMac);
+				selectedClient = findDeviceInMonitoringForMAC(currentClientMac);
 				
-				// Clear the table
-				var table = $('#datapath-table').DataTable();
-				$('#datapath-table')
-				.DataTable()
-				.rows()
-				.remove();
+				var pos = -1;
+				if (includePAN) {
+					pos = results.indexOf('COMMAND=show ap association');
+					var associationResults = results.substring(pos, results.indexOf('===================================', pos));
+					var associationLines = associationResults.split('\n');
+					var tableIndex = associationLines.indexOf('-----------------');
+					associationLines.splice(0,tableIndex+3);
+					var tableIndex = associationLines.indexOf('');
+					associationLines.splice(tableIndex-1);
+					// get PANID for each macaddr and map to the user IP.
+					$.each(associationLines, function() {
+						var associationPieces = this.split(' ');
+						var panId = associationPieces.pop();
+						if (panId != 0) {
+							var filtered = associationPieces.filter(elm => elm);
+							//console.log(filtered[2])
+							var clientDevice = findDeviceInMonitoringForMAC(filtered[2]);
+							//console.log(clientDevice)
+							if (clientDevice) ipToPAN[clientDevice.ip_address] = panId;
+						}
+					});
+				}
 				
 				// split into the two commands (show datapath session, show datapath session dpi)
 				var pos = results.indexOf('COMMAND=show datapath session');
 				var sessionResults = results.substring(pos, results.indexOf('COMMAND=show datapath session dpi', pos));
+				
 				pos = results.indexOf('COMMAND=show datapath session dpi');
 				var dpiResults = results.substring(pos);
 				
@@ -943,14 +1017,14 @@ function checkDatapathStatus(session_id, deviceSerial) {
 				var dpiLines = [];
 				// filter dpiLines for specific client info only (less to loop through each time)
 				$.each(rawDpiLines, function() {
-					if (this.includes(client['ip_address']+' ')) dpiLines.push(this);
+					if (this.includes(selectedClient['ip_address']+' ')) dpiLines.push(this);
 				});
 				
 				// Filter session table for client specific entries
 				// and Sort session table into flow pairs...
-				var clientPairs = {};
+				sessionPairs = {};
 				$.each(sessionLines, function() {
-					if (this.includes(client['ip_address']+' ')) {
+					if (this.includes(selectedClient['ip_address']+' ')) {
 						var lineData = this.replace(/  +/g, ' '); // remove the extra padding in the results
 						var lineArray = lineData.split(' ');
 						lineArray[10] = parseInt(lineArray[10], 16).toString(); // convert hex to int
@@ -968,64 +1042,32 @@ function checkDatapathStatus(session_id, deviceSerial) {
 							var dpiLineArray = dpiLineData.split(' ');
 							// Match on Src IP/Port and Dest IP/port 
 							if ((lineArray[0] === dpiLineArray[0]) && (lineArray[1] === dpiLineArray[1]) && (lineArray[3] === dpiLineArray[3]) && (lineArray[4] === dpiLineArray[4])) {
-								// Put in App
-								if (dpiLineArray[5] === 'App-Not-Class') lineArray[5] = 'Not Classified';
-								else lineArray[5] = titleCase(dpiLineArray[5]);
+								// Put in App from AppRF Mappings
+								var apprfIDs = dpiLineData.match(/\[(.*?)\]/g);
+								var appId = apprfIDs[0].replace(/[\[\]\s]+/g,'');
+								lineArray[5] = appIDMappings[appId];
 								
-								// Put in Web Category
-								var webCat = dpiLineArray[7];
-								if (webCat === ']') webCat = dpiLineArray[8];
-								if (webCat === 'Web-Not-Class') webCat = "Not Classified";
-								lineArray[6] = titleCase(webCat);
+								// Put in Web Category from AppRF Mappings
+								var webCatId = apprfIDs[1].replace(/[\[\]\s]+/g,'');
+								lineArray[6] = webCatMappings[webCatId];
+
 								return false; // Break out of dpiLines iteration
 							}
 						});
 						
 						// create session pair key - used to link in and out sessions together
 						var sessionKey = '';
-						if (lineArray[0] === client['ip_address']) sessionKey = lineArray[1] + ':' + lineArray[3] + ':' + lineArray[4]; // key for outbound traffic
+						if (lineArray[0] === selectedClient['ip_address']) sessionKey = lineArray[1] + ':' + lineArray[3] + ':' + lineArray[4]; // key for outbound traffic
 						else sessionKey = lineArray[0] + ':' + lineArray[4] + ':' + lineArray[3]; // key for return traffic
 						
-						if (!clientPairs[sessionKey]) {
-							clientPairs[sessionKey] = [];
+						if (!sessionPairs[sessionKey]) {
+							sessionPairs[sessionKey] = [];
 						}
-						clientPairs[sessionKey].push(lineArray); // add session line to pairing
+						sessionPairs[sessionKey].push(lineArray); // add session line to pairing
 					}
 				});
 				
-				var sessionKeyArray = Object.keys(clientPairs);
-				for (var i=0;i<sessionKeyArray.length;i++) {
-					var sessionLines = clientPairs[sessionKeyArray[i]];
-					
-					// Sort the session pairs so that the outbound is first
-					sessionLines.sort((a,b) => (b[0] === client['ip_address']) ? 1 : (a[0] === client['ip_address'] ? -1 : 0))
-					
-					$.each(sessionLines, function(){
-						// Add session direction arrow (and colour red is Denied)
-						var sessionRow = this;
-						if (sessionRow[0] === client['ip_address']) {
-							if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up text-danger"></i>');
-							else sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up"></i>');
-						} else {
-							if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down text-danger"></i>');
-							else sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down"></i>');
-						}
-						// Add the session pair number as the first element in the row, then add row to table
-						sessionRow.unshift(i+1);
-						var srcIP = sessionRow[2];
-						var dstIP = sessionRow[3];
-						if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
-						if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
-						table.row.add(sessionRow);
-					});
-				}
-				
-				
-				$('#datapath-table')
-				.DataTable()
-				.rows()
-				.draw();
-				$('#datapath-table').DataTable().columns.adjust().draw();
+				loadDatapathTable()
 				
 				
 				if (troubleshootingNotification) {
@@ -1043,11 +1085,84 @@ function checkDatapathStatus(session_id, deviceSerial) {
 	});
 }
 
+function loadDatapathTable() {
+	// Clear the table
+	var table = $('#datapath-table').DataTable();
+	$('#datapath-table')
+	.DataTable()
+	.rows()
+	.remove();
+	
+	var sessionKeyArray = Object.keys(sessionPairs);
+	for (var i=0;i<sessionKeyArray.length;i++) {
+		var sessionLines = sessionPairs[sessionKeyArray[i]];
+		
+		// Sort the session pairs so that the outbound is first
+		sessionLines.sort((a,b) => (b[0] === selectedClient['ip_address']) ? 1 : (a[0] === selectedClient['ip_address'] ? -1 : 0))
+		
+		// Make a duplicate so we are not modifying the stored data.
+		sessionCopy = JSON.parse(JSON.stringify(sessionLines));
+		
+		$.each(sessionCopy, function(){
+			var sessionRow = this;
+			// Map protocol to name
+			sessionRow[2] = networkProtocols[sessionRow[2]];
+			
+			// Add session direction arrow (and colour red is Denied)
+			if (isPrivateIP(sessionRow[0])) {
+				sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up"></i>');
+			} else {
+				sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down"></i>');
+			}
+			// Add the session pair number as the first element in the row, then add row to table
+			sessionRow.unshift(i+1);
+			var srcIP = sessionRow[2];
+			var dstIP = sessionRow[3];
+			if (document.getElementById('revealUsernames').checked) {
+				if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+srcIP+'">'+ipToUsername[srcIP]+'</span>';
+				if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+dstIP+'">'+ipToUsername[dstIP]+'</span>';
+			} else {
+				if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
+				if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
+			}
+			if (includePAN) {
+				if (ipToPAN[srcIP]) sessionRow[15] = ipToPAN[srcIP];
+				else sessionRow[15] = '-';
+			} else {
+				sessionRow[15] = '-'
+			}
+			if (sessionRow[14].includes('D')) sessionRow.splice(14, 0, '<i class="fa-solid fa-circle text-danger"></i>');
+			else sessionRow.splice(14, 0, '<i class="fa-solid fa-circle text-success"></i>');
+			
+			var rowNode = table.row.add(sessionRow).draw().node();
+			
+			
+		});
+	}
+	
+	$('#datapath-table').DataTable().columns.adjust().draw();
+}
+
+function isIpAddress(ip) { 
+	const ipv4Pattern =  
+		/^(\d{1,3}\.){3}\d{1,3}$/; 
+	const ipv6Pattern =  
+		/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/; 
+	return ipv4Pattern.test(ip) || ipv6Pattern.test(ip); 
+}
+
+function isPrivateIP(ip) {
+   var parts = ip.split('.');
+   return parts[0] === '10' || 
+	  (parts[0] === '172' && (parseInt(parts[1], 10) >= 16 && parseInt(parts[1], 10) <= 31)) || 
+	  (parts[0] === '192' && parts[1] === '168');
+}
+
 function generateIPtoUsernameMapping() {
 	ipToUsername = {};
 	var allClients = getClients();
 	$.each(allClients, function() {
-		if (this.ip_address) ipToUsername[this.ip_address] = this.name;
+		if (this.ip_address && this.name !== this.macaddr) ipToUsername[this.ip_address] = this.name;
 	});
 }
 
@@ -1082,6 +1197,12 @@ function displayClientMatch() {
 		$(document.getElementById('cmBtn')).removeClass('btn-outline');
 		$(document.getElementById('cmBtn')).addClass('btn-fill');
 		document.getElementById('cmCard').hidden = false;
+		
+		if ($(document.getElementById('userRoleBtn'))) {
+			$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+			$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+		}
+		document.getElementById('userRoleCard').hidden = true;
 	} else {
 		$(document.getElementById('cmBtn')).removeClass('btn-fill');
 		$(document.getElementById('cmBtn')).addClass('btn-outline');
@@ -1135,7 +1256,7 @@ function getClientMatchForClient(clientMac) {
 				return;
 			}
 			var response = JSON.parse(commandResults.responseBody);
-			console.log(response.result);
+			//console.log(response.result);
 			var fullString = response.result;
 			var vbrString = fullString.substring(fullString.indexOf('Timestamp \n')+11, fullString.indexOf('Last Redis Write'));
 			var vbrArray = vbrString.split('\n');
@@ -1200,7 +1321,7 @@ function getClientMatchForClient(clientMac) {
 				return;
 			}
 			var response = JSON.parse(commandResults.responseBody);
-			console.log(response.result);
+			//console.log(response.result);
 			
 			$('#cm-history-table')
 			.DataTable()
@@ -1304,7 +1425,7 @@ function getClientMatchForClient(clientMac) {
 						for (var i = 0, len = destAP.radios.length; i < len; i++) {
 							if (destAP.radios[i]['macaddr'] === destRadioClean) {
 								destChannel = destAP.radios[i].channel;
-								if (destAP.radios[i].band == 3) destBand = '6GHz';
+								if (destAP.radios[i].band == 4) destBand = '6GHz';
 								else if (destAP.radios[i].band == 0) destBand = '2.4GHz';
 								else destBand = '5GHz';
 							}
@@ -1347,3 +1468,167 @@ function getClientMatchForClient(clientMac) {
 		});
 	}
 }
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Role Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function getUserRoles(currentGroup) {
+	roleNotification = showLongNotification('ca-user-list', 'Getting User Role ACLs...', 'bottom', 'center', 'info');
+	userRoles = {};
+
+	// Grab config for Group in Central
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+
+		// pull the roles out of each group config
+		getUserRolesFromConfig(response, currentGroup);
+	});
+}
+
+
+
+function getUserRolesFromConfig(config, group) {
+	// Find the existing user role
+	var startIndex = -1;
+	var endIndex = -1;
+	var roleName = '';
+
+	// check if is a UI group (this doesn't work for template groups... yet)
+	if (config.length) {
+		for (i = 0; i < config.length; i++) {
+			var currentLine = config[i];
+
+			// Find first row of the user role
+			if (currentLine.includes(userRolePrefix) && startIndex == -1) {
+				// pull out the role name.
+				roleName = currentLine.replace(userRolePrefix, '');
+				startIndex = i;
+			} else if (endIndex == -1 && startIndex != -1 && !currentLine.includes('  ')) {
+				// next line after the end of the current role
+				endIndex = i;
+			}
+
+			if (endIndex != -1 && startIndex != -1) {
+				// Found the start and end of a user role
+				// Build the ACLs from the config.
+				// No need to keep the first line - since we already have the roleName, the first line can be rebuilt.
+				var fullACLs = config.slice(startIndex + 1, endIndex);
+
+				var finalACLs = [];
+				// Remove the "index #" line and "utf8"
+				$.each(fullACLs, function() {
+					if (!this.includes('utf8') && !this.includes('index ')) {
+						var rule = this.trim();
+						rule = rule.replace('rule ', '');
+						finalACLs.push(rule);
+					}
+				});
+
+				userRoles[roleName.toLowerCase()] = finalACLs;
+				
+				// Is the current line another User Role?
+				if (currentLine.includes(userRolePrefix)) {
+					roleName = currentLine.replace(userRolePrefix, '');
+					startIndex = i;
+					endIndex = -1;
+				} else {
+					// Not another user role - rest of the config shouldn't contain any user roles so break out of loop
+					break;
+				}
+			}
+		}
+	}
+	// replace User role reference in UI with button to display the user role details
+	var ul = document.getElementById('wirelessInfo');
+	var li = ul.getElementsByTagName('li');
+	
+	var userRoleLi = li[6];
+	// now put this value into the li tag by setting the .innerHTML
+	userRoleLi.innerHTML = 'User Role: <button class="btn btn-round btn-sm btn-outline btn-warning" onclick="displayUserRole(\''+selectedClient['user_role']+'\')" id="userRoleBtn">'+selectedClient['user_role']+'</button>';
+	if (roleNotification) {
+		roleNotification.update({ message: 'Obtained User Role ACLs', type: 'success' });
+		setTimeout(roleNotification.close, 1000);
+	}
+}
+
+function displayUserRole(userRole) {
+	// Control the UI pieces
+	if ($(document.getElementById('userRoleBtn')).hasClass('btn-outline' )) {
+		// Not selected
+		var userRoleRules = userRoles[userRole.toLowerCase()];
+		document.getElementById('userRoleTitle').innerHTML = 'User Role: <strong>'+ userRole + '</strong>';
+		
+		$('#userRoleRules').empty();
+		$.each(userRoleRules, function() {
+			var currentRule = this;
+			$('#userRoleRules').append('<li>');
+			if (currentRule.includes('vlan')) $('#userRoleRules').append('<i class="fa-solid fa-network-wired text-primary"></i> ');
+			if (currentRule.includes('captive-portal')) $('#userRoleRules').append('<i class="fa-solid fa-globe text-info"></i> ');
+			if (currentRule.includes('bandwidth-limit')) $('#userRoleRules').append('<i class="fa-solid fa-gauge text-warning"></i> ');
+			if (currentRule.includes('upstream ')) $('#userRoleRules').append('<i class="fa-solid fa-circle-up"></i> ');
+			if (currentRule.includes('downstream ')) $('#userRoleRules').append('<i class="fa-solid fa-circle-down"></i> ');
+			if (currentRule.includes('peruser')) $('#userRoleRules').append('<i class="fa-solid fa-user"></i> ');
+			
+			if (this.includes('permit')) $('#userRoleRules').append('<i class="fa-solid fa-circle text-success"></i> '+ currentRule.replace(' permit', ''));
+			else if (this.includes('deny')) $('#userRoleRules').append('<i class="fa-solid fa-circle text-danger"></i> '+ currentRule.replace(' deny', ''));
+			else $('#userRoleRules').append(currentRule);
+			
+			$('#userRoleRules').append('</li>');
+		});
+		
+		// Hide other tabs
+		$(document.getElementById('keySyncBtn')).removeClass('btn-fill');
+		$(document.getElementById('keySyncBtn')).addClass('btn-outline');
+		document.getElementById('syncedAPCard').hidden = true;
+		
+		$(document.getElementById('eventsBtn')).removeClass('btn-fill');
+		$(document.getElementById('eventsBtn')).addClass('btn-outline');
+		document.getElementById('eventsCard').hidden = true;
+		
+		$(document.getElementById('mobilityBtn')).removeClass('btn-fill');
+		$(document.getElementById('mobilityBtn')).addClass('btn-outline');
+		document.getElementById('mobilityCard').hidden = true;
+		
+		$(document.getElementById('datapathBtn')).removeClass('btn-fill');
+		$(document.getElementById('datapathBtn')).addClass('btn-outline');
+		document.getElementById('datapathCard').hidden = true;
+		
+		$(document.getElementById('cmBtn')).removeClass('btn-fill');
+		$(document.getElementById('cmBtn')).addClass('btn-outline');
+		document.getElementById('cmCard').hidden = true;
+		
+		$(document.getElementById('userRoleBtn')).removeClass('btn-outline');
+		$(document.getElementById('userRoleBtn')).addClass('btn-fill');
+		document.getElementById('userRoleCard').hidden = false;
+	} else {
+		$(document.getElementById('userRoleBtn')).removeClass('btn-fill');
+		$(document.getElementById('userRoleBtn')).addClass('btn-outline');
+		document.getElementById('userRoleCard').hidden = true;
+	}
+}
+

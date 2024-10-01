@@ -1,7 +1,7 @@
 /*
 Central Automation v1.8.0
-Updated: 1.17
-Aaron Scott (WiFi Downunder) 2021-2023
+Updated: 1.37.3
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var clientList = [];
@@ -16,6 +16,7 @@ var performanceCSVData = [];
 
 var statusNotification;
 var balanceNotification;
+var balanceHistoryNotification;
 var unsteerableNotification;
 var historyNotification;
 
@@ -73,11 +74,6 @@ function loadCurrentPageClient() {
 function updateClientMatchData() {
 	if (!localStorage.getItem('central_id') || localStorage.getItem('central_id') === 'undefined') {
 		Swal.fire({
-			title: 'Central ID Needed',
-			text: '.',
-			icon: 'error',
-		});
-		Swal.fire({
 			title: 'Central ID Needed!',
 			text: 'The ClientMatch service control requires you to enter your Central ID in the settings',
 			icon: 'warning',
@@ -88,11 +84,12 @@ function updateClientMatchData() {
 			}
 		});
 	} else {
-		$.when(tokenRefresh()).then(function() {
+		$.when(authRefresh()).then(function() {
 			clientList = getWirelessClients();
 
 			getClientMatchStatus();
 			getLoadBalanceStatus();
+			getLoadBalanceHistory();
 			getUnsteerableClients();
 			getSteerHistory();
 			$('[data-toggle="tooltip"]').tooltip();
@@ -201,7 +198,7 @@ function toggleCMState() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		CM Load Balance Status
+		CM Load Balance Info
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getLoadBalanceStatus() {
 	balanceNotification = showNotification('ca-scale', 'Getting ClientMatch Load Balance status...', 'bottom', 'center', 'info');
@@ -295,6 +292,140 @@ function toggleLoadBal() {
 			}
 			balanceNotification.close();
 		}
+	});
+}
+
+function getLoadBalanceHistory() {
+	balanceHistoryNotification = showNotification('ca-scale', 'Getting Load Balance History...', 'bottom', 'center', 'info');
+
+	$('#balance-history-table')
+		.DataTable()
+		.clear();
+	$('#balance-history-table')
+		.DataTable()
+		.rows()
+		.draw();
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/cm-api/loadbal-history/v1/' + localStorage.getItem('central_id'),
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/cm-api/loadbal-history/v1/<CENTRAL-ID>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		var centralURLs = getCentralURLs();
+		var centralHostURL = localStorage.getItem('base_url');
+		var table = $('#balance-history-table').DataTable();
+		
+		if (response.result.LoadBalanceHistory !== "Not found") {
+			$.each(response.result.LoadBalanceHistory, function() {
+				if (!this.hasOwnProperty('TimeNow')) {
+					
+					var m = moment(Object.keys(this)[0], 'YYYY-MM-DD hh:mm:ss.SSS Z');
+					var historyString = this[Object.keys(this)[0]].toString();
+					
+					var client_name;
+					var client_type = 'Unknown';
+					var macaddr = '';
+					var fromRadio = '';
+					var fromAP;
+					var toRadio = '';
+					var toAP;
+					
+					macaddr = historyString.match(/Mac=(.+?),/)[1];
+					client_name = macaddr;
+					$.each(clientList, function() {
+						var cleanMac = this['macaddr'].replace(/:/g, '');
+						if (cleanMac === macaddr) {
+							if (this['name']) client_name = this['name'];
+							if (this['os_type']) client_type = this['os_type'];
+						}
+					});
+					
+					// "From" Radio
+					var fromRadio = historyString.match(/FromRadio=\((.+?)\)/)[1].split(', ');
+					var fromRadioClean = fromRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					fromAP = findAPForRadio(fromRadioClean);
+					var fromBand = '';
+					var fromChannel = '';
+					for (var i = 0, len = fromAP.radios.length; i < len; i++) {
+						if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
+							fromChannel = fromAP.radios[i].channel;
+							if (fromAP.radios[i].band == 3) fromBand = '6GHz';
+							else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
+							else fromBand = '5GHz';
+						}
+					}
+					var fromPrefFlags = fromRadio[4];
+					if (fromPrefFlags !== '') fromPrefFlags = '<br>Pref Flag: '+ fromRadio[4];
+					// Make AP Name as a link to Central
+					var apName = encodeURI(fromAP['name']);
+					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + fromPrefFlags +'">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
+					
+					
+					// "To" Radio
+					var toRadio = historyString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
+					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
+					toAP = findAPForRadio(toRadioClean);
+					
+					var toBand = '';
+					var toChannel = '';
+					for (var i = 0, len = toAP.radios.length; i < len; i++) {
+						if (toAP.radios[i]['macaddr'] === toRadioClean) {
+							toChannel = toAP.radios[i].channel;
+							if (toAP.radios[i].band == 3) toBand = '6GHz';
+							else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
+							else toBand = '5GHz';
+						}
+					}
+					var toPrefFlags = toRadio[4];
+					if (toPrefFlags !== '') toPrefFlags = '<br>Pref Flag: '+ toRadio[4];
+					// Make AP Name as a link to Central
+					var apName = encodeURI(toAP['name']);
+					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + fromPrefFlags + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
+					
+					// Make link to Central
+					var client_name_url = encodeURI(client_name);
+					var apiURL = localStorage.getItem('base_url');
+					var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + macaddr + '?ccma=' + macaddr + '&cdcn=' + client_name_url + '&nc=client';
+					
+					// Add row to table
+					
+					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', fromAPString, toAPString]);
+				}
+			});
+		}
+		$('#balance-history-table')
+			.DataTable()
+			.rows()
+			.draw();
+		
+		table.columns.adjust().draw();
+		$('[data-toggle="tooltip"]').tooltip();
+		balanceHistoryNotification.close();
 	});
 }
 

@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240817" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -102,7 +102,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
+														<i class="central-icon ca-ap-icon text-warning" id="ap_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -383,6 +383,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 															</div>
 														</td>
 														<td>Download Inventory</td>
+													</tr>
+													<tr class="clickable-row" data-href="mgmt-expiring-inventory">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-opening-times"></i>
+															</div>
+														</td>
+														<td>Download Expiring Inventory</td>
 													</tr>
 												</tbody>
 											</table>
@@ -784,6 +792,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
 	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
 	<script src="assets/js/plugins/moment.min.js"></script>
+	<script src="assets/js/plugins/luxon.min.js"></script>
 	<!--  DatetimePicker   -->
 	<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
 	<!--  Sweet Alert  -->
@@ -863,10 +872,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	
 			$('#msp-ap-table').DataTable({
 				"pagingType": "simple_numbers",
-				autoWidth: false,
+				autoWidth: true,
 				scrollX: true,
 				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-				responsive: true,
+				//responsive: true,
 				language: {
 					search: "_INPUT_",
 					searchPlaceholder: "Search APs",
@@ -878,10 +887,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	
 			$('#msp-switch-table').DataTable({
 				"pagingType": "simple_numbers",
-				"autoWidth": false,
+				"autoWidth": true,
 				scrollX: true,
 				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-				responsive: true,
+				//responsive: true,
 				language: {
 					search: "_INPUT_",
 					searchPlaceholder: "Search Switches",
@@ -893,10 +902,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	
 			$('#msp-gateway-table').DataTable({
 				"pagingType": "simple_numbers",
-				"autoWidth": false,
+				"autoWidth": true,
 				scrollX: true,
 				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-				responsive: true,
+				//responsive: true,
 				language: {
 					search: "_INPUT_",
 					searchPlaceholder: "Search Gateways",
@@ -908,10 +917,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	
 			$('#group-table').DataTable({
 				"pagingType": "simple_numbers",
-				"autoWidth": false,
+				"autoWidth": true,
 				scrollX: true,
 				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-				responsive: true,
+				//responsive: true,
 				language: {
 					search: "_INPUT_",
 					searchPlaceholder: "Search Groups",
@@ -920,10 +929,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	
 			$('#customer-table').DataTable({
 				"pagingType": "simple_numbers",
-				"autoWidth": false,
+				"autoWidth": true,
 				scrollX: true,
 				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-				responsive: true,
+				//responsive: true,
 				language: {
 					search: "_INPUT_",
 					searchPlaceholder: "Search Customers",
@@ -941,8 +950,9 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240525"></script>
-	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/msp.js?v=231222"></script>
+	<script src="assets/js/version.js?v=240919"></script>
+	<script src="assets/js/main.js?v=240919"></script>
+	<script src="assets/js/proxy.js?v=240920"></script>
+	<script src="assets/js/hydra.js?v=240830"></script>
+	<script src="assets/js/msp.js?v=240628"></script>
 </html>

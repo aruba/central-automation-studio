@@ -16,7 +16,7 @@ var visitorNotification;
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getVisitorPortals() {
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		visitorPortals = {};
 		var portals = document.getElementById('portalselector');
 		portals.options.length = 0;
@@ -59,8 +59,7 @@ function getPortals(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getPortals(offset);
@@ -147,8 +146,7 @@ function getVisitors(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getVisitors(offset);

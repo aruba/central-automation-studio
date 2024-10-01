@@ -13,6 +13,13 @@ var goToAllowed = true;
 
 var cop_url = 'https://apigw-';
 
+// Data Dictionary Keys
+var statusKey = 'status';
+var apKey = 'aps';
+var switchKey = 'switches';
+var gatewayKey = 'gateways';
+var siteKey = 'sites';
+
 /*  ----------------------------------------------------------------------------------
 		Utility functions
 	---------------------------------------------------------------------------------- */
@@ -26,8 +33,11 @@ function saveGlobalSettings() {
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('data_optimization', document.getElementById('scaleselector').value);
 	localStorage.setItem('load_clients', document.getElementById('load_clients').checked);
-	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').checked);
+	localStorage.setItem('load_devices', document.getElementById('load_devices').checked);
+	localStorage.setItem('load_gateways', document.getElementById('load_gateways').checked);
+	if (!document.getElementById('load_gateways').checked) document.getElementById('load_gateway_details').checked = false;
 	localStorage.setItem('load_gateway_details', document.getElementById('load_gateway_details').checked);
+	localStorage.setItem('load_group_properties', document.getElementById('load_group_properties').checked);
 	localStorage.setItem('load_vc_config', document.getElementById('load_vc_config').checked);
 	localStorage.setItem('load_airmatch_events', document.getElementById('load_airmatch_events').checked);
 	localStorage.setItem('load_optimization_history', document.getElementById('load_optimization_history').checked);
@@ -38,6 +48,14 @@ function saveGlobalSettings() {
 		saveDataToDB('monitoring_wirelessClients', JSON.stringify([]));
 		saveDataToDB('monitoring_wiredClients', JSON.stringify([]));
 	}
+	if (!document.getElementById('load_devices').checked) {
+		saveDataToDB('monitoring_aps', JSON.stringify([]));
+		saveDataToDB('monitoring_switches', JSON.stringify([]));
+	}
+	if (!document.getElementById('load_gateways').checked) {
+		saveDataToDB('monitoring_gateways', JSON.stringify([]));
+		saveDataToDB('monitoring_controllers', JSON.stringify([]));
+	}
 	logInformation('Central Automation Studio settings saved');
 	
 	// remove that update is in progress
@@ -45,9 +63,11 @@ function saveGlobalSettings() {
 }
 
 function checkScaleConfig() {
-	if (document.getElementById('load_clients').checked && document.getElementById('load_group_properties').checked && document.getElementById('load_gateway_details').checked && document.getElementById('load_airmatch_events').checked && document.getElementById('load_optimization_history').checked && document.getElementById('load_vc_config').checked) {
+	if (document.getElementById('load_clients').checked && document.getElementById('load_devices').checked && document.getElementById('load_gateways').checked && document.getElementById('load_gateway_details').checked && document.getElementById('load_group_properties').checked && document.getElementById('load_airmatch_events').checked && document.getElementById('load_optimization_history').checked && document.getElementById('load_vc_config').checked) {
 		$('#scaleselector').val('full');
-	} else if (!document.getElementById('load_clients').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
+	} else if (!document.getElementById('load_clients').checked && !document.getElementById('load_devices').checked && !document.getElementById('load_gateways').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
+		$('#scaleselector').val('group');
+	} else if (!document.getElementById('load_clients').checked && document.getElementById('load_devices').checked && document.getElementById('load_gateways').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
 		$('#scaleselector').val('scale');
 	} else {
 		$('#scaleselector').val('custom');
@@ -59,13 +79,26 @@ function updateScaleSettings() {
 	var scale = document.getElementById('scaleselector').value;
 	if (scale === "full") {
 		document.getElementById('load_clients').checked = true;
+		document.getElementById('load_devices').checked = true;
+		document.getElementById('load_gateways').checked = true;
 		document.getElementById('load_group_properties').checked = true;
 		document.getElementById('load_gateway_details').checked = true;
 		document.getElementById('load_vc_config').checked = true;
 		document.getElementById('load_airmatch_events').checked = true;
 		document.getElementById('load_optimization_history').checked = true;
+	} else if (scale === "group") {
+		document.getElementById('load_clients').checked = false;
+		document.getElementById('load_devices').checked = false;
+		document.getElementById('load_gateways').checked = false;
+		document.getElementById('load_group_properties').checked = false;
+		document.getElementById('load_gateway_details').checked = false;
+		document.getElementById('load_vc_config').checked = false;
+		document.getElementById('load_airmatch_events').checked = false;
+		document.getElementById('load_optimization_history').checked = false;
 	} else if (scale === "scale") {
 		document.getElementById('load_clients').checked = false;
+		document.getElementById('load_devices').checked = true;
+		document.getElementById('load_gateways').checked = true;
 		document.getElementById('load_group_properties').checked = false;
 		document.getElementById('load_gateway_details').checked = false;
 		document.getElementById('load_vc_config').checked = false;
@@ -79,18 +112,18 @@ function onFinishSetup() {
 	clearErrorLog();
 	// Save all supplied addresses and details
 	saveGlobalSettings();
-	tokenRefreshForAll();
+	authRefreshForAll();
 }
 
 function loadDashboardData(refreshrate) {
 	// Check if we need to get the latest data - or can we just load it from localStorage
 	goToAllowed = true;
-	if (!localStorage.getItem('monitoring_update')) {
+	if (!localStorage.getItem('hydra_update')) {
 		console.log('Reading new hydra monitoring data from Central');
 		getDashboardData();
 	} else {
 		loadAccountDetails();
-		var lastRefresh = new Date(parseInt(localStorage.getItem('monitoring_update')));
+		var lastRefresh = new Date(parseInt(localStorage.getItem('hydra_update')));
 		var now = new Date();
 		var diffTime = Math.abs(now - lastRefresh);
 		var diffMinutes = Math.ceil(diffTime / (1000 * 60));
@@ -124,7 +157,7 @@ function deleteDataFomDB(indexKey) {
 	const request = store.delete(indexKey);
 
 	request.onsuccess = () => {
-		console.log('Data deleted');
+		console.log(indexKey+': Data deleted');
 	};
 
 	request.onerror = err => {
@@ -135,7 +168,7 @@ function deleteDataFomDB(indexKey) {
 /*  ----------------------------------------------------------------------------------
 		Authentication functions
 	---------------------------------------------------------------------------------- */
-function tokenRefreshForAll() {
+function authRefreshForAll() {
 	authNotification = showNotification('ca-padlock', 'Authenticating with Central...', 'bottom', 'center', 'info');
 	authCounter = 0;
 	authErrorCount = 0;
@@ -145,7 +178,7 @@ function tokenRefreshForAll() {
 	if (account_details != null && account_details != 'undefined') {
 		centralCredentials = JSON.parse(account_details);
 		$.each(centralCredentials, function() {
-			tokenRefreshForAccount(this['client_id']);
+			authRefreshForAccount(this['client_id']);
 		});
 		return authPromise.promise();
 	}
@@ -154,12 +187,37 @@ function tokenRefreshForAll() {
 function checkAuthComplete() {
 	if (authCounter >= centralCredentials.length) {
 		if (authErrorCount > 0) {
-			$('#ErrorModalLink').trigger('click');
-			Swal.fire({
-				title: 'Central API connection failed',
-				text: 'One or more Central accounts failed to authenticate correctly',
-				icon: 'error',
-			});
+			var path = window.location.pathname;
+			var page = path.split('/').pop();
+			if (page.includes('settings')) {
+				if (centralCredentials.length > 1) {
+					Swal.fire({
+						title: 'Central API connection failed',
+						text: 'One or more Central accounts failed to authenticate correctly',
+						icon: 'error',
+						showCancelButton: true,
+						cancelButtonColor: '#d33',
+						cancelButtonText: "I'll fix it",
+						confirmButtonColor: '#3085d6',
+						confirmButtonText: 'Go to Hydra Dashboard Anyway',
+					}).then(result => {
+						if (result.isConfirmed) {
+							var path = window.location.pathname;
+							var page = path.split('/').pop();
+							if (page.includes('settings')) {
+								// If more than one account configured go to Hydra dashboard
+								if (centralCredentials.length > 1) {
+									window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'hydra-dashboard.html';
+								} else {
+									// if only one account configured, go to the individual dashboard
+									loadIndividualAccount(centralCredentials[0].client_id, 0);
+								}
+							}
+							if (authNotification) authNotification.close();
+						}
+					});
+				}
+			}
 		} else {
 			var path = window.location.pathname;
 			var page = path.split('/').pop();
@@ -178,26 +236,26 @@ function checkAuthComplete() {
 	}
 }
 
-function tokenRefreshForAccount(clientID) {
-	if (getRefreshTokenforClientID(clientID) !== '') {
-		var settings = {
-			url: getAPIURL() + '/auth/refresh',
-			method: 'POST',
-			timeout: 0,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			data: JSON.stringify({
-				client_id: clientID,
-				client_secret: getClientSecretforClientID(clientID),
-				access_token: getAccessTokenforClientID(clientID),
-				refresh_token: getRefreshTokenforClientID(clientID),
-				base_url: getbaseURLforClientID(clientID),
-			}),
-		};
+function authRefreshForAccount(clientID) {
+	if (getRefreshTokenforClientID(clientID) !== '' && getRefreshTokenforClientID(clientID) != null) {
+		if (isAccessTokenExpiredForClientID(clientID)) {
+			var settings = {
+				url: getAPIURL() + '/auth/refresh',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					client_id: clientID,
+					client_secret: getClientSecretforClientID(clientID),
+					access_token: getAccessTokenforClientID(clientID),
+					refresh_token: getRefreshTokenforClientID(clientID),
+					base_url: getbaseURLforClientID(clientID),
+				}),
+			};
 	
-		return $.ajax(settings)
-			.done(function(response, textStatus, jqXHR) {
+			$.ajax(settings).done(function(response, textStatus, jqXHR) {
 				//console.log(response);
 				if (response.hasOwnProperty('status')) {
 					if (response.status === '503') {
@@ -205,15 +263,28 @@ function tokenRefreshForAccount(clientID) {
 						return;
 					}
 				}
+				
+				var cluster = getAccountforClientID(clientID);
 				if (response.hasOwnProperty('error')) {
 					logError(response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"');
 					showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
+					cluster['refresh_token'] = '';
+					cluster['access_token'] = '';
+					cluster['expires_at'] = '';
+					updateAccountDetails(cluster);
 					authErrorCount++;
 				} else {
 					var cluster = getAccountforClientID(clientID);
 					cluster['refresh_token'] = response.refresh_token;
 					cluster['access_token'] = response.access_token;
+					// Create timestamp for access token expiry
+					var nowDatestamp = Date.now();
+					nowDatestamp = nowDatestamp + (response.expires_in*1000)
+					cluster['expires_at'] = nowDatestamp;
 					updateAccountDetails(cluster);
+					
+					var d = new Date(nowDatestamp);
+					console.log(getNameforClientID(clientID) + ': Access Token is valid until ' + d.toTimeString());
 	
 					var path = window.location.pathname;
 					var page = path.split('/').pop();
@@ -221,12 +292,14 @@ function tokenRefreshForAccount(clientID) {
 						// refresh settings page table
 						loadAccountDetails();
 					}
+					showNotification('ca-padlock', 'Authentication for Central Account "' + getNameforClientID(clientID) + '" was successful', 'bottom', 'center', 'success');
+					
 				}
 				authCounter++;
 				checkAuthComplete();
 			})
 			.fail(function(XMLHttpRequest, textStatus, errorThrown) {
-				console.log("error")
+				console.log(getAccountforClientID(clientID))
 				if (XMLHttpRequest.readyState == 4) {
 					// HTTP error (can be checked by XMLHttpRequest.status and XMLHttpRequest.statusText)
 					showNotification('ca-globe', XMLHttpRequest.statusText, 'bottom', 'center', 'danger');
@@ -240,14 +313,21 @@ function tokenRefreshForAccount(clientID) {
 				authCounter++;
 				checkAuthComplete();
 			});
+		} else {
+			console.log('Access Token still valid for '+ getNameforClientID(clientID));
+			authCounter++;
+			checkAuthComplete();
+		}
 	} else {
 		// Missing refresh token
-		console.log('Missing refresh token');
+		showNotification('ca-padlock', 'Missing Refresh Token for "'+getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
 		authErrorCount++;
 		authCounter++;
 		checkAuthComplete();
 	}
 }
+
+
 
 
 /*  ----------------------------------------------------------------------------------
@@ -259,100 +339,42 @@ function getDashboardData() {
 	// Try and refresh the token
 	showNotification('ca-api', 'Updating Hydra Dashboard Data...', 'bottom', 'center', 'primary');
 	goToAllowed = false;
-	// Refresh card data
-	var account_details = localStorage.getItem('account_details');
-	if (account_details != null && account_details != 'undefined') {
-		centralCredentials = JSON.parse(account_details);
-		var hydraAuthSuccess = 0;
-		var hydraAuthFailed = 0;
-		authCounter = 0;
-		authNotification = showLongNotification('ca-padlock', 'Authenticating with Central on all Accounts...', 'bottom', 'center', 'info');
-		$.each(centralCredentials, function() {
-			if (this.refresh_token && this.refresh_token !== '') {
-				// Try and refresh the token for each clientID
-				var clientID = this.client_id;
-				var account = this;
-				var saveBaseURL = this.base_url;
-				if (saveBaseURL === getAPIGateway('Central On-Prem')) {
-					saveBaseURL = cop_url + this.cop_address;
+	$.when(authRefreshForAll()).then(function() {
+		goToAllowed = true;
+		// Refresh card data
+		console.log('Authentication attempted for all accounts')
+		var account_details = localStorage.getItem('account_details');
+		if (account_details != null && account_details != 'undefined') {
+			centralCredentials = JSON.parse(account_details);
+			for (var i=0;i<centralCredentials.length;i++) {
+				var account = centralCredentials[i];
+				var clientID = account.client_id;
+				if (account.refresh_token && account.refresh_token !== '') {
+					setTimeout(getOverviewDataForAccount, apiDelay*3*i, clientID);
+				} else {
+					var dataFramework = { [statusKey]: false, [apKey]: [], [switchKey]: [], [gatewayKey]: [], [siteKey]: [] };
+					hydraMonitoringData[clientID] = dataFramework;
 				}
-				var settings = {
-					url: getAPIURL() + '/auth/refresh',
-					method: 'POST',
-					timeout: 0,
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					data: JSON.stringify({
-						client_id: this.client_id,
-						client_secret: this.client_secret,
-						access_token: this.access_token,
-						refresh_token: this.refresh_token,
-						base_url: saveBaseURL,
-					}),
-				};
-	
-				$.ajax(settings).done(function(response, textStatus, jqXHR) {
-					if (response.hasOwnProperty('status')) {
-						if (response.status === '503') {
-							logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
-							return;
-						}
-					}
-					if (response.hasOwnProperty('error')) {
-						showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
-						
-						hydraAuthFailed++;
-						if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
-							goToAllowed = true;
-							if (authNotification) {
-								if (hydraAuthFailed == 0) authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
-								setTimeout(authNotification.close, 1000);
-							}
-						}
-					} else {
-						account['refresh_token'] = response.refresh_token;
-						account['access_token'] = response.access_token;
-						updateAccountDetails(account);
-						
-						// Counter used to try and prevent jumping another page when auth refresh is in process
-						hydraAuthSuccess++;
-						if ((hydraAuthSuccess + hydraAuthFailed) >= centralCredentials.length) {
-							goToAllowed = true;
-							if (authNotification) {
-								authNotification.update({ type: 'success', message: 'Authentication Tokens Updated' });
-								setTimeout(authNotification.close, 1000);
-							}
-						}
-	
-						var apKey = 'aps';
-						var switchKey = 'switches';
-						var gatewayKey = 'gateways';
-						var siteKey = 'sites';
-						var dataFramework = { [apKey]: [], [switchKey]: [], [gatewayKey]: [], [siteKey]: [] };
-	
-						hydraMonitoringData[clientID] = dataFramework;
-						showNotification('ca-cloud-data-download', 'Updating data for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'info');
-	
-						getWirelessClientOverviewForAccount(clientID);
-						getWiredClientOverviewForAccount(clientID);
-						getAPOverviewForAccount(clientID);
-						getSwitchOverviewForAccount(clientID);
-						getGatewayOverviewForAccount(clientID);
-						getSiteDataForAccount(clientID, 0);
-	
-						localStorage.setItem('monitoring_update', +new Date());
-					}
-					authCounter++;
-					checkAuthComplete();
-				});
-			} else {
-				showNotification('ca-padlock', 'Missing Refresh Token for "'+this.account_name + '"', 'bottom', 'center', 'danger');
-				authCounter++;
-				checkAuthComplete();
 			}
-		});
-	}
+		}
+	});
+}
+
+function getOverviewDataForAccount(clientID) {
+	
+	var dataFramework = { [statusKey]: true, [apKey]: [], [switchKey]: [], [gatewayKey]: [], [siteKey]: [] };
+	
+	hydraMonitoringData[clientID] = dataFramework;
+	showNotification('ca-cloud-data-download', 'Updating data for "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'info');
+	
+	getWirelessClientOverviewForAccount(clientID);
+	getWiredClientOverviewForAccount(clientID);
+	getAPOverviewForAccount(clientID);
+	getSwitchOverviewForAccount(clientID);
+	getGatewayOverviewForAccount(clientID);
+	getSiteDataForAccount(clientID, 0);
+	
+	localStorage.setItem('hydra_update', +new Date());
 }
 
 function loadHydraTable() {
@@ -560,9 +582,12 @@ function loadHydraTable() {
 		if (siteMinor > 0) siteString += '<i class="fa-solid fa-circle fa-fw-pointer text-minor"></i><span class="text-minor"><strong> ' + siteMinor + ' </strong></span>';
 
 		var checkBtn = '<button class="btn btn-round btn-sm btn-outline btn-info" onclick="loadIndividualAccount(\'' + k + '\',1)">Go To Account <i class="fa-solid  fa-arrow-right text-default"><strong></button>';
+		
+		var accountStatus = '<i class="fa-solid fa-circle fa-fw-pointer text-danger"></i>'
+		if (hydraMonitoringData[k]['status']) accountStatus = '<i class="fa-solid fa-circle fa-fw-pointer text-success"></i>';
 
 		var table = $('#account-table').DataTable();
-		table.row.add(['<strong>' + getNameforClientID(k) + '</strong>', clientString, apString, switchesString, gatewayString, siteString, checkBtn]);
+		table.row.add([accountStatus, '<strong>' + getNameforClientID(k) + '</strong>', clientString, apString, switchesString, gatewayString, siteString, checkBtn]);
 		$('#account-table')
 			.DataTable()
 			.rows()
@@ -573,10 +598,11 @@ function loadHydraTable() {
 function loadIndividualAccount(client_id, hydra) {
 	if (!goToAllowed) {
 		if (authNotification) authNotification.update({ type: 'warning', message: 'Authenticating with Central is still in progress' });
+		else authNotification = showNotification('ca-padlock', 'Authenticating with Central is still in progress', 'bottom', 'center', 'warning')
 	} else {
 		// get account details and save them out
 		var account = getAccountforClientID(client_id);
-	
+		
 		// If COP account - write the base_url with the COP address
 		var baseURL = account.base_url;
 		if (baseURL === getAPIGateway('Central On-Prem')) {
@@ -586,20 +612,43 @@ function loadIndividualAccount(client_id, hydra) {
 		} else {
 			localStorage.removeItem('is_cop');
 		}
-	
-		localStorage.setItem('central_id', account.central_id);
+		
 		localStorage.setItem('client_id', account.client_id);
 		localStorage.setItem('client_secret', account.client_secret);
 		localStorage.setItem('base_url', baseURL);
 		localStorage.setItem('refresh_token', account.refresh_token);
 		localStorage.setItem('access_token', account.access_token);
+		localStorage.setItem('expires_at', account.expires_at);
 	
 		// Jump to individual dashboard and refresh data
 		if (hydra == 1) localStorage.setItem('from_hydra', hydra);
 		else localStorage.removeItem('from_hydra');
-	
-		localStorage.removeItem('monitoring_update');
-		deleteDataFomDB('monitoring_bssids');
+		
+		// If same account as last time - no need to load all the data again
+		if (account.central_id !== localStorage.getItem('central_id')) {
+			localStorage.setItem('central_id', account.central_id);
+			
+			saveDataToDB('monitoring_aps', JSON.stringify([]));
+			saveDataToDB('monitoring_switches', JSON.stringify([]));
+			saveDataToDB('monitoring_gateways', JSON.stringify([]));
+			saveDataToDB('monitoring_controllers', JSON.stringify([]));
+			saveDataToDB('monitoring_sites', JSON.stringify([]));
+			saveDataToDB('monitoring_groups', JSON.stringify([]));
+			saveDataToDB('monitoring_swarms', JSON.stringify([]));
+			saveDataToDB('monitoring_wirelessClients', JSON.stringify([]));
+			saveDataToDB('monitoring_wiredClients', JSON.stringify([]));
+			saveDataToDB('inventory_ap', JSON.stringify([]));
+			saveDataToDB('inventory_switch', JSON.stringify([]));
+			saveDataToDB('inventory_gateway', JSON.stringify([]));
+			
+			localStorage.removeItem('monitoring_update');
+			
+			// Clear out inventory data for old customer
+			localStorage.removeItem('inventory_update');
+			
+			
+			deleteDataFomDB('monitoring_bssids');
+		}
 		window.location.href = window.location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'dashboard.html';
 	}
 }

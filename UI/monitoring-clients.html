@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240817" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -131,7 +131,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
+														<i class="central-icon ca-ap-icon text-warning" id="ap_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -252,17 +252,57 @@ Aaron Scott (WiFi Downunder) 2021-2024
 							</div>
 						</div>
 						<!-- End Overview Cards -->
+						<div class="row">
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header ">
+										<h4 class="card-title">Data Filters</h4>
+										<p></p>
+									</div>
+									<div class="card-body ">
+										<div class="row">
+											<div class="col-md-6">
+											<select id="client-wlanselector" class="selectpicker" data-title="Select a WLAN..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="updateClientGraphs()">
+												<option value="_all" selected>All Clients</option>
+												<option value="_wlan" selected>All WLANs</option>
+												<option value="_wired" selected>Wired Only</option>
+												<option style="color: #cccccc;" disabled>────────────────────────</option>
+											</select>
+											</div>
+											<div class="col-md-6">
+												<select id="client-siteselector" class="selectpicker" data-title="Select a site..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="updateClientGraphs()">
+													<option value="_all" selected>All Sites</option>
+													<option style="color: #cccccc;" disabled>────────────────────────</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
 						<!-- Client Stats Cards -->
 						<div class="row" id="clientOSrow">
-							<div class="col-md-12">
+							<div class="col-md-6">
 								<div class="card">
 									<div class="card-header ">
 										<h4 class="card-title">Client OS Types</h4>
-										<p class="card-category">Top 10 Client Operating Systems</p>
+										<p class="card-category">Top 7 Client Operating Systems</p>
 										<p></p>
 									</div>
 									<div class="card-body ">
 										<div id="chartOS" class="ct-chart-tooltip"></div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header ">
+										<h4 class="card-title">Client Signal-to-Noise Ratio</h4>
+										<p class="card-category">SNR in dB</p>
+										<p></p>
+									</div>
+									<div class="card-body ">
+										<div id="chartSNR" class="ct-chart-tooltip"></div>
 									</div>
 								</div>
 							</div>
@@ -473,9 +513,28 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="monitoring-aps.html">AP Statistics</a>
-											<a class="btn btn-fill btn-info" href="monitoring-reboot.html">Reboot APs</a>
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
+											<a href="monitoring-aps.html">
+												<button type="submit" class="btn btn-fill btn-info" id="statsAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+													AP Statistics
+												</button>
+											</a>
+											<a href="monitoring-reboot.html">
+												<button type="submit" class="btn btn-fill btn-info" id="rebootAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-power-off"></i></span>
+													Reboot APs
+												</button>
+											</a>
+											<a href="deployment-country.html">
+												<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+													Configure Country Codes
+												</button>
+											</a>
+											<button type="submit" class="btn btn-fill btn-info" id="downloadAPBtn" onclick="downloadDeviceCSV(DeviceType.AP)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
 										</div>
 									</div>
 								</div>
@@ -514,6 +573,20 @@ Aaron Scott (WiFi Downunder) 2021-2024
 													<tbody></tbody>
 												</table>
 											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<a href="monitoring-switches.html">
+											<button type="submit" class="btn btn-fill btn-info" id="statsSwitchBtn">
+												<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+												Switch Statistics
+											</button>
+										</a>
+											<button type="submit" class="btn btn-fill btn-info" id="downloadSwitchBtn" onclick="downloadDeviceCSV(DeviceType.Switch)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
 										</div>
 									</div>
 								</div>
@@ -558,6 +631,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											</div>
 										</div>
 									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadGatewayBtn" onclick="downloadDeviceCSV(DeviceType.Gateway)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -598,6 +679,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											</div>
 										</div>
 									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadControllerBtn" onclick="downloadDeviceCSV(DeviceType.Controller)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -633,7 +722,13 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										</div>
 									</div>
 									<div class="card-footer ">
-										<div class="col-md-12"><a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>&nbsp;<a class="btn btn-fill btn-info" href="deployment-site-mgmt.html">Bulk Manage Sites</a></div>
+										<div class="col-md-12"><button type="submit" class="btn btn-fill btn-info" id="countryAPBtn" href="deployment-country.html">
+											<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+											Configure Country Codes
+										</button>&nbsp;<button type="submit" class="btn btn-fill btn-info" id="bulkSiteBtn" href="deployment-site-mgmt.html">
+											<span class="btn-label"><i class="fa-solid fa-location-dot"></i></span>
+											Manage Sites
+										</button></div>
 									</div>
 								</div>
 							</div>
@@ -667,7 +762,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
+											<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn" href="deployment-country.html">
+											<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+											Configure Country Codes
+										</button>
 										</div>
 									</div>
 								</div>
@@ -802,6 +900,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 	<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
 	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
 	<script src="assets/js/plugins/moment.min.js"></script>
+	<script src="assets/js/plugins/luxon.min.js"></script>
 	<!--  DatetimePicker   -->
 	<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
 	<!--  Sweet Alert  -->
@@ -845,9 +944,33 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		loadAccountList();
 		
 		var reachabilityPromise = new $.Deferred();
-		      $.when(checkReachability(reachabilityPromise)).then(function () {
+		$.when(checkReachability(reachabilityPromise)).then(function () {
 
-
+			var previousWLAN = localStorage.getItem('filter_client_ssid');
+			if (previousWLAN != null && previousWLAN != "undefined") {
+				selectedWLAN = previousWLAN;
+			} else {
+				selectedWLAN = '_all';
+			}
+			
+			var previousSite = localStorage.getItem('filter_client_site');
+			if (previousSite != null && previousSite != "undefined") {
+				selectedSite = previousSite;
+			} else {
+				selectedSite = '_all';
+			}
+			
+			// Reload the WLAN list until the WLAN list can be pulled again
+			var networks = [];
+			var wlanList = localStorage.getItem('networks');
+			if (wlanList) networks = JSON.parse(wlanList);
+			for (var i = 0; i < networks.length; i++) {
+				$('#client-wlanselector').append($('<option>', { value: networks[i]['essid'], text: networks[i]['essid'] }));
+				if ($('#client-wlanselector').length != 0) {
+					$('#client-wlanselector').selectpicker('refresh');
+				}
+			}
+			if (selectedWLAN) $('#client-wlanselector').selectpicker('val', selectedWLAN);
 
 
 			var data11 = {
@@ -900,9 +1023,14 @@ Aaron Scott (WiFi Downunder) 2021-2024
 
 			Chartist.Bar('#chartAuth', data, options, responsiveOptions);
 
-			Chartist.Bar('#chartOS', {labels: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
+			Chartist.Bar('#chartOS', {labels: ['Device 1', 'Device 2', 'Device 3', 'Device 4', 'Device 5', 'Device 6', 'Device 7'],
 			  series: [20, 60, 120, 200, 180, 20, 10]}, {
-				distributeSeries: true
+				distributeSeries: false
+			  });
+			
+			Chartist.Bar('#chartSNR', {labels: ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60+'],
+			  series: [20, 60, 120, 200, 180, 20, 10]}, {
+				distributeSeries: false
 			  });
 
 			$(".clickable-row").click(function() {
@@ -1086,8 +1214,9 @@ Aaron Scott (WiFi Downunder) 2021-2024
 	});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240525"></script>
-	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra.js?v=230524"></script>
-	<script src="assets/js/clients.js?v=240429"></script>
+	<script src="assets/js/version.js?v=240919"></script>
+	<script src="assets/js/main.js?v=240919"></script>
+	<script src="assets/js/proxy.js?v=240920"></script>
+	<script src="assets/js/hydra.js?v=240830"></script>
+	<script src="assets/js/clients.js?v=240830"></script>
 </html>

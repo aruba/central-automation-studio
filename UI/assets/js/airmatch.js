@@ -1,6 +1,6 @@
 /*
 Central Automation v1.1.4
-Updated: 1.28.4
+Updated: 1.39
 Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
@@ -33,6 +33,7 @@ var domainKey = 'RF DOMAIN';
 var partitionKey = 'RF PARTITION';
 var feasibleKey = 'FEASIBLE CHANNELS';
 var eventsDataBuild = [];
+var noiseDataBuild = [];
 
 var sixChannel;
 var fiveChannel;
@@ -78,10 +79,9 @@ var currentAP = null;
 var currentFloor;
 var storedAP;
 var found;
-
+var closestSameAP;
 
 var apImage;
-
 
 var drawingLocation;
 
@@ -174,7 +174,7 @@ function updateAirMatchData() {
 	apImage = new Image();
 	apImage.src = 'assets/img/ap-icon.svg';
 	
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
 		fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
 		twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
@@ -340,7 +340,7 @@ function getRFNeighbours() {
 				console.log("There are " +response.length+" 6GHz neighbours")
 				rfNeighbours['6'] = response;
 				//console.log(rfNeighbours);
-
+				
 				if (neighbourNotification) {
 					neighbourNotification.update({ message: 'Retrieved RF Neighbours', type: 'success' });
 					setTimeout(neighbourNotification.close, 1000);
@@ -801,12 +801,11 @@ function getAirmatchOptimization() {
 		var optimizationIndex = 0;
 		if (response.length > 0) {
 			$.each(response, function() {
-				//console.log(this);
 				// Reset variables
 				var airMatchEpoch;
-				var two_deployed = false;
-				var five_deployed = false;
-				var six_deployed = false;
+				var two_deployed = [];
+				var five_deployed = [];
+				var six_deployed = [];
 				var two_improvement = 0;
 				var five_improvement = 0;
 				var six_improvement = 0;
@@ -850,10 +849,7 @@ function getAirmatchOptimization() {
 						// Add together all the 2.4Ghz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
 						timestamp = currentData['timestamp'];
 						airMatchEpoch = currentData['timestamp'];
-						if (currentData['timestamp'] >= airMatchEpoch) {
-							airMatchEpoch = currentData['timestamp'];
-							two_deployed = currentData['meta']['deploy'];
-						}
+						two_deployed.push(currentData['meta']['deploy']);
 						two_improvement = two_improvement + currentData['meta']['improvement_percent'];
 						two_counter++;
 						two_num_ap = two_num_ap + currentData['num_ap'];
@@ -865,10 +861,7 @@ function getAirmatchOptimization() {
 						// Add together all the 5Ghz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
 						timestamp = currentData['timestamp'];
 						airMatchEpoch = currentData['timestamp'];
-						if (currentData['timestamp'] >= airMatchEpoch) {
-							airMatchEpoch = currentData['timestamp'];
-							five_deployed = currentData['meta']['deploy'];
-						}
+						five_deployed.push(currentData['meta']['deploy']);
 						five_improvement = five_improvement + currentData['meta']['improvement_percent'];
 						five_counter++;
 						five_num_ap = five_num_ap + currentData['num_ap'];
@@ -880,10 +873,7 @@ function getAirmatchOptimization() {
 						// Add together all the 6Ghz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
 						timestamp = currentData['timestamp'];
 						airMatchEpoch = currentData['timestamp'];
-						if (currentData['timestamp'] >= airMatchEpoch) {
-							airMatchEpoch = currentData['timestamp'];
-							six_deployed = currentData['meta']['deploy'];
-						}
+						six_deployed.push(currentData['meta']['deploy']);
 						six_improvement = six_improvement + currentData['meta']['improvement_percent'];
 						six_counter++;
 						six_num_ap = six_num_ap + currentData['num_ap'];
@@ -900,12 +890,9 @@ function getAirmatchOptimization() {
 				eventTime = new Date(airMatchEpoch);
 	
 				// Convert boolean into words for deployed state
-				var two_deployedState = 'Not Deployed';
-				if (two_deployed) two_deployedState = 'Deployed';
-				var five_deployedState = 'Not Deployed';
-				if (five_deployed) five_deployedState = 'Deployed';
-				var six_deployedState = 'Not Deployed';
-				if (six_deployed) six_deployedState = 'Deployed';
+				two_deployedState = getDeployState(two_deployed);
+				five_deployedState = getDeployState(five_deployed);
+				six_deployedState = getDeployState(six_deployed);
 	
 				// Build improvement strings. Averaged out across the RF domains and partitions per band.
 				var two_improvement_string =
@@ -967,7 +954,7 @@ function getAirmatchOptimization() {
 				}
 	
 				// Add the radio info in under the timestamp
-				optimizations[timestamp] = results;
+				optimizations[timestamp] = {'aps': results, 'solution': this};
 	
 				airMatchEpoch = timestamp;
 				if (airMatchEpoch < 10000000000) airMatchEpoch *= 1000; // convert to milliseconds (Epoch is usually expressed in seconds, but Javascript uses Milliseconds)
@@ -1010,14 +997,66 @@ function getAirmatchOptimization() {
 	});
 }
 
+function getDeployState(deployArray) {
+	var deployOverall = 0;
+	for (var i = 0;i<deployArray.length;i++) {
+		var currentDeploy = deployArray[i];
+		if (i == 0) {
+			if (currentDeploy) deployOverall = 0;
+			else deployOverall = 2;
+		} else {
+			if (currentDeploy && deployOverall == 0) deployOverall = 0;
+			else if (currentDeploy && deployOverall == 1) deployOverall = 1;
+			else if (currentDeploy && deployOverall == 2) deployOverall = 1;
+			else if (!currentDeploy && deployOverall == 0) deployOverall = 1;
+			else if (!currentDeploy && deployOverall == 1) deployOverall = 1;
+			else if (!currentDeploy && deployOverall == 2) deployOverall = 2;
+		}
+	}
+	var deployedState = 'Not Deployed';
+	if (deployOverall == 0) deployedState = 'Deployed';
+	else if (deployOverall == 1) deployedState = 'Partially Deployed';
+	
+	return deployedState;
+}
+
 // Updated: 1.8.0
 function loadOptimization(timestamp, updateData) {
 	$('#optimization-table')
 		.DataTable()
 		.clear();
+		
+	$('#partition-table')
+	.DataTable()
+	.clear();
+
 
 	currentTimestamp = timestamp;
-	var results = optimizations[timestamp];
+	// Fill the partition table
+	var table = $('#partition-table').DataTable();
+	var solution = optimizations[timestamp].solution;
+	var optimizationKeys = Object.keys(solution);
+	$.each(optimizationKeys, function() {
+		var currentData = solution[this];
+		var container = this.toString().split(':');
+		var rfBand = container[0];
+		var rfDomain = container[1];
+		var rfPartition = container[2];
+		
+		var deployed = currentData['meta']['deploy'];
+		var numRadios = currentData['meta']['num_radios'];
+		var improvement =  '<span data-toggle="tooltip" data-placement="right" title="Threshold: ' + currentData['quality_threshold'][rfBand] + '">' + parseFloat(currentData['meta']['improvement_percent']).toFixed(2) + '%</span>';
+		var newRadios = currentData['meta']['new_radios_computed'];
+		
+		table.row.add([rfBand, rfDomain, rfPartition, numRadios, deployed?'Deployed':'Not Deployed', improvement]);
+	});
+	$('#partition-table')
+	.DataTable()
+	.rows()
+	.draw();
+	
+	// Fill AP Table
+	var results = optimizations[timestamp].aps;
 	var table = $('#optimization-table').DataTable();
 	airMatchEpoch = timestamp;
 	if (airMatchEpoch < 10000000000) airMatchEpoch *= 1000; // convert to milliseconds (Epoch is usually expressed in seconds, but Javascript uses Milliseconds)
@@ -1708,6 +1747,7 @@ function getNoiseEvents() {
 		.rows()
 		.draw();
 	noiseEvents = [];
+	noiseDataBuild = [];
 
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -1739,8 +1779,20 @@ function getNoiseEvents() {
 
 		//console.log("RF Events: "+ JSON.stringify(response))
 		noiseEvents = noiseEvents.concat(response);
+		
+		// Sort the array based on the second element
+		noiseEvents.sort(function(first, second) {
+			return second.timestamp - first.timestamp;
+		});
+		
+		var evtTimeKey = "Time";
+		var evtAPKey = "AP";
+		var evtTypeKey = 'Event Type';
+		var evtChannelKey = 'Channel';
+		var evtBandwidthKey = 'Bandwidth';
+		var evtBandKey = 'Band';
 
-		$.each(response, function() {
+		$.each(noiseEvents, function() {
 			if (this['mac']) {
 				foundAP = findAPForRadio(this['mac']);
 				if (!foundAP) {
@@ -1757,6 +1809,9 @@ function getNoiseEvents() {
 				// Add row to table
 				var table = $('#noise-table').DataTable();
 				table.row.add(['<span style="display:none;">' + this['timestamp'] + '</span>' + eventTime.toLocaleString(), foundAP['name'], titleCase(noUnderscore(this['type'])), this['channel'], bandwidth, this['band']]);
+				
+				// Prepare the CSV data for download
+				noiseDataBuild.push({ [evtTimeKey]: eventTime.toLocaleString(), [evtAPKey]: foundAP['name'], [evtTypeKey]: titleCase(noUnderscore(this['type'])), [evtChannelKey]: this['channel'], [evtBandwidthKey]: bandwidth, [evtBandKey]: this['band'] });
 			}
 		});
 		$('#noise-table')
@@ -1784,6 +1839,21 @@ function getNoiseEvents() {
 
 function showRadarFloorplan() {
 	$('#RadarModalLink').trigger('click');
+}
+
+function downloadNoiseEvents() {
+	var csv = Papa.unparse(noiseDataBuild);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	csvLink.setAttribute('download', 'AM-Noise-Radar-Events.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2168,8 +2238,7 @@ function getFloors(offset, triggerLocation) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getFloors(offset);
@@ -2393,7 +2462,7 @@ function drawAPsOnFloorplan() {
 	clearLinkCanvas();
 	
 	// Get current optimization to be able to set AP colour based on the optimization details
-	vrfOptimization = optimizations[currentTimestamp];
+	vrfOptimization = optimizations[currentTimestamp].aps;
 	
 	// Update the legend based on the selected visualisation
 	$('#visualLegend').empty();

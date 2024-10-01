@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7.5
 Updated: 1.14.
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var groupDeviceList = {};
@@ -25,6 +25,18 @@ function loadCurrentPageGroup() {
 function buildGroupDeviceList() {
 	var groupList = getGroups();
 	var gatewayList = getGateways();
+	groupList.sort((a, b) => {
+		const groupA = a.group.toUpperCase(); // ignore upper and lowercase
+		const groupB = b.group.toUpperCase(); // ignore upper and lowercase
+		// Sort on Group name
+		if (groupA < groupB) {
+			return -1;
+		}
+		if (groupA > groupB) {
+			return 1;
+		}
+		return 0;
+	});
 	$.each(groupList, function() {
 		if (this.group !== 'unprovisioned') {
 			//if (this.group_properties.AllowedDevTypes.includes("Gateways")) {
@@ -207,6 +219,7 @@ function applyCLICommands() {
 	//console.log(JSON.stringify({ cli_cmds: currentConfig }));
 
 	$.ajax(settings).done(function(response, statusText, xhr) {
+		//console.log(response)
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				logError('Central Server Error (503): ' + response.reason + ' (/caasapi/v1/exec/cmd)');
@@ -221,7 +234,21 @@ function applyCLICommands() {
 			}
 			getConfigforSelected();
 		} else {
-			logError('Config for ' + selectedText + ' failed to be applied: ' + result['status_str']);
+			// Loop through the cli_cmds_result looking for the failed command
+			var successState = false;
+			$.each(response['cli_cmds_result'], function() {
+				var currentResult = this;
+				var commands = Object.keys(currentResult);
+				$.each(commands, function() {
+					if (currentResult[this].status == 1) {
+						logError('Error with command "' + this + '": ' + currentResult[this]['status_str']);
+					} else if (currentResult[this].status == 0) {
+						logInformation('Command "' + this + '" was successful');
+						successState = true;
+					}
+				});
+			});
+			if (successState) getConfigforSelected();
 			showLog();
 			if (updateNotification) {
 				updateNotification.update({ type: 'warning', message: 'Gateway config for ' + selectedText + ' failed' });

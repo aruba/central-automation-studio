@@ -1,6 +1,6 @@
 /*
 Central Automation v1.29
-Updated: 
+Updated: 1.39
 Aaron Scott (WiFi Downunder) 2023
 */
 
@@ -20,6 +20,7 @@ var selectedGateway;
 var selectedVLAN;
 var selectedWLAN;
 
+var infraTableRows = [];
 var downAPs = {};
 var newDownAPs = {};
 var upAPs = {};
@@ -82,7 +83,7 @@ function loadDashboardData(refreshrate) {
 }
 
 function getDashboardData() {
-	$.when(tokenRefresh()).then(function() {
+	$.when(authRefresh()).then(function() {
 		updateTimestamp = +new Date();
 		showNotification('ca-dashboard', 'Updating Dashboard Data...', 'bottom', 'center', 'primary');
 
@@ -620,8 +621,7 @@ function getClientCountForNetwork(essid) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getUserCount();
@@ -673,18 +673,7 @@ function processAPs() {
 					// Add table row to top of table
 					console.log('New Down AP: ' + this['name']);
 					if (upAPs[currentSerial]) delete upAPs[currentSerial];
-					var name = encodeURI(this['name']);
-					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
-
-					eventTime = new Date(updateTimestamp);
-
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'AP <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is down', eventTime.toLocaleString()]);
-
-					$('#infra-table')
-						.DataTable()
-						.rows()
-						.draw();
+					infraTableRows.push({'device':this, 'timestamp':updateTimestamp, 'state':'offline', 'type':'ap'});
 				}
 			}
 
@@ -697,23 +686,14 @@ function processAPs() {
 					// need to alert in the infrastructure status as this is a new up AP
 					// Add table row to top of table
 					console.log('New Up AP ' + this['name']);
-					var name = encodeURI(this['name']);
-					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + this['serial'] + '?casn=' + this['serial'] + '&cdcn=' + name + '&nc=access_point';
-
-					eventTime = new Date(updateTimestamp);
-
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-success"></i>', 'AP <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is now online', eventTime.toLocaleString()]);
-
-					$('#infra-table')
-						.DataTable()
-						.rows()
-						.draw();
+					infraTableRows.push({'device':this, 'timestamp':updateTimestamp, 'state':'online', 'type':'ap'});
 				}
 			}
 		});
 		downAPs = newDownAPs;
 		upAPs = newUpAPs;
+		
+		loadInfraTable();
 	});
 }
 
@@ -736,18 +716,7 @@ function processSwitches() {
 					// Add table row to top of table
 					console.log('New Down Switch ' + this['name']);
 					if (upSwitches[currentSerial]) delete upSwitches[currentSerial];
-					var name = encodeURI(this['name']);
-					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
-
-					eventTime = new Date(updateTimestamp);
-					
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'Switch <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is down', eventTime.toLocaleString()]);
-
-					$('#infra-table')
-						.DataTable()
-						.rows()
-						.draw();
+					infraTableRows.push({'device':this, 'timestamp':updateTimestamp, 'state':'offline', 'type':'switch'});
 				}
 			}
 
@@ -760,23 +729,14 @@ function processSwitches() {
 					// need to alert in the infrastructure status as this is a new up Switch
 					// Add table row to top of table
 					console.log('New Up Switch ' + this['name']);
-					var name = encodeURI(this['name']);
-					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + this['serial'] + '?cssn=' + this['serial'] + '&cdcn=' + name + '&nc=device';
-
-					eventTime = new Date(updateTimestamp);
-
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-success"></i>', 'Switch <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is now online', eventTime.toLocaleString()]);
-
-					$('#infra-table')
-						.DataTable()
-						.rows()
-						.draw();
+					infraTableRows.push({'device':this, 'timestamp':updateTimestamp, 'state':'online', 'type':'switch'});
 				}
 			}
 		});
 		downSwitches = newDownSwitches;
 		upSwitches = newUpSwitches;
+		
+		loadInfraTable();
 	});
 }
 
@@ -788,7 +748,6 @@ function processGateways() {
 	disableGatewayDetails();
 
 	$.when(getGatewayData(0, false)).then(function() {
-		var table = $('#infra-table').DataTable();
 		var newGateways = getGateways();
 		$.each(newGateways, function() {
 			var currentSerial = this.serial;
@@ -801,18 +760,7 @@ function processGateways() {
 					// need to alert in the infrastructure status as this is a new down Switch
 					// Add table row to top of table
 					console.log('New Down Gateway ' + this['name']);
-					var name = encodeURI(this['name']);
-					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + this['serial'] + '?csg=' + this['serial'] + '&cdcn=' + name + '&nc=gateway';
-
-					eventTime = new Date(updateTimestamp);
-
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-danger"></i>', 'Gateway <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is now down', eventTime.toLocaleString()]);
-
-					$('#infra-table')
-						.DataTable()
-						.rows()
-						.draw();
+					infraTableRows.push({'device':this, 'timestamp':updateTimestamp, 'state':'offline', 'type':'gateway'});
 				}
 			}
 
@@ -825,24 +773,47 @@ function processGateways() {
 					// need to alert in the infrastructure status as this is a new up Switch
 					// Add table row to top of table
 					console.log('New Up Gateway ' + this['name']);
-					var name = encodeURI(this['name']);
-					var apiURL = localStorage.getItem('base_url');
-					var centralURL = centralURLs[apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + this['serial'] + '?csg=' + this['serial'] + '&cdcn=' + name + '&nc=gateway';
-
-					eventTime = new Date(updateTimestamp);
-
-					table.row.add([updateTimestamp, '<i class="fa-solid fa-circle text-success"></i>', 'Gateway <a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a> is now online', eventTime.toLocaleString()]);
-
-					$('#infra-table')
-						.DataTable()
-						.rows()
-						.draw();
+					infraTableRows.push({'device':this, 'timestamp':updateTimestamp, 'state':'online', 'type':'gateway'});
 				}
 			}
 		});
 		downGateways = newDownGateways;
 		upGateways = newUpGateways;
+		
+		loadInfraTable();
 	});
+}
+
+function loadInfraTable() {
+	var table = $('#infra-table').DataTable();
+	$('#infra-table')
+	.DataTable()
+	.clear();
+	
+	$.each(infraTableRows, function() {
+		var device = this.device;
+		var name = encodeURI(device['name']);
+		var apiURL = localStorage.getItem('base_url');
+		var eventTime = new Date(this.timestamp);
+		var iconColour = 'success';
+		if (this.state === 'offline') iconColour = 'danger';
+		
+		if (this.type === 'ap') {
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + device['serial'] + '?casn=' + device['serial'] + '&cdcn=' + name + '&nc=access_point';
+			table.row.add([this.timestamp, '<i class="fa-solid fa-circle text-'+ iconColour +'"></i>', 'AP <a href="' + centralURL + '" target="_blank"><strong>' + device['name'] + '</strong></a> is now '+this.state, eventTime.toLocaleString()]);
+		} else if (this.type === 'switch') {
+			var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + device['serial'] + '?cssn=' + device['serial'] + '&cdcn=' + name + '&nc=device';
+			table.row.add([this.timestamp, '<i class="fa-solid fa-circle text-'+ iconColour +'"></i>', 'Switch <a href="' + centralURL + '" target="_blank"><strong>' + device['name'] + '</strong></a> is now '+this.state, eventTime.toLocaleString()]);
+		} else if (this.type === 'gateway') {
+			var centralURL = centralURLs[apiURL] + '/frontend/#/GATEWAYDETAIL/OVERVIEW/' + device['serial'] + '?csg=' + device['serial'] + '&cdcn=' + name + '&nc=gateway';
+			table.row.add([this.timestamp, '<i class="fa-solid fa-circle text-'+ iconColour +'"></i>', 'Gateway <a href="' + centralURL + '" target="_blank"><strong>' + device['name'] + '</strong></a> is now '+this.state, eventTime.toLocaleString()]);
+		}
+	});
+	
+	$('#infra-table')
+	.DataTable()
+	.rows()
+	.draw();
 }
 
 /*---------------------------------------------------------------------
@@ -960,6 +931,9 @@ function loadClientCountForNetwork(network) {
 	var series1 = [];
 	var series2 = [];
 	var labels = [];
+	var maxClient = 0;
+	var avgClient = 0;
+	var avgClientCounter = 0;
 	// filter the dashboard data based on the selected time window
 
 	var labelCounter = 0;
@@ -977,8 +951,18 @@ function loadClientCountForNetwork(network) {
 
 			series1.push(value[network]['client_count']);
 			labelCounter++;
+			
+			if (value[network]['client_count']) {
+				if (value[network]['client_count'] > maxClient) maxClient = value[network]['client_count'];
+				avgClient = avgClient + value[network]['client_count'];
+				avgClientCounter++;
+			}
 		}
 	}
+	
+	$('#clientDetails').empty();
+	$('#clientDetails').append('<li><strong>Max Clients: </strong>' + maxClient + '&nbsp;&nbsp;<strong>Average Clients: </strong>'+Math.floor(avgClient/avgClientCounter)+'</li>');
+	$('#clientDetails').append('<li>&nbsp;</li');
 
 	optionsPage = {
 		lineSmooth: false,
@@ -1206,6 +1190,10 @@ function loadBandwidthForNetwork(network) {
 	var series1 = [];
 	var series2 = [];
 	var labels = [];
+	var peakThroughputUp = 0;
+	var peakThroughputDown = 0;
+	var totalThroughputUp = 0;
+	var totalThroughputDown = 0;
 	// filter the dashboard data based on the selected time window
 
 	var labelCounter = 0;
@@ -1220,12 +1208,72 @@ function loadBandwidthForNetwork(network) {
 			else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
 			else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
 			else labels.push('');
-
+			console.log(value[network])
 			series1.push(value[network]['rx_data_bytes'] / 1024 / 1024);
 			series2.push(value[network]['tx_data_bytes'] / 1024 / 1024);
+			if (value[network]['rx_data_bytes'] && value[network]['tx_data_bytes']) {
+				// Calculate Throughput counts
+				if (value[network]['rx_data_bytes'] > peakThroughputUp) peakThroughputUp = value[network]['rx_data_bytes'];
+				if (value[network]['tx_data_bytes'] > peakThroughputDown) peakThroughputDown = value[network]['tx_data_bytes'];
+				totalThroughputUp = totalThroughputUp + value[network]['rx_data_bytes'];
+				totalThroughputDown = totalThroughputDown + value[network]['tx_data_bytes'];
+			}
 			labelCounter++;
 		}
 	}
+	
+	$('#bandwidthDetails').empty();
+	var peakDisplayedUp = '';
+	peakThroughputUp = peakThroughputUp/1024/1024;
+	peakDisplayedUp = peakThroughputUp.toFixed(2)+'MB';
+	if (peakThroughputUp > 1000) {
+		peakThroughputUp = peakThroughputUp/1024;
+		peakDisplayedUp = peakThroughputUp.toFixed(2)+'GB';
+	}
+	if (peakThroughputUp > 1000) {
+		peakThroughputUp = peakThroughputUp/1024;
+		peakDisplayedUp = peakThroughputUp.toFixed(2)+'TB';
+	}
+	
+	var peakDisplayedDown = '';
+	console.log(peakThroughputDown)
+	peakThroughputDown = peakThroughputDown/1024/1024;
+	peakDisplayedDown = peakThroughputDown.toFixed(2)+'MB';
+	if (peakThroughputDown > 1000) { 
+		peakThroughputDown = peakThroughputDown/1024;
+		peakDisplayedDown = peakThroughputDown.toFixed(2)+'GB';
+	}
+	if (peakThroughputDown > 1000) {
+		peakThroughputDown = peakThroughputDown/1024;
+		peakDisplayedDown = peakThroughputDown.toFixed(2)+'TB';
+	}
+	
+	var totalDisplayedUp = '';
+	totalThroughputUp = totalThroughputUp/1024/1024;
+	totalDisplayedUp = totalThroughputUp.toFixed(2)+'MB';
+	if (totalThroughputUp > 1000) {
+		totalThroughputUp = totalThroughputUp/1024;
+		totalDisplayedUp = totalThroughputUp.toFixed(2)+'GB';
+	}
+	if (totalThroughputUp > 1000) {
+		totalThroughputUp = totalThroughputUp/1024;
+		totalDisplayedUp = totalThroughputUp.toFixed(2)+'TB';
+	}
+	
+	var totalDisplayedDown = '';
+	totalThroughputDown = totalThroughputDown/1024/1024;
+	totalDisplayedDown = totalThroughputDown.toFixed(2)+'MB';
+	if (totalThroughputDown > 1000) {
+		totalThroughputDown = totalThroughputDown/1024;
+		totalDisplayedDown = totalThroughputDown.toFixed(2)+'GB';
+	}
+	if (totalThroughputDown > 1000) {
+		totalThroughputDown = totalThroughputDown/1024;
+		totalDisplayedDown = totalThroughputDown.toFixed(2)+'TB';
+	}
+	
+	$('#bandwidthDetails').append('<li><strong>Peak Upload: </strong>' + peakDisplayedUp + '&nbsp;&nbsp;<strong>Peak Download: </strong>'+peakDisplayedDown+' (over 5mins)</li>');
+	$('#bandwidthDetails').append('<li><strong>Total Upload: </strong>' + totalDisplayedUp + '&nbsp;&nbsp;<strong>Total Download: </strong>'+totalDisplayedDown+'</li>');
 
 	optionsPage = {
 		lineSmooth: false,
@@ -1233,7 +1281,7 @@ function loadBandwidthForNetwork(network) {
 		showArea: false,
 		height: 280*graphHeightMultiplier+ 'px',
 		axisY: {
-			offset: 40,
+			offset: 50,
 			onlyInteger: true,
 		},
 		chartPadding: {
@@ -1302,23 +1350,27 @@ function updateVisibleCards() {
 	}
 	
 	if (document.getElementById('dashboard_condensed').checked) {
-		graphHeightMultiplier = 0.75;
-		document.getElementById('client-card').setAttribute("style","height:400px");
+		graphHeightMultiplier = 0.8;
+		document.getElementById('client-card').setAttribute("style","height:470px");
+		document.getElementById('infra-card').setAttribute("style","height:470px");
 		document.getElementById('top-aps-card').classList.remove('col-md-6');
 		document.getElementById('top-aps-card').classList.add('col-md-4');
 		document.getElementById('top-clients-card').classList.remove('col-md-6');
 		document.getElementById('top-clients-card').classList.add('col-md-4');
 		document.getElementById('top-apps-card').classList.remove('col-md-6');
 		document.getElementById('top-apps-card').classList.add('col-md-4');	
+		resizeInfraTable('350px');
 	} else {
 		graphHeightMultiplier = 1
-		document.getElementById('client-card').setAttribute("style","height:500px");
+		document.getElementById('client-card').setAttribute("style","height:530px");
+		document.getElementById('infra-card').setAttribute("style","height:530px");
 		document.getElementById('top-aps-card').classList.remove('col-md-4');
 		document.getElementById('top-aps-card').classList.add('col-md-6');
 		document.getElementById('top-clients-card').classList.remove('col-md-4');
 		document.getElementById('top-clients-card').classList.add('col-md-6');
 		document.getElementById('top-apps-card').classList.remove('col-md-4');
 		document.getElementById('top-apps-card').classList.add('col-md-6');	
+		resizeInfraTable('400px');
 	}
 	
 	if (document.getElementById('dashboard_wlan').checked) {
@@ -1339,10 +1391,10 @@ function updateVisibleCards() {
 
 	if (document.getElementById('dashboard_infra').checked) {
 		dashboardInfra = true;
-		document.getElementById('infra-card').hidden = false;
+		document.getElementById('infra-md').hidden = false;
 	} else {
 		dashboardInfra = false;
-		document.getElementById('infra-card').hidden = true;
+		document.getElementById('infra-md').hidden = true;
 	}
 
 	if (dashboardWLAN && !dashboardInfra) {
@@ -1375,6 +1427,28 @@ function updateVisibleCards() {
 		dashboardDHCP = false;
 		document.getElementById('dhcp-card').hidden = true;
 	}*/
+}
+
+function resizeInfraTable(newHeight) {
+	var table = $('#infra-table').DataTable();
+	table.clear().destroy();
+	
+	$('#infra-table').DataTable({
+		responsive: true,
+		paging: false,
+		searching: false,
+		info: false,
+		scrollX: false,
+		scrollY: newHeight,
+		scrollCollapse: true,
+		'order': [[0, 'desc']],
+		"columnDefs": [
+			{ "targets": [0], "visible": false },
+			{ "targets": [2], className: 'col-100' }],
+		"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); $(oSettings.nTHead).hide(); }
+	});
+	
+	loadInfraTable();
 }
 
 /*---------------------------------------------------------------------

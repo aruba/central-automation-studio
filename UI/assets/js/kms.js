@@ -1,7 +1,7 @@
 /*
 Central Automation v1.31
 Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2021-2023
+Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var currentClientMac;
@@ -53,6 +53,62 @@ function findAPForMAC(macaddr) {
 	return foundDevice;
 }
 
+function findClientForMac(macaddr) {
+	var clients = getWirelessClients();
+	var foundClient = null;
+	$.each(clients, function() {
+		if (this['macaddr'] === macaddr) {
+			foundClient = this;
+			return this;
+		}
+	});
+	return foundClient;
+}
+
+/*  -------------------------
+		Service functions
+----------------------------- */
+function getKMSStatus() {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/keymgmt/v1/health',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/keymgmt/v1/health)');
+			apiErrorCount++;
+			if (apNotification) apNotification.close();
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			if (apNotification) apNotification.close();
+			apiErrorCount++;
+			return;
+		}
+	
+		var response = JSON.parse(commandResults.responseBody);
+		logInformation('Key Management Service Status: ' + response['Status'])
+		if (document.getElementById('kms_status')) document.getElementById('kms_status').innerHTML = titleCase(response['Status']);
+		$(document.getElementById('kms_icon')).removeClass('text-warning');
+		$(document.getElementById('kms_icon')).removeClass('text-danger');
+		$(document.getElementById('kms_icon')).removeClass('text-success');
+		if (response['Status'] == 'UP') $(document.getElementById('kms_icon')).addClass('text-success');
+		else $(document.getElementById('kms_icon')).addClass('text-danger');
+	});
+}
+
 /*  -------------------------
 		Client functions
 ----------------------------- */
@@ -62,6 +118,8 @@ function updateKMSData() {
 }
 
 function loadCurrentPageClient() {
+	getKMSStatus();
+	
 	apImage = new Image();
 	apImage.src = 'assets/img/ap-icon.svg';
 
@@ -179,13 +237,21 @@ function getClientRecord(clientMac) {
 				clientNotification.update({ type: 'success', message: 'Cloud Client Record retrieved' });
 				setTimeout(clientNotification.close, 1000);
 			}
+			var client = findClientForMac(clientMac);
+			// Make link to Central
+			client_name_url = encodeURI(client.name);
+			var apiURL = localStorage.getItem('base_url');
+			var centralBaseURL = centralURLs[apiURL];
+			if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url); //manually build the COP address
+			var clientURL = centralBaseURL + '/frontend/#/CLIENTDETAIL/' + client['macaddr'] + '?ccma=' + client['macaddr'] + '&cdcn=' + client_name_url + '&nc=client';
+			
 			// process the response
 			$('#userDetails').empty();
 			$('#keyDetails').empty();
 			if (response['11r/OKC KEYCACHE ']) {
 				// 11r keycache entry - note the stupid extra space on the key!!
 				var keyCache = response['11r/OKC KEYCACHE '];
-				$('#userDetails').append('<li>Name: <strong>' + keyCache['name'] + '</strong></li>');
+				$('#userDetails').append('<li>Name: <a href="' + clientURL + '" target="_blank"><strong>' + client.name + '</strong></a></li>');
 				$('#userDetails').append('<li>Mac Address: <strong>' + keyCache['clientmac'] + '</strong></li>');
 				$('#userDetails').append('<li>ESSID: <strong>' + keyCache['essid'] + '</strong></li>');
 				$('#userDetails').append('<li>User Role: <strong>' + keyCache['role'] + '</strong></li>');
@@ -213,7 +279,7 @@ function getClientRecord(clientMac) {
 			} else if (response['NON 11r ']) {
 				// Non 11r entry - note the stupid extra space on the key!!
 				var keyCache = response['NON 11r '];
-				$('#userDetails').append('<li>Name: <strong>' + keyCache['name'] + '</strong></li>');
+				$('#userDetails').append('<li>Name: <a href="' + clientURL + '" target="_blank"><strong>' + client.name + '</strong></a></li>');
 				$('#userDetails').append('<li>Mac Address: <strong>' + keyCache['clientmac'] + '</strong></li>');
 				$('#userDetails').append('<li>ESSID: <strong>' + keyCache['essid'] + '</strong></li>');
 				$('#userDetails').append('<li>User Role: <strong>' + keyCache['role'] + '</strong></li>');
@@ -361,7 +427,7 @@ function getRoamCacheClientRecord(clientMac) {
 }
 
 function getSyncedAPsForClient(clientMac) {
-	apNotification = showNotification('ca-wifi', 'Retrieving Synced APs...', 'bottom', 'center', 'info');
+	apNotification = showNotification('ca-kms', 'Retrieving Synced APs...', 'bottom', 'center', 'info');
 	currentClientMac = clientMac;
 	document.getElementById('syncAPTitle').innerHTML = 'Keys Synced to APs for: <strong>' + clientMac + '</strong>';
 	if (document.getElementById('syncAPPlanTitle')) document.getElementById('syncAPPlanTitle').innerHTML = 'Keys Synced to APs for: <strong>' + clientMac + '</strong>';
@@ -1005,8 +1071,7 @@ function getFloors(offset) {
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
-				var authPromise = new $.Deferred();
-				$.when(authRefresh(authPromise)).then(function() {
+				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						failedAuth = true;
 						getFloors(offset);
@@ -1258,7 +1323,7 @@ function resetCanvases() {
 function loadBuildingSelector() {
 	// remove old data from the selector
 	var selectOpt = document.getElementById('kms-buildingselector');
-	selectOpt.options.length = 0;
+	if (selectOpt) selectOpt.options.length = 0;
 
 	vrfBuildings.sort((a, b) => {
 		const siteA = a.building_name.toUpperCase(); // ignore upper and lowercase
@@ -1324,3 +1389,5 @@ function updateSizes(width, height) {
 	document.getElementById('kms-visualPlan').setAttribute('style', 'height:' + rfVisualPlanHeight + 'px');
 	document.getElementById('kms-visualPlan').style.height = rfVisualPlanHeight + 'px';
 }
+
+

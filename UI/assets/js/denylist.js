@@ -1,7 +1,7 @@
 /*
 Central Automation v1.8
 Updated: 1.34.2
-Aaron Scott (WiFi Downunder) 2021-2023
+Aaron Scott (WiFi Downunder) 2021-2024
 */
 
 var deviceIDs = [];

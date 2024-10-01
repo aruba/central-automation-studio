@@ -1,6 +1,6 @@
 /*
 Central Automation v1.15.1
-Updated: 1.17 
+Updated: 1.39
 Aaron Scott (WiFi Downunder) 2021-2024
 */
 
@@ -442,7 +442,7 @@ function updateAPGraphs() {
 				var apiURL = localStorage.getItem('base_url');
 				var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + busyAPs[i]['serial'] + '?casn=' + busyAPs[i]['serial'] + '&cdcn=' + name + '&nc=access_point';
 
-				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Troubleshoot AP" onclick="debugSystemStatus(\'' + busyAPs[i]['serial'] + '\')"><i class="fa-solid fa-screwdriver-wrench"></i></a> ';
+				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Troubleshoot AP" onclick="getAPDetails(\'' + busyAPs[i]['serial'] + '\')"><i class="fa-solid fa-screwdriver-wrench"></i></a> ';
 
 				// Add row to table
 				table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + busyAPs[i]['name'] + '</strong></a>', duration.humanize(), actionBtns]);
@@ -721,9 +721,9 @@ function loadBSSIDTable(currentBSSIDs) {
 			var radio = this;
 			$.each(radio.bssids, function() {
 				// Add row to table
-				table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr']]);
+				table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr'], ap['site'], ap['group_name']]);
 
-				apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] });
+				apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] ,site: ap['site'], group: ap['group_name']});
 			});
 		});
 		if (document.getElementById('bssid_count')) {
@@ -1043,6 +1043,8 @@ function buildCSVData(selectedGroup, selectedSite) {
 	var serialKey = 'SERIAL';
 	var essidKey = 'ESSID';
 	var bssidKey = 'BSSID';
+	var siteKey = 'SITE';
+	var groupKey = 'GROUP'
 
 	var csvDataBuild = [];
 
@@ -1052,7 +1054,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 	// For each row in the filtered set
 	$.each(filteredRows[0], function() {
 		var row = apBSSIDs[this];
-		csvDataBuild.push({ [nameKey]: row.name, [statusKey]: row.status, [ipKey]: row.ip_address, [modelKey]: row.model, [serialKey]: row.serial, [essidKey]: row.essid, [bssidKey]: row.bssid });
+		csvDataBuild.push({ [nameKey]: row.name, [statusKey]: row.status, [ipKey]: row.ip_address, [modelKey]: row.model, [serialKey]: row.serial, [essidKey]: row.essid, [bssidKey]: row.bssid, [siteKey]: row.site, [groupKey]: row.group});
 	});
 
 	return csvDataBuild;
@@ -1258,8 +1260,9 @@ function getAPBandwidth(currentSerial) {
 	// convert timescale from minutes to seconds (*60)
 	// convert timestamp from ms to s (/1000)
 	var fromTime = Math.floor(now.getTime() / 1000 - timescale * 60);
-	
-	if (document.getElementById('bandwidthLabel')) document.getElementById('bandwidthLabel').innerHTML = currentAP.name + ' bandwidth for the last ' + select.options[select.selectedIndex].innerHTML + ' (in MB)';
+	var apName = currentSerial;
+	if (currentAP) apName = currentAP.name
+	if (document.getElementById('bandwidthLabel')) document.getElementById('bandwidthLabel').innerHTML = apName + ' bandwidth for the last ' + select.options[select.selectedIndex].innerHTML + ' (in MB)';
 	
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',

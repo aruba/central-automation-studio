@@ -35,7 +35,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240421" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=240817" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -131,7 +131,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 											<div class="row">
 												<div class="col-4">
 													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-wifi text-warning" id="ap_icon"></i>
+														<i class="central-icon ca-ap-icon text-warning" id="ap_icon"></i>
 													</div>
 												</div>
 												<div class="col-8">
@@ -508,6 +508,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 														</td>
 														<td>Set AP Static IP Address</td>
 													</tr>
+													<tr class="clickable-row" data-href="setAP1XCredentials">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-ap1x"></i>
+															</div>
+														</td>
+														<td>Set AP1X PEAP Credentials</td>
+													</tr>
 													<tr class="clickable-row" data-href="devicevariables">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -531,6 +539,44 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 															</div>
 														</td>
 														<td>Reboot Devices</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+									</div>
+									<div class="card-header ">
+										<h4 class="card-title">ArubaOS 10 Specific</h4>
+										<p class="card-category">Specialized deployment steps for 10.x</p>
+										<p></p>
+									</div>
+									
+									<div class="card-body ">
+										<div class="table-full-width">
+											<table class="table table-hover">
+												<tbody>
+													<tr class="clickable-row" data-href="ledOff">
+														<td style="width:92px;">
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-bulb-61"></i>
+															</div>
+														</td>
+														<td>Turn off AP LEDs</td>
+													</tr>
+													<tr class="clickable-row" data-href="ledOn">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-bulb-63"></i>
+															</div>
+														</td>
+														<td>Turn on AP LEDs</td>
+													</tr>
+													<tr class="clickable-row" data-href="gatewayTimezones">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-pin-time"></i>
+															</div>
+														</td>
+														<td>Set Gateway Timezones</td>
 													</tr>
 												</tbody>
 											</table>
@@ -665,7 +711,12 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 										</div>
 									</div>
 									<div class="card-footer ">
-										<a class="btn btn-fill btn-info" href="monitoring-clients.html">Client Statistics</a>
+										<a href="monitoring-clients.html">
+											<button type="submit" class="btn btn-fill btn-info" id="statsClientBtn">
+											<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+											Client Statistics
+											</button>
+										</a>
 									</div>
 								</div>
 							</div>
@@ -707,9 +758,28 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="monitoring-aps.html">AP Statistics</a>
-											<a class="btn btn-fill btn-info" href="monitoring-reboot.html">Reboot APs</a>
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
+											<a href="monitoring-aps.html">
+												<button type="submit" class="btn btn-fill btn-info" id="statsAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+													AP Statistics
+												</button>
+											</a>
+											<a href="monitoring-reboot.html">
+												<button type="submit" class="btn btn-fill btn-info" id="rebootAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-power-off"></i></span>
+													Reboot APs
+												</button>
+											</a>
+											<a href="deployment-country.html">
+												<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn">
+													<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+													Configure Country Codes
+												</button>
+											</a>
+											<button type="submit" class="btn btn-fill btn-info" id="downloadAPBtn" onclick="downloadDeviceCSV(DeviceType.AP)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
 										</div>
 									</div>
 								</div>
@@ -747,6 +817,20 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 													<tbody></tbody>
 												</table>
 											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<a href="monitoring-switches.html">
+											<button type="submit" class="btn btn-fill btn-info" id="statsSwitchBtn">
+												<span class="btn-label"><i class="fa-solid fa-chart-pie"></i></span>
+												Switch Statistics
+											</button>
+										</a>
+											<button type="submit" class="btn btn-fill btn-info" id="downloadSwitchBtn" onclick="downloadDeviceCSV(DeviceType.Switch)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
 										</div>
 									</div>
 								</div>
@@ -790,6 +874,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 											</div>
 										</div>
 									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadGatewayBtn" onclick="downloadDeviceCSV(DeviceType.Gateway)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -831,6 +923,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 											</div>
 										</div>
 									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadControllerBtn" onclick="downloadDeviceCSV(DeviceType.Controller)">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download Device CSV
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -867,7 +967,13 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>&nbsp;<a class="btn btn-fill btn-info" href="deployment-site-mgmt.html">Bulk Manage Sites</a>
+											<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn" href="deployment-country.html">
+											<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+											Configure Country Codes
+										</button>&nbsp;<button type="submit" class="btn btn-fill btn-info" id="bulkSiteBtn" href="deployment-site-mgmt.html">
+											<span class="btn-label"><i class="fa-solid fa-location-dot"></i></span>
+											Manage Sites
+										</button>
 										</div>
 									</div>
 								</div>
@@ -902,7 +1008,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 									</div>
 									<div class="card-footer ">
 										<div class="col-md-12">
-											<a class="btn btn-fill btn-info" href="deployment-country.html">Configure Country Codes</a>
+											<button type="submit" class="btn btn-fill btn-info" id="countryAPBtn" href="deployment-country.html">
+											<span class="btn-label"><i class="fa-solid fa-earth-americas"></i></span>
+											Configure Country Codes
+										</button>
 										</div>
 									</div>
 								</div>
@@ -1077,8 +1186,9 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	<script src="assets/js/plugins/bootstrap-notify.js"></script>
 	<!--  jVector Map  -->
 	<script src="assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
-	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
+	<!--  Plugin for Moment/Luxon-->
 	<script src="assets/js/plugins/moment.min.js"></script>
+	<script src="assets/js/plugins/luxon.min.js"></script>
 	<!--  DatetimePicker   -->
 	<script src="assets/js/plugins/bootstrap-datetimepicker.js"></script>
 	<!--  Sweet Alert  -->
@@ -1097,8 +1207,6 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 	<script src="assets/js/plugins/bootstrap-table.js"></script>
 	<!--  DataTable Plugin -->
 	<script src="assets/js/plugins/jquery.dataTables.min.js"></script>
-	<!--  Full Calendar   -->
-	<script src="assets/js/plugins/fullcalendar.min.js"></script>
 	<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
 	<script src="assets/js/light-bootstrap-dashboard.js?v=2.0.1" type="text/javascript"></script>
 	<!-- Light Dashboard DEMO methods, don't include it in your project! -->
@@ -1306,7 +1414,8 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2024
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/main.js?v=240525"></script>
-	<script src="assets/js/proxy.js?v=230325"></script>
-	<script src="assets/js/hydra.js?v=230524"></script>
+	<script src="assets/js/version.js?v=240919"></script>
+	<script src="assets/js/main.js?v=240919"></script>
+	<script src="assets/js/proxy.js?v=240920"></script>
+	<script src="assets/js/hydra.js?v=240830"></script>
 </html>

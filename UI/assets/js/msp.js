@@ -55,10 +55,12 @@ function selectCustomer() {
 
 function showMSPCard(display) {
 	var x = document.getElementById('msp_card');
-	if (display) {
-		x.style.display = 'block';
-	} else {
-		x.style.display = 'none';
+	if (x) {
+		if (display) {
+			x.style.display = 'block';
+		} else {
+			x.style.display = 'none';
+		}
 	}
 }
 
@@ -1359,7 +1361,7 @@ function createCustomer() {
 }
 
 function downloadMSPInventory() {
-	mspCSVData = buildMSPCSVData();
+	mspCSVData = buildMSPCSVData(false);
 
 	var csv = Papa.unparse(mspCSVData);
 
@@ -1374,7 +1376,23 @@ function downloadMSPInventory() {
 	window.URL.revokeObjectURL(csvLink);
 }
 
-function buildMSPCSVData() {
+function downloadMSPExpiringInventory() {
+	mspCSVData = buildMSPCSVData(true);
+
+	var csv = Papa.unparse(mspCSVData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+	csvLink.setAttribute('download', 'msp-expiring-inventory.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+function buildMSPCSVData(expiringOnly) {
 	//CSV header
 	var customerKey = 'CUSTOMER';
 	var serialKey = 'SERIAL';
@@ -1395,6 +1413,7 @@ function buildMSPCSVData() {
 	var licenseKey = 'LICENSE';
 	var subscriptionKey = 'SUBSCRIPTION KEY';
 	var expiryKey = 'SUBSCRIPTION EXPIRY';
+	var remainingKey = 'DAYS REMAINING';
 
 	var csvDataBuild = [];
 
@@ -1409,55 +1428,58 @@ function buildMSPCSVData() {
 		// Needed for subscription key as it is not included in the MSP inventory info
 		var fullInventoryInfo = findDeviceInInventory(device.serial)
 		
-		if (monitoringInfo) {
-			var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
-			var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
+		var subscriptionKeyString = device.subscription_key;
+		if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
 		
-			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
-			var duration = moment.duration(uptime * 1000);
-			var uptimeString = '';
+		var subEndDate = '';
+		if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
 		
-			
-			var publicIP = '';
-			if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
-			else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
-			
-			var labels = '';
-			if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
-			
-			var firmwareVersion = '';
-			if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
-			
-			var clientCount = '';
-			
-			if (monitoringInfo['status'] == "Up") {
-				uptimeString = duration.humanize();
-				if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
-				if (monitoringInfo['client_count'] == 0) clientCount = '0';
+		var keyExpiry = '';
+		if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
+		
+		var daysRemaining = '';
+		var dayCount = -1;
+		if (subEndDate != '') {
+			var today = moment();
+			var endDate = moment(subEndDate);
+			if (today.isBefore(endDate)) {
+				daysRemaining = endDate.diff(today, 'days');
+				dayCount = endDate.diff(today, 'days');
 			}
-			
-			var subscriptionKeyString = device.subscription_key;
-			if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
-			
-			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
-			
-			var keyExpiry = '';
-			if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
+		}
 		
-			csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry });
-		} else {
+		if ((expiringOnly && dayCount > 0 && dayCount < 90) || !expiringOnly) {
+			if (monitoringInfo) {
+				var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
+				var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
 			
-			var subscriptionKeyString = device.subscription_key;
-			if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
+				var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
+				var duration = moment.duration(uptime * 1000);
+				var uptimeString = '';
 			
-			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
+				
+				var publicIP = '';
+				if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
+				else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
+				
+				var labels = '';
+				if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
+				
+				var firmwareVersion = '';
+				if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
+				
+				var clientCount = '';
+				
+				if (monitoringInfo['status'] == "Up") {
+					uptimeString = duration.humanize();
+					if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
+					if (monitoringInfo['client_count'] == 0) clientCount = '0';
+				}
 			
-			var keyExpiry = '';
-			if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
-		
-			csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry });
+				csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry, [remainingKey]: daysRemaining});
+			} else {		
+				csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry, [remainingKey]: daysRemaining });
+			}
 		}
 	});
 
@@ -1471,55 +1493,58 @@ function buildMSPCSVData() {
 		// Needed for subscription key as it is not included in the MSP inventory info
 		var fullInventoryInfo = findDeviceInInventory(device.serial)
 		
-		if (monitoringInfo) {
-			var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
-			var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
+		var subscriptionKeyString = device.subscription_key;
+		if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
 		
-			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
-			var duration = moment.duration(uptime * 1000);
-			var uptimeString = '';
+		var subEndDate = '';
+		if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
 		
-			
-			var publicIP = '';
-			if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
-			else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
-			
-			var labels = '';
-			if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
-			
-			var firmwareVersion = '';
-			if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
-			
-			var clientCount = '';
-			
-			if (monitoringInfo['status'] == "Up") {
-				uptimeString = duration.humanize();
-				if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
-				if (monitoringInfo['client_count'] == 0) clientCount = '0';
+		var keyExpiry = '';
+		if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
+		
+		var daysRemaining = '';
+		var dayCount = -1;
+		if (subEndDate != '') {
+			var today = moment();
+			var endDate = moment(subEndDate);
+			if (today.isBefore(endDate)) {
+				daysRemaining = endDate.diff(today, 'days');
+				dayCount = endDate.diff(today, 'days');
 			}
-			
-			var subscriptionKeyString = device.subscription_key;
-			if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
-			
-			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
-			
-			var keyExpiry = '';
-			if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
+		}
 		
-			csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry });
-		} else {
+		if ((expiringOnly && dayCount > 0 && dayCount < 90) || !expiringOnly) {
+			if (monitoringInfo) {
+				var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
+				var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
 			
-			var subscriptionKeyString = device.subscription_key;
-			if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
+				var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
+				var duration = moment.duration(uptime * 1000);
+				var uptimeString = '';
 			
-			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
+				
+				var publicIP = '';
+				if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
+				else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
+				
+				var labels = '';
+				if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
+				
+				var firmwareVersion = '';
+				if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
+				
+				var clientCount = '';
+				
+				if (monitoringInfo['status'] == "Up") {
+					uptimeString = duration.humanize();
+					if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
+					if (monitoringInfo['client_count'] == 0) clientCount = '0';
+				}
 			
-			var keyExpiry = '';
-			if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
-		
-			csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry });
+				csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry, [remainingKey]: daysRemaining });
+			} else {
+				csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry, [remainingKey]: daysRemaining });
+			}
 		}
 	});
 
@@ -1533,55 +1558,58 @@ function buildMSPCSVData() {
 		// Needed for subscription key as it is not included in the MSP inventory info
 		var fullInventoryInfo = findDeviceInInventory(device.serial)
 		
-		if (monitoringInfo) {
-			var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
-			var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
+		var subscriptionKeyString = device.subscription_key;
+		if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
 		
-			var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
-			var duration = moment.duration(uptime * 1000);
-			var uptimeString = '';
+		var subEndDate = '';
+		if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
 		
-			
-			var publicIP = '';
-			if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
-			else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
-			
-			var labels = '';
-			if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
-			
-			var firmwareVersion = '';
-			if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
-			
-			var clientCount = '';
-			
-			if (monitoringInfo['status'] == "Up") {
-				uptimeString = duration.humanize();
-				if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
-				if (monitoringInfo['client_count'] == 0) clientCount = '0';
+		var keyExpiry = '';
+		if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
+		
+		var daysRemaining = '';
+		var dayCount = -1;
+		if (subEndDate != '') {
+			var today = moment();
+			var endDate = moment(subEndDate);
+			if (today.isBefore(endDate)) {
+				daysRemaining = endDate.diff(today, 'days');
+				dayCount = endDate.diff(today, 'days');
 			}
-			
-			var subscriptionKeyString = device.subscription_key;
-			if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
-			
-			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
-			
-			var keyExpiry = '';
-			if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
+		}
 		
-			csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry });
-		} else {
+		if ((expiringOnly && dayCount > 0 && dayCount < 90) || !expiringOnly) {
+			if (monitoringInfo) {
+				var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
+				var siteToUse = monitoringInfo['site'] ? monitoringInfo['site'] : '';
 			
-			var subscriptionKeyString = device.subscription_key;
-			if (!subscriptionKeyString) subscriptionKeyString = fullInventoryInfo.subscription_key;
+				var uptime = monitoringInfo['uptime'] ? monitoringInfo['uptime'] : 0;
+				var duration = moment.duration(uptime * 1000);
+				var uptimeString = '';
 			
-			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKeyString]) subEndDate = subscriptionKeys[subscriptionKeyString]['end_date'];
+				
+				var publicIP = '';
+				if (monitoringInfo.public_ip_address) publicIP = monitoringInfo.public_ip_address;
+				else if (monitoringInfo.public_ip)  publicIP = monitoringInfo.public_ip;
+				
+				var labels = '';
+				if (monitoringInfo.labels) labels = monitoringInfo.labels.join(', ');
+				
+				var firmwareVersion = '';
+				if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
+				
+				var clientCount = '';
+				
+				if (monitoringInfo['status'] == "Up") {
+					uptimeString = duration.humanize();
+					if (monitoringInfo['client_count']) clientCount = monitoringInfo['client_count'];
+					if (monitoringInfo['client_count'] == 0) clientCount = '0';
+				}
 			
-			var keyExpiry = '';
-			if (fullInventoryInfo && fullInventoryInfo['subscription_key']) keyExpiry = moment(subEndDate).format('L');
-		
-			csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry });
+				csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry, [remainingKey]: daysRemaining });
+			} else {		
+				csvDataBuild.push({ [customerKey]: device['customer_name'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: '', [siteKey]: '', [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: subscriptionKeyString ? subscriptionKeyString : '', [expiryKey]: keyExpiry, [remainingKey]: daysRemaining });
+			}
 		}
 	});
 
