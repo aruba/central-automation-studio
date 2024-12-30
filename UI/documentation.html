@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=240817" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=241216" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -302,15 +302,17 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											<li> <strong>API Data Optimization</strong> - adjusts how much data is gathered from APIs</li>
 											<ul>
 												<li>Full Details - Includes all options listed below</li>
-												<li>Large Scale Deployment - Disables all options listed below except AP & Switch Monitoring as well as Gateway Monitoring</li>
+												<li>Large Scale Deployment - Disables all options listed below except AP, Switch and Gateway Monitoring</li>
 												<li>Group Config Only - Disables all options listed below</li>
 												<li>Custom - Mix and Match the optional information</li>
 											</ul>
 											</ul>
 											<li> Optional Information</li>
 											<ul>
-											<li> <strong>Client Monitoring</strong> - Are Client details downloaded? Disabling improves performance at the loss of client information/statistics. This is enabled by default</li>
-											<li> <strong>AP & Switch Monitoring</strong> - Are AP and Switch details downloaded? Disabling improves speed when using Central Automation Studio only for group based config changes. This is enabled by default</li>
+											<li> <strong>Wireless Client Monitoring</strong> - Are wireless Client details downloaded? Disabling improves performance at the loss of client information/statistics. This is enabled by default</li>
+											<li> <strong>Wired Client Monitoring</strong> - Are wired Client details downloaded? Disabling improves performance at the loss of client information/statistics. This is enabled by default</li>
+											<li> <strong>AP Monitoring</strong> - Are AP details downloaded? Disabling improves speed when using Central Automation Studio only for group based config changes. This is enabled by default</li>
+											<li> <strong>Switch Monitoring</strong> - Are Switch details downloaded? Disabling improves speed when using Central Automation Studio only for group based config changes. This is enabled by default</li>
 											<li> <strong>Gateway Monitoring</strong> - Are Gateway details downloaded? Disabling improves speed when using Central Automation Studio only for group based config changes. This is enabled by default</li>
 											<li> <strong>Gateway Details</strong> - Are detailed Gateway properties fetched? Disabling improves performance of large numbers of gateways. This is disabled by default</li>
 											<li> <strong>Group Properties</strong> - Are Group properties fetched or just group names? Disabling improves performance of large numbers of groups. This is enabled by default</li>
@@ -475,6 +477,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									The workflows <strong>support</strong> more optional header names:
 									<ul>
 										<li> DEVICE NAME</li>
+										<li> MODEL</li>
 										<li> LICENSE</li>
 										<li> GROUP</li>
 										<li> SITE</li>
@@ -490,6 +493,8 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li> DUAL 5GHZ MODE</li>
 										<li> SPLIT 5GHZ MODE</li>
 										<li> FLEX DUAL BAND</li>
+										<li> ANTENNA WIDTH</li>
+										<li> ALTITUDE</li>
 										<li> IP ADDRESS</li>
 										<li> SUBNET MASK</li>
 										<li> DEFAULT GATEWAY</li>
@@ -502,6 +507,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									Behaviour Notes:
 									<ul>
 										<li>If the DEVICE NAME is not included, the device renaming workflows will skip that device during the processing</li>
+										<li>If the MODEL is not included, the licensing workflows will utilise Monitoring or Device Inventory data to determine the model</li>
 										<li>If the LICENSE is missing, the device is assumed to be assigned a Foundation license of the correct device type (AP, Switch, Gateway)</li>
 										<li>If the GROUP is missing for any device, the WebUI will ask you to select a Group. This group will be used for any device with a missing Group value in the CSV</li>
 										<li>If the SITE is missing, the device will be skipped when assigning devices to a Site</li>
@@ -516,6 +522,8 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
 										<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
 										<li>If the FLEX DUAL BAND value is missing or is equal to "-", the device will be skipped when assigning the flexible dual band mode for that Access Point. <i>Config is only applied to supported AP Models (AP-615, AP-605R)</i></li>
+										<li>If the ANTENNA WIDTH value is missing or is equal to "-", the device will be skipped when assigning the dynamic antenna mode for that Access Point. <i>Config is only applied to supported AP Models (AP-679)</i></li>
+										<li>If the ALTITUDE value is missing or is equal to "-", the device will be skipped when assigning the altitude (in meters) for that Access Point</li>
 										<li>Static IP Addresses will only be <strong>set</strong> if all of the required values are provided (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER). If any of the Static IP values (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER) are missing, the device will be skipped when assigning a static IP address for that Access Point</li>
 										<li>Static IP Address information will <strong>updated</strong> (if the Access Point is already configured for a Static IP) using any supplied fields (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER, DOMAIN NAME). Any fields not supplied will be left as previously configured</li>
 										<li>If the TIMEZONE is missing, the device will be skipped when configuring the Timezone of a Gateway</li>
@@ -536,19 +544,28 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
                                 <h4>License Devices</h4>
                                 <p>
-                                	Licenses all devices in the CSV with the appropriate license:
+                                	Licenses all devices in the CSV with the appropriate license using the SERIAL data in the CSV:
                                 	<ul>
 										<li> Foundation</li>
 										<li> Advanced</li>
 										<li> WLAN (for AOS10 WLAN Gateways)</li>
+										<li> WLAN Advanced (for AOS10 WLAN Gateways)</li>
 										<li> Foundation-Base (for SD-Branch Gateways)</li>
 										<li> Foundation-Base + Security (for SD-Branch Gateways)</li>
 										<li> Advance-Base (for SD-Branch Gateways)</li>
 										<li> Foundation + Security (for SD-Branch Gateways)</li>
 										<li> Advanced + Security (for SD-Branch Gateways)</li>
 									</ul>
-									If the LICENSE is missing for a device (or all devices) in the CSV, it is assumed a Foundation license will be assigned. The values in the list above are supported in the CSV for values (not including the parts in brackets)
+									If the LICENSE is missing for a device (or all devices) in the CSV, it is assumed a Foundation license will be assigned. The values in the list above are supported in the CSV for values (not including the parts in brackets). If the license to be assigned is the same as the license already assigned the device is skipped.
                                 </p>
+								<h4>Update Device Licenses</h4>
+								<p>
+									Similar to the "License Devices" workflow, but is designed for devices that are already connected to Central. Simply updates the license used, and does not check if the license assigned is the same as the selected license. This task only works for devices already connected to Central. Use "License Devices" for licensing devices that have not already been connected to Central. If the CSV includes the model string (export of device list from Central UI), the workflow will use that value to determine the device type and model for the correct license to be applied.
+								</p>
+								<h4>Update AP Licenses</h4>
+								<p>
+									Similar to the "Update Devices Licenses" workflow, but is designed for purely for APs that are already connected to Central. Simply updates the license used, and does not check if the license assigned is the same as the selected license. This task only works for devices already connected to Central. Use "License Devices" for licensing devices that have not already been connected to Central. This workflow skips any checking of device type and model and simply applies the required license.
+								</p>
                                 <h4>Unlicense Devices</h4>
                                 <p>
                                 	Unassigns the current licenses from all devices in the CSV (using the SERIAL column) </br>
@@ -687,6 +704,18 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<p>Antenna Gain configuration</p>
 									</div>
 									Uses the SERIAL column in the CSV file to configure the selected antenna gain. The antenna gain is set either using the Aruba antenna dropdown selector or manual entry of the antenna gain values, along with the model of the AP for which you want to apply the gain. Additionally, it provides a single click to reboot all configured APs after the antenna gain configuration has synced to each AP.
+								</p>
+								<h4>Set Dynamic Antenna Mode (AP-679)</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified AP-679 Dynamic Antenna mode (from the ANTENNA WIDTH column). The valid values are (case-insensitive): 
+									<ul>
+										<li>Wide</li>
+										<li>Narrow</li>
+									</ul>
+								</p>
+								<h4>Set AP Altitude</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified altitude in meters (from the ALTITUDE column). This value is required for FCO enabled APs for 6GHz operation
 								</p>
 								<h4>Set AP Swarm Mode</h4>
 								<p>
@@ -1033,7 +1062,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</p>
                                 <h4>WLAN Configuration</h4>
                                 <p>
-                                	Provides the ability modify the WLAN configuration used by a selected WLAN/SSID, and select which Groups to make the WLAN available in. This makes copying WLAN configuration from one UI Group to another simple.
+                                	Provides the ability modify the WLAN configuration used by a selected WLAN/SSID, and select which Groups to make the WLAN available in. This makes copying WLAN configuration from one UI Group to another simple. Copying from one group to other groups is only supported for Bridge mode SSIDs.
 									<div class="img-container">
 										<img src="assets/img/wlan-table.png" alt="WLAN-Table">
 										<p>WLAN Details with simple Edit and Enable/Disable</p>
@@ -1304,9 +1333,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								<p> <strong>Run Now Modes:</strong>
 									<ul>
 										<li> On-Demand - Full AirMatch solution generation</li>
-										<li> Incremental - Runs for all the APs for the tenant but it freezes solution for the APs which already have solution generated</li>
+										<li> Incremental - Rerun the optimization for all radios, but AirMatch only changes channel and power for radios which doesn't have any channel power assignment in the previous optimization result.
+											The rest radios will not change channel and power </li>
 										<li> EIRP Only - Just update the EIRP, don't change the channels</li>
-										<li> Opmode Update - Full + opmode update</li>
+										<li> Opmode Update - Rerun the optimization for all radios and will force solver to compute opmode for all APs.</li>
 										<li> New APs Only - Runs only for APs without solution generated</li>
 									</ul>
 								</p>
@@ -1891,6 +1921,7 @@ ip dns server-address priority 2 %dns2.ip%
 												<li> Firmware compliance is intelligently configured for the selected groups that have the correct allowed devices on the Group. E.g. AP firmware compliance will not be set on a group that does not include APs</li>
 											</ul>
 										<li> Provides quick link to configure Country Codes for Groups</li>
+										<li> Provides ability to modify group properties</li>
 									</ul>
 								</p>
 								<p>&nbsp;</p>
@@ -1935,6 +1966,78 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.43.1 (2024/12/30)</h4>
+									<ul>
+										<li>Added warning in WLAN deployment for Tunneled and Mixed mode SSIDs</li>
+									</ul>
+									<h4>Version 1.43.0 (2024/12/20) - <i>Happy Holidays</i></h4>
+									<ul>
+										<li>WLAN Deployment improvements</li>
+										<ul>
+											<li>Added support for WLANs with spaces in the profile name</li>
+											<li>Adding/Applying a WLAN config to another group will also add the matching default user role (if it is not already there)</li>
+											<li>Removing a WLAN from a group now removes the matching default user role</li>
+											<li>Improved WLAN matching to only display a single entry in the WLAN table for each exact WLAN config</li>
+											<li>Added a warning when attempting to delete WLANs</li>
+										</ul>
+									</ul>
+									<h4>Version 1.42.6 (2024/12/16)</h4>
+									<ul>
+										<li>Improved Group Management</li>
+										<ul>
+											<li>Improved colours to distinguish the Group properties</li>
+											<li>Added tag for New Central groups</li>
+											<li>Modification of Group properties now works as expected</li>
+										</ul>
+									</ul>
+									<h4>Version 1.42.6 (2024/12/11)</h4>
+									<ul>
+										<li>License Monitoring improvements due to API response changes - now displays correct license counts</li>
+									</ul>
+									<h4>Version 1.42.5 (2024/12/09)</h4>
+									<ul>
+										<li>Improved feedback in Visitor uploads</li>
+										<li>ALTITUDE column added to the Download Device CSV</li>
+									</ul>
+									<h4>Version 1.42.4 (2024/12/08)</h4>
+									<ul>
+										<li>Improvements to User Roles logic to prevent pushing config that only contains the user role and not the full config for the group </li>
+										<li>Group dropdown in WLANs, User Roles and Auth Servers now only display groups that contain AP config</li>
+									</ul>
+									<h4>Version 1.42.3 (2024/12/03)</h4>
+									<ul>
+										<li>Split the "AP & Switch Monitoring" knob into "AP Monitoring" and "Switch Monitoring" in Settings to provide more granular control</li>
+										<li>Added support to display the Gateway cluster which an AP is connected to in AP Statistics and AP Troubleshooting</li>
+									</ul>
+									<h4>Version 1.42.2 (2024/11/28)</h4>
+									<ul>
+										<li>Added support for AP Altitude configuration (FCO requirements for 6GHz operation) in <a href="#csv-row">CSV Workflows</a></li>
+									</ul>
+									<h4>Version 1.42.1 (2024/11/21)</h4>
+									<ul>
+										<li>Separated setting for Client Monitoring into Wireless and Wired Client Monitoring to provide more granular control of data download</li>
+									</ul>
+									<h4>Version 1.42.0 (2024/11/14)</h4>
+									<ul>
+										<li>Added support in <a href="#csv-row">CSV Workflows</a> for configuring the Dynamic Antenna mode in the AP-679</li>
+									</ul>
+									<h4>Version 1.41.10 (2024/10/22)</h4>
+									<ul>
+										<li>Update License task in the <a href="#csv-row">CSV Workflows</a> has been improved to now utilize the MODEL column in the CSV (if exported from the Central UI)</li>
+									</ul>
+									<h4>Version 1.41.9 (2024/10/11)</h4>
+									<ul>
+										<li>Added Label column to SSID Deployment and Bulk AP configuration</li>
+									</ul>
+									<h4>Version 1.41.8 (2024/10/09)</h4>
+									<ul>
+										<li>Added new task to <a href="#csv-row">CSV Workflows</a>: Update Device Licenses. Use when all devices you want to license are already up and in Central</li>
+										<li>Central Authentication improvements when tokens have expired</li>
+									</ul>
+									<h4>Version 1.41.7 (2024/10/08)</h4>
+									<ul>
+										<li>Limited licensing workflows to maximum of 50 devices per API call (GLP limitations workaround)</li>
+									</ul>
 									<h4>Version 1.41.6 (2024/09/19)</h4>
 									<ul>
 										<li>Added an additional API Proxy for redundancy</li>
@@ -3082,6 +3185,6 @@ ip dns server-address priority 2 %dns2.ip%
 	}
 </script>
 
-<script src="assets/js/version.js?v=240919"></script>
+<script src="assets/js/version.js?v=241230"></script>
 
 </html>

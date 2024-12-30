@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=240817" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=241216" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -108,7 +108,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 							
 								</div>
 								<div class="card-body">
-									<button class="btn btn-fill btn-info" name="runNowBtn" id="runNowBtn" onclick="createRole()">Create Role</button>
+									<button class="btn btn-fill btn-info" name="createBtn" id="createBtn" onclick="createRole()">Create Role</button>
 								</div>
 							</div>
 						</div>
@@ -188,7 +188,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									<div class="row">
 										<label class="col-md-3">Assigned Groups</label>
 										<div class="col-md-4">
-											<select multiple data-title="Select Groups" id="groupSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" onchange="checkSelectionCount()">
+											<select multiple data-title="Select Groups" id="groupselector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" onchange="checkSelectionCount()">
 											</select>
 										</div>
 										<div class="col-md-2">
@@ -206,8 +206,8 @@ Aaron Scott (WiFi Downunder) 2021-2024
 						<div class="card-footer ">
 							<div class="col-md-12">
 								<button type="submit" class="btn btn-fill btn-default" data-dismiss="modal" name="cancelRoleBtn" id="cancelRoleBtn">Cancel</button>
-								<button type="submit" class="btn btn-fill btn-danger" data-dismiss="modal" name="removeRoleBtn" id="removeRoleBtn" id="removeRoleBtn" onclick="updateRole(false)">Remove User Role</button>
-								<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="saveRoleBtn" id="saveRoleBtn" id="saveRoleBtn" onclick="updateRole(true)">Deploy User Role</button>
+								<button type="submit" class="btn btn-fill btn-danger" data-dismiss="modal" name="removeRoleBtn" id="removeRoleBtn" id="removeRoleBtn" onclick="updateRole(RoleAction.Delete)">Remove User Role</button>
+								<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="saveRoleBtn" id="saveRoleBtn" id="saveRoleBtn" onclick="updateRole(RoleAction.Update)">Deploy User Role</button>
 							</div>
 						</div>
 					</div>
@@ -347,11 +347,11 @@ Aaron Scott (WiFi Downunder) 2021-2024
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/version.js?v=240919"></script>
-<script src="assets/js/main.js?v=240919"></script>
+<script src="assets/js/version.js?v=241230"></script>
+<script src="assets/js/main.js?v=241216"></script>
 <script src="assets/js/proxy.js?v=240920"></script>
-<script src="assets/js/hydra.js?v=240830"></script>
-<script src="assets/js/user-roles.js?v=240830"></script>
+<script src="assets/js/hydra.js?v=241203"></script>
+<script src="assets/js/user-roles.js?v=241009"></script>
 
 
 </html>

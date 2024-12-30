@@ -85,14 +85,16 @@ function updateClientMatchData() {
 		});
 	} else {
 		$.when(authRefresh()).then(function() {
-			clientList = getWirelessClients();
-
-			getClientMatchStatus();
-			getLoadBalanceStatus();
-			getLoadBalanceHistory();
-			getUnsteerableClients();
-			getSteerHistory();
-			$('[data-toggle="tooltip"]').tooltip();
+			if (!failedAuth) {
+				clientList = getWirelessClients();
+	
+				getClientMatchStatus();
+				getLoadBalanceStatus();
+				getLoadBalanceHistory();
+				getUnsteerableClients();
+				getSteerHistory();
+				$('[data-toggle="tooltip"]').tooltip();
+			}
 		});
 	}
 }
@@ -1354,7 +1356,7 @@ function updateStatisticsTable() {
 		var rejectTotal = 0;
 		var wrongDstTotal = 0;
 		var wrongSrcTotal = 0;
-		console.log(steerCounts)
+		//console.log(steerCounts)
 		$.each(Object.keys(steerCounts), function() {
 			var mode = this.toString();
 			var statusCounts = steerCounts[this.toString()];

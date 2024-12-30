@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=240817" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=241216" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -269,6 +269,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 						</div>
 						<!-- End AP Model Card -->
 						<!-- AP Status Cards -->
+						<div class="row"><h4 class="section-header">Radio Info</h4></div>
 						<div class="row">
 							<div class="col-lg-2 col-sm-6">
 								<div class="card card-stats">
@@ -326,71 +327,6 @@ Aaron Scott (WiFi Downunder) 2021-2024
 													<div class="numbers">
 														<p class="card-category">BLE Beacons</p>
 														<h4 class="card-title" id="ble_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
-									<a href="javascript:showVCs();">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-networking text-warning" id="vc_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Virtual Controllers</p>
-														<h4 class="card-title" id="vc_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
-									<a href="javascript:showAPs('Memory');">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-ram-2 text-warning" id="mem_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">Memory Util >75%</p>
-														<h4 class="card-title" id="mem_count">-</h4>
-													</div>
-												</div>
-											</div>
-										</div>
-									</a>
-								</div>
-							</div>
-							<div class="col-lg-2 col-sm-6">
-								<div class="card card-stats">
-									<a href="javascript:showAPs('CPU');">
-										<div class="card-body ">
-											<div class="row">
-												<div class="col-4">
-													<div class="icon-big text-center icon-warning">
-														<i class="central-icon ca-cpu  text-warning" id="cpu_icon"></i>
-													</div>
-												</div>
-												<div class="col-8">
-													<div class="numbers">
-														<p class="card-category">CPU Util >50%</p>
-														<h4 class="card-title" id="cpu_count">-</h4>
 													</div>
 												</div>
 											</div>
@@ -462,6 +398,93 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								</div>
 							</div>
 						</div>
+						<div class="row"><h4 class="section-header">AP Overview</h4></div>
+						<div class="row">
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<a href="javascript:showAPs('Memory');">
+										<div class="card-body ">
+											<div class="row">
+												<div class="col-4">
+													<div class="icon-big text-center icon-warning">
+														<i class="central-icon ca-ram-2 text-warning" id="mem_icon"></i>
+													</div>
+												</div>
+												<div class="col-8">
+													<div class="numbers">
+														<p class="card-category">Memory Util >75%</p>
+														<h4 class="card-title" id="mem_count">-</h4>
+													</div>
+												</div>
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<a href="javascript:showAPs('CPU');">
+										<div class="card-body ">
+											<div class="row">
+												<div class="col-4">
+													<div class="icon-big text-center icon-warning">
+														<i class="central-icon ca-cpu  text-warning" id="cpu_icon"></i>
+													</div>
+												</div>
+												<div class="col-8">
+													<div class="numbers">
+														<p class="card-category">CPU Util >50%</p>
+														<h4 class="card-title" id="cpu_count">-</h4>
+													</div>
+												</div>
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<a href="javascript:showGWAPs();">
+										<div class="card-body ">
+											<div class="row">
+												<div class="col-4">
+													<div class="icon-big text-center icon-warning">
+														<i class="central-icon ca-gateway text-warning" id="gw_icon"></i>
+													</div>
+												</div>
+												<div class="col-8">
+													<div class="numbers">
+														<p class="card-category">Gateway Connected</p>
+														<h4 class="card-title" id="gw_count">-</h4>
+													</div>
+												</div>
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+							<div class="col-lg-2 col-sm-6">
+								<div class="card card-stats">
+									<a href="javascript:showVCs();">
+										<div class="card-body ">
+											<div class="row">
+												<div class="col-4">
+													<div class="icon-big text-center icon-warning">
+														<i class="central-icon ca-networking text-warning" id="vc_icon"></i>
+													</div>
+												</div>
+												<div class="col-8">
+													<div class="numbers">
+														<p class="card-category">Virtual Controllers</p>
+														<h4 class="card-title" id="vc_count">-</h4>
+													</div>
+												</div>
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+						</div>
 						<!-- End Status Cards -->
 						<div class="row" id="mainBoxes">
 							<div class="col-md-3">
@@ -471,7 +494,6 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<p class="card-category">Top 10 APs</p>
 										<p></p>
 									</div>
-
 									<div class="card-body ">
 										<div class="card-body table-no-bordered table-hover dataTable dtr-inline table-full-width">
 											<div class="fresh-datatables">
@@ -1130,6 +1152,43 @@ Aaron Scott (WiFi Downunder) 2021-2024
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- AP RADIO Modal -->
+				<div class="modal fade modal-mini modal-primary" id="GatewayAPModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">APs Connected to Gateway Clusters</h4>
+										<a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
+									</div>
+									<div class="card-body">
+										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="gw-ap-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>AP Name</th>
+														<th>Status</th>
+														<th>Status Text</th>
+														<th>Gateway Cluster</th>
+														<th>IP Address</th>
+														<th>Model</th>
+														<th>Serial</th>
+														<th>MAC Address</th>
+														<th>Site</th>
+														<th>Group</th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -1658,6 +1717,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 						<a data-toggle="modal" data-target="#BSSIDModal" id="BSSIDModalLink"></a>
 						<a data-toggle="modal" data-target="#RadiosModal" id="RadiosModalLink"></a>
 						<a data-toggle="modal" data-target="#BLEModal" id="BLEModalLink"></a>
+						<a data-toggle="modal" data-target="#GatewayAPModel" id="GatewayAPModelLink"></a>
 						<a data-toggle="modal" data-target="#VCModal" id="VCModalLink"></a>
 						<a data-toggle="modal" data-target="#VisualAPModal" id="VisualAPModalLink"></a>
 						<a data-toggle="modal" data-target="#TshootModal" id="APModalLink"></a>
@@ -1926,6 +1986,19 @@ Aaron Scott (WiFi Downunder) 2021-2024
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 			
+			$('#gw-ap-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				columnDefs: [{ type: 'ip-address', targets: 3 }, { "targets": 2, "visible": false }],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+			
 			$('#swarm-table').DataTable({
 				"pagingType": "simple_numbers",
 				"autoWidth": false,
@@ -2068,11 +2141,11 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=240919"></script>
-	<script src="assets/js/main.js?v=240919"></script>
+	<script src="assets/js/version.js?v=241230"></script>
+	<script src="assets/js/main.js?v=241216"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
-	<script src="assets/js/hydra.js?v=240830"></script>
-	<script src="assets/js/visualrf.js?v=240830"></script>
-	<script src="assets/js/troubleshooting-ap.js?v=240914"></script>
-	<script src="assets/js/accesspoints.js?v=240817"></script>
+	<script src="assets/js/hydra.js?v=241203"></script>
+	<script src="assets/js/visualrf.js?v=241009"></script>
+	<script src="assets/js/troubleshooting-ap.js?v=241203"></script>
+	<script src="assets/js/accesspoints.js?v=241203"></script>
 </html>

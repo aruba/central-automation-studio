@@ -27,6 +27,9 @@ var topAPs;
 var selectedAP;
 
 function loadCurrentPageAP() {
+	apImage = new Image();
+	apImage.src = 'assets/img/ap-icon.svg';
+	
 	updateAPGraphs();
 	loadBSSIDs();
 	getDevices();
@@ -106,11 +109,17 @@ function updateAPGraphs() {
 	var apCounter = 0;
 	var radioCounter = 0;
 	apRadios = [];
+	var gatewayAPCount = 0;
 
 	$('#radios-table')
 		.DataTable()
 		.rows()
 		.remove();
+		
+	$('#gw-ap-table')
+	.DataTable()
+	.rows()
+	.remove();
 
 	// Get stats for APs
 	$.each(aps, function() {
@@ -152,6 +161,10 @@ function updateAPGraphs() {
 				highCPUCount++;
 				highCPUAPs.push(currentAP);
 			}
+			
+			if (this['gateway_cluster_name'] !== '') gatewayAPCount++;
+			addAPtoGatewayTable(this);
+			
 
 			$.each(currentAP.radios, function() {
 				var table = $('#radios-table').DataTable();
@@ -204,6 +217,11 @@ function updateAPGraphs() {
 		.DataTable()
 		.rows()
 		.draw();
+		
+	$('#gw-ap-table')
+	.DataTable()
+	.rows()
+	.draw();
 	if (document.getElementById('radio_count')) {
 		document.getElementById('radio_count').innerHTML = radioCounter;
 
@@ -293,6 +311,22 @@ function updateAPGraphs() {
 			$(document.getElementById('6_icon')).removeClass('text-success');
 			$(document.getElementById('6_icon')).removeClass('text-warning');
 			$(document.getElementById('6_icon')).removeClass('text-danger');
+		}
+	}
+	
+	if (document.getElementById('gw_count')) {
+		document.getElementById('gw_count').innerHTML = gatewayAPCount;
+	
+		if (gw_count > 0) {
+			$(document.getElementById('gw_icon')).removeClass('text-primary');
+			$(document.getElementById('gw_icon')).removeClass('text-success');
+			$(document.getElementById('gw_icon')).removeClass('text-warning');
+			$(document.getElementById('gw_icon')).addClass('text-danger');
+		} else {
+			$(document.getElementById('gw_icon')).removeClass('text-primary');
+			$(document.getElementById('gw_icon')).addClass('text-success');
+			$(document.getElementById('gw_icon')).removeClass('text-warning');
+			$(document.getElementById('gw_icon')).removeClass('text-danger');
 		}
 	}
 
@@ -706,37 +740,39 @@ function loadBSSIDTable(currentBSSIDs) {
 	var table = $('#bssid-table').DataTable();
 	$.each(currentBSSIDs, function() {
 		var ap = findDeviceInMonitoring(this.serial);
-		var status = '<i class="fa-solid fa-circle text-danger"></i>';
-		if (ap['status'] && ap['status'] == 'Up') {
-			status = '<i class="fa-solid fa-circle text-success"></i>';
-		}
-		var ip_address = ap['ip_address'];
-		if (!ip_address) ip_address = '';
-
-		// Make AP Name as a link to Central
-		var name = encodeURI(ap['name']);
-		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
-		$.each(this.radio_bssids, function() {
-			var radio = this;
-			$.each(radio.bssids, function() {
-				// Add row to table
-				table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr'], ap['site'], ap['group_name']]);
-
-				apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] ,site: ap['site'], group: ap['group_name']});
+		if (ap) {
+			var status = '<i class="fa-solid fa-circle text-danger"></i>';
+			if (ap['status'] && ap['status'] == 'Up') {
+				status = '<i class="fa-solid fa-circle text-success"></i>';
+			}
+			var ip_address = ap['ip_address'];
+			if (!ip_address) ip_address = '';
+	
+			// Make AP Name as a link to Central
+			var name = encodeURI(ap['name']);
+			var apiURL = localStorage.getItem('base_url');
+			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+			$.each(this.radio_bssids, function() {
+				var radio = this;
+				$.each(radio.bssids, function() {
+					// Add row to table
+					table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr'], ap['site'], ap['group_name']]);
+	
+					apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] ,site: ap['site'], group: ap['group_name']});
+				});
 			});
-		});
-		if (document.getElementById('bssid_count')) {
-			document.getElementById('bssid_count').innerHTML = apBSSIDs.length;
-
-			if (apBSSIDs.length > 0) {
-				$(document.getElementById('bssid_icon')).addClass('text-primary');
-				$(document.getElementById('bssid_icon')).removeClass('text-warning');
-				$(document.getElementById('bssid_icon')).removeClass('text-danger');
-			} else {
-				$(document.getElementById('bssid_icon')).removeClass('text-success');
-				$(document.getElementById('bssid_icon')).removeClass('text-warning');
-				$(document.getElementById('bssid_icon')).addClass('text-danger');
+			if (document.getElementById('bssid_count')) {
+				document.getElementById('bssid_count').innerHTML = apBSSIDs.length;
+	
+				if (apBSSIDs.length > 0) {
+					$(document.getElementById('bssid_icon')).addClass('text-primary');
+					$(document.getElementById('bssid_icon')).removeClass('text-warning');
+					$(document.getElementById('bssid_icon')).removeClass('text-danger');
+				} else {
+					$(document.getElementById('bssid_icon')).removeClass('text-success');
+					$(document.getElementById('bssid_icon')).removeClass('text-warning');
+					$(document.getElementById('bssid_icon')).addClass('text-danger');
+				}
 			}
 		}
 	});
@@ -960,6 +996,10 @@ function showVCs() {
 	$('#VCModalLink').trigger('click');
 }
 
+function showGWAPs() {
+	$('#GatewayAPModelLink').trigger('click');
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Download Radios Action
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -1163,7 +1203,6 @@ function buildVCCSVData() {
 	return csvDataBuild;
 }
 
-
 /*---------------------------------------------------------------------
 	Top APs API Functions
 ---------------------------------------------------------------------*/
@@ -1366,8 +1405,34 @@ function getAPBandwidth(currentSerial) {
 		});
 		
 	});
+}
+
+function addAPtoGatewayTable(ap) {
+	var table = $('#gw-ap-table').DataTable();
+	var memoryUsage = (((ap['mem_total'] - ap['mem_free']) / ap['mem_total']) * 100).toFixed(0).toString();
+	var status = '<i class="fa-solid fa-circle text-danger"></i>';
+	if (ap['status'] == 'Up') {
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + ap['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+	}
+	var ip_address = ap['ip_address'];
+	if (!ip_address) ip_address = '';
 	
+	var uptime = ap['uptime'] ? ap['uptime'] : 0;
+	var duration = moment.duration(uptime * 1000);
 	
+	// Make AP Name as a link to Central
+	var name = encodeURI(ap['name']);
+	var apiURL = localStorage.getItem('base_url');
+	var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 	
+	var clusterValue = '-'
+	if (ap['gateway_cluster_name']) {
+		var clusterURL = centralURLs[apiURL] + '/frontend/#/GATEWAYCLUSTERDETAIL/OVERVIEW/' + ap['gateway_cluster_id'] + '/' + ap['gateway_cluster_name'] + '?csgc=%5Bobject%20Object%5D&cdcn=' + ap['gateway_cluster_name'] + '&nc=gatewaycluster';
+		clusterValue = '<a href="' + clusterURL + '" target="_blank"><strong>' + ap['gateway_cluster_name'] + '</strong></a>'
+	}
 	
+	// Add row to table
+	table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], clusterValue, ip_address, ap['model'], ap['serial'], ap['macaddr'], ap['site'], ap['group_name'], duration.humanize()]);
+	
+	$('[data-toggle="tooltip"]').tooltip();
 }

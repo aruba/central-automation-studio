@@ -41,7 +41,7 @@ function loadGroupInventory() {
 				if (monitoringInfo.status == 'Up') {
 					status = '<i class="fa-solid fa-circle text-success"></i>';
 				}
-				table.row.add([monitoringInfo.name ? '<strong>' + monitoringInfo.name + '</strong>' : '<strong>' + this.macaddr.toLowerCase() + '</strong>', this.serial, this.macaddr, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '']);
+				table.row.add([monitoringInfo.name ? '<strong>' + monitoringInfo.name + '</strong>' : '<strong>' + this.macaddr.toLowerCase() + '</strong>', this.serial, this.macaddr, this.model, status, monitoringInfo.status ? monitoringInfo.status : '', monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', monitoringInfo.labels ? monitoringInfo.labels.join(', ') : '']);
 
 				filteredList.push(monitoringInfo);
 			}

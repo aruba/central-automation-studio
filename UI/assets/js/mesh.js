@@ -179,7 +179,6 @@ function getMeshLinks(deviceSerial) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getMeshLinks(deviceSerial);
 					}
 				});

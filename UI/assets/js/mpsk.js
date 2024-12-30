@@ -136,67 +136,69 @@ function getGroupConfig() {
 
 	if (currentGroup !== '') {
 		$.when(authRefresh()).then(function() {
-			// Clearing old data
-			$('#mpsk-table')
-				.DataTable()
-				.clear();
-
-			document.getElementById('mpskPoolTitle').innerHTML = 'MPSK Pool';
-
-			$('#mpsk-table')
-				.DataTable()
-				.rows()
-				.draw();
-
-			groupCounter = 0;
-			groupConfigs = {};
-			wlans = {};
-			userRoles = [];
-			mpskPools = {};
-			groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
-
-			// Grab config for Group in Central
-			var settings = {
-				url: getAPIURL() + '/tools/getCommandwHeaders',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
-					access_token: localStorage.getItem('access_token'),
-				}),
-			};
-
-			$.ajax(settings).done(function(commandResults, statusText, xhr) {
-				if (commandResults.hasOwnProperty('headers')) {
-					updateAPILimits(JSON.parse(commandResults.headers));
-				}
-				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-					logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
-					apiErrorCount++;
-					return;
-				} else if (commandResults.hasOwnProperty('error_code')) {
-					logError(commandResults.description);
-					apiErrorCount++;
-					return;
-				}
-				var response = JSON.parse(commandResults.responseBody);
-
-				// save the group config for modifications
-				groupConfigs[currentGroup] = response;
-
-				// pull the pieces out of group config
-				getWLANsFromConfig(response, currentGroup);
-				getRolesFromConfig(response, currentGroup);
-				getMPSKPoolsFromConfig(response, currentGroup);
-
-				if (groupConfigNotification) {
-					groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
-					setTimeout(groupConfigNotification.close, 1000);
-				}
-			});
+			if (!failedAuth) {
+				// Clearing old data
+				$('#mpsk-table')
+					.DataTable()
+					.clear();
+	
+				document.getElementById('mpskPoolTitle').innerHTML = 'MPSK Pool';
+	
+				$('#mpsk-table')
+					.DataTable()
+					.rows()
+					.draw();
+	
+				groupCounter = 0;
+				groupConfigs = {};
+				wlans = {};
+				userRoles = [];
+				mpskPools = {};
+				groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
+	
+				// Grab config for Group in Central
+				var settings = {
+					url: getAPIURL() + '/tools/getCommandwHeaders',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
+						access_token: localStorage.getItem('access_token'),
+					}),
+				};
+	
+				$.ajax(settings).done(function(commandResults, statusText, xhr) {
+					if (commandResults.hasOwnProperty('headers')) {
+						updateAPILimits(JSON.parse(commandResults.headers));
+					}
+					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+						logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+						apiErrorCount++;
+						return;
+					} else if (commandResults.hasOwnProperty('error_code')) {
+						logError(commandResults.description);
+						apiErrorCount++;
+						return;
+					}
+					var response = JSON.parse(commandResults.responseBody);
+	
+					// save the group config for modifications
+					groupConfigs[currentGroup] = response;
+	
+					// pull the pieces out of group config
+					getWLANsFromConfig(response, currentGroup);
+					getRolesFromConfig(response, currentGroup);
+					getMPSKPoolsFromConfig(response, currentGroup);
+	
+					if (groupConfigNotification) {
+						groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
+						setTimeout(groupConfigNotification.close, 1000);
+					}
+				});
+			}
 		});
 	}
 	$('[data-toggle="tooltip"]').tooltip();

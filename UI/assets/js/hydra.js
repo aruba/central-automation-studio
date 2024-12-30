@@ -320,7 +320,9 @@ function exportSettings() {
 	exportData['qr_color'] = localStorage.getItem('qr_color');
 	exportData['qr_logo'] = localStorage.getItem('qr_logo');
 	exportData['load_clients'] = localStorage.getItem('load_clients');
-	exportData['load_devices'] = localStorage.getItem('load_devices');
+	exportData['load_clients_wired'] = localStorage.getItem('load_clients_wired');
+	exportData['load_aps'] = localStorage.getItem('load_aps');
+	exportData['load_switches'] = localStorage.getItem('load_switches');
 	exportData['load_gateways'] = localStorage.getItem('load_gateways');
 	exportData['load_gateway_details'] = localStorage.getItem('load_gateway_details');
 	exportData['load_group_properties'] = localStorage.getItem('load_group_properties');
@@ -382,7 +384,10 @@ function importConfirmed() {
 			if (importData['qr_logo']) localStorage.setItem('qr_logo', importData['qr_logo']);
 			else localStorage.setItem('qr_logo', '');
 			if (importData['load_clients']) localStorage.setItem('load_clients', importData['load_clients']);
+			if (importData['load_clients_wired']) localStorage.setItem('load_clients_wired', importData['load_clients_wired']);
 			if (importData['load_devices']) localStorage.setItem('load_devices', importData['load_devices']);
+			if (importData['load_aps']) localStorage.setItem('load_aps', importData['load_aps']);
+			if (importData['load_switches']) localStorage.setItem('load_switches', importData['load_switches']);
 			if (importData['load_gateways']) localStorage.setItem('load_gateways', importData['load_gateways']);
 			if (importData['load_gateway_details']) localStorage.setItem('load_gateway_details', importData['load_gateway_details']);
 			if (importData['load_group_properties']) localStorage.setItem('load_group_properties', importData['load_group_properties']);

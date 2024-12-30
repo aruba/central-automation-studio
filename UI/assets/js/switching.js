@@ -19,26 +19,28 @@ var variableCounter = 0;
 
 function getSwitchStacks() {
 	$.when(authRefresh()).then(function() {
-		stacksPromise = new $.Deferred();
-		$('#stacks-table')
-			.DataTable()
-			.clear();
-		stackCounter = 0;
-		stacks = [];
-		stackSwitches = {};
-		switchVariables = {};
-		showNotification('ca-document-copy', 'Getting Switch variables...', 'bottom', 'center', 'info');
-		getVariablesForAllDevices(0);
-		showNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
-		$.when(getStacks(0)).then(function() {
-			showNotification('ca-switch-stack', 'Downloaded Switch Stack Information', 'bottom', 'center', 'success');
-
-			// loop through each stack and get details for each switch in the the stack
-			showNotification('ca-switch-stack', 'Getting Switch Details...', 'bottom', 'center', 'info');
-			$.each(stacks, function() {
-				getStackSwitches(this.id, this.name);
+		if (!failedAuth) {
+			stacksPromise = new $.Deferred();
+			$('#stacks-table')
+				.DataTable()
+				.clear();
+			stackCounter = 0;
+			stacks = [];
+			stackSwitches = {};
+			switchVariables = {};
+			showNotification('ca-document-copy', 'Getting Switch variables...', 'bottom', 'center', 'info');
+			getVariablesForAllDevices(0);
+			showNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
+			$.when(getStacks(0)).then(function() {
+				showNotification('ca-switch-stack', 'Downloaded Switch Stack Information', 'bottom', 'center', 'success');
+	
+				// loop through each stack and get details for each switch in the the stack
+				showNotification('ca-switch-stack', 'Getting Switch Details...', 'bottom', 'center', 'info');
+				$.each(stacks, function() {
+					getStackSwitches(this.id, this.name);
+				});
 			});
-		});
+		}
 	});
 	$('[data-toggle="tooltip"]').tooltip();
 }

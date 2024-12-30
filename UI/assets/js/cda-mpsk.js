@@ -63,7 +63,6 @@ function getMPSKStats() {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getMPSKData();
 					}
 				});
@@ -161,7 +160,6 @@ function getMPSKSSIDs() {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getMPSKSSIDs();
 					}
 				});
@@ -240,7 +238,6 @@ function loadMPSKs(cursor) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						loadMPSKs(cursor);
 					}
 				});

@@ -40,61 +40,63 @@ function loadCurrentPageAP() {
 
 function getRapidsData() {
 	$.when(authRefresh()).then(function() {
-		rapidNotification = showLongNotification('ca-rapids', 'Obtaining RAPIDS information...', 'bottom', 'center', 'info');
-
-		totalAPs = [];
-		document.getElementById('total_count').innerHTML = '0';
-		$(document.getElementById('total_icon')).addClass('text-muted');
-		$(document.getElementById('total_icon')).removeClass('text-success');
-		$(document.getElementById('total_icon')).removeClass('text-warning');
-		$(document.getElementById('total_icon')).removeClass('text-danger');
-
-		rogues = [];
-		document.getElementById('rogue_count').innerHTML = '0';
-		$(document.getElementById('rogue_icon')).addClass('text-muted');
-		$(document.getElementById('rogue_icon')).removeClass('text-success');
-		$(document.getElementById('rogue_icon')).removeClass('text-warning');
-		$(document.getElementById('rogue_icon')).removeClass('text-danger');
-
-		interfering = [];
-		document.getElementById('interfering_count').innerHTML = '0';
-		$(document.getElementById('interfering_icon')).addClass('text-muted');
-		$(document.getElementById('interfering_icon')).removeClass('text-success');
-		$(document.getElementById('interfering_icon')).removeClass('text-warning');
-		$(document.getElementById('interfering_icon')).removeClass('text-danger');
-
-		suspect = [];
-		document.getElementById('suspect_count').innerHTML = '0';
-		$(document.getElementById('suspect_icon')).addClass('text-muted');
-		$(document.getElementById('suspect_icon')).removeClass('text-success');
-		$(document.getElementById('suspect_icon')).removeClass('text-warning');
-		$(document.getElementById('suspect_icon')).removeClass('text-danger');
-
-		neighbour = [];
-		document.getElementById('neighbour_count').innerHTML = '0';
-		$(document.getElementById('neighbour_icon')).addClass('text-muted');
-		$(document.getElementById('neighbour_icon')).removeClass('text-success');
-		$(document.getElementById('neighbour_icon')).removeClass('text-warning');
-		$(document.getElementById('neighbour_icon')).removeClass('text-danger');
-
-		contained = [];
-		document.getElementById('contained_count').innerHTML = '0';
-		$(document.getElementById('contained_icon')).addClass('text-muted');
-		$(document.getElementById('contained_icon')).removeClass('text-success');
-		$(document.getElementById('contained_icon')).removeClass('text-warning');
-		$(document.getElementById('contained_icon')).removeClass('text-danger');
-		$(document.getElementById('contained_icon')).removeClass('text-info');
-		
-		widsEvents = [];
-		widsCounts = {};
-
-		$.when(getRogues(0), getInterfering(0), getSuspect(0), getNeighbours(0), getContained(0), getWIDSEvents(0)).then(function() {
-			loadTable(RapidsType.All);
-			if (rapidNotification) {
-				rapidNotification.update({ message: 'RAPIDS information retrieved', type: 'success' });
-				setTimeout(rapidNotification.close, 1000);
-			}
-		});
+		if (!failedAuth) {
+			rapidNotification = showLongNotification('ca-rapids', 'Obtaining RAPIDS information...', 'bottom', 'center', 'info');
+	
+			totalAPs = [];
+			document.getElementById('total_count').innerHTML = '0';
+			$(document.getElementById('total_icon')).addClass('text-muted');
+			$(document.getElementById('total_icon')).removeClass('text-success');
+			$(document.getElementById('total_icon')).removeClass('text-warning');
+			$(document.getElementById('total_icon')).removeClass('text-danger');
+	
+			rogues = [];
+			document.getElementById('rogue_count').innerHTML = '0';
+			$(document.getElementById('rogue_icon')).addClass('text-muted');
+			$(document.getElementById('rogue_icon')).removeClass('text-success');
+			$(document.getElementById('rogue_icon')).removeClass('text-warning');
+			$(document.getElementById('rogue_icon')).removeClass('text-danger');
+	
+			interfering = [];
+			document.getElementById('interfering_count').innerHTML = '0';
+			$(document.getElementById('interfering_icon')).addClass('text-muted');
+			$(document.getElementById('interfering_icon')).removeClass('text-success');
+			$(document.getElementById('interfering_icon')).removeClass('text-warning');
+			$(document.getElementById('interfering_icon')).removeClass('text-danger');
+	
+			suspect = [];
+			document.getElementById('suspect_count').innerHTML = '0';
+			$(document.getElementById('suspect_icon')).addClass('text-muted');
+			$(document.getElementById('suspect_icon')).removeClass('text-success');
+			$(document.getElementById('suspect_icon')).removeClass('text-warning');
+			$(document.getElementById('suspect_icon')).removeClass('text-danger');
+	
+			neighbour = [];
+			document.getElementById('neighbour_count').innerHTML = '0';
+			$(document.getElementById('neighbour_icon')).addClass('text-muted');
+			$(document.getElementById('neighbour_icon')).removeClass('text-success');
+			$(document.getElementById('neighbour_icon')).removeClass('text-warning');
+			$(document.getElementById('neighbour_icon')).removeClass('text-danger');
+	
+			contained = [];
+			document.getElementById('contained_count').innerHTML = '0';
+			$(document.getElementById('contained_icon')).addClass('text-muted');
+			$(document.getElementById('contained_icon')).removeClass('text-success');
+			$(document.getElementById('contained_icon')).removeClass('text-warning');
+			$(document.getElementById('contained_icon')).removeClass('text-danger');
+			$(document.getElementById('contained_icon')).removeClass('text-info');
+			
+			widsEvents = [];
+			widsCounts = {};
+	
+			$.when(getRogues(0), getInterfering(0), getSuspect(0), getNeighbours(0), getContained(0), getWIDSEvents(0)).then(function() {
+				loadTable(RapidsType.All);
+				if (rapidNotification) {
+					rapidNotification.update({ message: 'RAPIDS information retrieved', type: 'success' });
+					setTimeout(rapidNotification.close, 1000);
+				}
+			});
+		}
 	});
 }
 
@@ -135,7 +137,6 @@ function getRogues(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getRogues(offset);
 					}
 				});
@@ -207,7 +208,6 @@ function getSuspect(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getSuspect(offset);
 					}
 				});
@@ -279,7 +279,6 @@ function getInterfering(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getInterfering(offset);
 					}
 				});
@@ -351,7 +350,6 @@ function getNeighbours(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getNeighbours(offset);
 					}
 				});
@@ -422,7 +420,6 @@ function getContained(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getContained(offset);
 					}
 				});
@@ -699,7 +696,6 @@ function getWIDSEvents(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getWIDSEvents(offset);
 					}
 				});
@@ -935,7 +931,6 @@ function exportRules() {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getWIDSEvents(offset);
 					}
 				});

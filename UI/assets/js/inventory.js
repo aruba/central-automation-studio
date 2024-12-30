@@ -23,7 +23,7 @@ function getInventoryData() {
 	gotAPs = false;
 	gotSwitches = false;
 	gotGateways = false;
-	updateMonitoringWithClients(false);
+	updateMonitoringWithClients(false,false);
 }
 
 function loadCurrentPageAP() {
@@ -451,10 +451,11 @@ function buildCSVData(selectedGroup, selectedSite) {
 	// For each row in the filtered set
 	$.each(filteredRows[0], function() {
 		var device = deviceDisplay[this];
-		
+		console.log(device)
 		// Find monitoring data if there is any
 		var monitoringInfo = findDeviceInMonitoring(device.serial);
 		if (monitoringInfo) {
+			
 			var groupToUse = monitoringInfo['group_name'] ? monitoringInfo['group_name'] : '';
 			if (selectedGroup) groupToUse = selectedGroup;
 
@@ -486,8 +487,12 @@ function buildCSVData(selectedGroup, selectedSite) {
 			
 			var keyExpiry = '';
 			if (device['subscription_key']) keyExpiry = moment(subscriptionKeys[device['subscription_key']]['end_date']).format('L');
+			
+			var modelString = device['model'];
+			if (device['device_type'] === "SWITCH") modelString = modelString + ' ('+device['aruba_part_no']+')';
+			if (device['device_type'] === "GATEWAY") modelString = 'A'+ modelString;
 
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '', [expiryKey]: keyExpiry });
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: modelString, [statusKey]: monitoringInfo['status'] ? monitoringInfo['status'] : '', [uptimeKey]: uptimeString, [ipKey]: monitoringInfo['ip_address'] ? monitoringInfo['ip_address'] : '', [nameKey]: monitoringInfo['name'] ? monitoringInfo['name'] : '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [clientsKey]:clientCount, [firmwareKey]: firmwareVersion, [publicIPKey]: publicIP, [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '', [expiryKey]: keyExpiry });
 		} else {
 			var groupToUse = '';
 			if (selectedGroup) groupToUse = selectedGroup;
@@ -497,8 +502,12 @@ function buildCSVData(selectedGroup, selectedSite) {
 			
 			var keyExpiry = '';
 			if (device['subscription_key']) keyExpiry = moment(subscriptionKeys[device['subscription_key']]['end_date']).format('L');
-
-			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: device['model'], [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '', [expiryKey]: keyExpiry });
+			
+			var modelString = device['model'];
+			if (device['device_type'] === "SWITCH") modelString = modelString + ' ('+device['aruba_part_no']+')';
+			if (device['device_type'] === "GATEWAY") modelString = 'A'+ modelString;
+			
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [typeKey]: device['device_type'], [skuKey]: device['aruba_part_no'], [modelKey]: modelString, [statusKey]: '', [uptimeKey]: '', [ipKey]: '', [nameKey]: '', [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: '', [clientsKey]:'', [firmwareKey]: '', [publicIPKey]: '', [licenseKey]: device['tier_type'] ? titleCase(device['tier_type']) : '', [subscriptionKey]: device['subscription_key'] ? device['subscription_key'] : '', [expiryKey]: keyExpiry });
 		}
 	});
 

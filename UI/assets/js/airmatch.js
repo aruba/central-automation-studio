@@ -175,70 +175,72 @@ function updateAirMatchData() {
 	apImage.src = 'assets/img/ap-icon.svg';
 	
 	$.when(authRefresh()).then(function() {
-		sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
-		fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
-		twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
-		sixPower = [];
-		fivePower = [];
-		twoPower = [];
-
-		powerLabels = [];
-		
-		// Hide the Elements that are not used in the Large Scale Deployment Mode
-		var scaleOpt = localStorage.getItem('data_optimization');
-		var optHistory = localStorage.getItem('load_optimization_history');
-		if (optHistory === null || optHistory === '') {
-			optHistory = true;
-		} else {
-			optHistory = JSON.parse(optHistory);
+		if (!failedAuth) {
+			sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
+			fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
+			twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
+			sixPower = [];
+			fivePower = [];
+			twoPower = [];
+	
+			powerLabels = [];
+			
+			// Hide the Elements that are not used in the Large Scale Deployment Mode
+			var scaleOpt = localStorage.getItem('data_optimization');
+			var optHistory = localStorage.getItem('load_optimization_history');
+			if (optHistory === null || optHistory === '') {
+				optHistory = true;
+			} else {
+				optHistory = JSON.parse(optHistory);
+			}
+			var apCount = getAPs().length;
+			if (scaleOpt === 'scale' || !optHistory) {
+				document.getElementById('am-history').hidden = true;
+				optimizationCount = 1;
+				neighbourMode = ScaleType.Scale;
+				showNotification('ca-scale', 'Configured for reduced API data...', 'top', 'center', 'info');
+			} else if (apCount > 10000) {
+				document.getElementById('am-history').hidden = true;
+				optimizationCount = 1;
+				neighbourMode = ScaleType.Scale;
+				showNotification('ca-scale', 'Automatically configured for reduced API data...', 'top', 'center', 'info');
+			} else {
+				document.getElementById('am-history').hidden = false;
+				optimizationCount = 11;
+				neighbourMode = ScaleType.Full;
+				getRFNeighbours();
+			}
+	
+			getEIRPDistribution();
+			getChannelDistribution();
+	
+			getAirmatchOptimization();
+			getStaticRadios();
+	
+			getAPsForNeighbours();
+	
+			// Get VRF data
+			setTimeout(getCampus, 1500, false);
+			
+			// Do we need to grab the group properties?
+			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
+			if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
+				loadAirMatchEvents = true;
+			} else {
+				loadAirMatchEvents = JSON.parse(loadAirMatchEvents);
+			}
+			if (loadAirMatchEvents) {
+				document.getElementById('rfevents-row').hidden = false;
+				getRFEvents();
+				document.getElementById('radar-row').hidden = false;
+				getNoiseEvents();
+			} else {
+				document.getElementById('rfevents-row').hidden = true;
+				document.getElementById('radar-row').hidden = true;
+			}
+			//getAirMatchHistory();
+			$('[data-toggle="tooltip"]').tooltip();
 		}
-		var apCount = getAPs().length;
-		if (scaleOpt === 'scale' || !optHistory) {
-			document.getElementById('am-history').hidden = true;
-			optimizationCount = 1;
-			neighbourMode = ScaleType.Scale;
-			showNotification('ca-scale', 'Configured for reduced API data...', 'top', 'center', 'info');
-		} else if (apCount > 10000) {
-			document.getElementById('am-history').hidden = true;
-			optimizationCount = 1;
-			neighbourMode = ScaleType.Scale;
-			showNotification('ca-scale', 'Automatically configured for reduced API data...', 'top', 'center', 'info');
-		} else {
-			document.getElementById('am-history').hidden = false;
-			optimizationCount = 11;
-			neighbourMode = ScaleType.Full;
-			getRFNeighbours();
-		}
-
-		getEIRPDistribution();
-		getChannelDistribution();
-
-		getAirmatchOptimization();
-		getStaticRadios();
-
-		getAPsForNeighbours();
-
-		// Get VRF data
-		setTimeout(getCampus, 1500, false);
-		
-		// Do we need to grab the group properties?
-		var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
-		if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
-			loadAirMatchEvents = true;
-		} else {
-			loadAirMatchEvents = JSON.parse(loadAirMatchEvents);
-		}
-		if (loadAirMatchEvents) {
-			document.getElementById('rfevents-row').hidden = false;
-			getRFEvents();
-			document.getElementById('radar-row').hidden = false;
-			getNoiseEvents();
-		} else {
-			document.getElementById('rfevents-row').hidden = true;
-			document.getElementById('radar-row').hidden = true;
-		}
-		//getAirMatchHistory();
-		$('[data-toggle="tooltip"]').tooltip();
 	});
 }
 
@@ -1045,10 +1047,11 @@ function loadOptimization(timestamp, updateData) {
 		
 		var deployed = currentData['meta']['deploy'];
 		var numRadios = currentData['meta']['num_radios'];
-		var improvement =  '<span data-toggle="tooltip" data-placement="right" title="Threshold: ' + currentData['quality_threshold'][rfBand] + '">' + parseFloat(currentData['meta']['improvement_percent']).toFixed(2) + '%</span>';
+		var improvement = '';
+		if (currentData['meta']['improvement_percent']) improvement = '<span data-toggle="tooltip" data-placement="right" title="Threshold: ' + currentData['quality_threshold'][rfBand] + '">' + parseFloat(currentData['meta']['improvement_percent']).toFixed(2) + '%</span>';
 		var newRadios = currentData['meta']['new_radios_computed'];
 		
-		table.row.add([rfBand, rfDomain, rfPartition, numRadios, deployed?'Deployed':'Not Deployed', improvement]);
+		table.row.add([rfBand, rfDomain, rfPartition, numRadios?numRadios:'0', deployed?'Deployed':'Not Deployed', improvement]);
 	});
 	$('#partition-table')
 	.DataTable()
@@ -2240,7 +2243,6 @@ function getFloors(offset, triggerLocation) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getFloors(offset);
 					}
 				});

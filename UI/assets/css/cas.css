@@ -928,6 +928,26 @@ Generated using nucleoapp.com
   content: "\eac4";
 }
 
+.ca-update-license::before {
+  content: "\eac5";
+}
+
+.ca-ap-license::before {
+  content: "\eac6";
+}
+
+.ca-resize-x::before {
+  content: "\eac7";
+}
+
+.ca-ap-altitude::before {
+  content: "\eac8";
+}
+
+.ca-antenna-width::before {
+  content: "\eac9";
+}
+
 
 
 /*------------------------
@@ -1624,6 +1644,91 @@ fieldset[disabled] .btn-element.active {
     border-top-color: #01A982;
 }
 
+.btn-purple {
+    border: 1px solid #9368E9;
+    color: #FFFFFF;
+    background-color: #9368E9;
+    cursor: pointer;
+}
+
+.btn-purple:hover,
+.btn-purple:focus,
+.btn-purple:active,
+.btn-purple.active,
+.open>.btn-purple.dropdown-toggle {
+    background-color: #9368E9;
+    color: #FFFFFF;
+    border-color: #9368E9;
+}
+
+.btn-purple.disabled,
+.btn-purple.disabled:hover,
+.btn-purple.disabled:focus,
+.btn-purple.disabled.focus,
+.btn-purple.disabled:active,
+.btn-purple.disabled.active,
+.btn-purple:disabled,
+.btn-purple:disabled:hover,
+.btn-purple:disabled:focus,
+.btn-purple:disabled.focus,
+.btn-purple:disabled:active,
+.btn-purple:disabled.active,
+.btn-purple[disabled],
+.btn-purple[disabled]:hover,
+.btn-purple[disabled]:focus,
+.btn-purple[disabled].focus,
+.btn-purple[disabled]:active,
+.btn-purple[disabled].active,
+fieldset[disabled] .btn-purple,
+fieldset[disabled] .btn-purple:hover,
+fieldset[disabled] .btn-purple:focus,
+fieldset[disabled] .btn-purple.focus,
+fieldset[disabled] .btn-purple:active,
+fieldset[disabled] .btn-purple.active {
+    background-color: transparent;
+    border-color: #9368E9;
+}
+
+.btn-purple.btn-outline {
+    color: #9368E9;
+    background-color: transparent;
+    border: 1px solid #9368E9;
+    opacity: 1;
+    filter: alpha(opacity=100);
+}
+
+.btn-purple.btn-outline:hover,
+.btn-purple.btn-outline:focus,
+.btn-purple.btn-outline:active,
+.btn-purple.btn-outline.active,
+.open>.btn-purple.btn-outline.dropdown-toggle {
+    background-color: #9368E9;
+    color: #FFFFFF;
+    border: 1px solid #9368E9;
+}
+
+.btn-purple.btn-outline .caret {
+    border-top-color: #FFFFFF;
+}
+
+.btn-purple.btn-link {
+    border-color: transparent !important;
+    background-color: transparent !important;
+    color: #888888;
+}
+
+.btn-purple.btn-link:hover,
+.btn-purple.btn-link:focus,
+.btn-purple.btn-link:active {
+    text-decoration: none;
+    border-color: transparent;
+    color: #797979;
+}
+
+.btn-purple .caret {
+    border-top-color: #9368E9;
+}
+
 .rightVert {
   border-right: 1px solid lightgrey;
 }
@@ -1648,6 +1753,14 @@ pre {
 }
 .json-string {
   color: red;
+}
+
+.has-error  {
+    color: #FB404B !important;
+}
+
+.has-error:focus {
+    border-color: #FB404B !important;
 }
 
 .full-page>.content .card-register .card-subtitle-dark {

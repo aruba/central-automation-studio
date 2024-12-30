@@ -1,6 +1,6 @@
 /*
 Central Automation v1.5
-Updated: 1.26
+Updated: 1.41.10
 Aaron Scott (WiFi Downunder) 2021-2024
 */
 
@@ -8,16 +8,22 @@ var configGroups = [];
 var groupConfigs = {};
 var groupWLANs = {};
 var wlans = [];
+var allWLANS = [];
+var userRoles = [];
 
 var groupCounter = 0;
 var updateCounter = 0;
 var errorCounter = 0;
+var pskCounter = 0;
 var wlanPrefix = 'wlan ssid-profile ';
+var userRolePrefix = 'wlan access-rule ';
 
 var selectedDevices = {};
+var selectedWLAN;
 var deviceInfo = {};
 
 var groupConfigNotification;
+var tunneledGroupList = [];
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Array Compare Function
@@ -52,10 +58,9 @@ Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 		PSK functions (1.26)
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function getWLANsforGroup() {
-	//showNotification('ca-wifi-protected', 'Obtaining WLANs for selected group configuration', 'bottom', 'center', 'info');
 	if (document.getElementById('pskPassphrase')) document.getElementById('pskPassphrase').value = '';
 	var wlans = document.getElementById('wlanselector');
-	wlans.options.length = 0;
+	if (wlans) wlans.options.length = 0;
 
 	var select = document.getElementById('groupselector');
 	var wlanGroup = select.value;
@@ -67,46 +72,7 @@ function getWLANsforGroup() {
 	});
 	$('#wlanselector').selectpicker('refresh');
 
-	// NOT NEEDED SINCE WE ALREADY HAVE THE FULL CONFIG - ARE ARE PULLING THE SSIDS OUT OF THAT CONFIG
-	/*var settings = {
-		url: getAPIURL() + '/tools/getCommandwHeaders',
-		method: 'POST',
-		timeout: 0,
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify({
-			url: localStorage.getItem('base_url') + '/configuration/v1/wlan/' + wlanGroup,
-			access_token: localStorage.getItem('access_token'),
-		}),
-	};
-
-	$.ajax(settings).done(function(commandResults, statusText, xhr) {
-		if (commandResults.hasOwnProperty('headers')) {
-			updateAPILimits(JSON.parse(commandResults.headers));
-		}
-		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/wlan/<GROUP>)');
-			apiErrorCount++;
-			return;
-		} else if (commandResults.hasOwnProperty('error_code')) {
-			logError(commandResults.description);
-			apiErrorCount++;
-			return;
-		}
-		var response = JSON.parse(commandResults.responseBody);
-
-		$.each(response.wlans, function() {
-			$('#wlanselector').append($('<option>', { value: this['name'], text: this['essid'] }));
-		});
-		if (response.wlans.length > 0) {
-			if ($('.selectpicker').length != 0) {
-				$('.selectpicker').selectpicker('refresh');
-			}
-		} else {
-			showNotification('ca-wifi', 'There are no WLANs in the "' + wlanGroup + '" group', 'bottom', 'center', 'danger');
-		}
-	});*/
+	
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
@@ -300,25 +266,23 @@ function generateQRCode() {
 // UPDATED 1.26 - Added delay to prevent hitting API calls/sec limit
 function getWLANs() {
 	$.when(authRefresh()).then(function() {
-		//$.when(getGroupData(0)).then(function () {
-		// Clearing old data
-		$('#wlan-table')
-			.DataTable()
-			.clear();
-		configGroups = getGroups();
-		groupCounter = 0;
-		groupConfigs = {};
-		groupWLANs = {};
-		wlans = [];
-		groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
-
-		// Grab config for each Group in Central - need to add in API call delay to not hit api/sec limit
-		var apiDelay = 0;
-		$.each(configGroups, function() {
-			setTimeout(getWLANConfigForGroup, 250 * apiDelay, this.group);
-			apiDelay++;
-		});
-		//})
+		if (!failedAuth) {
+			// Clearing old data
+			$('#wlan-table')
+				.DataTable()
+				.clear();
+			configGroups = getGroups();
+			groupCounter = 0;
+			groupConfigs = {};
+			groupWLANs = {};
+			wlans = [];
+			groupConfigNotification = showProgressNotification('ca-folder-settings', 'Getting Group Configs...', 'bottom', 'center', 'info');
+	
+			// Grab config for each Group in Central - need to add in API call delay to not hit api/sec limit
+			for(var i=0;i<configGroups.length;i++) {
+				setTimeout(getWLANConfigForGroup, apiDelay*i, configGroups[i].group);
+			}
+		}
 	});
 }
 
@@ -356,75 +320,118 @@ function getWLANConfigForGroup(group) {
 			return;
 		}
 		var response = JSON.parse(commandResults.responseBody);
+		
+		if (Array.isArray(response)) {
+			// Get the correct group back from the original Group
+			var requestedGroup = requestedUrl.match(/[^\/]+$/)[0];
+			
+			// save the group config for modifications
+			groupConfigs[requestedGroup] = response;
+			
+			// pull the SSIDs out of each group config
+			getWLANsFromConfig(response, requestedGroup);
+		
+			// pull the roles out of each group config
+			getUserRolesFromConfig(response, requestedGroup);
+		}
 
-		// Get the correct group back from the original Group
-		var requestedGroup = requestedUrl.match(/[^\/]+$/)[0];
-
-		// save the group config for modifications
-		groupConfigs[requestedGroup] = response;
-		// pull the SSIDs out of each group config
-		getWLANsFromConfig(response, requestedGroup);
+		
 
 		groupCounter++;
-		if (groupCounter >= configGroups.length) {
-			// Build table of user roles
-			var table = $('#wlan-table').DataTable();
-			for (i = 0; i < wlans.length; i++) {
-				//console.log(wlans[i]['config']);
-				// Pull additional info out
-				var keyMgmt = '';
-				var fastRoaming = [];
-				var mbr;
-				var mbr2 = '1';
-				var mbr5 = '6';
-				var apZone = '';
-				var rfBand = 'All';
-				var rfBand6 = false;
-				$.each(wlans[i]['config'], function() {
-					if (this.includes('opmode ')) keyMgmt = this.replace('opmode ', '');
-					if (this.includes('g-min-tx-rate ')) mbr2 = this.replace('g-min-tx-rate ', '');
-					if (this.includes('a-min-tx-rate ')) mbr5 = this.replace('a-min-tx-rate ', '');
-					if (this.includes('dot11k')) fastRoaming.push('11k');
-					if (this.includes('dot11v')) fastRoaming.push('11v');
-					if (this.includes('dot11r')) fastRoaming.push('11r');
-					if (this.includes('zone')) apZone = this.replace('zone ', '');
-					if (this.includes('rf-band ')) rfBand = this.replace('rf-band ', '');
-					if (this.includes('rf-band-6ghz')) rfBand6 = true;
-				});
-				fastRoaming.sort();
-				mbr = '2.4GHz: ' + mbr2 + 'Mbps / 5GHz: ' + mbr5 + 'Mbps';
-				
-				if (rfBand === '2.4') rfBand = '2.4GHz';
-				else if (rfBand === '5.0') rfBand = '5GHz';
-				else if (rfBand === 'none' && rfBand6) rfBand = '6GHz';
-				
-				if (rfBand === 'All') rfBand = '2.4GHz/5GHz';	
-				if (rfBand === '2.4GHz/5GHz' && rfBand6) rfBand = 'All';	
-				if ((rfBand === '2.4GHz' || rfBand === '5GHz') && rfBand6) rfBand += '/6GHz';
-
-				// Action Buttons
-				var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-solid fa-pencil"></i></a> ';
-				if (wlans[i]['config'].indexOf('disable') != -1) {
-					actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-solid fa-wifi"></i></a>';
-				} else {
-					actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-solid fa-wifi"></i></a>';
-				}
-
-				// Add row to table
-				table.row.add([i, '<strong>' + wlans[i]['name'] + '</strong>', wlans[i]['groups'].join(', '), rfBand, keyMgmt, mbr, fastRoaming.join('/'), apZone, actionBtns]);
-			}
-			$('#wlan-table')
-				.DataTable()
-				.rows()
-				.draw();
-
-			if (groupConfigNotification) {
-				groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
-				setTimeout(groupConfigNotification.close, 1000);
-			}
-			$('[data-toggle="tooltip"]').tooltip();
-		}
+		groupConfigNotification.update({ progress: groupCounter/configGroups.length*100 });
+		reloadWLANTable();
 	});
+}
+
+function reloadWLANTable() {
+	if (groupCounter >= configGroups.length) {
+		$('#wlan-table')
+		.DataTable()
+		.clear();
+		// Build table of ssids
+		var table = $('#wlan-table').DataTable();
+		for (i = 0; i < wlans.length; i++) {
+			// Pull additional info out
+			var keyMgmt = '';
+			var fastRoaming = [];
+			var mbr;
+			var mbr2 = '1';
+			var mbr5 = '6';
+			var apZone = '';
+			var rfBand = 'All';
+			var rfBand6 = false;
+			$.each(wlans[i]['config'], function() {
+				if (this.includes('opmode ')) keyMgmt = this.replace('opmode ', '');
+				if (this.includes('g-min-tx-rate ')) mbr2 = this.replace('g-min-tx-rate ', '');
+				if (this.includes('a-min-tx-rate ')) mbr5 = this.replace('a-min-tx-rate ', '');
+				if (this.includes('dot11k')) fastRoaming.push('11k');
+				if (this.includes('dot11v')) fastRoaming.push('11v');
+				if (this.includes('dot11r')) fastRoaming.push('11r');
+				if (this.includes('zone')) apZone = this.replace('zone ', '');
+				if (this.includes('rf-band ')) rfBand = this.replace('rf-band ', '');
+				if (this.includes('rf-band-6ghz')) rfBand6 = true;
+			});
+			fastRoaming.sort();
+			mbr = '2.4GHz: ' + mbr2 + 'Mbps / 5GHz: ' + mbr5 + 'Mbps';
+			
+			if (rfBand === '2.4') rfBand = '2.4GHz';
+			else if (rfBand === '5.0') rfBand = '5GHz';
+			else if (rfBand === 'none' && rfBand6) rfBand = '6GHz';
+			
+			if (rfBand === 'All') rfBand = '2.4GHz/5GHz';	
+			if (rfBand === '2.4GHz/5GHz' && rfBand6) rfBand = 'All';	
+			if ((rfBand === '2.4GHz' || rfBand === '5GHz') && rfBand6) rfBand += '/6GHz';
+	
+			// Action Buttons
+			var actionBtns = '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Edit WLAN" onclick="loadWLANUI(\'' + i + '\')"><i class="fa-solid fa-pencil"></i></a> ';
+			if (wlans[i]['config'].indexOf('disable') != -1) {
+				actionBtns += '<a class="btn btn-link btn-neutral" data-toggle="tooltip" data-placement="top" title="Enable WLAN" onclick="enableWLAN(\'' + i + '\',true)"><i class="fa-solid fa-wifi"></i></a>';
+			} else {
+				actionBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Disable WLAN" onclick="enableWLAN(\'' + i + '\',false)"><i class="fa-solid fa-wifi"></i></a>';
+			}
+	
+			// Add row to table
+			table.row.add([i, '<strong>' + wlans[i]['name'] + '</strong>', wlans[i]['groups'].join(', '), rfBand, keyMgmt, mbr, fastRoaming.join('/'), apZone, actionBtns]);
+		}
+		$('#wlan-table')
+			.DataTable()
+			.rows()
+			.draw();
+	
+		if (groupConfigNotification) {
+			groupConfigNotification.update({ message: 'Retrieved Group Configs...', type: 'success' });
+			setTimeout(groupConfigNotification.close, 1000);
+		}
+		
+		// Rebuild Group dropdown to only contain groups with config
+		select = document.getElementById('groupselector');
+		select.options.length = 0;
+		
+		// Sort the groups alphabetically
+		var wlanGroupList = Object.keys(groupConfigs);
+		wlanGroupList.sort((a, b) => {
+			const groupA = a.toUpperCase(); // ignore upper and lowercase
+			const groupB = b.toUpperCase(); // ignore upper and lowercase
+			// Sort on Group name
+			if (groupA < groupB) {
+				return -1;
+			}
+			if (groupA > groupB) {
+				return 1;
+			}
+			return 0;
+		});
+		
+		// Add and select the groups needed
+		$.each(wlanGroupList, function() {
+			$('#groupselector').append($('<option>', { value: this, text: this }));
+			if ($('.selectpicker').length != 0) {
+				$('.selectpicker').selectpicker('refresh');
+			}
+		});
+		
+		$('[data-toggle="tooltip"]').tooltip();
+	}
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -442,57 +449,66 @@ function getConfigforGroup() {
 }
 
 function getPSKForWLAN(wlanGroup, wlan) {
-	if (!wlan.includes(' ')) {
-		var settings = {
-			url: getAPIURL() + '/tools/getCommandwHeaders',
-			method: 'POST',
-			timeout: 0,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			data: JSON.stringify({
-				url: localStorage.getItem('base_url') + '/configuration/v2/wlan/' + wlanGroup + '/' + wlan,
-				access_token: localStorage.getItem('access_token'),
-			}),
-		};
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v2/wlan/' + wlanGroup + '/' + wlan,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
 
-		$.ajax(settings).done(function(commandResults, statusText, xhr) {
-			if (commandResults.hasOwnProperty('headers')) {
-				updateAPILimits(JSON.parse(commandResults.headers));
-			}
-			if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-				logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/wlan/<GROUP>/<WLAN>)');
-				apiErrorCount++;
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/wlan/<GROUP>/<WLAN>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		if (response.hasOwnProperty('message')) {
+			if (response.message === 'API rate limit exceeded') {
+				// Try again - too many concurrent calls
+				console.log('API Limit Exceeded - Trying again for ' + wlan + ' in ' + wlanGroup);
+				setTimeout(getPSKForWLAN, apiDelay, wlanGroup, wlan);
 				return;
-			} else if (commandResults.hasOwnProperty('error_code')) {
-				logError(commandResults.description);
-				apiErrorCount++;
-				return;
 			}
-			var response = JSON.parse(commandResults.responseBody);
-
-			if (response.wlan && response.wlan.wpa_passphrase) {
-				var passphrase = response.wlan.wpa_passphrase;
-				$.each(wlans, function() {
-					// find the WLAN and update the line with the actual PSK
-					if (this.name === wlan && this.groups.includes(wlanGroup)) {
-						// found the matching wlan
-						var config = this.config;
-						for (i = 0; i < config.length; i++) {
-							if (config[i].includes('wpa-passphrase')) {
-								this.config[i] = 'wpa-passphrase ' + passphrase;
-							}
+		}
+		if (response.wlan && response.wlan.wpa_passphrase) {
+			var passphrase = response.wlan.wpa_passphrase;
+			
+			$.each(groupWLANs[wlanGroup], function() {
+				// find the WLAN and update the line with the actual PSK
+				if (this.name === wlan) {
+					// found the matching wlan
+					var config = this.config;
+					for (i = 0; i < config.length; i++) {
+						if (config[i].includes('wpa-passphrase')) {
+							this.config[i] = 'wpa-passphrase ' + passphrase;
+							pskCounter--;
+							if (pskCounter <= 0) processForDuplicateWLANs();
 						}
 					}
-				});
-			}
-		});
-	}
+				}
+			});
+		}
+	});
 }
 
 // UPDATED 1.26 - Added the building of the SSID list per Group
 function getWLANsFromConfig(config, group) {
-	// Find the existing user role
+	// Find the existing SSID
 	var startIndex = -1;
 	var endIndex = -1;
 	var wlanName = '';
@@ -507,56 +523,37 @@ function getWLANsFromConfig(config, group) {
 				wlanName = currentLine.replace(wlanPrefix, '');
 				startIndex = i;
 			} else if (endIndex == -1 && startIndex != -1 && !currentLine.includes('  ')) {
-				// next line after the end of the current role
+				// next line after the end of the current ssid
 				endIndex = i;
 			}
+			
+			// Remove Quotes
+			wlanName = wlanName.replaceAll('"', '');
+			
 			if (endIndex != -1 && startIndex != -1) {
 				// Found the start and end of a WLAN
 				// Build the WLAN from the config.
 				// No need to keep the first line - since we already have the wlanName, the first line can be rebuilt.
 				var fullWLAN = config.slice(startIndex + 1, endIndex);
-
 				var essidName = 'abc';
 				var finalWLAN = [];
+				pskCounter = 0;
 				// Remove the "index #" line and "utf8"
 				$.each(fullWLAN, function() {
 					if (this.includes('essid')) essidName = this.match(/^.*essid\s(.*$)/)[1];
 					if (!this.includes('utf8') && !this.includes('index ')) finalWLAN.push(this.trim());
-					if (this.trim().includes('-psk-') || this.trim().includes('wpa3-sae')) getPSKForWLAN(group, wlanName);
+					if (this.trim().includes('-psk-') || this.trim().includes('wpa3-sae')) {
+						pskCounter++;
+						getPSKForWLAN(group, wlanName);
+					}
 				});
 
 				// Build WLANs list for the group
 				var groupWLANList = groupWLANs[group];
 				if (!groupWLANList) groupWLANList = [];
-				groupWLANList.push({ name: wlanName, essid: essidName });
+				groupWLANList.push({ name: wlanName, essid: essidName, config: finalWLAN });
 				groupWLANs[group] = groupWLANList;
-
-				// Check if we have already found the exact same role in another group
-				var existingWLANMatch = false;
-				$.each(wlans, function() {
-					if (this['name'] === wlanName) {
-						// Role with this name exists - now check if the rules are the same.
-						if (this['config'].equals(finalWLAN)) {
-							// exactly the same ACLs for the same role name. add group name to record.
-							var groupList = this['groups'];
-							groupList.push(group);
-							this['groups'] = groupList;
-							existingWLANMatch = true;
-							return false;
-						}
-					}
-				});
-
-				// No existing exact match. Need to add record.
-				if (!existingWLANMatch) {
-					var groupList = [];
-					groupList.push(group);
-					// Currently do not support WLANs with spaces in the name
-					if (!wlanName.includes(' ')) {
-						wlans.push({ name: wlanName, config: finalWLAN, groups: groupList });
-					}
-				}
-
+				
 				// Is the current line another WLAN?
 				if (currentLine.includes(wlanPrefix)) {
 					wlanName = currentLine.replace(wlanPrefix, '');
@@ -564,6 +561,117 @@ function getWLANsFromConfig(config, group) {
 					endIndex = -1;
 				} else {
 					// Not another WLAN - rest of the config shouldn't contain any WLANs so break out of loop
+					if (pskCounter <= 0) processForDuplicateWLANs();
+					break;
+				}
+			}
+		}
+	}
+}
+
+function processForDuplicateWLANs() {
+	wlans = [];
+	var groupKeys = Object.keys(groupWLANs);
+	$.each(groupKeys, function() {
+		var groupName = this;
+		$.each(groupWLANs[groupName], function() {
+			var wlanName = this.name;
+			var wlanConfig = this.config
+			// Check if we have already found the exact same ssid in another group
+			var existingWLANMatch = false;
+			$.each(wlans, function() {
+				if (this['name'] === wlanName) {
+					// SSID with this name exists - now check if the rules are the same.
+					if (JSON.stringify(this['config']) === JSON.stringify(wlanConfig)) {
+					//if (this['config'].equals(finalWLAN)) {
+						// exactly the same ACLs for the same ssid name. add group name to record.
+						var groupList = this['groups'];
+						groupList.push(groupName);
+						this['groups'] = groupList;
+						existingWLANMatch = true;
+						return false;
+					}
+				}
+			});
+			
+			
+			// No existing exact match. Need to add record.
+			if (!existingWLANMatch) {
+				var groupList = [];
+				groupList.push(groupName);
+				// Currently do not support WLANs with spaces in the name
+				//if (!wlanName.includes(' ')) {
+					wlans.push({ name: wlanName, config: wlanConfig, groups: groupList });
+				//}
+			}
+		});
+	})
+	reloadWLANTable();
+}
+
+function getUserRolesFromConfig(config, group) {
+	// Find the existing user role
+	var startIndex = -1;
+	var endIndex = -1;
+	var roleName = '';
+
+	// check if is a UI group (this doesn't work for template groups... yet)
+	if (config.length) {
+		for (i = 0; i < config.length; i++) {
+			var currentLine = config[i];
+
+			// Find first row of the user role
+			if (currentLine.includes(userRolePrefix) && startIndex == -1) {
+				// pull out the role name.
+				roleName = currentLine.replace(userRolePrefix, '');
+				startIndex = i;
+			} else if (endIndex == -1 && startIndex != -1 && !currentLine.includes('  ')) {
+				// next line after the end of the current role
+				endIndex = i;
+			}
+
+			if (endIndex != -1 && startIndex != -1) {
+				// Found the start and end of a user role
+				// Build the ACLs from the config.
+				// No need to keep the first line - since we already have the roleName, the first line can be rebuilt.
+				var fullACLs = config.slice(startIndex + 1, endIndex);
+
+				var finalACLs = [];
+				// Remove the "index #" line and "utf8"
+				$.each(fullACLs, function() {
+					if (!this.includes('utf8') && !this.includes('index ')) finalACLs.push(this.trim());
+				});
+
+				// Check if we have already found the exact same role in another group
+				var existingRoleMatch = false;
+				$.each(userRoles, function() {
+					if (this['name'] === roleName) {
+						// Role with this name exists - now check if the rules are the same.
+						if (this['acls'].equals(finalACLs)) {
+							// exactly the same ACLs for the same role name. add group name to record.
+							var groupList = this['groups'];
+							groupList.push(group);
+							this['groups'] = groupList;
+							existingRoleMatch = true;
+							return false;
+						}
+					}
+				});
+
+				// No existing exact match. Need to add record.
+				if (!existingRoleMatch) {
+					var groupList = [];
+					groupList.push(group);
+					userRoles.push({ name: roleName, acls: finalACLs, groups: groupList });
+				}
+
+				// Is the current line another User Role?
+				if (currentLine.includes(userRolePrefix)) {
+					roleName = currentLine.replace(userRolePrefix, '');
+					startIndex = i;
+					endIndex = -1;
+				} else {
+					// Not another user role - rest of the config shouldn't contain any user roles so break out of loop
 					break;
 				}
 			}
@@ -576,7 +684,7 @@ function getWLANsFromConfig(config, group) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageGroup() {
 	select = document.getElementById('wlanselector');
-	select.options.length = 0;
+	if (select) select.options.length = 0;
 	
 	table = document.getElementById('device-table');
 	if (table) {
@@ -593,30 +701,57 @@ function loadCurrentPageGroup() {
 }
 
 function loadWLANUI(wlanIndex) {
-	var wlan = wlans[wlanIndex];
-	document.getElementById('wlanName').value = wlan.name;
-	document.getElementById('wlanConfig').value = wlan.config.join('\n');
+	tunneledGroupList = [];
+	
+	selectedWLAN = wlans[wlanIndex];
+	document.getElementById('wlanName').value = selectedWLAN.name;
+	document.getElementById('wlanConfig').value = selectedWLAN.config.join('\n');
 
-	// load selectPicker with Groups
-	select = document.getElementById('modalGroupSelector');
-	select.options.length = 0;
-	$.each(configGroups, function() {
-		var currentGroup = this.group;
-		$('#modalGroupSelector').append($('<option>', { value: currentGroup, text: currentGroup }));
-		if ($('.selectpicker').length != 0) {
-			$('.selectpicker').selectpicker('refresh');
-		}
-		$.each(wlan.groups, function(idx, val) {
-			$("select option[value='" + val + "']").prop('selected', true);
-		});
-	});
+	// Rebuild Group dropdown to only contain groups with config
+	buildGroupList();
+	
 	checkSelectionCount();
 	
+	// Check for specific configs and set checkboxes
 	checkForTxBFConfig();
 	checkForMUMIMOConfig();
 	checkForOFDMAConfig();
 	
 	$('#WLANModalLink').trigger('click');
+}
+
+function buildGroupList() {
+	// Rebuild Group dropdown to only contain groups with config
+	select = document.getElementById('modalGroupSelector');
+	select.options.length = 0;
+	
+	// Sort the groups alphabetically
+	var wlanGroupList = Object.keys(groupConfigs);
+	wlanGroupList.sort((a, b) => {
+		const groupA = a.toUpperCase(); // ignore upper and lowercase
+		const groupB = b.toUpperCase(); // ignore upper and lowercase
+		// Sort on Group name
+		if (groupA < groupB) {
+			return -1;
+		}
+		if (groupA > groupB) {
+			return 1;
+		}
+		return 0;
+	});
+	
+	// Add and select the groups needed
+	$.each(wlanGroupList, function() {
+		$('#modalGroupSelector').append($('<option>', { value: this, text: this }));
+		if ($('.selectpicker').length != 0) {
+			$('.selectpicker').selectpicker('refresh');
+		}
+		$.each(selectedWLAN.groups, function(idx, val) {
+			$("select option[value='" + val.toString() + "']").prop('selected', true);
+			if (!tunneledGroupList.includes(val.toString())) tunneledGroupList.push(val.toString());
+		});
+	});
+	$('.selectpicker').selectpicker('refresh');
 }
 
 function checkSelectionCount() {
@@ -631,6 +766,18 @@ function checkSelectionCount() {
 	} else {
 		document.getElementById('saveWLANBtn').disabled = false;
 		document.getElementById('selectAllGroups').checked = false;
+	}
+	
+	var newConfig = document.getElementById('wlanConfig').value;
+	if ((newConfig.includes('forward-mode l2') || newConfig.includes('forward-mode l3') || newConfig.includes('forward-mode mixed')) && selectedGroups.toString() !== tunneledGroupList.toString()) {
+		Swal.fire({
+			title: 'WLAN Deployment',
+			text: 'Deploying Tunnel or Mixed mode SSIDs to additional groups is not supported. Modifying an existing WLAN in the original group is supported.',
+			icon: 'warning',
+		});
+		
+		//reset the selected groups back to original
+		buildGroupList();
 	}
 }
 
@@ -683,13 +830,39 @@ function checkForDuplicateWLANName(newName) {
 	return duplicate;
 }
 
+function confirmWLANDelete() {
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'The WLAN "'+ document.getElementById('wlanName').value + '" will be deleted from the selected groups.',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, do it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			updateWLAN(false);
+		}
+	});
+}
+
 function updateWLAN(addingWLAN) {
+	if ($('#WLANModal')) $('#WLANModal').modal('hide');
 	updateCounter = 0;
 	errorCounter = 0;
 	clearErrorLog();
 
 	// get WLAN name
 	var newWLANName = document.getElementById('wlanName').value;
+	if (newWLANName.includes(' '))  newWLANName = '"'+newWLANName+'"';
+	
+	var newUserRole;
+	$.each(userRoles, function() {
+		if (this['name'] === newWLANName) {
+			newUserRole = this;
+			return false;
+		}
+	});
 
 	// If we are going to be adding the WLAN - then prep the config with the required formatting
 	if (addingWLAN) {
@@ -707,10 +880,10 @@ function updateWLAN(addingWLAN) {
 	var selectedGroups = [...select.selectedOptions].map(option => option.value);
 
 	// Loop through the groups and grab the stored config
-	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	showNotification('ca-folder-settings', 'Updating Group Configs...', 'bottom', 'center', 'info');
 	$.each(selectedGroups, function() {
 		var currentConfig = groupConfigs[this];
-		var currentGroup = this;
+		var currentGroup = this.toString();
 
 		// Find if there is an existing WLAN
 		var startIndex = -1;
@@ -720,7 +893,7 @@ function updateWLAN(addingWLAN) {
 		var lineToFind = wlanPrefix + newWLANName;
 		for (i = 0; i < currentConfig.length; i++) {
 			if (currentConfig[i].includes(wlanPrefix) && firstWLANLocation == -1) {
-				// grab the location of the first user role - in case the role we are looking for isnt in the config
+				// grab the location of the first ssid - in case the role we are looking for isnt in the config
 				firstWLANLocation = i;
 			}
 			if (currentConfig[i] === lineToFind) {
@@ -731,19 +904,33 @@ function updateWLAN(addingWLAN) {
 		}
 
 		if (startIndex == -1) {
-			// no existing user role. Find the first user role and place this role before it.
+			// no existing ssid. Find the first ssid and place this role before it.
 			startIndex = firstWLANLocation;
 		} else {
-			// remove the existing role from the config
+			// remove the existing SSID from the config
 			currentConfig.splice(startIndex, endIndex - startIndex);
 		}
+		
 
 		// If the desired result is to add the new/updated role into the config for this group
 		if (addingWLAN) {
-			// build new role
+			// build new WLAN
 			var newWLAN = [];
 			newWLAN.push(wlanPrefix + newWLANName);
 			newWLAN.push(...newConfigArray);
+			
+			// Include default role if missing from the destination group
+			var userRoleGroups = newUserRole.groups;
+			var roleToFind = userRolePrefix + newWLANName;
+			if (!currentConfig.includes(roleToFind)) {
+				logInformation('Adding missing WLAN default user role to Group "'+currentGroup+'"')
+				newWLAN.push(userRolePrefix + newWLANName);
+				// Add indent to the acls
+				var tempACLArray = newUserRole.acls;
+				for (i = 0; i < tempACLArray.length; i++) {
+					newWLAN.push('  ' + tempACLArray[i]);
+				}
+			}
 
 			// Splice the new role into the config
 			if (currentConfig.length) {
@@ -751,8 +938,32 @@ function updateWLAN(addingWLAN) {
 			} else {
 				currentConfig = newWLAN;
 			}
+		} else {
+			// Find if there is an existing default user role
+			var startRoleIndex = -1;
+			var endRoleIndex = -1;
+			var firstUserRoleLocation = -1;
+			
+			var lineToFind = userRolePrefix + newWLANName;
+			for (i = 0; i < currentConfig.length; i++) {
+				if (currentConfig[i].includes(userRolePrefix) && firstUserRoleLocation == -1) {
+					// grab the location of the first user role - in case the role we are looking for isnt in the config
+					firstUserRoleLocation = i;
+				}
+				if (currentConfig[i] === lineToFind) {
+					startRoleIndex = i;
+				} else if (endRoleIndex == -1 && startRoleIndex != -1 && !currentConfig[i].includes('  ')) {
+					endRoleIndex = i;
+				}
+			}
+			
+			if (startRoleIndex != -1) {
+				// remove the existing role from the config
+				logInformation('Removing WLAN default user role from Group "'+currentGroup+'"')
+				currentConfig.splice(startRoleIndex, endRoleIndex - startRoleIndex);
+			}
 		}
-
+		
 		// need to push config back to Central.
 		var settings = {
 			url: getAPIURL() + '/tools/postCommand',
@@ -784,7 +995,7 @@ function updateWLAN(addingWLAN) {
 				});
 			} else if (response.code && response.code == 429) {
 				console.log('errorCode');
-				logError('User role was not applied to group ' + currentGroup);
+				logError('WLAN was not applied to group ' + currentGroup);
 				Swal.fire({
 					title: 'API Limit Reached',
 					text: 'You have reached your daily API limit. No more API calls will succeed today.',
@@ -796,6 +1007,8 @@ function updateWLAN(addingWLAN) {
 			} else if (response !== '' + currentGroup) {
 				logError('WLAN change was not applied to group ' + currentGroup);
 				errorCounter++;
+			} else {
+				logInformation('WLAN change was applied to group ' + currentGroup)
 			}
 			if (updateCounter == selectedGroups.length) {
 				if (errorCounter != 0) {
@@ -843,7 +1056,7 @@ function enableWLAN(wlanIndex, wlanEnable) {
 	}
 
 	// Loop through the groups and grab the stored config
-	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	showNotification('ca-folder-settings', 'Updating Group Configs...', 'bottom', 'center', 'info');
 	$.each(wlanGroups, function() {
 		var currentConfig = groupConfigs[this];
 		var currentGroup = this;
@@ -856,7 +1069,7 @@ function enableWLAN(wlanIndex, wlanEnable) {
 		var lineToFind = wlanPrefix + wlanName;
 		for (i = 0; i < currentConfig.length; i++) {
 			if (currentConfig[i].includes(wlanPrefix) && firstWLANLocation == -1) {
-				// grab the location of the first user role - in case the role we are looking for isnt in the config
+				// grab the location of the first ssid - in case the role we are looking for isnt in the config
 				firstWLANLocation = i;
 			}
 			if (currentConfig[i] === lineToFind) {
@@ -867,7 +1080,7 @@ function enableWLAN(wlanIndex, wlanEnable) {
 		}
 
 		if (startIndex == -1) {
-			// no existing user role. Find the first user role and place this role before it.
+			// no existing ssid. Find the first ssid and place this role before it.
 			startIndex = firstWLANLocation;
 		} else {
 			// remove the existing role from the config
@@ -917,7 +1130,7 @@ function enableWLAN(wlanIndex, wlanEnable) {
 				});
 			} else if (response.code && response.code == 429) {
 				console.log('errorCode');
-				logError('User role was not applied to group ' + currentGroup);
+				logError('WLAN was not applied to group ' + currentGroup);
 				Swal.fire({
 					title: 'API Limit Reached',
 					text: 'You have reached your daily API limit. No more API calls will succeed today.',
@@ -961,7 +1174,7 @@ function updateFullWLAN() {
 	var newConfig = document.getElementById('wlanConfig').value;
 	var currentConfig = newConfig.split('\n');
 
-	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	showNotification('ca-folder-settings', 'Updating Group Configs...', 'bottom', 'center', 'info');
 
 	// need to push config back to Central.
 	var settings = {
@@ -993,7 +1206,7 @@ function updateFullWLAN() {
 			});
 		} else if (response.code && response.code == 429) {
 			console.log('errorCode');
-			logError('User role was not applied to group ' + currentGroup);
+			logError('WLAN was not applied to group ' + currentGroup);
 			Swal.fire({
 				title: 'API Limit Reached',
 				text: 'You have reached your daily API limit. No more API calls will succeed today.',
@@ -1084,7 +1297,7 @@ function loadDevicesTable(checked) {
 
 		// Add AP to table
 		var table = $('#device-table').DataTable();
-		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['model'], device['group_name'], device['site'], device['firmware_version']]);
+		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['model'], device['group_name'], device['site'], device['labels'].join(', '), device['firmware_version']]);
 	}
 	$('#device-table')
 		.DataTable()

@@ -1,6 +1,6 @@
 /*
 Central Automation v1.26
-Updated: 
+Updated: 1.42.5
 Aaron Scott (WiFi Downunder) 2023
 */
 
@@ -17,12 +17,14 @@ var visitorNotification;
 
 function getVisitorPortals() {
 	$.when(authRefresh()).then(function() {
-		visitorPortals = {};
-		var portals = document.getElementById('portalselector');
-		portals.options.length = 0;
-		portalNotification = showLongNotification('ca-user-frame-33', 'Obtaining Visitor portals...', 'bottom', 'center', 'info');
-
-		getPortals(0);
+		if (!failedAuth) {
+			visitorPortals = {};
+			var portals = document.getElementById('portalselector');
+			portals.options.length = 0;
+			portalNotification = showLongNotification('ca-user-frame-33', 'Obtaining Visitor portals...', 'bottom', 'center', 'info');
+	
+			getPortals(0);
+		}
 	});
 }
 
@@ -61,7 +63,6 @@ function getPortals(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getPortals(offset);
 					}
 				});
@@ -148,7 +149,6 @@ function getVisitors(offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getVisitors(offset);
 					}
 				});
@@ -224,7 +224,7 @@ function deleteAccount(visitorID) {
 		if (response.hasOwnProperty('status')) {
 			if (response.status === '503') {
 				apiErrorCount++;
-				logError('Central Server Error (503): ' + response.reason + ' (/central/v2/sites/associate)');
+				logError('Central Server Error (503): ' + response.reason + ' (/guest/v1/portals/<PORTAL_ID>/visitors)');
 			}
 		}
 		if (response.hasOwnProperty('error_code')) {
@@ -255,8 +255,11 @@ function loadPortalDetails() {
 	$('#portalInformation').append('<li>Shared: <strong>' + sharedState + '</strong></li>');
 }
 
+// Updated 1.42.5 - added protection for not selecting a portal
 function uploadVisitors() {
-	loadCSVFile('createVisitors');
+	var select = document.getElementById('portalselector');
+	if (select.value === '') showNotification('ca-multiple-11', 'Please select a Portal to create visitors', 'bottom', 'center', 'danger');
+	else loadCSVFile('createVisitors');
 }
 
 function loadCurrentPageVisitors() {

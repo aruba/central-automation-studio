@@ -50,75 +50,87 @@ Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 
 function getAuthServers() {
 	$.when(authRefresh()).then(function() {
-		groupConfigNotification = showLongNotification('ca-folder-settings', 'Getting Group WLAN Configs...', 'bottom', 'center', 'info');
-		$.when(getGroupData(0)).then(function() {
-			// Clearing old data
+		if (!failedAuth) {
+			groupConfigNotification = showProgressNotification('ca-folder-settings', 'Getting Group Configs...', 'bottom', 'center', 'info');
+			$.when(getGroupData(0)).then(function() {
+				// Clearing old data
+				$('#server-table')
+					.DataTable()
+					.clear();
+				configGroups = getGroups();
+				groupCounter = 0;
+				groupConfigs = {};
+				authServers = [];
+	
+				// Grab config for each Group in Central - need to add in API call delay to not hit api/sec limit
+				for(var i=0;i<configGroups.length;i++) {
+					setTimeout(getConfigForGroup, apiDelay*i, configGroups[i].group);
+				}
+			});
+		}
+	});
+}
+
+function getConfigForGroup(currentGroup) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+	
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		if (Array.isArray(response)) {
+			// save the group config for modifications
+			groupConfigs[currentGroup] = response;
+			
+			// pull the auth server out of each group config
+			getAuthServersFromConfig(response, currentGroup);
+		}
+
+		groupCounter++;
+		
+		var groupProgress = (groupCounter / configGroups.length) * 100;
+		groupConfigNotification.update({ progress: groupProgress });
+		
+		if (groupCounter == configGroups.length) {
+			// Build table of servers
+			var table = $('#server-table').DataTable();
+			for (i = 0; i < authServers.length; i++) {
+				// Add row to table
+				table.row.add([i, authServers[i]['name'], authServers[i]['groups'].join(', ')]);
+			}
 			$('#server-table')
 				.DataTable()
-				.clear();
-			configGroups = getGroups();
-			groupCounter = 0;
-			groupConfigs = {};
-			authServers = [];
-
-			// Grab config for each Group in Central
-			$.each(configGroups, function() {
-				var currentGroup = this.group;
-				var settings = {
-					url: getAPIURL() + '/tools/getCommandwHeaders',
-					method: 'POST',
-					timeout: 0,
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					data: JSON.stringify({
-						url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentGroup,
-						access_token: localStorage.getItem('access_token'),
-					}),
-				};
-
-				$.ajax(settings).done(function(commandResults, statusText, xhr) {
-					if (commandResults.hasOwnProperty('headers')) {
-						updateAPILimits(JSON.parse(commandResults.headers));
-					}
-					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-						logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_cli/<GROUP>)');
-						apiErrorCount++;
-						return;
-					} else if (commandResults.hasOwnProperty('error_code')) {
-						logError(commandResults.description);
-						apiErrorCount++;
-						return;
-					}
-					var response = JSON.parse(commandResults.responseBody);
-
-					// save the group config for modifications
-					groupConfigs[currentGroup] = response;
-
-					// pull the servers out of each group config
-					getAuthServersFromConfig(response, currentGroup);
-					groupCounter++;
-					if (groupCounter == configGroups.length) {
-						// Build table of servers
-						var table = $('#server-table').DataTable();
-						for (i = 0; i < authServers.length; i++) {
-							// Add row to table
-							table.row.add([i, authServers[i]['name'], authServers[i]['groups'].join(', ')]);
-						}
-						$('#server-table')
-							.DataTable()
-							.rows()
-							.draw();
-
-						if (groupConfigNotification) {
-							groupConfigNotification.update({ message: 'Retrieved Group WLAN Configs...', type: 'success' });
-							setTimeout(groupConfigNotification.close, 1000);
-						}
-					}
-					$('[data-toggle="tooltip"]').tooltip();
-				});
-			});
-		});
+				.rows()
+				.draw();
+	
+			if (groupConfigNotification) {
+				groupConfigNotification.update({ message: 'Retrieved Group Configs...', type: 'success' });
+				setTimeout(groupConfigNotification.close, 1000);
+			}
+		}
+		$('[data-toggle="tooltip"]').tooltip();
 	});
 }
 
@@ -206,12 +218,28 @@ function loadServerUI(serverIndex) {
 	document.getElementById('serverName').value = server.name;
 	document.getElementById('serverConfig').value = server.config.join('\n');
 
-	// load selectPicker with Groups
-	select = document.getElementById('groupSelector');
+	// Rebuild Group dropdown to only contain groups with config
+	select = document.getElementById('groupselector');
 	select.options.length = 0;
-	$.each(configGroups, function() {
-		var currentGroup = this.group;
-		$('#groupSelector').append($('<option>', { value: currentGroup, text: currentGroup }));
+	
+	// Sort the groups alphabetically
+	var wlanGroupList = Object.keys(groupConfigs);
+	wlanGroupList.sort((a, b) => {
+		const groupA = a.toUpperCase(); // ignore upper and lowercase
+		const groupB = b.toUpperCase(); // ignore upper and lowercase
+		// Sort on Group name
+		if (groupA < groupB) {
+			return -1;
+		}
+		if (groupA > groupB) {
+			return 1;
+		}
+		return 0;
+	});
+	
+	// Add and select the groups needed
+	$.each(wlanGroupList, function() {
+		$('#groupselector').append($('<option>', { value: this, text: this }));
 		if ($('.selectpicker').length != 0) {
 			$('.selectpicker').selectpicker('refresh');
 		}
@@ -219,12 +247,14 @@ function loadServerUI(serverIndex) {
 			$("select option[value='" + val + "']").prop('selected', true);
 		});
 	});
+	$('.selectpicker').selectpicker('refresh');
+	
 	checkSelectionCount();
 	$('#ServerModalLink').trigger('click');
 }
 
 function checkSelectionCount() {
-	var select = document.getElementById('groupSelector');
+	var select = document.getElementById('groupselector');
 	var selectedGroups = [...select.selectedOptions].map(option => option.value);
 	if (selectedGroups.length == 0) {
 		document.getElementById('saveServerBtn').disabled = true;
@@ -260,11 +290,11 @@ function createServer() {
 	document.getElementById('serverConfig').value = 'ip x.x.x.x\nkey ********\nport 1812\nacctport 1813\nrfc3576\ncppm-rfc3576-port 5999';
 
 	// load selectPicker with Groups
-	select = document.getElementById('groupSelector');
+	select = document.getElementById('groupselector');
 	select.options.length = 0;
 	$.each(configGroups, function() {
 		var currentGroup = this.group;
-		$('#groupSelector').append($('<option>', { value: currentGroup, text: currentGroup }));
+		$('#groupselector').append($('<option>', { value: currentGroup, text: currentGroup }));
 		if ($('.selectpicker').length != 0) {
 			$('.selectpicker').selectpicker('refresh');
 		}
@@ -307,11 +337,11 @@ function saveServer() {
 	}
 
 	// get selected Groups
-	var select = document.getElementById('groupSelector');
+	var select = document.getElementById('groupselector');
 	var selectedGroups = [...select.selectedOptions].map(option => option.value);
 
 	// Loop through the groups and grab the stored config
-	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	showNotification('ca-folder-settings', 'Updating Group Configs...', 'bottom', 'center', 'info');
 	$.each(selectedGroups, function() {
 		var currentConfig = groupConfigs[this];
 		var currentGroup = this;
@@ -439,11 +469,11 @@ function updateServer(addingServer) {
 	}
 
 	// get selected Groups
-	var select = document.getElementById('groupSelector');
+	var select = document.getElementById('groupselector');
 	var selectedGroups = [...select.selectedOptions].map(option => option.value);
 
 	// Loop through the groups and grab the stored config
-	showNotification('ca-folder-settings', 'Updating Group WLAN Configs...', 'bottom', 'center', 'info');
+	showNotification('ca-folder-settings', 'Updating Group Configs...', 'bottom', 'center', 'info');
 	$.each(selectedGroups, function() {
 		var currentConfig = groupConfigs[this];
 		var currentGroup = this;

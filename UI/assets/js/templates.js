@@ -51,29 +51,31 @@ function loadCurrentPageSwitch() {
 
 function getSwitchStacks() {
 	$.when(authRefresh()).then(function() {
-		getSwitchVariables();
-		stacksPromise = new $.Deferred();
-		$('#stacks-table')
-			.DataTable()
-			.clear();
-		stackCounter = 0;
-		stacks = [];
-		stackSwitches = {};
-		stackNotification = showLongNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
-		$.when(getStacks(0)).then(function() {
-			// loop through each stack and get details for each switch in the the stack
-			if (stacks.length > 0) {
-				stackNotification.update({ message: 'Getting Stack Switch Details...', type: 'info' });
-				$.each(stacks, function() {
-					getStackSwitches(this.id, this.name);
-				});
-			} else {
-				if (stackNotification) {
-					stackNotification.update({ message: 'No Switch Stacks Found', type: 'warning' });
-					setTimeout(stackNotification.close, 1000);
+		if (!failedAuth) {
+			getSwitchVariables();
+			stacksPromise = new $.Deferred();
+			$('#stacks-table')
+				.DataTable()
+				.clear();
+			stackCounter = 0;
+			stacks = [];
+			stackSwitches = {};
+			stackNotification = showLongNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
+			$.when(getStacks(0)).then(function() {
+				// loop through each stack and get details for each switch in the the stack
+				if (stacks.length > 0) {
+					stackNotification.update({ message: 'Getting Stack Switch Details...', type: 'info' });
+					$.each(stacks, function() {
+						getStackSwitches(this.id, this.name);
+					});
+				} else {
+					if (stackNotification) {
+						stackNotification.update({ message: 'No Switch Stacks Found', type: 'warning' });
+						setTimeout(stackNotification.close, 1000);
+					}
 				}
-			}
-		});
+			});
+		}
 	});
 	document.getElementById('addNewVLANBtn').disabled = true;
 }

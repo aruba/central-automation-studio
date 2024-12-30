@@ -139,13 +139,43 @@ function cloneGroup() {
 }
 
 function updateGroup() {
+	// Check selections
 	var enableAPs = document.getElementById('deviceTypeAccessPoint').checked;
 	var enableAOSS = document.getElementById('deviceTypeSwitchesAOS').checked;
 	var enableCX = document.getElementById('deviceTypeSwitchesCX').checked;
 	var enableGateways = document.getElementById('deviceTypeGateways').checked;
+	
+	var apSelectedCount = 0;
+	if (document.getElementById('arch8AP').checked) apSelectedCount++;
+	if (document.getElementById('arch10Campus').checked) apSelectedCount++;
+	if (document.getElementById('arch10MB').checked) apSelectedCount++;
+	if ( apSelectedCount > 1) {
+		showNotification('ca-folder-settings', 'Only 1 Wireless Architecture can be selected', 'bottom', 'center', 'warning');
+		return;
+	} else if (apSelectedCount == 0 && enableAPs) {
+		showNotification('ca-folder-settings', '1 Wireless Architecture needs to be selected to enable APs for the Group', 'bottom', 'center', 'warning');
+		return;
+	}
+	
+	var gwSelectedCount = 0;
+	if (document.getElementById('gatewayMobility').checked) gwSelectedCount++;
+	if (document.getElementById('gatewayBranch').checked) gwSelectedCount++;
+	if (document.getElementById('gatewayVPNC').checked) gwSelectedCount++;
+	if ( gwSelectedCount > 1) {
+		showNotification('ca-folder-settings', 'Only 1 Gateway Persona can be selected', 'bottom', 'center', 'warning');
+		return;
+	} else if (gwSelectedCount == 0 && enableGateways) {
+		showNotification('ca-folder-settings', '1 Gateway Persona needs to be selected to enable Gateways for the Group', 'bottom', 'center', 'warning');
+		return;
+	}
+	
+	
 	var properties = modifyGroup['group_properties'];
 
 	var allowedDevTypes = properties['AllowedDevTypes'];
+	var allowedArch = properties['Architecture'];
+	var apRole = properties['ApNetworkRole'];
+	var gwRole = properties['GwNetworkRole'];
 	var allowedSwitchTypes = properties['AllowedSwitchTypes'];
 
 	// If switches are being added to the group (no adding of switch types after switching has been added is allowed)
@@ -155,20 +185,61 @@ function updateGroup() {
 	}
 	properties['AllowedSwitchTypes'] = allowedSwitchTypes;
 
-	// Set the allowedDevTypes
+	// Set the allowedDevTypes and associated keys
 	if (!allowedDevTypes.includes('AccessPoints')) {
-		if (enableAPs) allowedDevTypes.push('AccessPoints');
+		if (enableAPs) {
+			allowedDevTypes.push('AccessPoints');
+			if (document.getElementById('arch8AP').checked) {
+				properties['Architecture'] = 'Instant';
+				properties['ApNetworkRole'] = 'Standard';
+			} else if (document.getElementById('arch10Campus').checked) {
+				properties['Architecture'] = 'AOS10';
+				properties['ApNetworkRole'] = 'Standard';
+			} else if (document.getElementById('arch10MB').checked) {
+				properties['Architecture'] = 'AOS10';
+				properties['ApNetworkRole'] = 'Microbranch';
+			}
+		} else {
+			if (properties.hasOwnProperty('Architecture')) delete properties['Architecture'];
+			if (properties.hasOwnProperty('ApNetworkRole')) delete properties['ApNetworkRole'];
+		}
 	}
 	if (!allowedDevTypes.includes('Switches')) {
 		if (enableAOSS) allowedDevTypes.push('Switches');
 		else if (enableCX) allowedDevTypes.push('Switches');
+		
+		var monitorArray = [];
+		if (document.getElementById('monitorAOSS').checked) monitorArray.push("AOS_S")
+		if (document.getElementById('monitorCX').checked) monitorArray.push("AOS_CX")
+
+		if (monitorArray.length > 0) {
+			properties['MonitorOnly'] = monitorArray;
+			if (monitorArray.length == allowedSwitchTypes.length) properties['MonitorOnlySwitch'] = true;
+			else properties['MonitorOnlySwitch'] = false;
+		} else {
+			if (properties.hasOwnProperty('MonitorOnly')) delete properties['MonitorOnly'];
+			if (properties.hasOwnProperty('MonitorOnlySwitch')) delete properties['MonitorOnlySwitch'];
+		}
 	}
 	if (!allowedDevTypes.includes('Gateways')) {
-		if (enableGateways) allowedDevTypes.push('Gateways');
+		if (enableGateways) {
+			allowedDevTypes.push('Gateways');
+			if (document.getElementById('gatewayMobility').checked) {
+				properties['GwNetworkRole'] = 'WLANGateway';
+			} else if (document.getElementById('gatewayBranch').checked) {
+				properties['GwNetworkRole'] = 'BranchGateway';
+			} else if (document.getElementById('gatewayVPNC').checked) {
+				properties['GwNetworkRole'] = 'VPNConcentrator';
+			}
+		} else {
+			if (properties.hasOwnProperty('GwNetworkRole')) delete properties['GwNetworkRole']
+		}
 	}
 	properties['AllowedDevTypes'] = allowedDevTypes;
+	
 
-	console.log(properties);
+	//console.log(properties);
+	
 	var apSettings = {
 		url: getAPIURL() + '/tools/patchCommand',
 		method: 'POST',
@@ -184,9 +255,17 @@ function updateGroup() {
 	};
 
 	$.ajax(apSettings).done(function(response, statusText, xhr) {
-		console.log(response);
-		console.log(xhr);
+		//console.log(response);
+		//console.log(xhr);
+		if (response.hasOwnProperty('description')) {
+			showNotification('ca-folder-settings', response.description, 'bottom', 'center', 'danger')
+		} else if (response === 'Success') {
+			showNotification('ca-folder-settings', document.getElementById('modifyGroupName').value + ' was updated successfully', 'bottom', 'center', 'success');
+			$('#ModifyGroupModal').modal('hide');
+			updateGroupData();
+		}
 	});
+	
 }
 
 function loadModifyGroup(groupName) {
@@ -198,7 +277,7 @@ function loadModifyGroup(groupName) {
 			return false;
 		}
 	});
-
+	
 	// Update checkboxes
 	document.getElementById('modifyGroupName').value = groupName;
 	var devTypes = modifyGroup['group_properties']['AllowedDevTypes'];
@@ -206,6 +285,7 @@ function loadModifyGroup(groupName) {
 	document.getElementById('monitorAOSS').disabled = false;
 	document.getElementById('monitorCX').disabled = false;
 
+	// Set Template checkboxes
 	var templateModes = modifyGroup['template_details'];
 	document.getElementById('templateWireless').disabled = false;
 	document.getElementById('templateWired').disabled = false;
@@ -215,15 +295,46 @@ function loadModifyGroup(groupName) {
 	if (templateModes.Wireless == false) document.getElementById('templateWireless').checked = false;
 	else document.getElementById('templateWireless').checked = true;
 
+	// Set AP checkboxes
 	if (devTypes.includes('AccessPoints')) {
 		document.getElementById('deviceTypeAccessPoint').checked = true;
 		document.getElementById('deviceTypeAccessPoint').disabled = true;
 		document.getElementById('templateWireless').disabled = true;
+		if (modifyGroup['group_properties']['Architecture'] === 'Instant') {
+			document.getElementById('arch8AP').checked = true;
+			document.getElementById('arch8AP').disabled = true;
+			document.getElementById('arch10MB').checked = false;
+			document.getElementById('arch10MB').disabled = true;
+			document.getElementById('arch10Campus').checked = false;
+			document.getElementById('arch10Campus').disabled = true;
+		} else if ((modifyGroup['group_properties']['Architecture'] === 'AOS10') && (modifyGroup['group_properties']['ApNetworkRole'] === 'Standard')) {
+			document.getElementById('arch8AP').checked = false;
+			document.getElementById('arch8AP').disabled = true;
+			document.getElementById('arch10MB').checked = false;
+			document.getElementById('arch10MB').disabled = true;
+			document.getElementById('arch10Campus').checked = true;
+			document.getElementById('arch10Campus').disabled = true;
+		} else if ((modifyGroup['group_properties']['Architecture'] === 'AOS10') && (modifyGroup['group_properties']['ApNetworkRole'] === 'Microbranch')) {
+			document.getElementById('arch8AP').checked = false;
+			document.getElementById('arch8AP').disabled = true;
+			document.getElementById('arch10MB').checked = true;
+			document.getElementById('arch10MB').disabled = true;
+			document.getElementById('arch10Campus').checked = false;
+			document.getElementById('arch10Campus').disabled = true;
+		}
 	} else {
 		document.getElementById('deviceTypeAccessPoint').checked = false;
 		document.getElementById('deviceTypeAccessPoint').disabled = false;
+		document.getElementById('arch8AP').checked = false;
+		document.getElementById('arch8AP').disabled = false;
+		document.getElementById('arch10MB').checked = false;
+		document.getElementById('arch10MB').disabled = false;
+		document.getElementById('arch10Campus').checked = false;
+		document.getElementById('arch10Campus').disabled = false;
 	}
+	enableWirelessArch();
 
+	// Set GW checkboxes
 	document.getElementById('gatewayMobility').disabled = true;
 	document.getElementById('gatewayBranch').disabled = true;
 	document.getElementById('gatewayVPNC').disabled = true;
@@ -249,6 +360,7 @@ function loadModifyGroup(groupName) {
 	}
 	enablePersonas();
 
+	// Set SW checkboxes
 	var switchTypes = modifyGroup['group_properties']['AllowedSwitchTypes'];
 	if (devTypes.includes('Switches')) {
 		if (switchTypes.includes('AOS_S')) document.getElementById('deviceTypeSwitchesAOS').checked = true;
@@ -276,6 +388,24 @@ function loadModifyGroup(groupName) {
 	}
 
 	$('#ModifyGroupModalLink').trigger('click');
+}
+
+function enableWirelessArch() {
+	if (document.getElementById('deviceTypeAccessPoint').checked) {
+		document.getElementById('wirelessDivider').hidden = false;
+		document.getElementById('wiressArch').hidden = false;
+		if (!document.getElementById('deviceTypeAccessPoint').disabled) {
+			document.getElementById('arch8AP').disabled = false;
+			document.getElementById('arch10MB').disabled = false;
+			document.getElementById('arch10Campus').disabled = false;
+		}
+	} else {
+		document.getElementById('wirelessDivider').hidden = true;
+		document.getElementById('wiressArch').hidden = true;
+		document.getElementById('arch8AP').disabled = true;
+		document.getElementById('arch10MB').disabled = true;
+		document.getElementById('arch10Campus').disabled = true;
+	}
 }
 
 function enablePersonas() {
@@ -471,7 +601,6 @@ function getFirmwareCompliance() {
 
 		// get Firmware info
 		groupInfo[groupName] = this;
-		console.log(this);
 		// Check if group includes APs
 		if (this['group_properties']['AllowedDevTypes'].includes('AccessPoints')) {
 			var apSettings = {

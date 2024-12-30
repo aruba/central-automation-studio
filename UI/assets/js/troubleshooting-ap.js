@@ -492,6 +492,17 @@ function showAPDetails(currentAP, apData) {
 	$('#wirelessConnection').empty();
 	$('#wirelessConnection').append('<li>SSIDs: <strong>'+extraData['ssid_count']+'</li>');
 	$('#wirelessConnection').append('<li>Clients: <strong>'+selectedAP['client_count']+'</li>');
+	
+	if (selectedAP['gateway_cluster_name'] !== '') {
+		var apiURL = localStorage.getItem('base_url');
+		var centralBaseURL = centralURLs[apiURL];
+		if (!centralBaseURL) centralBaseURL = apiURL.replace(cop_url, cop_central_url); //manually build the COP address
+		var centralURL = centralBaseURL + '/frontend/#/GATEWAYCLUSTERDETAIL/OVERVIEW/' + selectedAP['gateway_cluster_id'] + '/' + selectedAP['gateway_cluster_name'] + '?csgc=%5Bobject%20Object%5D&cdcn=' + selectedAP['gateway_cluster_name'] + '&nc=gatewaycluster';
+		var nameValue = '<a href="' + centralURL + '" target="_blank"><strong>' + selectedAP['gateway_cluster_name'] + '</strong></a>'
+		
+		//https://internal-ui.central.arubanetworks.com/frontend/#/GATEWAYCLUSTERDETAIL/OVERVIEW/2291/auto_group_403?csgc=%5Bobject%20Object%5D&cdcn=auto_group_403&nc=gatewaycluster
+		$('#wirelessConnection').append('<li>Gateway Cluster: <strong>'+nameValue+'</li>');
+	}
 		
 	if (document.getElementById('syncedAPFloorplanCard')) document.getElementById('syncedAPFloorplanCard').hidden = true;
 	if (document.getElementById('syncedAPCard')) document.getElementById('syncedAPCard').hidden = true;
@@ -619,7 +630,6 @@ function getFloor(floorId) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getFloor(floorId);
 					}
 				});

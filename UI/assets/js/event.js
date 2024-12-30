@@ -84,55 +84,57 @@ function loadDashboardData(refreshrate) {
 
 function getDashboardData() {
 	$.when(authRefresh()).then(function() {
-		updateTimestamp = +new Date();
-		showNotification('ca-dashboard', 'Updating Dashboard Data...', 'bottom', 'center', 'primary');
-
-		// Load current data to be updated...
-		const transaction = db.transaction('general', 'readonly');
-		const store = transaction.objectStore('general');
-
-		/*const dashboardQuery = store.get('monitoring_dashboard');
-		dashboardQuery.onsuccess = function() {
-			if (dashboardQuery.result) {
-				dashboardData = JSON.parse(dashboardQuery.result.data);
-			} else {
-				dashboardData = {};
+		if (!failedAuth) {
+			updateTimestamp = +new Date();
+			showNotification('ca-dashboard', 'Updating Dashboard Data...', 'bottom', 'center', 'primary');
+	
+			// Load current data to be updated...
+			const transaction = db.transaction('general', 'readonly');
+			const store = transaction.objectStore('general');
+	
+			/*const dashboardQuery = store.get('monitoring_dashboard');
+			dashboardQuery.onsuccess = function() {
+				if (dashboardQuery.result) {
+					dashboardData = JSON.parse(dashboardQuery.result.data);
+				} else {
+					dashboardData = {};
+				}
+			};*/
+	
+			const eventQuery = store.get('monitoring_event');
+			eventQuery.onsuccess = function() {
+				if (eventQuery.result) {
+					eventData = JSON.parse(eventQuery.result.data);
+				} else {
+					eventData = {};
+				}
+			};
+			if (dashboardWLAN) {
+				getWLANs();
 			}
-		};*/
-
-		const eventQuery = store.get('monitoring_event');
-		eventQuery.onsuccess = function() {
-			if (eventQuery.result) {
-				eventData = JSON.parse(eventQuery.result.data);
-			} else {
-				eventData = {};
+			if (dashboardInfra) {
+				processAPs(0);
+				setTimeout(processSwitches, 2000, 0);
+				setTimeout(processGateways, 4000, 0);
 			}
-		};
-		if (dashboardWLAN) {
-			getWLANs();
+	
+			if (dashboardTop) {
+				getAppRFStats();
+				getTopClients();
+				getTopAPs();
+			}
+			/*
+			var nowData = dashboardData[updateTimestamp] ? dashboardData[updateTimestamp] : {};
+			console.log(dashboardBandwidth);
+			if (dashboardClients) {
+				getWirelessUserCount();
+				getWiredUserCount();
+			}
+			if (dashboardBandwidth) getWLANs();
+			if (dashboardDHCP) getDHCPStats();
+			*/
+			localStorage.setItem('dashboard_update', +new Date());
 		}
-		if (dashboardInfra) {
-			processAPs(0);
-			setTimeout(processSwitches, 2000, 0);
-			setTimeout(processGateways, 4000, 0);
-		}
-
-		if (dashboardTop) {
-			getAppRFStats();
-			getTopClients();
-			getTopAPs();
-		}
-		/*
-		var nowData = dashboardData[updateTimestamp] ? dashboardData[updateTimestamp] : {};
-		console.log(dashboardBandwidth);
-		if (dashboardClients) {
-			getWirelessUserCount();
-			getWiredUserCount();
-		}
-		if (dashboardBandwidth) getWLANs();
-		if (dashboardDHCP) getDHCPStats();
-		*/
-		localStorage.setItem('dashboard_update', +new Date());
 	});
 }
 
@@ -623,7 +625,6 @@ function getClientCountForNetwork(essid) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getUserCount();
 					}
 				});

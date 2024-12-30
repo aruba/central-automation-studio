@@ -281,7 +281,6 @@ function getFloorsForBuilding(buildingId, offset) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getFloors(offset);
 					}
 				});

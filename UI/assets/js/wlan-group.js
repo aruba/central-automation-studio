@@ -165,7 +165,6 @@ function updateFullWLAN() {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						updateFullWLAN();
 					}
 				});

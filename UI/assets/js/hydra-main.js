@@ -32,8 +32,10 @@ function saveGlobalSettings() {
 	localStorage.setItem('port_variable_format', $('#port_variable_format').val());
 	localStorage.setItem('refresh_rate', $('#refresh_rate').val());
 	localStorage.setItem('data_optimization', document.getElementById('scaleselector').value);
-	localStorage.setItem('load_clients', document.getElementById('load_clients').checked);
-	localStorage.setItem('load_devices', document.getElementById('load_devices').checked);
+	localStorage.setItem('load_clients', document.getElementById('load_clients_wireless').checked);
+	localStorage.setItem('load_clients_wired', document.getElementById('load_clients_wired').checked);
+	localStorage.setItem('load_aps', document.getElementById('load_aps').checked);
+	localStorage.setItem('load_switches', document.getElementById('load_switches').checked);
 	localStorage.setItem('load_gateways', document.getElementById('load_gateways').checked);
 	if (!document.getElementById('load_gateways').checked) document.getElementById('load_gateway_details').checked = false;
 	localStorage.setItem('load_gateway_details', document.getElementById('load_gateway_details').checked);
@@ -44,12 +46,16 @@ function saveGlobalSettings() {
 	localStorage.setItem('qr_color', $('#color_picker').val());
 	localStorage.setItem('qr_logo', $('#qr_logo').val());
 	// remove existing client data
-	if (!document.getElementById('load_clients').checked) {
+	if (!document.getElementById('load_clients_wireless').checked) {
 		saveDataToDB('monitoring_wirelessClients', JSON.stringify([]));
+	}
+	if (!document.getElementById('load_clients_wired').checked) {
 		saveDataToDB('monitoring_wiredClients', JSON.stringify([]));
 	}
-	if (!document.getElementById('load_devices').checked) {
+	if (!document.getElementById('load_aps').checked) {
 		saveDataToDB('monitoring_aps', JSON.stringify([]));
+	}
+	if (!document.getElementById('load_switches').checked) {
 		saveDataToDB('monitoring_switches', JSON.stringify([]));
 	}
 	if (!document.getElementById('load_gateways').checked) {
@@ -63,11 +69,11 @@ function saveGlobalSettings() {
 }
 
 function checkScaleConfig() {
-	if (document.getElementById('load_clients').checked && document.getElementById('load_devices').checked && document.getElementById('load_gateways').checked && document.getElementById('load_gateway_details').checked && document.getElementById('load_group_properties').checked && document.getElementById('load_airmatch_events').checked && document.getElementById('load_optimization_history').checked && document.getElementById('load_vc_config').checked) {
+	if (document.getElementById('load_clients_wireless').checked && document.getElementById('load_clients_wired').checked && document.getElementById('load_aps').checked && document.getElementById('load_switches').checked && document.getElementById('load_gateways').checked && document.getElementById('load_gateway_details').checked && document.getElementById('load_group_properties').checked && document.getElementById('load_airmatch_events').checked && document.getElementById('load_optimization_history').checked && document.getElementById('load_vc_config').checked) {
 		$('#scaleselector').val('full');
-	} else if (!document.getElementById('load_clients').checked && !document.getElementById('load_devices').checked && !document.getElementById('load_gateways').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
+	} else if (!document.getElementById('load_clients_wireless').checked && !document.getElementById('load_clients_wired').checked && !document.getElementById('load_aps').checked && !document.getElementById('load_switches').checked && !document.getElementById('load_gateways').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
 		$('#scaleselector').val('group');
-	} else if (!document.getElementById('load_clients').checked && document.getElementById('load_devices').checked && document.getElementById('load_gateways').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
+	} else if (!document.getElementById('load_clients_wireless').checked && !document.getElementById('load_clients_wired').checked && document.getElementById('load_aps').checked && document.getElementById('load_switches').checked && document.getElementById('load_gateways').checked && !document.getElementById('load_gateway_details').checked && !document.getElementById('load_group_properties').checked && !document.getElementById('load_airmatch_events').checked && !document.getElementById('load_optimization_history').checked && !document.getElementById('load_vc_config').checked) {
 		$('#scaleselector').val('scale');
 	} else {
 		$('#scaleselector').val('custom');
@@ -78,29 +84,35 @@ function checkScaleConfig() {
 function updateScaleSettings() {
 	var scale = document.getElementById('scaleselector').value;
 	if (scale === "full") {
-		document.getElementById('load_clients').checked = true;
-		document.getElementById('load_devices').checked = true;
+		document.getElementById('load_clients_wireless').checked = true;
+		document.getElementById('load_clients_wired').checked = true;
+		document.getElementById('load_aps').checked = true;
+		document.getElementById('load_switches').checked = true;
 		document.getElementById('load_gateways').checked = true;
-		document.getElementById('load_group_properties').checked = true;
 		document.getElementById('load_gateway_details').checked = true;
+		document.getElementById('load_group_properties').checked = true;
 		document.getElementById('load_vc_config').checked = true;
 		document.getElementById('load_airmatch_events').checked = true;
 		document.getElementById('load_optimization_history').checked = true;
 	} else if (scale === "group") {
-		document.getElementById('load_clients').checked = false;
-		document.getElementById('load_devices').checked = false;
+		document.getElementById('load_clients_wireless').checked = false;
+		document.getElementById('load_clients_wired').checked = false;
+		document.getElementById('load_aps').checked = false;
+		document.getElementById('load_switches').checked = false;
 		document.getElementById('load_gateways').checked = false;
-		document.getElementById('load_group_properties').checked = false;
 		document.getElementById('load_gateway_details').checked = false;
+		document.getElementById('load_group_properties').checked = false;
 		document.getElementById('load_vc_config').checked = false;
 		document.getElementById('load_airmatch_events').checked = false;
 		document.getElementById('load_optimization_history').checked = false;
 	} else if (scale === "scale") {
-		document.getElementById('load_clients').checked = false;
-		document.getElementById('load_devices').checked = true;
+		document.getElementById('load_clients_wireless').checked = false;
+		document.getElementById('load_clients_wired').checked = false;
+		document.getElementById('load_aps').checked = true;
+		document.getElementById('load_switches').checked = true;
 		document.getElementById('load_gateways').checked = true;
-		document.getElementById('load_group_properties').checked = false;
 		document.getElementById('load_gateway_details').checked = false;
+		document.getElementById('load_group_properties').checked = false;
 		document.getElementById('load_vc_config').checked = false;
 		document.getElementById('load_airmatch_events').checked = false;
 		document.getElementById('load_optimization_history').checked = false;

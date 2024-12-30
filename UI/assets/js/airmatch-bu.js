@@ -178,57 +178,59 @@ function updateAirMatchData() {
 	apImage.src = 'assets/img/ap-icon.svg';
 	
 	$.when(authRefresh()).then(function() {
-		sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
-		fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
-		twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
-		sixPower = [];
-		fivePower = [];
-		twoPower = [];
-
-		powerLabels = [];
-		
-		// Hide the Elements that are not used in the Large Scale Deployment Mode
-		var scaleOpt = localStorage.getItem('data_optimization');
-		if (scaleOpt === 'scale') {
-			document.getElementById('am-history').hidden = true;
-			optimizationCount = 1;
-			neighbourMode = ScaleType.Scale;
-		} else {
-			document.getElementById('am-history').hidden = false;
-			optimizationCount = 11;
-			neighbourMode = ScaleType.Full;
-			getRFNeighbours();
+		if (!failedAuth) {
+			sixChannel = Array.apply(null, new Array(labels6.length)).map(Number.prototype.valueOf, 0);
+			fiveChannel = Array.apply(null, new Array(labels5.length)).map(Number.prototype.valueOf, 0);
+			twoChannel = Array.apply(null, new Array(labels2.length)).map(Number.prototype.valueOf, 0);
+			sixPower = [];
+			fivePower = [];
+			twoPower = [];
+	
+			powerLabels = [];
+			
+			// Hide the Elements that are not used in the Large Scale Deployment Mode
+			var scaleOpt = localStorage.getItem('data_optimization');
+			if (scaleOpt === 'scale') {
+				document.getElementById('am-history').hidden = true;
+				optimizationCount = 1;
+				neighbourMode = ScaleType.Scale;
+			} else {
+				document.getElementById('am-history').hidden = false;
+				optimizationCount = 11;
+				neighbourMode = ScaleType.Full;
+				getRFNeighbours();
+			}
+	
+			getEIRPDistribution();
+			getChannelDistribution();
+	
+			getAirmatchOptimization();
+			getStaticRadios();
+	
+			getAPsForNeighbours();
+	
+			// Get VRF data
+			setTimeout(getCampus, 1000, false);
+			
+			// Do we need to grab the group properties?
+			var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
+			if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
+				loadAirMatchEvents = true;
+			} else {
+				loadAirMatchEvents = JSON.parse(loadAirMatchEvents);
+			}
+			if (loadAirMatchEvents) {
+				document.getElementById('rfevents-row').hidden = false;
+				getRFEvents();
+				document.getElementById('radar-row').hidden = false;
+				getNoiseEvents();
+			} else {
+				document.getElementById('rfevents-row').hidden = true;
+				document.getElementById('radar-row').hidden = true;
+			}
+			//getAirMatchHistory();
+			$('[data-toggle="tooltip"]').tooltip();
 		}
-
-		getEIRPDistribution();
-		getChannelDistribution();
-
-		getAirmatchOptimization();
-		getStaticRadios();
-
-		getAPsForNeighbours();
-
-		// Get VRF data
-		setTimeout(getCampus, 1000, false);
-		
-		// Do we need to grab the group properties?
-		var loadAirMatchEvents = localStorage.getItem('load_airmatch_events');
-		if (loadAirMatchEvents === null || loadAirMatchEvents === '') {
-			loadAirMatchEvents = true;
-		} else {
-			loadAirMatchEvents = JSON.parse(loadAirMatchEvents);
-		}
-		if (loadAirMatchEvents) {
-			document.getElementById('rfevents-row').hidden = false;
-			getRFEvents();
-			document.getElementById('radar-row').hidden = false;
-			getNoiseEvents();
-		} else {
-			document.getElementById('rfevents-row').hidden = true;
-			document.getElementById('radar-row').hidden = true;
-		}
-		//getAirMatchHistory();
-		$('[data-toggle="tooltip"]').tooltip();
 	});
 }
 
@@ -2104,7 +2106,6 @@ function getFloors(offset, triggerLocation) {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getFloors(offset);
 					}
 				});

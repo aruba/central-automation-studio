@@ -1,6 +1,6 @@
 /*
 Central Automation v1.13
-Updated: 1.28.1
+Updated: 1.42.6
 Copyright Aaron Scott (WiFi Downunder) 2021-2024
 */
 
@@ -44,6 +44,8 @@ function getLicensingData() {
 	keys = [];
 	subscriptionCounts = {};
 	licenseNotification = showLongNotification('ca-license-key', 'Checking Central licenses...', 'bottom', 'center', 'info');
+	
+	var totalNonSubscribed = 0;
 
 	// Get overview stats
 	var settings = {
@@ -74,72 +76,22 @@ function getLicensingData() {
 		}
 		var response = JSON.parse(commandResults.responseBody);
 
+				
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
-						failedAuth = true;
 						getLicensingData();
 					}
 				});
 			}
 		} else if (response.total) {
-			for (const [key, value] of Object.entries(response['license_usage_by_services'])) {
-				subscriptionCounts[licenseMapping[key]] = { used: value, count: 0 };
-			}
+		
 
 			failedAuth = false;
-			if (document.getElementById('total_count')) {
-				document.getElementById('total_count').innerHTML = response.total;
-				$(document.getElementById('total_icon')).removeClass('text-warning');
-				$(document.getElementById('total_icon')).addClass('text-primary');
-			}
-
-			if (document.getElementById('available_count')) {
-				document.getElementById('available_count').innerHTML = response.available;
-				if (response.available > 0) {
-					$(document.getElementById('available_icon')).addClass('text-success');
-					$(document.getElementById('available_icon')).removeClass('text-warning');
-					$(document.getElementById('available_icon')).removeClass('text-danger');
-				} else {
-					$(document.getElementById('available_icon')).removeClass('text-success');
-					$(document.getElementById('available_icon')).addClass('text-warning');
-					$(document.getElementById('available_icon')).removeClass('text-danger');
-				}
-			}
-
-			if (document.getElementById('used_count')) {
-				document.getElementById('used_count').innerHTML = response.used;
-				$(document.getElementById('used_icon')).removeClass('text-warning');
-				$(document.getElementById('used_icon')).addClass('text-success');
-			}
-
-			if (document.getElementById('unsub_count')) {
-				document.getElementById('unsub_count').innerHTML = response.non_subscribed_devices;
-				if (response.non_subscribed_devices > 0) {
-					$(document.getElementById('unsub_icon')).removeClass('text-success');
-					$(document.getElementById('unsub_icon')).removeClass('text-warning');
-					$(document.getElementById('unsub_icon')).addClass('text-danger');
-				} else {
-					$(document.getElementById('unsub_icon')).addClass('text-success');
-					$(document.getElementById('unsub_icon')).removeClass('text-warning');
-					$(document.getElementById('unsub_icon')).removeClass('text-danger');
-				}
-			}
-
-			if (document.getElementById('expiry_count')) {
-				document.getElementById('expiry_count').innerHTML = response.expiring;
-				if (response.expiring > 0) {
-					$(document.getElementById('expiry_icon')).removeClass('text-success');
-					$(document.getElementById('expiry_icon')).addClass('text-warning');
-					$(document.getElementById('expiry_icon')).removeClass('text-danger');
-				} else {
-					$(document.getElementById('expiry_icon')).addClass('text-success');
-					$(document.getElementById('expiry_icon')).removeClass('text-warning');
-					$(document.getElementById('expiry_icon')).removeClass('text-danger');
-				}
-			}
+			if (response.non_subscribed_devices) totalNonSubscribed = response.non_subscribed_devices;
+			
 		}
 	});
 
@@ -168,7 +120,6 @@ function getLicensingData() {
 			// Access Token expired - get a new one and try again.
 			$.when(authRefresh()).then(function() {
 				if (!failedAuth) {
-					failedAuth = true;
 					getLicensingData();
 				}
 			});
@@ -180,42 +131,54 @@ function getLicensingData() {
 		}
 
 		var response = JSON.parse(commandResults.responseBody);
-		//console.log(response);
 		// Empty the table
 		$('#subscription-table')
 			.DataTable()
 			.rows()
 			.remove();
+			
+		var totalAvailable = 0;
+		var totalQuantity = 0;
+		var totalExpiring = 0;
 
 		var table = $('#subscription-table').DataTable();
 		$.each(response.subscriptions, function() {
 			// Add row to table
-			keys.push(this);
-			var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa-solid fa-circle text-danger"></i></span>';
-			if (this.status === 'OK') {
-				var today = moment();
-				var endDate = moment(this.end_date);
-				if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 90) {
-					status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 90 days"><i class="fa-solid fa-circle text-warning"></i></span>';
-					showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> expiring soon...', 'bottom', 'center', 'warning');
-				} else {
-					status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa-solid fa-circle text-success"></i></span>';
-				}
-
-				// update the subscriptionCounts
-				var sub = subscriptionCounts[this.license_type];
-				if (sub) {
-					if (!sub['count']) sub['count'] = 0;
-					sub['count'] = sub['count'] + this.quantity;
+			if ((this.acpapp_name === 'nms') && (!this.license_type.includes('UXI') && !this.license_type.includes('Device-Insight'))) {
+				keys.push(this);
+				var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa-solid fa-circle text-danger"></i></span>';
+				
+				
+				if (this.status === 'OK') {
+					var today = moment();
+					var endDate = moment(this.end_date);
+					if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 90) {
+						status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 90 days"><i class="fa-solid fa-circle text-warning"></i></span>';
+						showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> expiring soon...', 'bottom', 'center', 'warning');
+						totalExpiring += this.quantity;
+					} else {
+						status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa-solid fa-circle text-success"></i></span>';
+					}
+					
+					// update the subscriptionCounts
+					
+					totalAvailable += this.available;
+					totalQuantity += this.quantity;
+					
+					var sub = subscriptionCounts[this.license_type];
+					if (!sub) sub = {'available':0, 'total':0};
+					sub['total'] = sub['total'] + this.quantity;
+					sub['available'] = sub['available'] + this.available;
 					subscriptionCounts[this.license_type] = sub;
 				}
+	
+				var subType = this.subscription_type;
+				if (subType === 'EVAL') subType = 'Evaluation';
+				else if (subType === 'NONE') subType = 'Paid';
+				
+				var actionBtns = '<button class="btn-warning btn-action" onclick="loadDeviceTable(\'' + this.subscription_key + '\')">Devices</button> ';
+				table.row.add(['<strong>' + this.subscription_key + '</strong>', subType, status, this.license_type, this.quantity, this.available, '<span style="display:none;">' + this.start_date + '</span>' + moment(this.start_date).format('L'), '<span style="display:none;">' + this.end_date + '</span>' + moment(this.end_date).format('L'), actionBtns]);
 			}
-
-			var subType = this.subscription_type;
-			if (subType === 'EVAL') subType = 'Evaluation';
-			else if (subType === 'NONE') subType = 'Paid';
-			var actionBtns = '<button class="btn-warning btn-action" onclick="loadDeviceTable(\'' + this.subscription_key + '\')">Devices</button> ';
-			table.row.add(['<strong>' + this.subscription_key + '</strong>', subType, status, this.license_type, this.quantity, '<span style="display:none;">' + this.start_date + '</span>' + moment(this.start_date).format('L'), '<span style="display:none;">' + this.end_date + '</span>' + moment(this.end_date).format('L'), actionBtns]);
 		});
 
 		$('#subscription-table')
@@ -228,9 +191,66 @@ function getLicensingData() {
 			.DataTable()
 			.rows()
 			.remove();
+			
+		
+		//Update UI cards
+		
+		var totalUsed = totalQuantity - totalAvailable;
+		if (document.getElementById('total_count')) {
+			document.getElementById('total_count').innerHTML = totalQuantity;
+			$(document.getElementById('total_icon')).removeClass('text-warning');
+			$(document.getElementById('total_icon')).addClass('text-primary');
+		}
+		
+		if (document.getElementById('available_count')) {
+			document.getElementById('available_count').innerHTML = totalAvailable;
+			if (totalAvailable > 0) {
+				$(document.getElementById('available_icon')).addClass('text-success');
+				$(document.getElementById('available_icon')).removeClass('text-warning');
+				$(document.getElementById('available_icon')).removeClass('text-danger');
+			} else {
+				$(document.getElementById('available_icon')).removeClass('text-success');
+				$(document.getElementById('available_icon')).addClass('text-warning');
+				$(document.getElementById('available_icon')).removeClass('text-danger');
+			}
+		}
+		
+		if (document.getElementById('used_count')) {
+			document.getElementById('used_count').innerHTML = totalUsed;
+			$(document.getElementById('used_icon')).removeClass('text-warning');
+			$(document.getElementById('used_icon')).addClass('text-success');
+		}
+		
+		if (document.getElementById('unsub_count')) {
+			document.getElementById('unsub_count').innerHTML = totalNonSubscribed;
+			if (totalNonSubscribed > 0) {
+				$(document.getElementById('unsub_icon')).removeClass('text-success');
+				$(document.getElementById('unsub_icon')).removeClass('text-warning');
+				$(document.getElementById('unsub_icon')).addClass('text-danger');
+			} else {
+				$(document.getElementById('unsub_icon')).addClass('text-success');
+				$(document.getElementById('unsub_icon')).removeClass('text-warning');
+				$(document.getElementById('unsub_icon')).removeClass('text-danger');
+			}
+		}
+		
+		if (document.getElementById('expiry_count')) {
+			document.getElementById('expiry_count').innerHTML = totalExpiring;
+			if (totalExpiring > 0) {
+				$(document.getElementById('expiry_icon')).removeClass('text-success');
+				$(document.getElementById('expiry_icon')).addClass('text-warning');
+				$(document.getElementById('expiry_icon')).removeClass('text-danger');
+			} else {
+				$(document.getElementById('expiry_icon')).addClass('text-success');
+				$(document.getElementById('expiry_icon')).removeClass('text-warning');
+				$(document.getElementById('expiry_icon')).removeClass('text-danger');
+			}
+		}
+		
+		
 		var table = $('#used-table').DataTable();
 		for (const [key, value] of Object.entries(subscriptionCounts)) {
-			if (value['count'] > 0) table.row.add(['<strong>' + key + '</strong>', value['used'], value['count'] - value['used'], value['count']]);
+			if (value['total'] > 0) table.row.add(['<strong>' + key + '</strong>', value['total'] - value['available'], value['available'], value['total']]);
 		}
 		$('#used-table')
 			.DataTable()
@@ -307,6 +327,7 @@ function buildCSVData() {
 	var statusKey = 'STATUS';
 	var licenseTypeKey = 'LICENSE TYPE';
 	var qtyKey = 'QUANTITY';
+	var availableKey = 'AVAILABLE';
 	var startKey = 'START DATE';
 	var endKey = 'END DATE';
 
@@ -320,7 +341,7 @@ function buildCSVData() {
 		var subType = subscription['subscription_type'];
 		if (subType === 'EVAL') subType = 'Evaluation';
 		else if (subType === 'NONE') subType = 'Paid';
-		csvDataBuild.push({ [subKey]: subscription['subscription_key'], [subTypeKey]: subType, [statusKey]: titleCase(subscription['status']), [licenseTypeKey]: subscription['license_type'], [qtyKey]: subscription['quantity'], [startKey]: moment(subscription['start_date']).format('L'), [endKey]: moment(subscription['end_date']).format('L') });
+		csvDataBuild.push({ [subKey]: subscription['subscription_key'], [subTypeKey]: subType, [statusKey]: titleCase(subscription['status']), [licenseTypeKey]: subscription['license_type'], [qtyKey]: subscription['quantity'], [availableKey]: subscription['available'], [startKey]: moment(subscription['start_date']).format('L'), [endKey]: moment(subscription['end_date']).format('L') });
 	});
 
 	return csvDataBuild;
