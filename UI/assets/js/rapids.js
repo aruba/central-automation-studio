@@ -1,7 +1,7 @@
 /*
 Central Automation v1.20
 Updated: 1.36.7
-Copyright Aaron Scott (WiFi Downunder) 2021-2024
+Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 const RapidsType = { All: 0, Rogues: 1, SuspectedRogues: 2, Interfering: 3, Neighbours: 4, Contained: 5};

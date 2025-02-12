@@ -1,7 +1,7 @@
   /*
 Central Automation v1
 Updated: 1.37
-Copyright Aaron Scott (WiFi Downunder) 2021-2024
+Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 
@@ -946,6 +946,10 @@ Generated using nucleoapp.com
 
 .ca-antenna-width::before {
   content: "\eac9";
+}
+
+.ca-a-tag-add::before {
+  content: "\eaca";
 }
 
 

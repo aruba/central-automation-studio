@@ -273,6 +273,11 @@ var devicesToReboot = [];
 
 var needAntennaConfig = [];
 
+var iotCollectorsArray = [];
+var iotCollectors = {};
+var apsToAssociateCount = 0;
+var associatedCounter = 0;
+
 const apiLimit = 1000;
 const apiClientLimit = 1000;
 const apiAPLimit = 500;
@@ -280,6 +285,7 @@ const apiGLCPLimit = 100;
 const apiSiteLimit = 1000;
 const apiGroupLimit = 20;
 const apiMSPLimit = 50;
+const iotAPILimit = 50;
 const apiDelay = 250;
 const apiVRFLimit = 100;
 const apiLicensingLimit = 50;
@@ -348,6 +354,7 @@ var ipNotification;
 var visitorNotification;
 var siteNotification;
 var labelNotification;
+var iotNotification;
 
 var appIDMappings = {};
 var webCatMappings = {};
@@ -1149,6 +1156,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Configuring Gateway Timezones...');
 				currentWorkflow = '';
 				setGatewayTimezones();
+			} else if (clickedRow === 'iotAssociation') {
+				logStart('Associating APs to an IoT Collector...');
+				currentWorkflow = '';
+				setIoTCollector();
 			} else if (clickedRow === 'auto-add-license') {
 				logStart('Adding devices and licensing...');
 				currentWorkflow = 'auto-add-license';
@@ -1729,7 +1740,7 @@ function getMonitoringData(event) {
 			return; // an update is already in progress
 		}*/
 		
-		console.log('Reading new monitoring data from Central');
+		console.log('Obtaining the latest monitoring data from Central');
 	
 		// Are we including Wireless Clients in the monitoring data calls?
 		var loadWirelessClients = localStorage.getItem('load_clients');
@@ -4707,6 +4718,8 @@ function findDeviceInMonitoring(currentSerial) {
 		Search through all monitoring data 
 		return the device if found, along with storing the device type
 	*/
+	if (!currentSerial) return false;
+	
 	var found = false;
 	// Check APs
 	deviceType = '';
@@ -9037,7 +9050,7 @@ function setFlexRadioMode() {
 	var settingsList = {};
 	radioModeCounter = 0;
 	$.when(updateInventory(false)).then(function() {
-		radioNotification = showProgressNotification('ca-router', 'Setting Radio Mode...', 'bottom', 'center', 'info');
+		radioNotification = showProgressNotification('ca-router', 'Setting Flexible Dual Band Mode...', 'bottom', 'center', 'info');
 		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
 		$.each(csvData, function() {
 			// find device in inventory to get device type
@@ -9151,7 +9164,7 @@ function setFlexRadioMode() {
 											}
 										}
 										if (response !== currentSerial) {
-											logError(currentSerial + ' was not assigned the new Radio Modes. Reason: ' + response.reason);
+											logError(currentSerial + ' was not assigned the new Flexible Dual Band Modes. Reason: ' + response.reason);
 											//console.log(response.reason);
 											apiErrorCount++;
 										} else {
@@ -12695,4 +12708,204 @@ function buildDeviceCSVData(downloadType) {
 	});
 
 	return csvDataBuild;
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	IOT Collector functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function setIoTCollector() {
+	if (csvData.length == 0) { 
+		showNotification('ca-a-tag-add', 'No APs in the CSV file', 'bottom', 'center', 'warning');
+		return;
+	}
+	
+	// Clear out old IOT Collectors
+	select = document.getElementById('collectorSelector');
+	if (select) {
+		select.options.length = 0;
+		$('#collectorSelector').selectpicker('refresh');
+	}
+	iotCollectorsArray = [];
+	iotCollectors = {}
+	loadIOTCollectors(0);
+	
+	$('#BulkIOTConfigModalLink').trigger('click');
+}
+
+function applyIOTBulkChanges() {
+	// Get selected IoT Collector
+	var select = document.getElementById('collectorSelector');
+	selectedIOTCollector = select.value;	
+	if (selectedIOTCollector === '') {
+		showNotification('ca-a-tag-add', 'Select an IoT Collector from the dropdown', 'bottom', 'center', 'danger');
+		return;
+	}
+	
+	// Build array 
+	var selectedAPs = [];
+	for (var i=0;i<csvData.length;i++) {
+		var currentSerial = csvData[i]['SERIAL']
+		if (currentSerial && currentSerial !== '') selectedAPs.push(currentSerial)
+	}
+	
+	// Call function for association
+	associateAPsToCollector(selectedAPs, iotCollectors[selectedIOTCollector]);
+}
+
+function loadIOTCollectors(pageID) {
+	
+	iotNotification = showProgressNotification('ca-a-tag-add', 'Obtaining IoT Collectors...', 'bottom', 'center', 'info');
+
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/iot_operations/api/v1/iot_gateways?checkStatus=true&page='+pageID+'&size=100',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	return $.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (' + url + ')');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		if (response.hasOwnProperty('error')) {
+			//console.log(response);
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			iotCollectorsArray = iotCollectorsArray.concat(response.content);
+			var progress = (pageID + 1)/response.totalPages * 100;
+			iotNotification.update({ progress: progress });
+			
+			if (!response.last) {
+				loadIOTCollectors(pageID);
+			} else {
+				iotNotification.update({ type: 'success', message: 'Obtained IoT Collectors' });
+				setTimeout(iotNotification.close, 1000);
+				
+				$.each(iotCollectorsArray, function() {
+					//console.log(this);
+					iotCollectors[this.id] = this;
+					if (document.getElementById('collectorSelector')) {
+						$('#collectorSelector').append($('<option>', { value: this.id, text: this.name }));
+						if ($('#collectorSelector').length != 0) {
+							$('#collectorSelector').selectpicker('refresh');
+						}
+					}
+				});
+				
+			}
+		}
+	});
+}
+
+function associateAPsToCollector(apsToAssociate, selectedCollector) {
+	// Setup
+	iotNotification = showProgressNotification('ca-a-tag-add', 'Associating APs to the IoT Collector...', 'bottom', 'center', 'info');
+	apsToAssociateCount = apsToAssociate.length;;
+	associatedCounter = 0;
+	apiErrorCount = 0;
+	
+	// Need to split up into 20 device blocks (API limitation?)
+	while (apsToAssociate.length > 0) {
+		var serialBlock = [];
+		serialBlock = apsToAssociate.splice(0, iotAPILimit);
+		logInformation('Adding APs to the ' + selectedCollector.name + ' IoT Collector: ' + serialBlock.join(', '));
+		
+		// Build posted data
+		var uploadDevices = {
+		  "collectorId": selectedCollector.id,
+		  "collectorIp": selectedCollector.ipAddress,
+		  "reporterList": serialBlock
+		}
+	
+		// Move the block of serials in separate function to avoid variable changing between API call and response (due to looping) - enables better error and completion tracking
+		$.when(performIOTAssociation(uploadDevices, new $.Deferred())).then(function() {
+			// check for completion after each bulk association
+			var associateProgress = (associatedCounter / apsToAssociateCount) * 100;
+			if (iotNotification) iotNotification.update({ progress: associateProgress });
+	
+			if (associatedCounter == apsToAssociateCount) {
+				if (document.getElementById('BulkIOTConfigModal')) $('#BulkIOTConfigModal').modal('hide');
+				if (iotNotification) iotNotification.close();
+				if (apiErrorCount != 0) {
+					showLog();
+					Swal.fire({
+						title: 'AP Association Failure',
+						text: 'Some or all devices failed to be associated to the Iot Collector',
+						icon: 'error',
+					});
+				} else {
+					Swal.fire({
+						title: 'AP Association Success',
+						text: 'All devices were to associated to the IoT Collector',
+						icon: 'success',
+					});
+				}
+			}
+		});
+	}
+}	
+	
+function performIOTAssociation(uploadDevices, associatePromise)	{
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/iot_operations/api/v1/iot_gateways/association',
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify(uploadDevices),
+		}),
+	};
+	
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
+		console.log('Associate AP response: ' + JSON.stringify(response));
+		if (response.hasOwnProperty('message')) {
+			if (response.message === 'API rate limit exceeded') {
+				Swal.fire({
+					title: 'API Limit',
+					text: 'Daily API limit reached',
+					icon: 'error',
+				});
+				apiErrorCount++;
+			}
+		}
+	
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/iot_operations/api/v1/iot_gateways/association)');
+			}
+		}
+		
+		// Check if there are any failed associations - if so log them
+		if (response.failedActionReporterList && response.failedActionReporterList.length > 0) {
+			$.each(failedActionReporterList, function() {
+				logError("AP ("+ this + ") failed to be associated with '" + select.name + "'");
+				apiErrorCount++;
+			});
+			showLog();
+		}
+		associatedCounter = associatedCounter + uploadDevices['reporterList'].length;
+		associatePromise.resolve();
+	});
+	return associatePromise.promise();
 }

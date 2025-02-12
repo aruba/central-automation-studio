@@ -1,7 +1,7 @@
 /*
 Central Automation v1.14.1
 Updated: 
-© Aaron Scott (WiFi Downunder) 2021-2024
+© Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var deviceInfo = [];

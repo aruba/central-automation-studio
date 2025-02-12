@@ -104,21 +104,23 @@ function loadCurrentPageSite() {
 	
 	// Clear the Sites from the dropdown
 	select = document.getElementById('client-siteselector');
-	select.options.length = 0;
-	$('#client-siteselector').append($('<option>', { value: '_all', text: 'All Sites' }));
-	$('#client-siteselector').append($('<option>', { value: '', text: '────────────────────────', style: 'color: #cccccc;', disabled: true }));
-	$.each(allSites, function() {
-		// Add group to the dropdown selector
-		$('#client-siteselector').append($('<option>', { value: this['name'], text: this['name'] }));
-		if ($('#client-siteselector').length != 0) {
-			$('#client-siteselector').selectpicker('refresh');
+	if (select) {
+		select.options.length = 0;
+		$('#client-siteselector').append($('<option>', { value: '_all', text: 'All Sites' }));
+		$('#client-siteselector').append($('<option>', { value: '', text: '────────────────────────', style: 'color: #cccccc;', disabled: true }));
+		$.each(allSites, function() {
+			// Add group to the dropdown selector
+			$('#client-siteselector').append($('<option>', { value: this['name'], text: this['name'] }));
+			if ($('#client-siteselector').length != 0) {
+				$('#client-siteselector').selectpicker('refresh');
+			}
+		});
+		
+		if (selectedSite) {
+			$('#client-siteselector').selectpicker('val', selectedSite);
+		} else {
+			$('#client-siteselector').selectpicker('val', '_all');
 		}
-	});
-	
-	if (selectedSite) {
-		$('#client-siteselector').selectpicker('val', selectedSite);
-	} else {
-		$('#client-siteselector').selectpicker('val', '_all');
 	}
 	updateClientGraphs();
 }
@@ -183,12 +185,20 @@ function getWLANs() {
 
 function updateClientGraphs() {
 	select = document.getElementById('client-wlanselector');
-	selectedWLAN = select.value;
-	localStorage.setItem('filter_client_ssid', selectedWLAN);
+	if (select) { 
+		selectedWLAN = select.value;
+		localStorage.setItem('filter_client_ssid', selectedWLAN);
+	} else {
+		selectedWLAN = '_all';
+	}
 	
 	select = document.getElementById('client-siteselector');
-	selectedSite = select.value;
-	localStorage.setItem('filter_client_site', selectedSite);
+	if (select) { 
+		selectedSite = select.value;
+		localStorage.setItem('filter_client_site', selectedSite);
+	} else {
+		selectedSite = '_all';
+	}
 	
 	countRandomMAC = 0;
 	randomMACClients = [];
@@ -262,10 +272,10 @@ function updateClientGraphs() {
 	osType = {};
 	wirelessClients = getWirelessClients();
 	wiredClients = getWiredClients();
-
+	
 	// Get stats for wireless clients
 	$.each(wirelessClients, function() {
-		if ((this.network === selectedWLAN || selectedWLAN === '_all' || selectedWLAN === '_wlan') && (this.site === selectedSite || selectedSite === '_all'))  {			
+		if ((this.network === selectedWLAN || selectedWLAN === '_all' || selectedWLAN === '_wlan') && (this.site === selectedSite || selectedSite === '_all'))  {	
 			// Randomized MAC?
 			if (this.macaddr.charAt(1) === '2' || this.macaddr.charAt(1) === '6' || this.macaddr.charAt(1) === 'a' || this.macaddr.charAt(1) === 'e') {
 				countRandomMAC++;
@@ -492,54 +502,56 @@ function updateClientGraphs() {
 		labelOther =  Math.round(percentageOther) + '%';
 		if (otherClients.length == 0) labelOther = ' ';
 	
-		Chartist.Pie(
-			'#chartwpa',
-			{
-				labels: [labelWPA3, labelWPA3X, labelWPA2, labelWPA2X, labelOWE, labelOpen, labelOther],
-				series: [
-					{
-						meta: 'WPA3',
-						value: percentageWPA3,
-					},
-					{
-						meta: 'WPA3X',
-						value: percentageWPA3X,
-					},
-					{
-						meta: 'WPA2',
-						value: percentageWPA2,
-					},
-					{
-						meta: 'WPA2X',
-						value: percentageWPA2X,
-					},
-					{
-						meta: 'OWE',
-						value: percentageOWE,
-					},
-					{
-						meta: 'Open',
-						value: percentageOpen,
-					},
-					{
-						meta: 'Others',
-						value: percentageOther,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-	
-		$('#chartwpa').on('click', '.ct-slice-donut', function() {
-			displaySelectedClientsWPA($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chartwpa')) {
+			Chartist.Pie(
+				'#chartwpa',
+				{
+					labels: [labelWPA3, labelWPA3X, labelWPA2, labelWPA2X, labelOWE, labelOpen, labelOther],
+					series: [
+						{
+							meta: 'WPA3',
+							value: percentageWPA3,
+						},
+						{
+							meta: 'WPA3X',
+							value: percentageWPA3X,
+						},
+						{
+							meta: 'WPA2',
+							value: percentageWPA2,
+						},
+						{
+							meta: 'WPA2X',
+							value: percentageWPA2X,
+						},
+						{
+							meta: 'OWE',
+							value: percentageOWE,
+						},
+						{
+							meta: 'Open',
+							value: percentageOpen,
+						},
+						{
+							meta: 'Others',
+							value: percentageOther,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+		
+			$('#chartwpa').on('click', '.ct-slice-donut', function() {
+				displaySelectedClientsWPA($(this).attr('ct:meta'));
+			});
+		}
 		
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------
 		Randomized MAC chart
@@ -552,34 +564,36 @@ function updateClientGraphs() {
 		labelActual =  Math.round(percentageActual) + '%';
 		if (percentageActual == 0) labelActual = '';
 
-		Chartist.Pie(
-			'#chartMAC',
-			{
-				labels: [labelRandom, labelActual],
-				series: [
-					{
-						meta: 'randomized',
-						value: percentageRandomzied,
-					},
-					{
-						meta: 'actual',
-						value: percentageActual,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-
-		$('#chartMAC').on('click', '.ct-slice-donut', function() {
-			displaySelectedClientsRandomMac($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chartMAC')) {
+			Chartist.Pie(
+				'#chartMAC',
+				{
+					labels: [labelRandom, labelActual],
+					series: [
+						{
+							meta: 'randomized',
+							value: percentageRandomzied,
+						},
+						{
+							meta: 'actual',
+							value: percentageActual,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+	
+			$('#chartMAC').on('click', '.ct-slice-donut', function() {
+				displaySelectedClientsRandomMac($(this).attr('ct:meta'));
+			});
+		}
 
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		11k chart
@@ -592,35 +606,37 @@ function updateClientGraphs() {
 		labelNoK =  Math.round(percentageNoK) + '%';
 		if (percentageNoK == 0) labelNoK = '';
 
-		Chartist.Pie(
-			'#chart11k',
-			{
-				labels: [labelK, labelNoK],
-				//series: [percentage11k, 100-percentage11k]
-				series: [
-					{
-						meta: '11k',
-						value: percentage11k,
-					},
-					{
-						meta: 'no11k',
-						value: percentageNoK,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-
-		$('#chart11k').on('click', '.ct-slice-donut', function() {
-			displaySelectedClients11k($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chart11k')) {
+			Chartist.Pie(
+				'#chart11k',
+				{
+					labels: [labelK, labelNoK],
+					//series: [percentage11k, 100-percentage11k]
+					series: [
+						{
+							meta: '11k',
+							value: percentage11k,
+						},
+						{
+							meta: 'no11k',
+							value: percentageNoK,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+	
+			$('#chart11k').on('click', '.ct-slice-donut', function() {
+				displaySelectedClients11k($(this).attr('ct:meta'));
+			});
+		}
 
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		11v chart
@@ -634,35 +650,37 @@ function updateClientGraphs() {
 		labelNoV =  Math.round(percentageNoV) + '%';
 		if (percentageNoV == 0) labelNoV = ' ';
 
-		Chartist.Pie(
-			'#chart11v',
-			{
-				labels: [labelV, labelNoV],
-				//series: [percentage11v, 100-percentage11v]
-				series: [
-					{
-						meta: '11v',
-						value: percentage11v,
-					},
-					{
-						meta: 'no11v',
-						value: percentageNoV,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-
-		$('#chart11v').on('click', '.ct-slice-donut', function() {
-			displaySelectedClients11v($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chart11v')) {
+			Chartist.Pie(
+				'#chart11v',
+				{
+					labels: [labelV, labelNoV],
+					//series: [percentage11v, 100-percentage11v]
+					series: [
+						{
+							meta: '11v',
+							value: percentage11v,
+						},
+						{
+							meta: 'no11v',
+							value: percentageNoV,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+	
+			$('#chart11v').on('click', '.ct-slice-donut', function() {
+				displaySelectedClients11v($(this).attr('ct:meta'));
+			});
+		}
 
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		11r chart
@@ -676,35 +694,37 @@ function updateClientGraphs() {
 		labelNoR =  Math.round(percentageNoR) + '%';
 		if (percentageNoR == 0) labelNoR = ' ';
 
-		Chartist.Pie(
-			'#chart11r',
-			{
-				labels: [labelR, labelNoR],
-				//series: [percentage11r, 100-percentage11r]
-				series: [
-					{
-						meta: '11r',
-						value: percentage11r,
-					},
-					{
-						meta: 'no11r',
-						value: percentageNoR,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-
-		$('#chart11r').on('click', '.ct-slice-donut', function() {
-			displaySelectedClients11r($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chart11r')) {
+			Chartist.Pie(
+				'#chart11r',
+				{
+					labels: [labelR, labelNoR],
+					//series: [percentage11r, 100-percentage11r]
+					series: [
+						{
+							meta: '11r',
+							value: percentage11r,
+						},
+						{
+							meta: 'no11r',
+							value: percentageNoR,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+	
+			$('#chart11r').on('click', '.ct-slice-donut', function() {
+				displaySelectedClients11r($(this).attr('ct:meta'));
+			});
+		}
 
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Band split chart
@@ -721,39 +741,41 @@ function updateClientGraphs() {
 		label2 = Math.round(percentage2) + '%';
 		if (count2Ghz == 0) label2 = ' ';
 
-		Chartist.Pie(
-			'#chartBand',
-			{
-				labels: [label6, label5, label2],
-				//series: [percentageBand, bandLeft]
-				series: [
-					{
-						meta: '6Ghz',
-						value: percentage6,
-					},
-					{
-						meta: '5GHz',
-						value: percentage5,
-					},
-					{
-						meta: '2.4GHz',
-						value: percentage2,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-
-		$('#chartBand').on('click', '.ct-slice-donut', function() {
-			displaySelectedClientsBand($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chartBand')) {
+			Chartist.Pie(
+				'#chartBand',
+				{
+					labels: [label6, label5, label2],
+					//series: [percentageBand, bandLeft]
+					series: [
+						{
+							meta: '6Ghz',
+							value: percentage6,
+						},
+						{
+							meta: '5GHz',
+							value: percentage5,
+						},
+						{
+							meta: '2.4GHz',
+							value: percentage2,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+	
+			$('#chartBand').on('click', '.ct-slice-donut', function() {
+				displaySelectedClientsBand($(this).attr('ct:meta'));
+			});
+		}
 
 		/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Standard Chart
@@ -781,49 +803,51 @@ function updateClientGraphs() {
 		labelAN =  Math.round(percentage11an) + '%';
 		if (count11an == 0) labelAN = ' ';
 
-		Chartist.Pie(
-			'#chart11',
-			{
-				labels: [labelBE, label6E, labelAX, labelAC, labelAN, labelGN],
-				//series: [percentage11ax, percentage11ac, percentage11gn, percentage11an]
-				series: [
-					{
-						meta: '11be',
-						value: percentage11be,
-					},{
-						meta: '11ax/6E',
-						value: percentage6e,
-					},{
-						meta: '11ax',
-						value: percentage11ax,
-					},
-					{
-						meta: '11ac',
-						value: percentage11ac,
-					},
-					{
-						meta: '11an',
-						value: percentage11an,
-					},
-					{
-						meta: '11gn',
-						value: percentage11gn,
-					},
-				],
-			},
-			{
-				donut: true,
-				donutWidth: 30,
-				showLabel: true,
-				chartPadding: 26,
-				labelOffset: 30,
-				labelDirection: 'explode',
-			}
-		);
-
-		$('#chart11').on('click', '.ct-slice-donut', function() {
-			displaySelectedClients11($(this).attr('ct:meta'));
-		});
+		if (document.getElementById('chart11')) {
+			Chartist.Pie(
+				'#chart11',
+				{
+					labels: [labelBE, label6E, labelAX, labelAC, labelAN, labelGN],
+					//series: [percentage11ax, percentage11ac, percentage11gn, percentage11an]
+					series: [
+						{
+							meta: '11be',
+							value: percentage11be,
+						},{
+							meta: '11ax/6E',
+							value: percentage6e,
+						},{
+							meta: '11ax',
+							value: percentage11ax,
+						},
+						{
+							meta: '11ac',
+							value: percentage11ac,
+						},
+						{
+							meta: '11an',
+							value: percentage11an,
+						},
+						{
+							meta: '11gn',
+							value: percentage11gn,
+						},
+					],
+				},
+				{
+					donut: true,
+					donutWidth: 30,
+					showLabel: true,
+					chartPadding: 26,
+					labelOffset: 30,
+					labelDirection: 'explode',
+				}
+			);
+	
+			$('#chart11').on('click', '.ct-slice-donut', function() {
+				displaySelectedClients11($(this).attr('ct:meta'));
+			});
+		}
 	}
 
 	/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -839,76 +863,78 @@ function updateClientGraphs() {
 		plugins: [Chartist.plugins.tooltip()],
 	};
 
-	Chartist.Bar(
-		'#chartAuth',
-		{
-			labels: ['None', 'MAC Auth', '802.1X'],
-			//series: [[countNoAuth, countMACAuth, countDot1X],[countNoAuth2, countMACAuth2, countDot1X2], [countNoAuthW, countMACAuthW, countDot1XW]]
-			series: [
-				[
-					{
-						meta: '6GHz: No Auth',
-						value: countNoAuth6,
-					},
-					{
-						meta: '6GHz: MAC Auth',
-						value: countMACAuth6,
-					},
-					{
-						meta: '6GHz: 802.1X',
-						value: countDot1X6,
-					},
+	if (document.getElementById('chartAuth')) {
+		Chartist.Bar(
+			'#chartAuth',
+			{
+				labels: ['None', 'MAC Auth', '802.1X'],
+				//series: [[countNoAuth, countMACAuth, countDot1X],[countNoAuth2, countMACAuth2, countDot1X2], [countNoAuthW, countMACAuthW, countDot1XW]]
+				series: [
+					[
+						{
+							meta: '6GHz: No Auth',
+							value: countNoAuth6,
+						},
+						{
+							meta: '6GHz: MAC Auth',
+							value: countMACAuth6,
+						},
+						{
+							meta: '6GHz: 802.1X',
+							value: countDot1X6,
+						},
+					],
+					[
+						{
+							meta: '5GHz: No Auth',
+							value: countNoAuth,
+						},
+						{
+							meta: '5GHz: MAC Auth',
+							value: countMACAuth,
+						},
+						{
+							meta: '5GHz: 802.1X',
+							value: countDot1X,
+						},
+					],
+					[
+						{
+							meta: '2.4GHz: No Auth',
+							value: countNoAuth2,
+						},
+						{
+							meta: '2.4GHz: MAC Auth',
+							value: countMACAuth2,
+						},
+						{
+							meta: '2.4GHz: 802.1X',
+							value: countDot1X2,
+						},
+					],
+					[
+						{
+							meta: 'Wired: No Auth',
+							value: countNoAuthW,
+						},
+						{
+							meta: 'Wired: MAC Auth',
+							value: countMACAuthW,
+						},
+						{
+							meta: 'Wired: 802.1X',
+							value: countDot1XW,
+						},
+					],
 				],
-				[
-					{
-						meta: '5GHz: No Auth',
-						value: countNoAuth,
-					},
-					{
-						meta: '5GHz: MAC Auth',
-						value: countMACAuth,
-					},
-					{
-						meta: '5GHz: 802.1X',
-						value: countDot1X,
-					},
-				],
-				[
-					{
-						meta: '2.4GHz: No Auth',
-						value: countNoAuth2,
-					},
-					{
-						meta: '2.4GHz: MAC Auth',
-						value: countMACAuth2,
-					},
-					{
-						meta: '2.4GHz: 802.1X',
-						value: countDot1X2,
-					},
-				],
-				[
-					{
-						meta: 'Wired: No Auth',
-						value: countNoAuthW,
-					},
-					{
-						meta: 'Wired: MAC Auth',
-						value: countMACAuthW,
-					},
-					{
-						meta: 'Wired: 802.1X',
-						value: countDot1XW,
-					},
-				],
-			],
-		},
-		barOptions
-	);
-
-	$('#chartAuth').on('click', '.ct-bar', function() {
-		displaySelectedClientsAuth($(this).attr('ct:meta'));
-	});
+			},
+			barOptions
+		);
+	
+		$('#chartAuth').on('click', '.ct-bar', function() {
+			displaySelectedClientsAuth($(this).attr('ct:meta'));
+		});
+	}
 
 	/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		OS Type Bar Chart
@@ -949,79 +975,81 @@ function updateClientGraphs() {
 		osSeries.push({ meta: this[0], value: this[1].length});
 	});
 
-	Chartist.Bar(
-		'#chartOS',
-		{
-			labels: osLabels,
-			series: [osSeries],
-		},
-		{
-			//distributeSeries: true,
-			height: 250,
-			axisX: {
-				showGrid: false,
+	if (document.getElementById('chartOS')) {
+		Chartist.Bar(
+			'#chartOS',
+			{
+				labels: osLabels,
+				series: [osSeries],
 			},
-			axisY: {
-				onlyInteger: true,
-				offset: 50,
-			},
-			plugins: [Chartist.plugins.tooltip()],
-		}
-	);
-
-	$('#chartOS').on('click', '.ct-bar', function() {
-		$('#selected-client-table')
-			.DataTable()
-			.rows()
-			.remove();
-		var table = $('#selected-client-table').DataTable();
-		var selectedClients = [];
-		var val = $(this).attr('ct:meta');
-		selectedClients = osType[val];
-		document.getElementById('selected-title').innerHTML = 'Clients running operating system: ' + val;
-
-		$.each(selectedClients, function() {
-			var status = '';
-			if (!this['health']) {
-				status = '<i class="fa-solid fa-circle text-neutral"></i>';
-			} else if (this['health'] < 50) {
-				status = '<i class="fa-solid fa-circle text-danger"></i>';
-			} else if (this['health'] < 70) {
-				status = '<i class="fa-solid fa-circle text-warning"></i>';
-			} else {
-				status = '<i class="fa-solid fa-circle text-success"></i>';
+			{
+				//distributeSeries: true,
+				height: 250,
+				axisX: {
+					showGrid: false,
+				},
+				axisY: {
+					onlyInteger: true,
+					offset: 50,
+				},
+				plugins: [Chartist.plugins.tooltip()],
 			}
-			// Generate clean data for table
-			var site = '';
-			if (this['site']) site = this['site'];
-			var health = '';
-			if (this['health']) health = this['health'];
-			var associatedDevice_name = '';
-			var associatedDevice = findDeviceInMonitoring(this['associated_device']);
-			if (associatedDevice) associatedDevice_name = associatedDevice.name;
-			var ip_address = '';
-			if (this['ip_address']) ip_address = this['ip_address'];
-			var vlan = '';
-			if (this['vlan']) vlan = this['vlan'];
-			var os_type = '';
-			if (this['os_type']) os_type = this['os_type'];
-			var client_name = '';
-			if (this['name']) client_name = this['name'];
-
-			// Make link to Central
-			name = encodeURI(client_name);
-			var apiURL = localStorage.getItem('base_url');
-			var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
-
-			// Add row to table
-			table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
+		);
+	
+		$('#chartOS').on('click', '.ct-bar', function() {
+			$('#selected-client-table')
+				.DataTable()
+				.rows()
+				.remove();
+			var table = $('#selected-client-table').DataTable();
+			var selectedClients = [];
+			var val = $(this).attr('ct:meta');
+			selectedClients = osType[val];
+			document.getElementById('selected-title').innerHTML = 'Clients running operating system: ' + val;
+	
+			$.each(selectedClients, function() {
+				var status = '';
+				if (!this['health']) {
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
+				} else if (this['health'] < 50) {
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
+				} else if (this['health'] < 70) {
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
+				} else {
+					status = '<i class="fa-solid fa-circle text-success"></i>';
+				}
+				// Generate clean data for table
+				var site = '';
+				if (this['site']) site = this['site'];
+				var health = '';
+				if (this['health']) health = this['health'];
+				var associatedDevice_name = '';
+				var associatedDevice = findDeviceInMonitoring(this['associated_device']);
+				if (associatedDevice) associatedDevice_name = associatedDevice.name;
+				var ip_address = '';
+				if (this['ip_address']) ip_address = this['ip_address'];
+				var vlan = '';
+				if (this['vlan']) vlan = this['vlan'];
+				var os_type = '';
+				if (this['os_type']) os_type = this['os_type'];
+				var client_name = '';
+				if (this['name']) client_name = this['name'];
+	
+				// Make link to Central
+				name = encodeURI(client_name);
+				var apiURL = localStorage.getItem('base_url');
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+	
+				// Add row to table
+				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
+			});
+			$('#selected-client-table')
+				.DataTable()
+				.rows()
+				.draw();
+			$('#SelectedClientModalLink').trigger('click');
 		});
-		$('#selected-client-table')
-			.DataTable()
-			.rows()
-			.draw();
-		$('#SelectedClientModalLink').trigger('click');
-	});
+	}
 	
 	/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		SNR Chart
@@ -1052,87 +1080,88 @@ function updateClientGraphs() {
 	// Build series
 	var snrSeries = [{ meta: '0-9', value: snr0.length}, { meta: '10-19', value: snr10.length}, { meta: '20-29', value: snr20.length}, { meta: '30-39', value: snr30.length}, { meta: '40-49', value: snr40.length}, { meta: '50-59', value: snr50.length}, { meta: '60+', value: snr60.length}];
 	
-	Chartist.Bar(
-		'#chartSNR',
-		{
-			labels: snrLabels,
-			series: [snrSeries],
-		},
-		{
-			//distributeSeries: true,
-			height: 250,
-			axisX: {
-				showGrid: false,
-				labelInterpolationFnc: function(value) {
-				  return value + 'dB'
+	if (document.getElementById('chartSNR')) {
+		Chartist.Bar(
+			'#chartSNR',
+			{
+				labels: snrLabels,
+				series: [snrSeries],
+			},
+			{
+				//distributeSeries: true,
+				height: 250,
+				axisX: {
+					showGrid: false,
+					labelInterpolationFnc: function(value) {
+					return value + 'dB'
+					},
 				},
-			},
-			axisY: {
-				onlyInteger: true,
-				offset: 50,
-			},
-			plugins: [Chartist.plugins.tooltip()],
-		}
-	);
-	
-	$('#chartSNR').on('click', '.ct-bar', function() {
-		$('#selected-client-table')
-			.DataTable()
-			.rows()
-			.remove();
-		var table = $('#selected-client-table').DataTable();
-		var selectedClients = [];
-		var val = $(this).attr('ct:meta');
-		var valIndex = snrLabels.indexOf(val);
-		selectedClients = snrArray[valIndex];
-		console.log(val)
-		console.log(valIndex)
-		document.getElementById('selected-title').innerHTML = 'Clients with SNR in the Range: ' + snrLabels[valIndex] + 'dB';
-	
-		$.each(selectedClients, function() {
-			var status = '';
-			if (!this['health']) {
-				status = '<i class="fa-solid fa-circle text-neutral"></i>';
-			} else if (this['health'] < 50) {
-				status = '<i class="fa-solid fa-circle text-danger"></i>';
-			} else if (this['health'] < 70) {
-				status = '<i class="fa-solid fa-circle text-warning"></i>';
-			} else {
-				status = '<i class="fa-solid fa-circle text-success"></i>';
+				axisY: {
+					onlyInteger: true,
+					offset: 50,
+				},
+				plugins: [Chartist.plugins.tooltip()],
 			}
-			// Generate clean data for table
-			var site = '';
-			if (this['site']) site = this['site'];
-			var health = '';
-			if (this['health']) health = this['health'];
-			var associatedDevice_name = '';
-			var associatedDevice = findDeviceInMonitoring(this['associated_device']);
-			if (associatedDevice) associatedDevice_name = associatedDevice.name;
-			var ip_address = '';
-			if (this['ip_address']) ip_address = this['ip_address'];
-			var vlan = '';
-			if (this['vlan']) vlan = this['vlan'];
-			var os_type = '';
-			if (this['os_type']) os_type = this['os_type'];
-			var client_name = '';
-			if (this['name']) client_name = this['name'];
-	
-			// Make link to Central
-			name = encodeURI(client_name);
-			var apiURL = localStorage.getItem('base_url');
-			var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
-	
-			// Add row to table
-			table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
+		);
+		
+		$('#chartSNR').on('click', '.ct-bar', function() {
+			$('#selected-client-table')
+				.DataTable()
+				.rows()
+				.remove();
+			var table = $('#selected-client-table').DataTable();
+			var selectedClients = [];
+			var val = $(this).attr('ct:meta');
+			var valIndex = snrLabels.indexOf(val);
+			selectedClients = snrArray[valIndex];
+			console.log(val)
+			console.log(valIndex)
+			document.getElementById('selected-title').innerHTML = 'Clients with SNR in the Range: ' + snrLabels[valIndex] + 'dB';
+		
+			$.each(selectedClients, function() {
+				var status = '';
+				if (!this['health']) {
+					status = '<i class="fa-solid fa-circle text-neutral"></i>';
+				} else if (this['health'] < 50) {
+					status = '<i class="fa-solid fa-circle text-danger"></i>';
+				} else if (this['health'] < 70) {
+					status = '<i class="fa-solid fa-circle text-warning"></i>';
+				} else {
+					status = '<i class="fa-solid fa-circle text-success"></i>';
+				}
+				// Generate clean data for table
+				var site = '';
+				if (this['site']) site = this['site'];
+				var health = '';
+				if (this['health']) health = this['health'];
+				var associatedDevice_name = '';
+				var associatedDevice = findDeviceInMonitoring(this['associated_device']);
+				if (associatedDevice) associatedDevice_name = associatedDevice.name;
+				var ip_address = '';
+				if (this['ip_address']) ip_address = this['ip_address'];
+				var vlan = '';
+				if (this['vlan']) vlan = this['vlan'];
+				var os_type = '';
+				if (this['os_type']) os_type = this['os_type'];
+				var client_name = '';
+				if (this['name']) client_name = this['name'];
+		
+				// Make link to Central
+				name = encodeURI(client_name);
+				var apiURL = localStorage.getItem('base_url');
+				var clientURL = centralURLs[apiURL] + '/frontend/#/CLIENTDETAIL/' + this['macaddr'] + '?ccma=' + this['macaddr'] + '&cdcn=' + client_name + '&nc=client';
+		
+				// Add row to table
+				table.row.add(['<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', status, this['macaddr'], ip_address, os_type, associatedDevice_name, site, vlan]);
+			});
+			$('#selected-client-table')
+				.DataTable()
+				.rows()
+				.draw();
+			$('#SelectedClientModalLink').trigger('click');
 		});
-		$('#selected-client-table')
-			.DataTable()
-			.rows()
-			.draw();
-		$('#SelectedClientModalLink').trigger('click');
-	});
-	$('[data-toggle="tooltip"]').tooltip();
-	
+		$('[data-toggle="tooltip"]').tooltip();
+	}
 	
 	
 }

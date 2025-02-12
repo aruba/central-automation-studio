@@ -156,6 +156,8 @@ function getAppRFStats() {
 	var now = new Date();
 	// convert timescale from minutes to ms (*60*1000)
 	var fromTime = Math.floor(now.getTime() - timescale * 60 * 1000);
+	// convert back to seconds
+	fromTime = Math.floor(fromTime /1000);
 
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -1209,7 +1211,7 @@ function loadBandwidthForNetwork(network) {
 			else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
 			else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
 			else labels.push('');
-			console.log(value[network])
+			//console.log(value[network])
 			series1.push(value[network]['rx_data_bytes'] / 1024 / 1024);
 			series2.push(value[network]['tx_data_bytes'] / 1024 / 1024);
 			if (value[network]['rx_data_bytes'] && value[network]['tx_data_bytes']) {
@@ -1237,7 +1239,7 @@ function loadBandwidthForNetwork(network) {
 	}
 	
 	var peakDisplayedDown = '';
-	console.log(peakThroughputDown)
+	//console.log(peakThroughputDown)
 	peakThroughputDown = peakThroughputDown/1024/1024;
 	peakDisplayedDown = peakThroughputDown.toFixed(2)+'MB';
 	if (peakThroughputDown > 1000) { 

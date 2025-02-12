@@ -1,7 +1,7 @@
 /*
 Central Automation v1.31
 Updated: 
-Copyright Aaron Scott (WiFi Downunder) 2021-2024
+Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var currentClientMac;
@@ -237,6 +237,7 @@ function getClientRecord(clientMac) {
 				clientNotification.update({ type: 'success', message: 'Cloud Client Record retrieved' });
 				setTimeout(clientNotification.close, 1000);
 			}
+			console.log(response)
 			var client = findClientForMac(clientMac);
 			// Make link to Central
 			client_name_url = encodeURI(client.name);
@@ -256,6 +257,7 @@ function getClientRecord(clientMac) {
 				$('#userDetails').append('<li>ESSID: <strong>' + keyCache['essid'] + '</strong></li>');
 				$('#userDetails').append('<li>User Role: <strong>' + keyCache['role'] + '</strong></li>');
 				$('#userDetails').append('<li>VLAN: <strong>' + keyCache['vlan'] + '</strong></li>');
+				if (keyCache['user_panid'] !== '0') $('#userDetails').append('<li>PAN ID: <strong>' + keyCache['user_panid'] + '</strong></li>');
 
 				var originAP = findAPForMAC(keyCache['origin_apmac']);
 				if (originAP) {
@@ -273,6 +275,7 @@ function getClientRecord(clientMac) {
 				$('#keyDetails').append('<li>MDID: <strong>' + keyCache['MDID'] + '</strong></li>');
 				$('#keyDetails').append('<li>Reauth Interval: <strong>' + keyCache['reauth_interval'] + '</strong></li>');
 				$('#keyDetails').append('<li>Accounting Interval: <strong>' + keyCache['acct_interval'] + '</strong></li>');
+				$('#keyDetails').append('<li>Key Cache Lifetime: <strong>' + keyCache['original_cache_lifetime'] + '</strong></li>');
 				$('#keyDetails').append('<li>Key Cache TTL: <strong>' + keyCache['keycache TTL'] + '</strong></li>');
 				var timestamp = Date.parse(keyCache['timestamp']);
 				$('#keyDetails').append('<li>Timestamp: <strong>' + moment(timestamp).format('LT') + '</strong></li>');
@@ -593,7 +596,7 @@ function getCloudEncryptionKey() {
 }
 
 function getKMSDetailsFromAP(deviceSerial) {
-	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 100 }, { command_id: 199 }, { command_id: 200 }, { command_id: 114 }] });
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 100 }, { command_id: 199 }, { command_id: 200 }, { command_id: 114 }, { command_id: 467}] });
 
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -666,7 +669,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 			} else if (response.status === 'COMPLETED') {
 				//var results = decodeURI(response.output);
 				var results = response.output;
-
+				console.log(results)
 				// Verify the encryption key matches the key in the cloud
 				var apPMKEncryption = results.match(/(\bPMK Encryption Key\s+:)(\S+)/)[2];
 				$('#pmkAPDetails').empty();
@@ -682,7 +685,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 				if (!pmkCacheTable.includes(currentClientMac)) {
 					// not in PMK Cache - check the MPSK cache too
 					if (!mpskCacheTable.includes(currentClientMac)) {
-						$('#pmkAPDetails').append('<li>Client Record: <i class="fa-solid fa-circle text-danger"></i><strong> Client missing from PMK/MPSK Cache on AP</strong></li>');
+						$('#pmkAPDetails').append('<li>Client Record: <i class="fa-solid fa-circle text-danger"></i><strong> Client missing from PMK Cache on AP</strong></li>');
 						if (x) x.hidden = true;
 					} else {
 						$('#pmkAPDetails').append('<li>Client Record: <i class="fa-solid fa-circle text-danger"></i><strong> Found in MPSK Cache on AP</strong></li>');
@@ -751,6 +754,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 				$('#pmkNeighourDetails').empty();
 				$('#pmkFTDetails').empty();
 				$('#pmkOKCDetails').empty();
+				$('#pmkOnDemandDetails').empty();
 				$('#pmkLatencyDetails').empty();
 				var startString = 'COMMAND=show ap debug pmk-sync-statistics';
 				var startLocation = results.indexOf(startString) + startString.length;
@@ -773,6 +777,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 					else if (this.includes('PMK Key found in DT cache')) $('#pmkRoamingDetails').append('<li>Key found in DT cache: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('PMK Key not found DT in cache')) $('#pmkRoamingDetails').append('<li>Key not found DT in cache: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('PMK Key found in R1 lcoal cache')) $('#pmkRoamingDetails').append('<li>Key found in R1 local cache: <strong>' + this.match(/\d+/g)[1] + '</strong></li>');
+					else if (this.includes('DT cache threshold hit count')) $('#pmkRoamingDetails').append('<li>AP PMK Cache Threshold Hits: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					// Neighbour Stats
 					else if (this.includes('Neighbor update to central  ')) $('#pmkNeighourDetails').append('<li>Update to Central: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('Neighbor update to central fail')) $('#pmkNeighourDetails').append('<li>Update to Central fail: <strong>' + this.match(/\d+/g) + '</strong></li>');
@@ -791,6 +796,16 @@ function checkKMSStatus(session_id, deviceSerial) {
 					else if (this.includes('OKC Auth Failed Count ')) $('#pmkOKCDetails').append('<li>Failed: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('OKC Key found in DT cache')) $('#pmkOKCDetails').append('<li>Key found in DT cache: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('OKC Key not found DT in cache')) $('#pmkOKCDetails').append('<li>Key not found DT in cache: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					// PMKR1 Fetch On demand Stats
+					else if (this.includes('Key Fetch Request to central')) $('#pmkOnDemandDetails').append('<li>Key Fetch Request to Central: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Key Fetch Resp from central')) $('#pmkOnDemandDetails').append('<li>Key Fetch Response from Central: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Key Fetch FT Success')) $('#pmkOnDemandDetails').append('<li>Key Fetch FT Success: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Key Fetch Error R0UNREACHABLE')) $('#pmkOnDemandDetails').append('<li>Key Fetch Error - R0UNREACHABLE: <strong>' + this.match(/\d+/g)[1] + '</strong></li>');
+					else if (this.includes('Key Fetch Error INVALIDPMK')) $('#pmkOnDemandDetails').append('<li>Key Fetch Error - INVALIDPMK: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Key Fetch Error NOBSSID')) $('#pmkOnDemandDetails').append('<li>Key Fetch Error - NOBSSID: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Maximum latency       ')) $('#pmkOnDemandDetails').append('<li>Key Fetch Maximum Latency: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Median latency        ')) $('#pmkOnDemandDetails').append('<li>Key Fetch Median Latency: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Average latency      ')) $('#pmkOnDemandDetails').append('<li>Key Fetch Average Latency: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					// PMK keycache latency Stats
 					else if (this.includes('Maximum latency')) $('#pmkLatencyDetails').append('<li>Maximum latency: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('Median latency')) $('#pmkLatencyDetails').append('<li>Median latency: <strong>' + this.match(/\d+/g) + '</strong></li>');
@@ -798,6 +813,23 @@ function checkKMSStatus(session_id, deviceSerial) {
 				});
 
 				//console.log(pmkSyncStats);
+				var startString = 'COMMAND=show ap pmkcache syncfailures';
+				var endString = '=== Troubleshooting session completed ==='
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf(endString);
+				var pmkSyncFailures = results
+					.substring(startLocation, endLocation)
+					.trim()
+					.split('\n');
+				$.each(pmkSyncFailures, function() {
+					if (this.toString().trim() !== '') {
+						if (this.toString().includes(currentClientMac)) {
+							$('#pmkFailuresDetails').append('<li><strong>'+ this.toString() + '</strong></li>');
+						} else {
+							$('#pmkFailuresDetails').append('<li>'+ this.toString() +'</li>');
+						}
+					}
+				});	
 
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
 			} else {

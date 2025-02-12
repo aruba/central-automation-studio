@@ -14,7 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.x
 Updated: 1.39.3
-Aaron Scott (WiFi Downunder) 2021-2024
+Aaron Scott (WiFi Downunder) 2021-2025
 -->
 
 <!DOCTYPE html>
@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=241216" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=250120" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -794,6 +794,10 @@ Aaron Scott (WiFi Downunder) 2021-2024
 								<p>
 									Uses the SERIAL, MAC and TIMEZONE columns in the CSV file to configure the timezone for a Gateway. Timezone format uses IANA format (e.g. Australia/Sydney, America/Los_Angeles)
 								</p>
+								<h4>Associate APs to IoT Collector</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to associate the AP to the selected IoT Collector (which is selected from a dropdown list)
+								</p>
                                 <h2>Automated Tasks</h2>
                                 <p>
                                 	The automated tasks are the individual tasks linked together. Refer to the descriptions above for each individual task.
@@ -1302,6 +1306,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 										<li>Antenna Gain</li>
 										<li>PoE Optimization Config</li>
 										<li>AP1X PEAP Credentials</li>
+										<li>IoT Collector Assignment</li>
 									</ul>
 									Simply select a group, provide any additional filtering to reduce the group to only the APs you want to configure. Then configure all the APs in the list at the same time.<br />
 									Antenna configuration provides a simple list of Aruba antennas (that will auto fill the correct antenna gains), and also allows for custom antenna gains for 3rd party antenna support.
@@ -1828,7 +1833,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 									<p>Switch Port Troubleshooting List</p>
 								</div>
 								<p>
-									The <a href="troubleshooting-switching.html">Switch Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Switches. Important information is presented at the top of the troubleshooting panel, while a list of ports for the switch provide easily accessible information as well as the ability to perform PoE Bounce and Interface Bounce on a port.<br />
+									The <a href="troubleshooting-switching.html">Switch Troubleshooting</a> provides the ability to easily obtain troubleshooting information for specific Switches, or backup the running config. Important information is presented at the top of the troubleshooting panel, while a list of ports for the switch provide easily accessible information as well as the ability to perform PoE Bounce and Interface Bounce on a port.<br />
 									Additionally, for switches that support port-access configuration, the port-access client information can be displayed - along with the ability to bounce the interface or PoE on that port.
 								</p>
 								
@@ -1966,6 +1971,23 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.43.5 (2025/01/28)</h4>
+									<ul>
+										<li>Added the ability to download a backup of the running config on a switch in the <a href="troubleshooting-switching.html">Switch Troubleshooting</a> page</li>
+									</ul>
+									<h4>Version 1.43.4 (2025/01/21)</h4>
+									<ul>
+										<li>Added Associate APs to IoT Collector to the <a href="#csv-row">CSV Workflows</a> page</li>
+									</ul>
+									<h4>Version 1.43.3 (2025/01/20)</h4>
+									<ul>
+										<li>Added extra information when Troubleshooting APs in the <a href="#kms-row">Key Management Service</a> page</li>
+										<li>Added IoT Collector Assignment to the <a href="#bulk-row">Bulk AP Deployment</a> page</li>
+									</ul>
+									<h4>Version 1.43.2 (2025/01/16)</h4>
+									<ul>
+										<li>Fix for Event Dashboard due to API changes</li>
+									</ul>
 									<h4>Version 1.43.1 (2024/12/30)</h4>
 									<ul>
 										<li>Added warning in WLAN deployment for Tunneled and Mixed mode SSIDs</li>
@@ -3185,6 +3207,6 @@ ip dns server-address priority 2 %dns2.ip%
 	}
 </script>
 
-<script src="assets/js/version.js?v=241230"></script>
+<script src="assets/js/version.js?v=250128"></script>
 
 </html>

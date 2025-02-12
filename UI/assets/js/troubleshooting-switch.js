@@ -10,6 +10,7 @@ var switchPorts = {};
 var portNotification;
 var portAccessNotification;
 var commandNotification;
+var backupNotifications = {};
 
 var currentSwitch;
 var selectedSwitch;
@@ -62,6 +63,7 @@ function loadDevicesTable() {
 		if (device['status'] == 'Up') {
 			tshootBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Switch Details" onclick="showSwitchDetails(\'' + device.serial + '\')"><i class="fa-solid fa-circle-info"></i></a> ';
 			tshootBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Reboot Switch" onclick="rebootSwitch(\'' +  device['serial'] + '\')"><i class="fa-solid fa-power-off"></i></a> ';
+			tshootBtns += '<a class="btn btn-link btn-warning" data-toggle="tooltip" data-placement="top" title="Download Running Config" onclick="backupConfig(\'' +  device['serial'] + '\')"><i class="fa-solid fa-download"></i></a> ';
 		}
 
 		// Add Switch to table
@@ -678,3 +680,154 @@ function checkDebugPortAccess(session_id, deviceSerial) {
 	});
 }
 
+
+function backupConfig(deviceSerial) {
+	backupNotifications[deviceSerial] = showLongNotification('ca-cloud-data-download', 'Getting Running Config for '+ deviceSerial +'...', 'bottom', 'center', 'info');
+
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/running-config-backup/serial/' + deviceSerial + '/prefix/cas',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(response) {
+		//console.log(response);
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				logError('Central Server Error (503): ' + response.reason + ' (/troubleshooting/v1/running-config-backup/serial/<SERIAL>)');
+				return;
+			}
+		}
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else if (response['accepted'].length > 0) {
+			backupNotifications[deviceSerial].update({ type: 'info', message: 'Waiting for config backup to complete for '+ deviceSerial +'...' });
+			setTimeout(checkBackupProgress, 3000, response['accepted'][0]['serial']);
+		} else {
+			backupNotifications[deviceSerial].update({ type: 'danger', message: 'Failed to create backup of running config' });
+			logError('Failed to create backup of running config for '+ response['rejected'][0]['serial'] + ': ' + response['rejected'][0]['reason'])
+			showLog();
+		}
+	});
+}
+
+function checkBackupProgress(deviceSerial) {
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/troubleshooting/v1/running-config-backup/serial/' + deviceSerial + '/prefix/cas',
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/running-config-backup/serial/<SERIAL>/prefix/<prefix>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		if (response.hasOwnProperty('error')) {
+			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+		} else {
+			var latestBackup = response.pop();
+			if (latestBackup.status === 'RUNNING' || latestBackup.status === 'QUEUED') {
+				setTimeout(checkBackupProgress, 10000, latestBackup.serial);
+			} else if (latestBackup.status === 'SUCCEEDED') {
+				
+				// Grab backup
+				var settings2 = {
+					url: getAPIURL() + '/tools/getCommandwHeaders',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						url: localStorage.getItem('base_url') + '/troubleshooting/v1/running-config-backup/name/' + latestBackup.name,
+						access_token: localStorage.getItem('access_token'),
+					}),
+				};
+				
+				$.ajax(settings2).done(function(commandResults, statusText, xhr) {
+					if (commandResults.hasOwnProperty('headers')) {
+						updateAPILimits(JSON.parse(commandResults.headers));
+					}
+					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+						logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/running-config-backup/serial/<SERIAL>/prefix/<prefix>)');
+						apiErrorCount++;
+						return;
+					} else if (commandResults.hasOwnProperty('error_code')) {
+						logError(commandResults.description);
+						apiErrorCount++;
+						return;
+					}
+					var response = JSON.parse(commandResults.responseBody);
+					if (response.hasOwnProperty('error')) {
+						showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
+						if (backupNotifications[latestBackup.serial]) cleanUpNotification(latestBackup.serial);
+					} else {
+						
+						// Remove troubleshooting formatting to just have the running config
+						var output = response.output;
+						// CX command string
+						var configStartString = 'COMMAND= show running-config';
+						var configCommandLocation = output.indexOf(configStartString);
+						if (configCommandLocation == -1) {
+							// AOS-S command string
+							configStartString = 'Running configuration:';
+						}
+						var configStart = output.indexOf(configStartString)+ configStartString.length;
+						var configEnd = output.indexOf('=== Troubleshooting session completed ===');
+						var configResult = output.substring(configStart, configEnd);
+						
+						// Save output to file
+						var configBlob = new Blob([configResult.trim()], { type: 'text/csv;charset=utf-8;' });
+						var configURL = window.URL.createObjectURL(configBlob);
+						var configLink = document.createElement('a');
+						configLink.href = configURL;
+						configLink.setAttribute('download', response.name+'.txt');
+						configLink.click();
+						window.URL.revokeObjectURL(configLink);
+						if (backupNotifications[latestBackup.serial]) {
+							backupNotifications[latestBackup.serial].update({ message: 'Downloading backup for ' + latestBackup.serial, type: 'success' });
+							setTimeout(cleanUpNotification, 3000, latestBackup.serial);
+						}
+					}
+				});
+				
+			} else {
+				if (backupNotifications[latestBackup.serial]) {
+					backupNotifications[latestBackup.serial].update({ message: 'Unable to obtain running config backup', type: 'danger' });
+					logError('Failed to create backup of running config for '+ latestBackup.serial)
+					setTimeout(cleanUpNotification, 3000, latestBackup.serial);
+				}
+			}
+		}
+	});
+}
+
+function cleanUpNotification(deviceSerial) {
+	backupNotifications[deviceSerial].close();
+	delete backupNotifications[deviceSerial];
+}

@@ -1,7 +1,7 @@
 /*
 Central Automation v1.2
 Updated: 1.8.2
-Aaron Scott (WiFi Downunder) 2021-2024
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var configGroups = [];

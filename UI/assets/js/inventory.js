@@ -1,7 +1,7 @@
 /*
 Central Automation v1.10
 Updated: v1.38
-Copyright Aaron Scott (WiFi Downunder) 2021-2024
+Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 const InventoryType = { All: 0, Unlicensed: 1, Group: 2, Site: 3, Offline: 4, Expiring: 5};
@@ -451,7 +451,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 	// For each row in the filtered set
 	$.each(filteredRows[0], function() {
 		var device = deviceDisplay[this];
-		console.log(device)
+		//console.log(device)
 		// Find monitoring data if there is any
 		var monitoringInfo = findDeviceInMonitoring(device.serial);
 		if (monitoringInfo) {

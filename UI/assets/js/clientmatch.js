@@ -1,7 +1,7 @@
 /*
 Central Automation v1.8.0
 Updated: 1.37.3
-Aaron Scott (WiFi Downunder) 2021-2024
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var clientList = [];

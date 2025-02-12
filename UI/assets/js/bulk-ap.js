@@ -1,7 +1,7 @@
 /*
 Central Automation v1.18
-Updated: v1.23
-Copyright Aaron Scott (WiFi Downunder) 2023
+Updated: v1.43.3
+Copyright Aaron Scott (WiFi Downunder) 2023-2025
 */
 
 var deviceList = [];
@@ -115,7 +115,7 @@ function loadRFProfiles() {
 function profileSelected() {
 	document.getElementById('profileDetails').hidden = false;
 	var profileDetails = rfProfiles[document.getElementById('radioSelector').value];
-	console.log(profileDetails);
+	//console.log(profileDetails);
 	$('#profileDetailsTooltip').attr('data-original-title', 'Tx Power: ' + profileDetails.min_tx_power + '/' + profileDetails.max_tx_power + '<br>Allowed Channels: ' + profileDetails.allowed_channels + '<br>Channel Width: ' + profileDetails.ch_bw_range.join('/'));
 	$('[data-toggle="tooltip"]').tooltip();
 }
@@ -150,6 +150,18 @@ function openPOEBulkConfig() {
 
 function openAP1XBulkConfig() {
 	$('#BulkAP1XModalLink').trigger('click');
+}
+
+function openIOTBulkConfig() {
+	// Clear out old IOT Collectors
+	select = document.getElementById('collectorSelector');
+	if (select) select.options.length = 0;
+	$('#collectorSelector').selectpicker('refresh');
+	iotCollectorsArray = [];
+	iotCollectors = {}
+	loadIOTCollectors(0);
+
+	$('#BulkIOTConfigModalLink').trigger('click');
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -329,3 +341,49 @@ function buildCSVData(selectedGroup, mode) {
 
 	return csvDataBuild;
 }
+
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	IOT Collector functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function updateIOTCollector() {
+	Swal.fire({
+		title: 'Are you sure?',
+		text: 'This will associate all APs shown in the table to the selected IoT Collector',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes, do it!',
+	}).then(result => {
+		if (result.isConfirmed) {
+			applyIOTBulkChanges();
+		}
+	});
+}
+
+// Override 'main' function used in CSV workflows to supply AP serial list
+function applyIOTBulkChanges() {
+	// Get selected IoT Collector
+	var select = document.getElementById('collectorSelector');
+	selectedIOTCollector = select.value;	
+	if (selectedIOTCollector === '') {
+		showNotification('ca-a-tag-add', 'Select an IoT Collector from the dropdown', 'bottom', 'center', 'danger');
+		return;
+	}
+	
+	// Get APs
+	var table = $('#inventory-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+	
+	// For each row in the filtered set build array of Serials
+	var selectedAPs = [];
+	$.each(filteredRows[0], function() {
+		var device = filteredList[this];
+		selectedAPs.push(device.serial)
+	});
+	
+	// Call 'main' function for association
+	associateAPsToCollector(selectedAPs, iotCollectors[selectedIOTCollector]);
+}	

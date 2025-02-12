@@ -1,7 +1,7 @@
 /*
 Central Automation v1.1.4
 Updated: 1.28.4
-Copyright Aaron Scott (WiFi Downunder) 2021-2024
+Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var optimizationCount = 11;

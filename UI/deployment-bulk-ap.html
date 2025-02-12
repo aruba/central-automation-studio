@@ -15,7 +15,7 @@ The above copyright notice and this permission notice shall be included in all c
 <!--
 Central Automation v1.8
 Updated:
-Aaron Scott (WiFi Downunder) 2021-2024
+Aaron Scott (WiFi Downunder) 2021-2025
 -->
 
 <!DOCTYPE html>
@@ -36,7 +36,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=241216" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=250120" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -139,6 +139,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 											<button type="submit" class="btn btn-fill btn-info" id="bulkAntennaBtn" onclick="openAntennaBulkConfig()">Antenna Config</button>
 											<button type="submit" class="btn btn-fill btn-info" id="bulkAntennaBtn" onclick="openPOEBulkConfig()">POE Optimization Config</button>
 											<button type="submit" class="btn btn-fill btn-info" id="bulkAP1xBtn" onclick="openAP1XBulkConfig()">AP1X PEAP Credentials</button>
+											<button type="submit" class="btn btn-fill btn-info" id="bulkIOTBtn" onclick="openIOTBulkConfig()">IoT Collector Assignment</button>
 										</div>
 									</div>
 								</div>
@@ -209,7 +210,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 													</div>
 													<div class="col-md-3">
 														<label class="form-check-label">
-															<input class="form-check-input" type="checkbox" value="" id='dual5'>
+															<input class="form-check-input" type="checkbox" value="" id='split5'>
 															<span class="form-check-sign"></span>
 															Split 5GHz
 														</label>
@@ -450,6 +451,40 @@ Aaron Scott (WiFi Downunder) 2021-2024
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- IoT Connector Modal -->
+				<div class="modal fade modal-700 modal-primary" id="BulkIOTConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Associate APs to IoT Collector</h4>
+									</div>
+									<div class="card-body" id="groupBody">
+										<form class="form-horizontal">								
+											<div class="form-group">
+												<div class="row">
+													<label class="col-md-3">IoT Collector</label>
+													<div class="col-md-9">
+														<select data-title="Select IoT Collector..." id="collectorSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+														</select>	
+													</div>
+													
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12 floatRight">
+											<button type="submit" class="btn btn-fill btn-info" id="applyBulkChanges" onclick="updateIOTCollector()">Associate APs</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -476,6 +511,7 @@ Aaron Scott (WiFi Downunder) 2021-2024
 						<a data-toggle="modal" data-target="#BulkAntennaConfigModal" id="BulkAntennaConfigModalLink"></a>
 						<a data-toggle="modal" data-target="#BulkPOEConfigModal" id="BulkPOEConfigModalLink"></a>
 						<a data-toggle="modal" data-target="#BulkAP1XConfigModal" id="BulkAP1XModalLink"></a>
+						<a data-toggle="modal" data-target="#BulkIOTConfigModal" id="BulkIOTConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -598,9 +634,9 @@ Aaron Scott (WiFi Downunder) 2021-2024
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=241230"></script>
-	<script src="assets/js/main.js?v=241216"></script>
+	<script src="assets/js/version.js?v=250128"></script>
+	<script src="assets/js/main.js?v=250122"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
-	<script src="assets/js/bulk-ap.js?v=241011"></script>
+	<script src="assets/js/bulk-ap.js?v=250121"></script>
 </html>
