@@ -38,7 +38,7 @@ Note: Using WSL has not been tested.<br>
         `sudo docker run -it --rm --name containerName -p 443:443 -e API_URL="https://<ip-address-or-fqdn>/backend" -e SECURE="True" -v <path-to-ssl-key>:/usr/local/apache2/conf/apache-private.key -v <path-to-ssl-certificate>:/usr/local/apache2/conf/apache-cert.crt arubahpe/central-automation-studio`<br>
 
         For example: <br>
-        `sudo docker run -it --rm --name myContainer -p 443:443 -e API_URL="https://192.168.1.200/backend" -e SECURE="True" -v /etc/ssl/private/apache-selfsigned.key:/usr/local/apache2/conf/apache-private.key -v /etc/ssl/certs/apache-selfsigned.crt:/usr/local/apache2/conf/apache-cert.crt arubahpe/central-automation-studio`<br>
+        `sudo docker run -it --rm --name myContainer -p 443:443 -e API_URL="https://192.168.1.200/backend" -e Verify="True" -e SECURE="True" -v /etc/ssl/private/apache-selfsigned.key:/usr/local/apache2/conf/apache-private.key -v /etc/ssl/certs/apache-selfsigned.crt:/usr/local/apache2/conf/apache-cert.crt arubahpe/central-automation-studio`<br>
 
         View your container at the specified IP address or FQDN (Fully Qualified Domain Name), ex: https://192.168.1.200/<br>
         For an example of how to quickly set up a self-signed certificate, see **Step 1** of this article: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04. The Common Name should match the IP address in API_URL. Note that if you use a self-signed certificate, you may see an error message; click "Advanced" and proceed anyway.
@@ -47,6 +47,8 @@ Note: Using WSL has not been tested.<br>
         The "-e" flag sets an environment variable. There are two environment variables that need to be set: <br>
         **API_URL**: Set this to the URL of your backend server.<br>
         **SECURE**: Set this to "True" if you want to enable SSL and use HTTPS, otherwise set it to "False". <br>
+        One optional environment variable that can be set:<br>
+        **VERIFY**: Set this to "False" if you want to skip verification of SSL certificate on the Central cluster, otherwise set it to "True". <br>
 
 3. If you want to stop your container:  <br>
        `sudo docker stop containerName`<br>
@@ -64,10 +66,10 @@ Note: Using WSL has not been tested.<br>
 
 3. Start a container using the image you just pulled.<br>
     - With HTTP<br>
-        `docker run -it --rm --name containerName -p <port-number>:80 -e API_URL="http://<ip-address>:<port-number>/backend" -e SECURE="False" arubahpe/central-automation-studio`<br>
+        `docker run -it --rm --name containerName -p <port-number>:80 -e API_URL="http://<ip-address>:<port-number>/backend" -e Verify="True" -e SECURE="False" arubahpe/central-automation-studio`<br>
 
         For example: <br>
-        `docker run -it --rm --name myContainer -p 5001:80 -e API_URL="http://192.168.1.200:5001/backend" -e SECURE="False" arubahpe/central-automation-studio` <br>
+        `docker run -it --rm --name myContainer -p 5001:80 -e API_URL="http://192.168.1.200:5001/backend" -e Verify="True" -e SECURE="False" arubahpe/central-automation-studio` <br>
 
         View your container at the specified IP address, ex: http://192.168.1.200:5001/. The --rm flag means that your container will be removed when it is stopped; if you would like continue running the same exact container, remove the --rm flag. <br>
 
@@ -75,6 +77,8 @@ Note: Using WSL has not been tested.<br>
         The "-e" flag sets an environment variable. There are two environment variables that need to be set: <br>
         **API_URL**: Set this to the URL of your backend server.<br>
         **SECURE**: Set this to "True" if you want to enable SSL and use HTTPS, otherwise set it to "False". <br>
+        One optional environment variable that can be set:<br>
+        **VERIFY**: Set this to "False" if you want to skip verification of SSL certificate on the Central cluster, otherwise set it to "True". <br>
 
 3. If you want to stop your container:  <br>
        `sudo docker stop containerName`<br>

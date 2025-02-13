@@ -1,6 +1,6 @@
-# API Proxy v1.2.1
-# Updated: 2023/03/20
-# Aaron Scott (WiFi Downunder) 2023
+# API Proxy v1.3
+# Updated: 2025/02/13
+# Aaron Scott (WiFi Downunder) 2023-2025
 # ------------------------------------------------------------------------------------------
 # Convert JS based API calls into Python calls (to work around CORS) and return the results
 # ------------------------------------------------------------------------------------------
@@ -21,6 +21,16 @@ app = Flask(__name__)
 
 cors = CORS(app, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], supports_credentials=True, 
           expose_headers='Authorization', allow_headers=['Accept', 'Authorization', 'Cache-Control', 'Content-Type', 'DNT', 'If-Modified-Since', 'Keep-Alive', 'Origin', 'User-Agent', 'X-Requested-With'])
+		  
+# Handle untrusted SSL certs
+# creating Session object and declaring the verify variable to set the SSL verification state
+session = requests.Session()
+session.verify = cert_verify_state
+if session.verify == False:
+	# Disable warnings for insecure requests
+	from requests.packages.urllib3.exceptions import InsecureRequestWarning
+	requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+	print("SSL Check Disabled for this worker")
 
 def create_timed_rotating_log(path):
 	app.logger = logging.getLogger('werkzeug')
@@ -28,7 +38,7 @@ def create_timed_rotating_log(path):
 	app.logger.setLevel(logging.DEBUG) # controls the priority of the messages that are logged
 	app.logger.addHandler(handler) # adds handler to the logger
 
-log_file = "/central/API/timed_test.log" # creates this file at the specified path
+log_file = "/central/API/api-proxy.log" # creates this file at the specified path
 create_timed_rotating_log(log_file)
 
 @app.route('/auth/refresh', methods = ["POST"])
@@ -45,7 +55,14 @@ def tokenRefresh():
 	  'Authorization': 'Bearer ' + data['access_token'],
 	  'Content-Type': 'application/json'
 	}
-	response = requests.request("POST", url, headers=headers, data=payload)
+	try:
+		response = session.request("POST", url, headers=headers, data=payload)
+	except requests.exceptions.ConnectionError as e:
+		result = jsonify(status="500", reason=str(e));
+		print("Connection Error. Make sure you are connected to Internet. Technical Details given below:");
+		print(str(e));
+		print("\n");
+		return result;
 
 	try:
 		result = jsonify(json.loads(response.text));
@@ -69,7 +86,7 @@ def tokenRefreshwHeaders():
 	  'Authorization': 'Bearer ' + data['access_token'],
 	  'Content-Type': 'application/json'
 	}
-	response = requests.request("POST", url, headers=headers, data=payload)
+	response = session.request("POST", url, headers=headers, data=payload)
 	
 	headers_json = json.dumps(dict(response.headers))
 	try:
@@ -98,7 +115,7 @@ def getCommand():
 		  'Content-Type': 'application/json'
 		};
 	
-	response = requests.request("GET", url, headers=headers);
+	response = session.request("GET", url, headers=headers);
 	#print(response.text)
 	#print(response);
 	try:
@@ -128,7 +145,7 @@ def getCommandwHeaders():
 		  'Content-Type': 'application/json'
 		};
 	
-	response = requests.request("GET", url, headers=headers);
+	response = session.request("GET", url, headers=headers);
 	headers_json = json.dumps(dict(response.headers))
 	try:
 		result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json, requestedUrl=url);
@@ -161,9 +178,9 @@ def postCommand():
 
 	if 'data' in data:
 		payload = data['data'];
-		response = requests.request("POST", url, headers=headers, data=payload);
+		response = session.request("POST", url, headers=headers, data=payload);
 	else:
-		response = requests.request("POST", url, headers=headers);
+		response = session.request("POST", url, headers=headers);
 
 	#app.logger.debug(response.text)
 	
@@ -199,13 +216,13 @@ def postFormDataCommand():
 	if 'template' in data:
 		payload = data['template'];
 		files = {'template': ('template.txt', payload)}
-		response = requests.request("POST", url, headers=headers, files=files);
+		response = session.request("POST", url, headers=headers, files=files);
 	elif 'variables' in data:
 		payload = data['variables'];
 		files = {'variables': ('variables.txt', payload)}
-		response = requests.request("POST", url, headers=headers, files=files);
+		response = session.request("POST", url, headers=headers, files=files);
 	else:
-		response = requests.request("POST", url, headers=headers);
+		response = session.request("POST", url, headers=headers);
 
 	#app.logger.debug(response.text)
 	
@@ -239,7 +256,7 @@ def putCommand():
 		  'Content-Type': 'application/json'
 		};
     
-	response = requests.request("PUT", url, data=payload, headers=headers);
+	response = session.request("PUT", url, data=payload, headers=headers);
 	
 	#app.logger.debug(response.text)
 	try:
@@ -273,13 +290,13 @@ def patchFormDataCommand():
 	if 'template' in data:
 		payload = data['template'];
 		files = {'template': ('template.txt', payload)}
-		response = requests.request("PATCH", url, headers=headers, files=files);
+		response = session.request("PATCH", url, headers=headers, files=files);
 	elif 'variables' in data:
 		payload = data['variables'];
 		files = {'variables': ('variables.txt', payload)}
-		response = requests.request("PATCH", url, headers=headers, files=files);
+		response = session.request("PATCH", url, headers=headers, files=files);
 	else:
-		response = requests.request("PATCH", url, headers=headers);
+		response = session.request("PATCH", url, headers=headers);
 
 	#app.logger.debug(response.text)
 	
@@ -313,7 +330,7 @@ def patchCommand():
 			'Content-Type': 'application/json'
 		};
     
-	response = requests.request("PATCH", url, data=payload, headers=headers);
+	response = session.request("PATCH", url, data=payload, headers=headers);
 	
 	try:
 		result = jsonify(json.loads(response.text));
@@ -345,9 +362,9 @@ def deleteCommand():
 	
 	if "data" in data:
 		payload = data['data'];
-		response = requests.request("DELETE", url, data=payload, headers=headers);
+		response = session.request("DELETE", url, data=payload, headers=headers);
 	else:
-		response = requests.request("DELETE", url, headers=headers);
+		response = session.request("DELETE", url, headers=headers);
 	
 	try:
 		result = jsonify(json.loads(response.text)), response.status_code;
