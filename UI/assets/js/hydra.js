@@ -269,11 +269,17 @@ function testToken() {
 
 	return $.ajax(settings)
 		.done(function(response, textStatus, jqXHR) {
+			//console.log(response)
 			if (response.hasOwnProperty('status')) {
 				if (response.status === '503') {
 					logError('Central Server Error (503): ' + response.reason + ' (/auth/refresh)');
-					return;
+				} else if (response.status === '500') {
+					if (response.reason.includes('Failed to resolve')) {
+						logError('Central Server Error (500): Failed to resolve DNS for Central (/auth/refresh)');
+						showNotification('ca-globe', 'Unable to resolve hostname for Central (DNS issue)', 'top', 'center', 'danger');
+					} else logError('Central Server Error (500): ' + response.reason + ' (/auth/refresh)');
 				}
+				return;
 			}
 			if (response.hasOwnProperty('error')) {
 				Swal.fire({
@@ -295,13 +301,15 @@ function testToken() {
 			}
 		})
 		.fail(function(XMLHttpRequest, textStatus, errorThrown) {
-			console.log('error');
+			console.log('error: '+ errorThrown);
+			
 			if (XMLHttpRequest.readyState == 4) {
 				// HTTP error (can be checked by XMLHttpRequest.status and XMLHttpRequest.statusText)
-				showNotification('ca-globe', XMLHttpRequest.statusText.replace('refresh_token', 'Refresh Token'), 'bottom', 'center', 'danger');
+				showNotification('ca-globe', XMLHttpRequest.statusText.replace('refresh_token', 'Refresh Token'), 'top', 'center', 'danger');
+				
 			} else if (XMLHttpRequest.readyState == 0) {
 				// Network error (i.e. connection refused, access denied due to CORS, etc.)
-				showNotification('ca-globe', 'Can not connect to API server', 'bottom', 'center', 'danger');
+				showNotification('ca-globe', 'Can not connect to API server', 'top', 'center', 'danger');
 			} else {
 				// something weird is happening
 			}
