@@ -13,8 +13,8 @@ Coded by Creative Tim
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
 
 <!--
-Central Automation v1.7.5
-Updated: 1.14.x
+Central Automation v1.7
+Updated: 
 Aaron Scott (WiFi Downunder) 2021-2025
 -->
 
@@ -45,13 +45,13 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		<div class="wrapper">
 			<div class="main-panel">
 				<!-- Navbar -->
-				<nav class="navbar navbar-expand-lg ">
+				<nav class="navbar navbar-expand-md ">
 					<div class="container-fluid">
 						<div class="navbar-wrapper">
 							<div class="icon-big text-center icon-warning">
 								<i class="central-icon ca-api text-warning"></i>
 							</div>
-							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Gateway Configuration </a>
+							<a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: IP Address Management </a>
 						</div>
 						<div class="collapse navbar-collapse justify-content-end">
 							<ul class="navbar-nav">
@@ -94,44 +94,126 @@ Aaron Scott (WiFi Downunder) 2021-2025
 				<!-- End Navbar -->
 				<div class="content">
 					<div class="container-fluid">
-						<!-- Change CLI Card -->
-						<div class="card col-md-12">
-							<div class="card-body">
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Config Snippets</h4>
-											<p class="card-category">Choose a group or device and enter the required CLI commands</p>
-											<p></p>
-										</div>
-
-										<div class="card-body">
-											<select id="groupselector" class="selectpicker" data-title="Select a Group / Device..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getConfigforSelected()"> </select>
-										</div>
-									</div>
+						<div class="row">
+							<div class="col-md-12">
+								<div class="nav-container">
+									<ul class="nav nav-icons justify-content-center" role="tablist">
+										<li class="nav-item show active">
+											<a class="nav-link" id="system-tab" href="#system-logo" role="tab" data-toggle="tab">
+												<i class="central-icon ca-network-communication"></i>
+												<br />
+												System IP Pools
+											</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="dhcp-tab" href="#dhcp-logo" role="tab" data-toggle="tab">
+												<i class="central-icon ca-hierarchy-55"></i>
+												<br />
+												Shared DHCP Pools
+											</a>
+										</li>
+									</ul>
 								</div>
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Configuration</h4>
-											<button type="submit" class="btn btn-sm btn-outline btn-round btn-info reload-link" data-dismiss="modal" name="viewGatewayBtn" id="viewGatewayBtn" id="viewGatewayBtn" onclick="viewConfig()" disabled>View Current Committed Configuration</button>
-											<button type="submit" class="btn btn-sm btn-outline btn-round btn-info reload-btn" data-dismiss="modal" name="viewEffectiveGatewayBtn" id="viewEffectiveGatewayBtn" id="viewEffectiveGatewayBtn" onclick="viewEffectiveConfig()" disabled>View Effective Configuration</button>
+								<div class="tab-content">
+									<div class="tab-pane fade show active" id="system-logo" aria-labelledby="system-tab">
+										<!-- System IP Card -->
+										<div class="card">
+											<div class="card-header">
+												<h4 class="card-title">System IP Pools</h4>
+											</div>
+											<div class="card-body">
+												<div class="card-body table-no-bordered dataTable dtr-inline table-full-width">
+													<div class="fresh-datatables">
+														<table id="system-pool-table" class="table table-no-bordered" cellspacing="0" width="100%" style="width:100%">
+															<thead>
+																<th>Name</th>
+																<th>IP Range</th>
+																<th>Allocated IP Addresses</th>
+															</thead>
+															<tbody></tbody>
+														</table>
+													</div>
+												</div>
+											</div>
 										</div>
+										<div class="card">
+											<div class="card-header">
+												<h4 class="card-title">System IP Pool Allocations</h4>
+											</div>
+											<div class="card-body">
+												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+													<div class="fresh-datatables">
+														<table id="system-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+															<thead>
+																<th>Name</th>
+																<th>Serial Number</th>
+																<th>MAC Address</th>
+																<th>System IP Pool</th>
+																<th>IP Address</th>
+																<th>Subnet Mask</th>
+																<th>Site</th>
+																<th>Group</th>
+															</thead>
+															<tbody></tbody>
+														</table>
+													</div>
+												</div>
+											</div>
+										</div>
+										<!-- End System IP Card -->
 									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<textarea type="text" placeholder="Configuration goes here" class="form-control textarea cli-output" id="gatewayConfig" rows="20"></textarea>
+									<div class="tab-pane" id="dhcp-logo" aria-labelledby="dhcp-tab">
+										<!-- Shared DHCP Card -->
+										<div class="card">
+											<div class="card-header">
+												<h4 class="card-title">Shared DHCP Pools</h4>
+											</div>
+											<div class="card-body">
+												<div class="card-body table-no-bordered dataTable dtr-inline table-full-width">
+													<div class="fresh-datatables">
+														<table id="dhcp-pool-table" class="table table-no-bordered" cellspacing="0" width="100%" style="width:100%">
+															<thead>
+																<th>Name</th>
+																<th>IP Range</th>
+																<th>Hosts per Allocation</th>
+																<th>Allocated IP Addresses</th>
+															</thead>
+															<tbody></tbody>
+														</table>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="card">
+											<div class="card-header">
+												<h4 class="card-title">Shared DHCP Pool Allocations</h4>
+											</div>
+											<div class="card-body">
+												<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+													<div class="fresh-datatables">
+														<table id="dhcp-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+															<thead>
+																<th>Name</th>
+																<th>Serial Number</th>
+																<th>MAC Address</th>
+																<th>DHCP Pool</th>
+																<th>Subnet</th>
+																<th>Subnet Mask</th>
+																<!-- <th>Hosts</th> -->
+																<th>Site</th>
+																<th>Group</th>
+															</thead>
+															<tbody></tbody>
+														</table>
+													</div>
+												</div>
+											</div>
+										</div>
+										<!-- End Shared DHCP Card -->
 									</div>
-								</div>
-							</div>
-							<div class="card-footer">
-								<div class="col-md-12">
-									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="saveGatewayBtn" id="saveGatewayBtn" id="saveGatewayBtn" onclick="confirmCommands()">Update Configuration</button>
 								</div>
 							</div>
 						</div>
-						<!-- End Change CLI Card -->
 					</div>
 				</div>
 				<!-- Error Log Modal -->
@@ -151,47 +233,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Config Modal -->
-				<div class="modal fade modal-mini modal-primary" id="ConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="card-header">
-										<h4 class="card-title">Current Committed Configuration</h4>
-									</div>
-									<div class="card-body" id="configBody">
-										<textarea type="text" placeholder="Select a Group/Device..." class="form-control textarea-600 cli-output" id="gatewayConfigView" rows="100" readonly></textarea>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!-- End Config Modal -->
-				<!-- Effective Config Modal -->
-				<div class="modal fade modal-mini modal-primary" id="EffectiveConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="card-header">
-										<h4 class="card-title">Current Effective Configuration</h4>
-									</div>
-									<div class="card-body" id="configBody">
-										<textarea type="text" placeholder="Select a Group/Device..." class="form-control textarea-600 cli-output" id="gatewayEffectiveConfigView" rows="30" readonly></textarea>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!-- End effective Config Modal -->
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
-						<a data-toggle="modal" data-target="#ConfigModal" id="ConfigModalLink"></a>
-						<a data-toggle="modal" data-target="#EffectiveConfigModal" id="EffectiveConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -241,6 +285,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 	<script src="assets/js/plugins/bootstrap-table.js"></script>
 	<!--  DataTable Plugin -->
 	<script src="assets/js/plugins/jquery.dataTables.min.js"></script>
+	<script src="assets/js/plugins/datetime-moment.js"></script>
 	<!--  Full Calendar   -->
 	<script src="assets/js/plugins/fullcalendar.min.js"></script>
 	<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
@@ -253,10 +298,10 @@ Aaron Scott (WiFi Downunder) 2021-2025
 	<script src="assets/js/plugins/title-numeric.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function() {
-  			getCASVersion();
-  			openIndexedDB();
-			 
-			var pageName = 'Gateway Configuration';
+			getCASVersion();
+			openIndexedDB();
+			
+			var pageName = 'IP Address Management';
 			if  (localStorage.getItem('from_hydra')) {
 				document.getElementById('titleText').innerHTML = "Central Automation Studio > "+ getNameforClientID(localStorage.getItem('client_id')) + ": " + '<strong>' + pageName + '</strong>';
 			} else {
@@ -265,43 +310,78 @@ Aaron Scott (WiFi Downunder) 2021-2025
 			// If more than one account build Account list and show menu in top right
 			loadAccountList();
 			
+
 			var reachabilityPromise = new $.Deferred();
 		    $.when(checkReachability(reachabilityPromise)).then(function () {
-				
-				// Check if we need to get the latest data - or can we just load it from localStorage
-				var refreshrate = localStorage.getItem('refresh_rate');
-				if (refreshrate === null || refreshrate === "") {
-					refreshrate = "30";
+
+
+			$('#system-pool-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[-1, 10, 25, 50, 100], ["All", 10, 25, 50, 100]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Pools",
 				}
+			});
 
-				loadMonitoringData(refreshrate);
+			$('#system-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[-1, 10, 25, 50, 100, 500], ["All", 10, 25, 50, 100, 500]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Allocations",
+				},
+				columnDefs: [{ type: 'ip-address', targets: [2,3] }],
+				'order': [[2, 'asc']]
+			});
 
-				var loadIntervalID;
-				loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
+			$('#dhcp-pool-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[-1, 10, 25, 50, 100], ["All", 10, 25, 50, 100]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Pools",
+				}
+			});
 
-				document.addEventListener("visibilitychange", function handleVisibilityChange() {
-			  	if (!document.hidden) {
-					var reachabilityPromise = new $.Deferred();
-					$.when(checkReachability(reachabilityPromise)).then(function () {
-						loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
-					});
-			  	} else {
-					clearInterval(loadIntervalID);
-			  	}
-				}, false);
-				
-				document.onkeyup = function(e) {
-					if (e.ctrlKey && e.which == 82) {
-						getMonitoringData()
-					}
-				};
-		  	});
-		  });
+			$('#dhcp-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Allocations",
+				},
+				columnDefs: [{ type: 'ip-address', targets: [2,3] }],
+				'order': [[2, 'asc']]
+			});
+
+			var refreshrate = localStorage.getItem('refresh_rate');
+			if (refreshrate === null || refreshrate === "") {
+				refreshrate = "30";
+			}
+			loadMonitoringData(refreshrate);
+			
+			document.onkeyup = function(e) {
+				if (e.ctrlKey && e.which == 82) {
+					getMonitoringData()
+				}
+			};
+		});
+
+	});
 	</script>
 	<!--   Main JS Files   -->
 	<script src="assets/js/version.js?v=250218"></script>
 	<script src="assets/js/main.js?v=250219"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
-	<script src="assets/js/gateway.js?v=240711"></script>
+	<script src="assets/js/ipam.js"></script>
 </html>

@@ -1013,6 +1013,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Archving devices...');
 				currentWorkflow = '';
 				archiveDevices();
+			} else if (clickedRow === 'unarchivedevices') {
+				logStart('Unarchving devices...');
+				currentWorkflow = '';
+				unarchiveDevices();
 			} else if (clickedRow === 'deletedevices') {
 				logStart('Deleting devices...');
 				currentWorkflow = '';
@@ -1284,6 +1288,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Removing clients from denylist...');
 				currentWorkflow = '';
 				removeClientsFromDenylist();
+			} else if (clickedRow === 'updateVenueName') {
+				logStart('Setting Venue Name for Passpoint');
+				currentWorkflow = '';
+				updateVenueName();
 			}
 		},
 	});
@@ -5221,6 +5229,99 @@ function archiveDevices() {
 			} else {
 				// complete the Add part of the automation
 				logEnd('Automation: Archiving devices complete');
+				autoArchivePromise.resolve();
+			}
+		}
+	});
+	//console.log(JSON.stringify(devices));
+	if (currentWorkflow !== '') {
+		return autoArchivePromise.promise();
+	}
+}
+
+// Added 1.43.6
+function unarchiveDevices() {
+	archiveCounter = 0;
+	showNotification('ca-box', 'Unarchiving devices...', 'bottom', 'center', 'info');
+
+	var devices = [];
+	$.each(csvData, function() {
+		// build array for uploading.
+
+		if (!this['SERIAL']) {
+			return false;
+		}
+		devices.push(this['SERIAL'].trim());
+	});
+	console.log('About to archive: ' + JSON.stringify(devices));
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/platform/device_inventory/v1/devices/unarchive',
+			access_token: localStorage.getItem('access_token'),
+			//data: JSON.stringify(devices),
+			data: JSON.stringify({ serials: devices }),
+		}),
+	};
+
+	$.ajax(settings).done(function(response, textStatus, jqXHR) {
+		console.log('Archive device response: ' + JSON.stringify(response));
+
+		if (response.hasOwnProperty('message')) {
+			if (response.message === 'API rate limit exceeded') {
+				Swal.fire({
+					title: 'API Limit',
+					text: 'Daily API limit reached',
+					icon: 'error',
+				});
+				apiErrorCount++;
+			}
+			if (response.message === 'No devices to archive') {
+				apiErrorCount++;
+			}
+		}
+
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/platform/device_inventory/v1/devices/unarchive)');
+			}
+		}
+
+		// check for erroring devices
+		if (response.code && response.code === 'ERROR_DEVICE_UNARCHIVE_FAILED') {
+			if (response.extra.message === 'No valid Serial(s) to Unarchive') {
+				logError('No valid Serial(s) to Unarchive');
+				apiErrorCount++;
+			}
+		}
+
+		//addCounter = addCounter + 1;
+		archiveCounter = archiveCounter + devices.length;
+		if (archiveCounter == csvData.length) {
+			if (currentWorkflow === '') {
+				if (apiErrorCount != 0) {
+					showLog();
+					Swal.fire({
+						title: 'Archive Failure',
+						text: 'Some or all devices failed to be unarchived in Central',
+						icon: 'error',
+					});
+				} else {
+					Swal.fire({
+						title: 'Archive Success',
+						text: 'All devices were unarchived in Central',
+						icon: 'success',
+					});
+				}
+			} else {
+				// complete the Add part of the automation
+				logEnd('Automation: Unarchiving devices complete');
 				autoArchivePromise.resolve();
 			}
 		}
