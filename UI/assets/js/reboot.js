@@ -1,7 +1,7 @@
 /*
 Central Automation v1.7
 Updated: 1.21
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var selectedClusters = {};

@@ -1,7 +1,7 @@
 /*
 Central Automation v1.43.6
 Updated: 
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var updateCounter = 0;
@@ -79,11 +79,11 @@ function setVenueNameForAP(venueName, currentSerial) {
 			for (i = 0; i < apCLIResponse.length; i++) {
 				var currentLine = apCLIResponse[i];
 				if (currentLine.includes(venuePrefix)) {
-					apCLIResponse[i] = '  '+ venuePrefix + venueName;
+					apCLIResponse[i] = '  '+ venuePrefix + '"'+venueName+'"';
 					break;
 				}
 			}
-		
+			
 			// need to push config back to Central.
 			var settings = {
 				url: getAPIURL() + '/tools/postCommand',
@@ -126,8 +126,10 @@ function setVenueNameForAP(venueName, currentSerial) {
 						logError(response.description);
 						errorCounter++;
 					} else if (response !== '' + currentSerial) {
-						logError('WLAN change was not applied to AP ' + currentSerial);
+						logError('Venue name change was not applied to AP ' + currentSerial);
 						errorCounter++;
+					} else {
+						logInformation(currentSerial + ' venue-name was changed to "'+ venueName + '"');
 					}
 					updateCounter++;
 					checkForAirPassCompletion();

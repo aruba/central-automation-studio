@@ -1,7 +1,7 @@
 /*
 Central Automation v1.34
 Updated: 1.34.3
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 // used to store devices in the unfiltered table 

@@ -183,12 +183,12 @@ function updateAPGraphs() {
 				var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + currentAP['serial'] + '?casn=' + currentAP['serial'] + '&cdcn=' + name + '&nc=access_point';
 				// Add row to table
 				if (radio['status'] == 'Up') {
-					table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, radio['channel'], radio['tx_power'] ? radio['tx_power'] : '-', radio['utilization'] ? radio['utilization'] : '-', radio['spatial_stream']]);
+					table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, radio['channel'], radio['tx_power'] ? radio['tx_power'] : '-', radio['utilization'] ? radio['utilization'] : '-', radio['spatial_stream'], currentAP['site']]);
 				} else {
-					table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, '-', '-', '-', radio['spatial_stream']]);
+					table.row.add([currentAP['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + currentAP['name'] + '</strong></a>', status, radio['status'], radio['macaddr'], band, '-', '-', '-', radio['spatial_stream'], currentAP['site']]);
 				}
 				
-				apRadios.push({ name: currentAP['name'], serial: currentAP['serial'], status: radio['status'], radiomac: radio['macaddr'], band: band, channel: radio['channel'] ? radio['channel'] : '-', power: radio['tx_power'] ? radio['tx_power'] : '-', util: radio['utilization'] ? radio['utilization'] : '-', streams: radio['spatial_stream'] });
+				apRadios.push({ name: currentAP['name'], serial: currentAP['serial'], status: radio['status'], radiomac: radio['macaddr'], band: band, channel: radio['channel'] ? radio['channel'] : '-', power: radio['tx_power'] ? radio['tx_power'] : '-', util: radio['utilization'] ? radio['utilization'] : '-', streams: radio['spatial_stream'], site: currentAP['site'] });
 				
 				radioCounter++;
 

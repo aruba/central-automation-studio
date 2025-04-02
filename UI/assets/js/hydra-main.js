@@ -1,7 +1,7 @@
 /*
 Central Automation v1.6.0
 Updated: 1.37.4
-Aaron Scott (WiFi Downunder) 2024
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var hydraMonitoringData = {};

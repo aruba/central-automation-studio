@@ -201,7 +201,8 @@ function applyCLICommands() {
 	var currentConfig = newConfig.split('\n');
 
 	updateNotification = showLongNotification('ca-window-code', 'Updating Gateway Config...', 'bottom', 'center', 'info');
-
+	logStart('Applying commands for: ' +currentGroup)
+		
 	// need to push config back to Central.
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -226,12 +227,34 @@ function applyCLICommands() {
 				return;
 			}
 		}
+		// Check overall result
 		var result = response['_global_result'];
-		if (result['status_str'] === 'Success') {
+		if (result['status'] == 0) {
 			if (updateNotification) {
 				updateNotification.update({ type: 'success', message: 'Gateway config for ' + selectedText + ' was successfully updated' });
 				setTimeout(updateNotification.close, 2000);
 			}
+			if (result['warning']) {
+				logWarning(result['warning']);
+			}
+			var successState = false;
+			$.each(response['cli_cmds_result'], function() {
+				var currentResult = this;
+				var commands = Object.keys(currentResult);
+				$.each(commands, function() {
+					if (currentResult[this].status == 1) {
+						logError('Error with command "' + this + '": ' + currentResult[this]['status_str']);
+					} else if (currentResult[this].status == 2) {
+						logInformation('Command "' + this + '" was successful but returned a warning:');
+						logWarning(currentResult[this].status_str);
+						successState = true;
+					} else if (currentResult[this].status == 0) {
+						logInformation('Command "' + this + '" was successful');
+						successState = true;
+					}
+				});
+			});
+			showLog();
 			getConfigforSelected();
 		} else {
 			// Loop through the cli_cmds_result looking for the failed command
@@ -242,6 +265,10 @@ function applyCLICommands() {
 				$.each(commands, function() {
 					if (currentResult[this].status == 1) {
 						logError('Error with command "' + this + '": ' + currentResult[this]['status_str']);
+					} else if (currentResult[this].status == 2) {
+						logInformation('Command "' + this + '" was successful');
+						logWarning(currentResult[this].status_str);
+						successState = true;
 					} else if (currentResult[this].status == 0) {
 						logInformation('Command "' + this + '" was successful');
 						successState = true;
@@ -251,7 +278,7 @@ function applyCLICommands() {
 			if (successState) getConfigforSelected();
 			showLog();
 			if (updateNotification) {
-				updateNotification.update({ type: 'warning', message: 'Gateway config for ' + selectedText + ' failed' });
+				updateNotification.update({ type: 'warning', message: 'Gateway config for ' + selectedText + ' returned errors' });
 				setTimeout(updateNotification.close, 2000);
 			}
 		}

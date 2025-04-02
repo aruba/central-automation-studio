@@ -1,7 +1,7 @@
 /*
 Central Automation v1.10.4
 Updated: 1.23
-Aaron Scott (WiFi Downunder) 2023
+Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var configGroups = [];
@@ -52,6 +52,7 @@ Object.defineProperty(Array.prototype, 'equals', { enumerable: false });
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function getConfigforGroup() {
+	document.getElementById('wlanConfig').value = '';
 	var select = document.getElementById('groupselector');
 	var wlanGroup = select.value;
 	var wlanGroupName = select.options[select.selectedIndex].text;
@@ -112,6 +113,8 @@ function getConfigforGroup() {
 			document.getElementById('wlanConfig').value = groupConfigs[wlanGroup].join('\n');
 		}
 		checkForAWConfig();
+		checkForAutoDRTConfig();
+		checkForSSHConfig();
 	});
 	$('[data-toggle="tooltip"]').tooltip();
 }
@@ -302,6 +305,49 @@ function clearAutoDRTConfig() {
 	} else {
 		if (newConfig.includes('auto-drt-upgrade-under-central-mgmt-disable')) newConfig = newConfig.replace('\nauto-drt-upgrade-under-central-mgmt-disable', '');
 	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
+}
+
+function checkForSSHConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('ssh disable-ciphers aes-cbc')) {
+		$('#sshselector').selectpicker('val', 'aes-cbc');
+	} else if (newConfig.includes('ssh disable-ciphers aes-ctr')) {
+		$('#sshselector').selectpicker('val', 'aes-ctr');
+	} else {
+		$('#sshselector').selectpicker('val', 'both');
+	}
+}
+
+function changeSSHConfig() {
+	var sshValue = document.getElementById('sshselector').value;
+	
+	var newConfig = document.getElementById('wlanConfig').value;
+	var currentConfig = newConfig.split('\n');
+	
+	if (sshValue.includes('both') && newConfig.includes('disable-ciphers')) {
+		// loop through config to find the line and remove it
+		for (var i=0; i<currentConfig.length;i++) {
+			if (currentConfig[i].includes('disable-ciphers')) {
+				currentConfig.splice(i, 1);
+				break;
+			}
+		}
+	} else if (!sshValue.includes('both')) {
+		if (newConfig.includes('disable-ciphers')) {
+			// loop through config to find the line and replace it
+			for (var i=0; i<currentConfig.length;i++) {
+				if (currentConfig[i].includes('disable-ciphers')) {
+					currentConfig[i] = 'ssh disable-ciphers '+sshValue;
+					break;
+				}
+			}
+		} else {
+			currentConfig.push('ssh disable-ciphers '+sshValue);
+		}
+	}
+	newConfig = currentConfig.join('\n')
 	document.getElementById('wlanConfig').value = newConfig;
 	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
 }

@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=250120" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=250329" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -163,6 +163,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									<li>
 										<a href="#bulk-row">Bulk AP Deployment</a>
 									</li>
+									<li>
+										<a href="#status-row">AP Config Status</a>
+									</li>
 									<li>&nbsp;</li>
                                     <li>
                                         <a href="#airmatch-row">AirMatch</a>
@@ -255,12 +258,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									The WebUI uses Javascript to make API calls to the API Proxy Server. The API Proxy Server converts those Javascript requests into Python API calls and makes the call to Aruba Central, returning any data back to the WebUI for processing in Javascript.
 								</p>
 								<p>
-									Multiple API Proxy Servers exist for speed and redundancy. The API Proxy Server used depends on the Central instance being communicated with:
-									<ul>
-										<li> APAC-based Central Cluster = https://api.wifidownunder.com (Hosted in Sydney - Azure Australia East)</li>
-										<li> 2x US-based Central Clusters = https://api-usw.wifidownunder.com, https://api-usw-2.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
-										<li> EU-based Central Cluster = https://api-euw.wifidownunder.com (Hosted in Amsterdam - Azure Europe West)</li>
-									</ul>
+									The API Proxy Server is contained within this deployment (This is different to the publicly hosted version of Central Automation Studio)
+								</p>
+								<p>
 									API Proxy Server Accessibility is available in the footer of each page
 									<div class="img-container">
 										<img src="assets/img/proxy-status.png" alt="...">
@@ -1312,6 +1312,17 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									Antenna configuration provides a simple list of Aruba antennas (that will auto fill the correct antenna gains), and also allows for custom antenna gains for 3rd party antenna support.
 								</p>
 							</div>
+							<div class="tim-row" id="status-row">
+								<h2 class="text-center">AP Config Status</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-priority-normal text-warning" id="status_icon"></i>
+								</div>
+								<p>
+									The <a href="deployment-config-status.html">AP Config Status</a> page provides the ability to easily verify the configuration status of Access Points.<br />
+									Simply select a group, and/or a Site.<br />
+									Data can be downloaded as a CSV (download is only of data from the filtered table)
+								</p>
+							</div>
                             <div class="tim-row" id="airmatch-row">
                                 <h2 class="text-center">AirMatch</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1965,12 +1976,40 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 								</p>
 								<p>&nbsp;</p>
+								<h2>Audit Trail</h2>
+								<p>
+									The <a href="management-audit.html">Audit Trail</a> page provides the following abilities:
+									<ul>
+										<li> View and download of Audit Trail from Central</li>
+										<li> Provides visibility of details of the event in the Audit Trail</li>
+									</ul>
+								</p>
+								<p>&nbsp;</p>
+								
 							</div>
                             <div class="tim-row" id="changes-row">
                                 <h2 class="text-center">Change Log</h2>
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.44.1 (2025/03/29)</h4>
+									<ul>
+										<li>Added AP Config Status page in Deployment Tasks</li>
+									</ul>
+									<h4>Version 1.44.0 (2025/03/23) - <i>Trails</i></h4>
+									<ul>
+										<li>Added Audit Trail page in Management Tasks</li>
+										<li>Added Export capabilities to RAPIDS page</li>
+									</ul>
+									<h4>Version 1.43.8 (2025/03/01)</h4>
+									<ul>
+										<li>Improved feedback in the Gateway deployment page</li>
+										<li>Account List in menu bar is now in the correct alphabetical order</li>
+									</ul>
+									<h4>Version 1.43.7 (2025/02/26)</h4>
+									<ul>
+										<li>Added Config Shortcut for disabling SSH Cipher Suites in AP Group Deployment</li>
+									</ul>
 									<h4>Version 1.43.6 (2025/02/24)</h4>
 									<ul>
 										<li>Added support for self signed Certificates when using Central On-Prem (Docker/GitHub version only)</li>
@@ -3211,6 +3250,6 @@ ip dns server-address priority 2 %dns2.ip%
 	}
 </script>
 
-<script src="assets/js/version.js?v=250218"></script>
+<script src="assets/js/version.js?v=250329"></script>
 
 </html>

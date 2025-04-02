@@ -40,7 +40,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=250120" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=250329" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -572,6 +572,27 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							</div>
 						</div>
 						<!-- End Troubleshooting Tasks -->
+						<!-- Bulk AP Config Status Tasks -->
+						<div class="col-sm-3" id='configstatus_card'>
+							<div class="card  card-tasks">
+								<a href="deployment-config-status.html">
+								<div class="card-header ">
+									<h4 class="card-title">AP Config Status</h4>
+									<p class="card-category">Verify AP Configuration Status<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-priority-normal text-warning" id="ap_config_status_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Troubleshooting Tasks -->
 					</div>
 					<div class="row"><h4 class="section-header">Central Services</h4></div>
 					<div class="row">
@@ -975,7 +996,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 					<div class="row"><h4 class="section-header">Management Tasks</h4></div>
 					<div class="row">
-						<!-- Group Management Tasks -->
+						<!-- Group Management Task -->
 						<div class="col-sm-3" id='mgmtgroup_card'>
 							<div class="card  card-tasks">
 								<a href="deployment-group-mgmt.html">
@@ -995,8 +1016,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</a>
 							</div>
 						</div>
-						<!-- End Group Management Tasks -->
-						<!-- Sites Tasks -->
+						<!-- End Group Management Task -->
+						<!-- Sites Task -->
 						<div class="col-sm-3" id='mgmtsite_card'>
 							<div class="card  card-tasks">
 								<a href="deployment-site-mgmt.html">
@@ -1016,8 +1037,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</a>
 							</div>
 						</div>
-						<!-- End Sites Tasks -->
-						<!-- Visitor Tasks -->
+						<!-- End Sites Task -->
+						<!-- Visitor Task -->
 						<div class="col-sm-3" id='mgmtvisitor_card'>
 							<div class="card  card-tasks">
 								<a href="deployment-visitor.html">
@@ -1037,7 +1058,28 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</a>
 							</div>
 						</div>
-						<!-- End Visitor Tasks -->
+						<!-- End Visitor Task -->
+						<!-- Audit Trail Task -->
+						<div class="col-sm-3" id='mgmtvisitor_card'>
+							<div class="card  card-tasks">
+								<a href="management-audit.html">
+								<div class="card-header ">
+									<h4 class="card-title">Audit Trail</h4>
+									<p class="card-category">View & Download<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-timeline text-warning" id="audit_trail_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End Audit Trail Tasks -->
 					</div>
 					<!-- End Segment Cards -->
 				</div>
@@ -1831,8 +1873,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/version.js?v=250218"></script>
-<script src="assets/js/main.js?v=250219"></script>
+<script src="assets/js/version.js?v=250329"></script>
+<script src="assets/js/main.js?v=250329"></script>
 <script src="assets/js/proxy.js?v=240920"></script>
 <script src="assets/js/hydra.js?v=241203"></script>
 <script src="assets/js/msp.js?v=231210"></script>

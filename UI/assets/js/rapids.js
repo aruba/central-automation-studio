@@ -13,6 +13,7 @@ var suspect = [];
 var neighbour = [];
 var contained = [];
 var widsEvents = [];
+var widsTableEvents = [];
 var widsCounts = {};
 
 var roguePromise;
@@ -712,10 +713,11 @@ function getWIDSEvents(offset) {
 					.DataTable()
 					.rows()
 					.remove();
+					
+				widsTableEvents = [];
 				
 				var table = $('#wids-table').DataTable();
 				$.each(widsEvents, function() {
-					
 					var attackType = titleCase(noUnderscore(this.attack_type));
 					// Count up each type of attack for graphing
 					//if (this.level === 'high') {
@@ -731,6 +733,7 @@ function getWIDSEvents(offset) {
 					if (this.level === 'high') dotColour = '<i class="fa-solid fa-circle text-danger"></i>';
 					
 					table.row.add([moment(this.event_time*1000).format('LLL'), attackType, dotColour, titleCase(this.level), this.macaddr, this.radio_band+'GHz', this.description]);
+					widsTableEvents.push([{date: moment(this.event_time*1000).format('L'), time: moment(this.event_time*1000).format('LTS'), type: attackType, level: titleCase(this.level), station: this.macaddr, ap: this.detected_ap, band:  this.radio_band+'GHz', description: this.description}])
 				});
 					
 				$('#wids-table')
@@ -820,6 +823,25 @@ function downloadDetectedAPs() {
 	window.URL.revokeObjectURL(csvLink);
 }
 
+function downloadWIDSEvents() {
+	csvData = buildWIDSCSVData();
+	var csv = Papa.unparse(csvData);
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	var table = $('#wids-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', 'rapids-events-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', 'rapids-events.csv');
+
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Build CSV with any required changes (group or site action)
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -889,6 +911,40 @@ function buildCSVData() {
 		});
 	});
 
+	return csvDataBuild;
+}
+
+function buildWIDSCSVData() {
+	//CSV header
+	var dateKey = 'DATE';
+	var timeKey = 'TIME';
+	var typeKey = 'TYPE';
+	var levelKey = 'LEVEL';
+	var stationKey = 'STATION';
+	var apKey = 'DETECTED BY AP';
+	var bandKey = 'BAND';
+	var descriptionKey = 'DESCRIPTION';
+
+	var csvDataBuild = [];
+
+	var table = $('#wids-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var widsEvent = widsTableEvents[this][0];
+		
+		csvDataBuild.push({
+			[dateKey]: widsEvent['date'],
+			[timeKey]: widsEvent['time'],
+			[typeKey]: widsEvent['type'],
+			[levelKey]: widsEvent['level'],
+			[stationKey]: widsEvent['station'],
+			[apKey]: widsEvent['ap'],
+			[bandKey]: widsEvent['band'],
+			[descriptionKey]: widsEvent['description'],
+		});
+	});
+	
 	return csvDataBuild;
 }
 

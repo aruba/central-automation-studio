@@ -1,10 +1,9 @@
 /*
 Central Automation v1.x
-Last Updated 1.42.6
-Aaron Scott (WiFi Downunder) 2023-2024
+Aaron Scott (WiFi Downunder) 2023-2025
 */
 
-const CASVersion = "1.43.6";
+const CASVersion = "1.44.1";
 function getCASVersion() {
 	var versionP = document.getElementById('cas-version');
 	if (versionP) versionP.innerHTML = 'Version: ' + CASVersion;

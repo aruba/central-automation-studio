@@ -1,7 +1,7 @@
 /*
 Central Automation v1.x
 Last Updated 1.42.5
-Aaron Scott (WiFi Downunder) 2023-2024
+Aaron Scott (WiFi Downunder) 2023-2025
 */
 
 var showTimingData = false;
@@ -27,6 +27,7 @@ var centralURLs =
 		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'https://cmcsa1.aruba.b4b.comcast.net',
 		'https://apigw-stgthdnaas.central.arubanetworks.com': 'https://app-stgthdnaas.central.arubanetworks.com',
 		'https://apigw-thdnaas.central.arubanetworks.com': 'https://app-thdnaas.central.arubanetworks.com',
+		'https://apigw-gcpuswest1.central.arubanetworks.com': 'https://app-gcpuswest1.central.arubanetworks.com',
 		COP: 'COP',
 	};
 
@@ -55,6 +56,7 @@ var centralClusters =
 		'CMCSA1': {url: 'https://apigw-cmcsa1api.aruba.b4b.comcast.net', type: 'Private'},
 		'STGTHDNAAS':{url: 'https://apigw-stgthdnaas.central.arubanetworks.com', type: 'Private'},
 		'THDNAAS':{url: 'https://apigw-thdnaas.central.arubanetworks.com', type: 'Private'},
+		'GCPUSWEST1':{url: 'https://apigw-gcpuswest1.central.arubanetworks.com', type: 'Private'},
 		'Central On-Prem': {url: 'COP', type: 'Private'},
 	};
 
@@ -79,6 +81,7 @@ var clusterNames =
 		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'CMCSA1',
 		'https://apigw-stgthdnaas.central.arubanetworks.com':'STGTHDNAAS',
 		'https://apigw-thdnaas.central.arubanetworks.com':'THDNAAS',
+		'https://apigw-gcpuswest1.central.arubanetworks.com':'GCPUSWEST1',
 		COP: 'Central On-Prem',
 	};
 
@@ -201,6 +204,7 @@ var switchPromise;
 var gatewayPromise;
 var controllerPromise;
 var groupPromise;
+var sitePromise;
 var swarmPromise;
 var customerPromise;
 var zonePromise;
@@ -288,6 +292,7 @@ const apiMSPLimit = 50;
 const iotAPILimit = 50;
 const apiDelay = 250;
 const apiVRFLimit = 100;
+const apiAuditLimit = 100;
 const apiLicensingLimit = 50;
 const apiLicensingDelay = 500;
 var apiMessage = false;
@@ -895,7 +900,7 @@ function showPermanentNotification(icon, message, from, align, color, url) {
 // Updated 1.9.3
 function logError(message) {
 	var errorBody = document.getElementById('errorBody');
-	var text = document.createTextNode('- ' + message);
+	var text = document.createTextNode('! ' + message);
 	var span = document.createElement('span');
 	span.style.color = '#FB404B';
 	span.appendChild(text);
@@ -914,6 +919,20 @@ function logInformation(message) {
 	var br = document.createElement('br');
 	errorBody.appendChild(br);
 	console.log(message);
+}
+
+// Added 1.43.7
+function logWarning(message) {
+	var errorBody = document.getElementById('errorBody');
+	var text = document.createTextNode('- ' + message);
+	var span = document.createElement('span');
+	span.style.color = '#FFA534';
+	span.appendChild(text);
+	errorBody.appendChild(span);
+	var br = document.createElement('br');
+	errorBody.appendChild(br);
+	console.log(message);
+	apiErrorCount++;
 }
 
 // Added 1.28.1
@@ -1621,7 +1640,7 @@ function loadAccountList() {
 		centralCredentials = JSON.parse(account_details);
 		if (centralCredentials.length > 1) {
 			$("#accountDropdownList").html("");
-			centralCredentials.sort((a,b) => (a.account_name > b.account_name) ? 1 : ((b.account_name > a.account_name) ? -1 : 0))
+			centralCredentials.sort((a,b) => (a.account_name.toLowerCase() > b.account_name.toLowerCase()) ? 1 : ((b.account_name.toLowerCase() > a.account_name.toLowerCase()) ? -1 : 0))
 			$.each(centralCredentials, function() {
 				if (localStorage.getItem('client_id') === this.client_id) {
 					document.getElementById('accountDropdownList').innerHTML += '<a href="javascript:switchAccount(\''+this.client_id+'\', 1);" class="dropdown-item"><i class="fa-solid fa-check text-muted"></i> '+this.account_name+'</a>'
@@ -1697,7 +1716,15 @@ function loadCurrentPageClient() {
 	// override on visible page - used as a notification
 }
 
+function loadCurrentPageAPBegin() {
+	// override on visible page - used as a notification
+}
+
 function loadCurrentPageAP() {
+	// override on visible page - used as a notification
+}
+
+function loadCurrentPageSwitchBegin() {
 	// override on visible page - used as a notification
 }
 
@@ -1705,7 +1732,15 @@ function loadCurrentPageSwitch() {
 	// override on visible page - used as a notification
 }
 
+function loadCurrentPageGatewayBegin() {
+	// override on visible page - used as a notification
+}
+
 function loadCurrentPageGateway() {
+	// override on visible page - used as a notification
+}
+
+function loadCurrentPageControllerBegin() {
 	// override on visible page - used as a notification
 }
 
@@ -1713,7 +1748,15 @@ function loadCurrentPageController() {
 	// override on visible page - used as a notification
 }
 
+function loadCurrentPageSiteBegin() {
+	// override on visible page - used as a notification
+}
+
 function loadCurrentPageSite() {
+	// override on visible page - used as a notification
+}
+
+function loadCurrentPageGroupBegin() {
 	// override on visible page - used as a notification
 }
 
@@ -2261,7 +2304,7 @@ function updateClientUI() {
 function getWirelessClientData(lastMac) {
 	if (showTimingData) {
 		var wirelessDate = Date.now();
-		console.log('Requesting Wired Clients :' + lastMac)
+		console.log('Requesting Wireless Clients :' + lastMac)
 	}
 	
 	//console.log('Getting Client block:' + offset);
@@ -2555,7 +2598,10 @@ function getAPData(offset, needClients) {
 		var apDate = Date.now();
 		console.log('Requesting APs offset: ' + offset)
 	}
-	if (offset == 0) apPromise = new $.Deferred();
+	if (offset == 0) {
+		apPromise = new $.Deferred();
+		loadCurrentPageAPBegin(); // Notify page of beginning of AP reload
+	}
 	//console.log('Asking for AP block: ' + offset);
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -2812,7 +2858,10 @@ function getSwitchData(offset, needClients) {
 		var switchDate = Date.now();
 		console.log('Requesting Switches offset: ' + offset)
 	}
-	if (offset == 0) switchPromise = new $.Deferred();
+	if (offset == 0) {
+		switchPromise = new $.Deferred();
+		loadCurrentPageSwitchBegin(); // Notify page of beginning of reload
+	}
 
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
@@ -3035,7 +3084,11 @@ function getGatewayData(offset) {
 		console.log('Requesting Gateways offset: ' + offset)
 	}
 	
-	if (offset == 0) gatewayPromise = new $.Deferred();
+	if (offset == 0) {
+		gatewayPromise = new $.Deferred();
+		loadCurrentPageGatewayBegin(); // Notify page of beginning of reload
+	}
+	
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -3332,7 +3385,11 @@ function updateControllerUI() {
 }
 
 function getControllerData(offset) {
-	if (offset == 0) controllerPromise = new $.Deferred();
+	if (offset == 0) {
+		controllerPromise = new $.Deferred();
+		loadCurrentPageControllerBegin(); // Notify page of beginning of reload
+	}
+	
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -3713,6 +3770,10 @@ function getSiteData(offset) {
 		var siteDate = Date.now();
 		console.log('Requesting Sites offset: ' + offset)
 	}
+	
+	if (offset == 0) {
+		loadCurrentPageSiteBegin(); // Notify page of beginning of reload
+	}
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -3905,7 +3966,10 @@ function getGroupData(offset) {
 		console.log('Requesting Groups offset: ' + offset)
 	}
 	
-	if (offset == 0) groupPromise = new $.Deferred();
+	if (offset == 0) {
+		groupPromise = new $.Deferred();
+		loadCurrentPageGroupBegin(); // Notify page of beginning of reload
+	}
 	var settings = {
 		url: getAPIURL() + '/tools/getCommandwHeaders',
 		method: 'POST',
@@ -5447,7 +5511,7 @@ function checkForDeleteCompletion() {
 	var deleteProgress = (deleteCounter / csvData.length) * 100;
 	deleteNotification.update({ progress: deleteProgress });
 	
-	if (deleteCounter == csvData.length) {
+	if (deleteCounter >= csvData.length) {
 		if (deleteNotification) deleteNotification.close();
 		if (currentWorkflow === '') {
 			if (apiErrorCount != 0) {

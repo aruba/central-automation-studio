@@ -37,7 +37,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250120" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -273,7 +273,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<div class="row">
 									<div class="col-12">
 										<div class="card-header ">
-											<h4 class="card-title">Configuration</h4>
+											<h4 class="card-title">Configuration</h4><a class="refresh-link" onclick="getConfigforGroup()"><i class="central-icon ca-reload"></i></a>
 										</div>
 									</div>
 								</div>
@@ -297,6 +297,18 @@ Aaron Scott (WiFi Downunder) 2021-2025
 													<input class="form-check-input" type="checkbox" value="" id="clearAutoDRTCheckbox" onclick="clearAutoDRTConfig()" />
 													<span class="form-check-sign"></span>Disable Auto DRT Update
 												</label>
+											</div>
+											<div class="row">
+												<div class='form-check pad-10 pt-1'>
+													<label class="form-check-label">SSH Ciphers</label>
+												</div>
+												<div class='form-check col-3'>
+													<select id="sshselector" class="selectpicker" data-title="Select cipher suite..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="changeSSHConfig()"> 
+														<option value="both">Both (AES-CBC & AES-CTR)</option>
+														<option value="aes-ctr">AES-CBC Only</option>
+														<option value="aes-cbc">AES-CTR Only</option>
+													</select>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -994,6 +1006,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 	
 				checkForAWConfig();
 				checkForAutoDRTConfig();
+				checkForSSHConfig();
 				
 				document.onkeyup = function(e) {
 					if (e.ctrlKey && e.which == 82) {
@@ -1004,9 +1017,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250218"></script>
-	<script src="assets/js/main.js?v=250219"></script>
+	<script src="assets/js/version.js?v=250329"></script>
+	<script src="assets/js/main.js?v=250329"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
-	<script src="assets/js/wlan-group.js?v=241009"></script>
+	<script src="assets/js/wlan-group.js?v=250312"></script>
 </html>
