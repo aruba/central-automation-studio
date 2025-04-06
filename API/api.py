@@ -14,6 +14,9 @@ import logging
 import requests
 import binascii
 import os
+from ipaddress import ip_address
+from urllib.parse import urlparse
+import socket
 
 from logging.handlers import RotatingFileHandler
 
@@ -40,6 +43,27 @@ def create_timed_rotating_log(path):
 
 log_file = "/central/API/api-proxy.log" # creates this file at the specified path
 create_timed_rotating_log(log_file)
+
+# Check if host is public IP or COP server (aimed to prevent access to local network services)
+def verifyHost(url):
+	host = urlparse(url).hostname
+	# resolve the ip address
+	try:
+		ip = socket.gethostbyname(host)
+		# converting the str into a IPv4Address object
+		ip = ip_address(ip)
+		if ip.is_private:
+			# allow access to COP server
+			if url.startswith("https://apigw-"):
+				return True
+			else:
+				return False
+		else:
+			return True
+	except socket.gaierror as e:
+		print(f'Invalid hostname, error raised is {e}')
+		return False
+
 
 @app.route('/auth/refresh', methods = ["POST"])
 def tokenRefresh():
@@ -101,58 +125,68 @@ def tokenRefreshwHeaders():
 def getCommand():
 	data = request.get_json();
 	url = data['url'];
-	if 'tenantID' in data:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json',
-		  'TenantID': data['tenantID']
-		};
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json',
+			'TenantID': data['tenantID']
+			};
+		else:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json'
+			};
+		
+		response = session.request("GET", url, headers=headers);
+		#print(response.text)
+		#print(response);
+		try:
+			result = jsonify(json.loads(response.text));
+			# ...
+		except ValueError:
+			# no JSON returned
+			result = jsonify(status=str(response.status_code), reason=response.reason, responseBody=str(response.text));
+		
 	else:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json'
-		};
-	
-	response = session.request("GET", url, headers=headers);
-	#print(response.text)
-	#print(response);
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		result = jsonify(status=str(response.status_code), reason=response.reason, responseBody=str(response.text));
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
-
 
 @app.route('/tools/getCommandwHeaders', methods = ["POST"])
 def getCommandwHeaders():
 	data = request.get_json();
 	url = data['url'];
-	if 'tenantID' in data:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json',
-		  'TenantID': data['tenantID']
-		};
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json',
+			'TenantID': data['tenantID']
+			};
+		else:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json'
+			};
+		
+		response = session.request("GET", url, headers=headers);
+		headers_json = json.dumps(dict(response.headers))
+		try:
+			result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json, requestedUrl=url);
+			# ...
+		except ValueError:
+			# no JSON returned
+			result = jsonify(responseBody=str(response.text), status=str(response.status_code), reason=response.reason, requestedUrl=url);
 	else:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json'
-		};
-	
-	response = session.request("GET", url, headers=headers);
-	headers_json = json.dumps(dict(response.headers))
-	try:
-		result = jsonify(responseBody=str(response.text), status=str(response.status_code), headers=headers_json, requestedUrl=url);
-		# ...
-	except ValueError:
-		# no JSON returned
-		result = jsonify(responseBody=str(response.text), status=str(response.status_code), reason=response.reason, requestedUrl=url);
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
 	
 	
@@ -161,36 +195,40 @@ def getCommandwHeaders():
 def postCommand():
 	data = request.get_json();
 	url = data['url'];
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json',
+			'TenantID': data['tenantID']
+			};
+		else:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json'
+			};
 	
-	if 'tenantID' in data:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json',
-		  'TenantID': data['tenantID']
-		};
-	else:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json'
-		};
-
-	if 'data' in data:
-		payload = data['data'];
-		response = session.request("POST", url, headers=headers, data=payload);
-	else:
-		response = session.request("POST", url, headers=headers);
-
-	#app.logger.debug(response.text)
+		if 'data' in data:
+			payload = data['data'];
+			response = session.request("POST", url, headers=headers, data=payload);
+		else:
+			response = session.request("POST", url, headers=headers);
 	
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		app.logger.debug("No JSON")
-		result = jsonify(status=str(response.status_code), reason=response.reason);
+		#app.logger.debug(response.text)
+		
+		try:
+			result = jsonify(json.loads(response.text));
+			# ...
+		except ValueError:
+			# no JSON returned
+			app.logger.debug("No JSON")
+			result = jsonify(status=str(response.status_code), reason=response.reason);
+	else:
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
 	
 	
@@ -198,41 +236,45 @@ def postCommand():
 def postFormDataCommand():
 	data = request.get_json();
 	url = data['url'];
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			"Accept": "*/*",
+			'TenantID': data['tenantID']
+			};
+		else:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			"Accept": "*/*"
+			};
+		
+		if 'template' in data:
+			payload = data['template'];
+			files = {'template': ('template.txt', payload)}
+			response = session.request("POST", url, headers=headers, files=files);
+		elif 'variables' in data:
+			payload = data['variables'];
+			files = {'variables': ('variables.txt', payload)}
+			response = session.request("POST", url, headers=headers, files=files);
+		else:
+			response = session.request("POST", url, headers=headers);
 	
-	if 'tenantID' in data:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  "Accept": "*/*",
-		  'TenantID': data['tenantID']
-		};
+		#app.logger.debug(response.text)
+		
+		try:
+			result = jsonify(json.loads(response.text));
+			# ...
+		except ValueError:
+			# no JSON returned
+			app.logger.debug("No JSON")
+			result = jsonify(status=str(response.status_code), reason=response.reason);
 	else:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  "Accept": "*/*"
-		};
-    
-	if 'template' in data:
-		payload = data['template'];
-		files = {'template': ('template.txt', payload)}
-		response = session.request("POST", url, headers=headers, files=files);
-	elif 'variables' in data:
-		payload = data['variables'];
-		files = {'variables': ('variables.txt', payload)}
-		response = session.request("POST", url, headers=headers, files=files);
-	else:
-		response = session.request("POST", url, headers=headers);
-
-	#app.logger.debug(response.text)
-	
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		app.logger.debug("No JSON")
-		result = jsonify(status=str(response.status_code), reason=response.reason);
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
 
 	
@@ -241,30 +283,34 @@ def putCommand():
 	data = request.get_json();
 	url = data['url'];
 	payload = data['data'];
-	
-	if 'tenantID' in data:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json',
-		  'TenantID': data['tenantID']
-		};
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json',
+			'TenantID': data['tenantID']
+			};
+		else:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			'Content-Type': 'application/json'
+			};
+		
+		response = session.request("PUT", url, data=payload, headers=headers);
+		
+		#app.logger.debug(response.text)
+		try:
+			result = jsonify(json.loads(response.text));
+			# ...
+		except ValueError:
+			# no JSON returned
+			result = jsonify(status=str(response.status_code), reason=response.reason);
 	else:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  'Content-Type': 'application/json'
-		};
-    
-	response = session.request("PUT", url, data=payload, headers=headers);
-	
-	#app.logger.debug(response.text)
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		result = jsonify(status=str(response.status_code), reason=response.reason);
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
 
 
@@ -272,41 +318,45 @@ def putCommand():
 def patchFormDataCommand():
 	data = request.get_json();
 	url = data['url'];
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			"Accept": "*/*",
+			'TenantID': data['tenantID']
+			};
+		else:
+			headers = { 
+			'cache-control': "no-cache",
+			'Authorization': 'Bearer ' + data['access_token'],
+			"Accept": "*/*"
+			};
+		
+		if 'template' in data:
+			payload = data['template'];
+			files = {'template': ('template.txt', payload)}
+			response = session.request("PATCH", url, headers=headers, files=files);
+		elif 'variables' in data:
+			payload = data['variables'];
+			files = {'variables': ('variables.txt', payload)}
+			response = session.request("PATCH", url, headers=headers, files=files);
+		else:
+			response = session.request("PATCH", url, headers=headers);
 	
-	if 'tenantID' in data:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  "Accept": "*/*",
-		  'TenantID': data['tenantID']
-		};
+		#app.logger.debug(response.text)
+		
+		try:
+			result = jsonify(json.loads(response.text));
+			# ...
+		except ValueError:
+			# no JSON returned
+			app.logger.debug("No JSON")
+			result = jsonify(status=str(response.status_code), reason=response.reason);
 	else:
-		headers = { 
-		  'cache-control': "no-cache",
-		  'Authorization': 'Bearer ' + data['access_token'],
-		  "Accept": "*/*"
-		};
-    
-	if 'template' in data:
-		payload = data['template'];
-		files = {'template': ('template.txt', payload)}
-		response = session.request("PATCH", url, headers=headers, files=files);
-	elif 'variables' in data:
-		payload = data['variables'];
-		files = {'variables': ('variables.txt', payload)}
-		response = session.request("PATCH", url, headers=headers, files=files);
-	else:
-		response = session.request("PATCH", url, headers=headers);
-
-	#app.logger.debug(response.text)
-	
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		app.logger.debug("No JSON")
-		result = jsonify(status=str(response.status_code), reason=response.reason);
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
 
 
@@ -315,29 +365,33 @@ def patchCommand():
 	data = request.get_json();
 	url = data['url'];
 	payload = data['data'];
-	
-	if 'tenantID' in data:
-		headers = {
-			'cache-control': "no-cache",
-			'Authorization': 'Bearer ' + data['access_token'],
-			'Content-Type': 'application/json',
-			'TenantID': data['tenantID']
-		};
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = {
+				'cache-control': "no-cache",
+				'Authorization': 'Bearer ' + data['access_token'],
+				'Content-Type': 'application/json',
+				'TenantID': data['tenantID']
+			};
+		else:
+			headers = {
+				'cache-control': "no-cache",
+				'Authorization': 'Bearer ' + data['access_token'],
+				'Content-Type': 'application/json'
+			};
+		
+		response = session.request("PATCH", url, data=payload, headers=headers);
+		
+		try:
+			result = jsonify(json.loads(response.text));
+			# ...
+		except ValueError:
+			# no JSON returned
+			result = jsonify(status=str(response.status_code), reason=response.reason);
 	else:
-		headers = {
-			'cache-control': "no-cache",
-			'Authorization': 'Bearer ' + data['access_token'],
-			'Content-Type': 'application/json'
-		};
-    
-	response = session.request("PATCH", url, data=payload, headers=headers);
-	
-	try:
-		result = jsonify(json.loads(response.text));
-		# ...
-	except ValueError:
-		# no JSON returned
-		result = jsonify(status=str(response.status_code), reason=response.reason);
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
 	return result;
 
 	
@@ -345,35 +399,37 @@ def patchCommand():
 def deleteCommand():
 	data = request.get_json();
 	url = data['url'];
-	
-	if 'tenantID' in data:
-		headers = {
-			'cache-control': "no-cache",
-			'Authorization': 'Bearer ' + data['access_token'],
-			'Content-Type': 'application/json',
-			'TenantID': data['tenantID']
-		};
-	else:
-		headers = {
-			'cache-control': "no-cache",
-			'Authorization': 'Bearer ' + data['access_token'],
-			'Content-Type': 'application/json'
-		};
-	
-	if "data" in data:
-		payload = data['data'];
-		response = session.request("DELETE", url, data=payload, headers=headers);
-	else:
-		response = session.request("DELETE", url, headers=headers);
-	
-	try:
-		result = jsonify(json.loads(response.text)), response.status_code;
-	except ValueError:
-		# no JSON returned
-		result = jsonify(status=str(response.status_code), reason=response.reason), response.status_code;
-	return result;
-
+	validUrl = verifyHost(url);
+	if validUrl:
+		if 'tenantID' in data:
+			headers = {
+				'cache-control': "no-cache",
+				'Authorization': 'Bearer ' + data['access_token'],
+				'Content-Type': 'application/json',
+				'TenantID': data['tenantID']
+			};
+		else:
+			headers = {
+				'cache-control': "no-cache",
+				'Authorization': 'Bearer ' + data['access_token'],
+				'Content-Type': 'application/json'
+			};
 		
+		if "data" in data:
+			payload = data['data'];
+			response = session.request("DELETE", url, data=payload, headers=headers);
+		else:
+			response = session.request("DELETE", url, headers=headers);
+		
+		try:
+			result = jsonify(json.loads(response.text)), response.status_code;
+		except ValueError:
+			# no JSON returned
+			result = jsonify(status=str(response.status_code), reason=response.reason), response.status_code;
+	else:
+		print('Invalid URL')
+		result = jsonify(status=str(403), reason='Invalid URL', responseBody='Invalid URL');
+	return result;
 
 
 @app.route("/")
