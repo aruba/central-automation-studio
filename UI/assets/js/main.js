@@ -1393,6 +1393,14 @@ function generateCSVForSite(clickedRow) {
 			logStart('Configuring Swarm Mode...');
 			currentWorkflow = '';
 			setSwarmMode();
+		} else if (clickedRow === 'enable24') {
+			logStart('Enabling 2.4GHz radios...');
+			currentWorkflow = '';
+			enable24radios();
+		} else if (clickedRow === 'disable24') {
+			logStart('Disabling 2.4GHz radios...');
+			currentWorkflow = '';
+			disable24radios();
 		} else if (clickedRow === 'split5GhzMode') {
 			logStart('Configuring 5GHz radios...');
 			currentWorkflow = '';
@@ -5526,6 +5534,15 @@ function checkForDeleteCompletion() {
 					title: 'Delete Success',
 					text: 'All devices were deleted from Central',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} else {
@@ -5558,6 +5575,15 @@ function checkForLicensingCompletion() {
 					title: 'Add Success',
 					text: 'All devices were assigned licenses',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} else {
@@ -6072,6 +6098,15 @@ function checkForUnlicensingCompletion() {
 					title: 'Add Success',
 					text: 'All devices had licenses unassigned',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} else {
@@ -6799,6 +6834,15 @@ function checkForSiteMoveCompletion() {
 					title: 'Add Success',
 					text: 'All devices were moved to the correct sites',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 			updateMonitoringWithClients(false, false);
@@ -6905,6 +6949,15 @@ function checkForSiteRemoveCompletion() {
 					title: 'Add Success',
 					text: 'All devices were removed to the requested sites',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 			updateMonitoringWithClients(false, false);
@@ -7276,6 +7329,15 @@ function checkForRenameCompletion() {
 					title: 'Renaming Success',
 					text: 'All devices were renamed',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} else if (currentWorkflow === 'auto-site-rename') {
@@ -7713,6 +7775,15 @@ function checkForUpdatePortCompletion() {
 					title: 'Renaming Success',
 					text: 'All ports with connected APs were renamed',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} else {
@@ -8124,6 +8195,15 @@ function checkForZoneCompletion() {
 					title: 'Zone/SSID Configuration Success',
 					text: 'All devices were set to the correct Zones/SSIDs',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} /* else if (currentWorkflow === "auto-site-rename"){
@@ -8342,6 +8422,15 @@ function checkForRFCompletion() {
 					title: 'RF Zone/Profile Configuration Success',
 					text: 'All devices were set to the correct RF Zones/RF Profiles',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		} /* else if (currentWorkflow === "auto-site-rename"){
@@ -8516,6 +8605,15 @@ function checkForSwarmModeCompletion() {
 					title: 'Swarm Mode Configuration Success',
 					text: 'All devices were set to the correct Swarm Mode',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		}
@@ -8672,6 +8770,15 @@ function checkForAP1XCompletion() {
 					title: 'AP1X PEAP Configuration Success',
 					text: 'All devices were set to the correct AP1X credentials',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		}
@@ -8822,6 +8929,15 @@ function checkForPOECompletion() {
 					title: 'RF Profile Configuration Success',
 					text: 'All devices were set to the correct POE Optimization configuration',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		}
@@ -8967,6 +9083,15 @@ function checkForRadioModeCompletion() {
 					title: 'Radio Mode Configuration Success',
 					text: 'All devices were set to the correct Radio Modes',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		}
@@ -9994,6 +10119,15 @@ function checkForGPSCompletion() {
 					title: 'AP Altitude Configuration Success',
 					text: 'All APs altitudes were configured',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		}
@@ -10080,8 +10214,6 @@ function setAPAltitude(serial, altitude) {
 			}
 			
 		}
-		console.log(apCLIResponse)
-		console.log(postRequired)
 		
 		if (postRequired) {	
 			// Update ap cli as the LED state is altered
@@ -10148,15 +10280,30 @@ function checkForRadioCompletion() {
 					text: 'All devices had the 2.4GHz radio configured',
 					icon: 'success',
 				});
+				Swal.fire({
+					title: '2.4GHz Radio Success',
+					text: 'All devices had the 2.4GHz radio configured',
+					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
+				});
 			}
 		}
 	}
 }
-
+// 1.44.2: Old Enable/Disable code. Will be removed in later release
+/*
 function disable24radios() {
-	/*  
-		if AP - grab AP settings via API, then disable the 2.4GHz radio
-	*/
+	
+	//	if AP - grab AP settings via API, then disable the 2.4GHz radio
+	
 
 	radioCounter = 0;
 	$.when(updateInventory(false)).then(function() {
@@ -10265,9 +10412,8 @@ function disable24radios() {
 }
 
 function enable24radios() {
-	/*  
-		if AP - grab AP settings via API, then disable the 2.4GHz radio
-	*/
+	//	if AP - grab AP settings via API, then disable the 2.4GHz radio
+	
 
 	radioCounter = 0;
 	$.when(updateInventory(false)).then(function() {
@@ -10373,6 +10519,297 @@ function enable24radios() {
 		return autoRadioPromise.promise();
 	}
 }
+*/
+
+/* New Versions 1.44.2 */
+function disable24radios() {
+	/*  
+		if AP - grab AP settings via API, then disable the 2.4GHz radio
+	*/
+
+	radioCounter = 0;
+	$.when(updateInventory(false)).then(function() {
+		radioNotification = showProgressNotification('ca-wifi-off', 'Disabling 2.4GHz radios...', 'bottom', 'center', 'info');
+
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				var currentSerial = this['SERIAL'].trim();
+				var device = findDeviceInInventory(currentSerial);
+				if (!device) {
+					logError('Unable to find device ' + currentSerial + ' in the device inventory');
+					apiErrorCount++;
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				} else if (deviceType === 'IAP') {
+					// if AP then get AP settings
+					var settings = {
+						url: getAPIURL() + '/tools/getCommandwHeaders',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+							access_token: localStorage.getItem('access_token'),
+						}),
+					};
+
+					$.ajax(settings).done(function(commandResults, statusText, xhr) {
+						if (commandResults.hasOwnProperty('headers')) {
+							updateAPILimits(JSON.parse(commandResults.headers));
+						}
+						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+							apiErrorCount++;
+							return;
+						} else if (commandResults.hasOwnProperty('error_code')) {
+							logError(commandResults.description);
+							apiErrorCount++;
+							return;
+						}
+						var response = JSON.parse(commandResults.responseBody);
+
+						//console.log(response);
+						if (response.hasOwnProperty('error_code')) {
+							logError(response.description);
+							apiErrorCount++;
+							radioCounter = radioCounter + 1;
+							checkForRadioCompletion();
+						} else {
+							var apCLIResponse = response;
+							
+							// check if radio is already disabled and if a 2.4GHz radio is configured
+							var foundType = -1;
+							var radioID = 1;
+							for (i = 0; i < apCLIResponse.length; i++) {
+								if (apCLIResponse[i].includes('dot11g-radio-disable') || apCLIResponse[i].includes('radio-1-disable')) {
+									foundType = i;
+								} else if (apCLIResponse[i].includes('2.4GHz-and')) {
+									radioID = 0;
+								} else if (apCLIResponse[i].includes('and-2.4GHz')) {
+									radioID = 1;
+								} else if (apCLIResponse[i].includes('5GHz-and-6GHz')) {
+									radioID = -1;
+								} else if (apCLIResponse[i].includes('6GHz-and-5GHz')) {
+									radioID = -1;
+								} else if (apCLIResponse[i].includes('dual-5GHz-mode enable')) {
+									radioID = -1;
+								}
+							}
+							if (foundType !== -1) {
+								logInformation('Device ' + currentSerial + ' 2.4GHz radio is already disabled');
+								radioCounter = radioCounter + 1;
+								checkForRadioCompletion();
+							} else if (radioID == -1) {
+								logInformation('Device ' + currentSerial + ' is not configured with a 2.4GHz radio');
+								radioCounter = radioCounter + 1;
+								checkForRadioCompletion();
+							} else {
+								// cover both old style and new style
+								apCLIResponse.push('  dot11g-radio-disable');
+								apCLIResponse.push('  radio-'+radioID+'-disable');
+								
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ clis: apCLIResponse }),
+									}),
+								};
+	
+								$.ajax(settings).done(function(response, textStatus, jqXHR) {
+									if (response.hasOwnProperty('status')) {
+										if (response.status === '503') {
+											apiErrorCount++;
+											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+										}
+									}
+									if (response !== currentSerial) {
+										logError('2.4GHz radio on AP "' + currentSerial + '" was not disabled. Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation('2.4GHz radio on AP "' + currentSerial + '" was disabled');
+									}
+									radioCounter = radioCounter + 1;
+									checkForRadioCompletion();
+								});
+							}
+						}
+					});
+				} else {
+					// Either switch or controller/gateway
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				}
+			} else {
+				radioCounter = radioCounter + 1;
+				checkForRadioCompletion();
+			}
+		});
+	});
+	if (currentWorkflow !== '') {
+		return autoRadioPromise.promise();
+	}
+}
+
+function enable24radios() {
+	/*  
+		if AP - grab AP settings via API, then disable the 2.4GHz radio
+	*/
+
+	radioCounter = 0;
+	$.when(updateInventory(false)).then(function() {
+		radioNotification = showProgressNotification('ca-wifi', 'Enabling 2.4GHz radios...', 'bottom', 'center', 'info');
+
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				var currentSerial = this['SERIAL'].trim();
+				var device = findDeviceInInventory(currentSerial);
+				if (!device) {
+					logError('Unable to find device ' + currentSerial + ' in the device inventory');
+					apiErrorCount++;
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				} else if (deviceType === 'IAP') {
+					// if AP then get AP settings
+					var settings = {
+						url: getAPIURL() + '/tools/getCommandwHeaders',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+							access_token: localStorage.getItem('access_token'),
+						}),
+					};
+
+					$.ajax(settings).done(function(commandResults, statusText, xhr) {
+						if (commandResults.hasOwnProperty('headers')) {
+							updateAPILimits(JSON.parse(commandResults.headers));
+						}
+						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+							apiErrorCount++;
+							return;
+						} else if (commandResults.hasOwnProperty('error_code')) {
+							logError(commandResults.description);
+							apiErrorCount++;
+							return;
+						}
+						var response = JSON.parse(commandResults.responseBody);
+						//console.log(response);
+						if (response.hasOwnProperty('error_code')) {
+							logError(response.description);
+							apiErrorCount++;
+							radioCounter = radioCounter + 1;
+							checkForRadioCompletion();
+						} else {
+							
+							var apCLIResponse = response;
+							
+							// check if a 2.4GHz radio is configured
+							var foundOld = -1;
+							var foundNew = -1;
+							var radioID = 1;
+							for (i = 0; i < apCLIResponse.length; i++) {
+								 if (apCLIResponse[i].includes('2.4GHz-and')) {
+									radioID = 0;
+								} else if (apCLIResponse[i].includes('and-2.4GHz')) {
+									radioID = 1;
+								} else if (apCLIResponse[i].includes('5GHz-and-6GHz')) {
+									radioID = -1;
+								} else if (apCLIResponse[i].includes('6GHz-and-5GHz')) {
+									radioID = -1;
+								} else if (apCLIResponse[i].includes('dual-5GHz-mode enable')) {
+									radioID = -1;
+								}
+							}
+							
+							for (i = 0; i < apCLIResponse.length; i++) {
+								if (apCLIResponse[i].includes('dot11g-radio-disable')) {
+									foundOld = i;
+								} else if (apCLIResponse[i].includes('radio-'+radioID+'-disable')) {
+									foundNew = i;
+								}
+							}
+							
+							// remove references to the 2.4GHz radio being disabled
+							if (foundOld !== -1) apCLIResponse.splice(foundOld, 1);
+							if (foundNew !== -1) apCLIResponse.splice(foundNew, 1);
+							
+							if (radioID == -1) {
+								logInformation('Device ' + currentSerial + ' is not configured with a 2.4GHz radio');
+								radioCounter = radioCounter + 1;
+								checkForRadioCompletion();
+							} else if (foundOld == -1 && foundNew == -1) {
+								logInformation('Device ' + currentSerial + ' 2.4GHz radio is already enabled');
+								radioCounter = radioCounter + 1;
+								checkForRadioCompletion();
+							} else {
+							
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ clis: apCLIResponse }),
+									}),
+								};
+	
+								$.ajax(settings).done(function(response, textStatus, jqXHR) {
+									if (response.hasOwnProperty('status')) {
+										if (response.status === '503') {
+											apiErrorCount++;
+											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+										}
+									}
+									if (response !== currentSerial) {
+										logError('2.4GHz radio on AP "' + currentSerial + '" was not enabled. Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation('2.4GHz radio on AP "' + currentSerial + '" was enabled');
+									}
+									radioCounter = radioCounter + 1;
+									checkForRadioCompletion();
+								});
+							}
+						}
+					});
+				} else {
+					// Either switch or controller/gateway
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				}
+			} else {
+				radioCounter = radioCounter + 1;
+				checkForRadioCompletion();
+			}
+		});
+	});
+	if (currentWorkflow !== '') {
+		return autoRadioPromise.promise();
+	}
+}
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Indoor / Outdoor functions
@@ -10397,6 +10834,15 @@ function checkForInstallationCompletion() {
 					title: 'AP Installation Type Configuration Success',
 					text: 'All devices were set to the correct installation type',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 
@@ -10578,6 +11024,15 @@ function checkForLEDCompletion() {
 					title: 'AP LED Configuration Success',
 					text: 'All devices LEDs were configured',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 		}
@@ -11047,6 +11502,15 @@ function checkForNameAndRadioModeCompletion() {
 				title: 'Automation Configuration Success',
 				text: 'All devices were set to the correct Hostanme and Radio Modes',
 				icon: 'success',
+				showCancelButton: true,
+				confirmButtonColor: '#3085d6',
+				cancelButtonColor: '#888888',
+				confirmButtonText: 'OK',
+				cancelButtonText: 'Show Log',
+			}).then(result => {
+				if (result.isDismissed) {
+					showLog();
+				}
 			});
 		}
 	}
@@ -12192,6 +12656,15 @@ function checkForStaticIPCompletion() {
 			title: 'Active Static IP',
 			text: 'All APs using static IP have been checked.',
 			icon: icon,
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#888888',
+			confirmButtonText: 'OK',
+			cancelButtonText: 'Show Log',
+		}).then(result => {
+			if (result.isDismissed) {
+				showLog();
+			}
 		});
 	}
 }
@@ -12426,6 +12899,15 @@ function checkForVisitorCompletion() {
 					title: 'Add Success',
 					text: 'All visitor accounts were created.',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 			loadCurrentPageVisitors();
@@ -12662,6 +13144,15 @@ function checkForGatewayCompletion() {
 					title: 'Gateway Config Success',
 					text: 'All Gateways have been updated.',
 					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
 				});
 			}
 			logEnd('Gateway Timezone update complete')

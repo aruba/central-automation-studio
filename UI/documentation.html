@@ -691,11 +691,11 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</p>
 								<h4>Enable 2.4GHz radios</h4>
 								<p>
-									Uses the SERIAL column in the CSV file to enable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
+									Uses the SERIAL column in the CSV file to enable the 2.4GHz radio (if configured) on the corresponding Access Points in Aruba Central.
 								</p>
 								<h4>Disable 2.4GHz radios</h4>
 								<p>
-									Uses the SERIAL column in the CSV file to disable the 2.4GHz radio on the corresponding Access Points in Aruba Central.
+									Uses the SERIAL column in the CSV file to disable the 2.4GHz radio (if configured) on the corresponding Access Points in Aruba Central.
 								</p>
 								<h4>Set Antenna Gain</h4>
 								<p>
@@ -857,6 +857,14 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<h4>Enable Dual-5GHz Mode (AP-340 Series)</h4>
 								<p>
 									This task configures each AP-340 Series AP on the site to be enabled for <a href='https://www.arubanetworks.com/techdocs/central/latest/content/aos10x/monitoring/dual-5g.htm?Highlight=dual%205ghz' target='_blank'>Dual 5GHz Mode</a>.
+								</p>
+								<h4>Enable 2.4GHz Radios</h4>
+								<p>
+									This task enables the 2.4GHz radios on all APs in the site (that are configured with a 2.4GHz radio).
+								</p>
+								<h4>Disable 2.4GHz Radios</h4>
+								<p>
+									This task disables the 2.4GHz radios on all APs in the site (that are configured with a 2.4GHz radio).
 								</p>
 								<h4>Set Antenna Gain</h4>
 								<p>
@@ -1992,6 +2000,11 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.44.2 (2025/04/05)</h4>
+									<ul>
+										<li>Enable/Disable 2.4GHz radios tasks now intelligently determines which radio ID is operating in 2.4Ghz (if the AP is configured with a 2.4GHz radio)</li>
+										<li>Enable/Disable 2.4GHz radios tasks are now available in the Site-based workflows</li>
+									</ul>
 									<h4>Version 1.44.1 (2025/03/29)</h4>
 									<ul>
 										<li>Added AP Config Status page in Deployment Tasks</li>
