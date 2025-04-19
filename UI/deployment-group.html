@@ -265,7 +265,6 @@ Aaron Scott (WiFi Downunder) 2021-2025
 											<p class="card-category">Choose a group or Virtual Controller to obtain the Wireless config</p>
 											<p></p>
 										</div>
-
 										<div class="card-body">
 											<select id="groupselector" class="selectpicker" data-title="Select a group or VC..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getConfigforGroup()"> </select>
 										</div>
@@ -329,23 +328,27 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<div class="row">
 									<div class="col-12">
 										 <!-- Inline styling to keep boxes even on page. -->
-										<div class="card-header" style="margin-bottom: 5.5rem;">
+										<div class="card-header" style="margin-bottom: 1.3rem;">
 											<h4 class="card-title">Validated Solutions Guide Check</h4>
-											<p class="card-category">Below box is to validate configuration against VSGs.</p>
+											<p class="card-category">Use the button below to validate the configuration against the VSG</p>
 											<p></p>
 										</div>
 									</div>
 								</div>
+								<div class="card-body">
+									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="validateConfig" id="validateConfigBtn" onclick="getValidation()">Validate</button>
+								</div>
 								<div class="row">
 									<div class="col-12">
 										<div class="card-header">
-											<h4 class="card-title">Configuration</h4><a class="refresh-link" onclick="getValidation()"><i class="central-icon ca-reload"></i></a>
+											<h4 class="card-title">Results</h4><a class="refresh-link" onclick="getValidation()"><i class="central-icon ca-reload"></i></a>
 										</div>
 									</div>
 								</div>
 								<div class="row">
 									<div class="col-md-12">
-										<textarea type="text" placeholder="Validating. . ." class="form-control textarea cli-output" id="wlanVSG" rows="20" disabled></textarea>
+										<div id="wlanVSG" contenteditable="false" class="form-control textarea cli-output" style="height: 400px; white-space: pre-wrap; user-select: text; overflow-y: auto" role="textbox" aria-readonly="true"></div>
+										<!--<textarea type="text" placeholder="Validating. . ." class="form-control textarea cli-output" id="wlanVSG" rows="20"></textarea>-->
 									</div>
 								</div>
 

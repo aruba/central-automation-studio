@@ -120,11 +120,36 @@ function getConfigforGroup() {
 	});
 	$('[data-toggle="tooltip"]').tooltip();
 }
+// Function for validation box
 function getValidation() {
-	// Placeholder code to keep from refreshing config. Just sets value of validation box to whatever is in config box.
-	var wlanConfig = document.getElementById('wlanConfig');
-	document.getElementById('wlanVSG').value = wlanConfig.value
+    var wlanConfig = document.getElementById('wlanConfig');
+    var wlanVSG = document.getElementById('wlanVSG');
+    
+    // Get plain text from wlanConfig
+    var configText = wlanConfig.value;
+    
+    // Format the text with bold, italic, and colors
+    var lines = configText.split('\n').filter(line => line.trim() !== '');
+    var formattedContent = lines.map((line, index) => {
+        // Example formatting based on content
+        if (line.includes('ssid-profile')) {
+            return `<strong>${line}</strong>`;
+        } else if (line.includes('Security:')) {
+            return `<em>${line}</em>`;
+        } else if (line.includes('Channel:')) {
+            return `<p style="color: blue;">${line}</p>`;
+        } else {
+            return `${line}`;
+        }
+    }).join('<br/>');
+    
+    // Set formatted content in the div
+    wlanVSG.innerHTML = formattedContent || '<p>Validating. . .</p>';
+    
+    // Ensure non-editable
+    wlanVSG.setAttribute('contenteditable', 'false');
 }
+
 function updateFullWLAN() {
 	errorCounter = 0;
 	clearErrorLog();
