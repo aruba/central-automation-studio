@@ -109,8 +109,10 @@ function getConfigforGroup() {
 
 		if (groupConfigs[wlanGroup].hasOwnProperty('error_code')) {
 			document.getElementById('wlanConfig').value = '';
+			document.getElementById('wlanVSG').value = '';
 		} else {
 			document.getElementById('wlanConfig').value = groupConfigs[wlanGroup].join('\n');
+			document.getElementById('wlanVSG').value = groupConfigs[wlanGroup].join('\n');
 		}
 		checkForAWConfig();
 		checkForAutoDRTConfig();
@@ -118,7 +120,11 @@ function getConfigforGroup() {
 	});
 	$('[data-toggle="tooltip"]').tooltip();
 }
-
+function getValidation() {
+	// Placeholder code to keep from refreshing config. Just sets value of validation box to whatever is in config box.
+	var wlanConfig = document.getElementById('wlanConfig');
+	document.getElementById('wlanVSG').value = wlanConfig.value
+}
 function updateFullWLAN() {
 	errorCounter = 0;
 	clearErrorLog();

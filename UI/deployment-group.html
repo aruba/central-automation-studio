@@ -255,7 +255,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
 						</div>
 						<!-- End Overview Cards -->
 						<!-- Change PSK Card -->
-						<div class="card col-md-8">
+						<div class="row">
+						<div class="card col-md-6">
 							<div class="card-body">
 								<div class="row">
 									<div class="col-12">
@@ -322,6 +323,39 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							</div>
 						</div>
 						<!-- End Change PSK Card -->
+						 <!-- Zak Config Check -->
+						<div class="card col-md-6">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-12">
+										 <!-- Inline styling to keep boxes even on page. -->
+										<div class="card-header" style="margin-bottom: 5.5rem;">
+											<h4 class="card-title">Validated Solutions Guide Check</h4>
+											<p class="card-category">Below box is to validate configuration against VSGs.</p>
+											<p></p>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-12">
+										<div class="card-header">
+											<h4 class="card-title">Configuration</h4><a class="refresh-link" onclick="getValidation()"><i class="central-icon ca-reload"></i></a>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<textarea type="text" placeholder="Validating. . ." class="form-control textarea cli-output" id="wlanVSG" rows="20" disabled></textarea>
+									</div>
+								</div>
+
+							</div>
+							<div class="card-footer">
+
+							</div>
+						</div>
+						</div>
+						<!-- End Zak Config Check -->
 					</div>
 				</div>
 				<!-- Client Modal -->
