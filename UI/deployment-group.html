@@ -255,7 +255,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
 						</div>
 						<!-- End Overview Cards -->
 						<!-- Change PSK Card -->
-						<div class="card col-md-8">
+						<div class="row">
+						<div class="card col-md-6">
 							<div class="card-body">
 								<div class="row">
 									<div class="col-12">
@@ -264,7 +265,6 @@ Aaron Scott (WiFi Downunder) 2021-2025
 											<p class="card-category">Choose a group or Virtual Controller to obtain the Wireless config</p>
 											<p></p>
 										</div>
-
 										<div class="card-body">
 											<select id="groupselector" class="selectpicker" data-title="Select a group or VC..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getConfigforGroup()"> </select>
 										</div>
@@ -322,6 +322,58 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							</div>
 						</div>
 						<!-- End Change PSK Card -->
+						 <!-- Validation Card -->
+						<div class="card col-md-6">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-12">
+										 <!-- Inline styling to keep boxes even on page. -->
+										<div class="card-header" style="margin-bottom: 1.3rem;">
+											<h4 class="card-title">Validated Solutions Guide Check</h4>
+											<p class="card-category">Use the button below to validate the configuration against the VSG</p>
+											<p></p>
+										</div>
+									</div>
+								</div>
+								<div class="card-body">
+									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="validateConfig" id="validateConfigBtn" onclick="getValidation()">Validate</button>
+								</div>
+								<div class="row">
+									<div class="col-12">
+										<div class="card-header">
+											<h4 class="card-title">Results</h4><a class="refresh-link" onclick="getValidation()"><i class="central-icon ca-reload"></i></a>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<div id="wlanVSG" contenteditable="false" class="form-control textarea cli-output" style="height: 400px; white-space: pre-wrap; user-select: text; overflow-y: auto" role="textbox" aria-readonly="true"></div>
+									</div>
+								</div>
+								<hr />
+								<div class="row">
+									<div class="col-12">
+										<div class="card-header ">
+											<h4 class="card-title">Disclaimer:</h4>
+										</div>
+										<div class="card-body">
+											<div class="form-check pad-10">
+												<label class="form-check-label">
+													The validated solutions check is <strong><u>not</u></strong> an indication of incorrect configuration. It is only a guide to call out potential misconfigurations that are identified by a ruleset pulled from VSGs (Validated Solutions Guides).
+													Use it to quickly verify configurations.
+													<br/>To add, the ruleset is checked against AOS8-Instant configuration today. Support for AOS10 will be coming soon.
+												</label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="card-footer">
+
+							</div>
+						</div>
+						</div>
+						<!-- End Validation Card -->
 					</div>
 				</div>
 				<!-- Client Modal -->

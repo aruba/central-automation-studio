@@ -109,8 +109,10 @@ function getConfigforGroup() {
 
 		if (groupConfigs[wlanGroup].hasOwnProperty('error_code')) {
 			document.getElementById('wlanConfig').value = '';
+			document.getElementById('wlanVSG').value = '';
 		} else {
 			document.getElementById('wlanConfig').value = groupConfigs[wlanGroup].join('\n');
+			document.getElementById('wlanVSG').value = groupConfigs[wlanGroup].join('\n');
 		}
 		checkForAWConfig();
 		checkForAutoDRTConfig();
@@ -118,6 +120,152 @@ function getConfigforGroup() {
 	});
 	$('[data-toggle="tooltip"]').tooltip();
 }
+// Function for validation box
+// TODO: Break out GlobalFeatures and SSID features into separate functions.
+function getValidation() {
+    var wlanConfig = document.getElementById('wlanConfig');
+    var wlanVSG = document.getElementById('wlanVSG');
+    var configText = wlanConfig.value;
+    
+    // Define global features
+    const globalFeatures = [
+        'data-encryption-enable',
+        'application-monitoring',
+        'voip_qos_trusted',
+        'dpi',
+        'ntp-server',
+        'ipm',
+        'clock timezone none',
+        'virtual-controller-country',
+        'pmkcache-timeout'
+    ];  
+    // Define SSID-specific features
+    const ssidFeatures = [
+        'okc',
+        'dot11k',
+        'dmo-client-threshold 40',
+        'rf-band-6ghz',
+        'broadcast-filter arp',
+        'g-min-tx-rate',
+        'a-min-tx-rate',
+        'multicast-rate-optimization',
+        'dynamic-multicast-optimization',
+        'delete-pmkcache'
+    ];
+    
+    // Define feature-specific formatting rules. This is used to callout specific values, if needed.
+    const featureConfig = {
+        'virtual-controller-country': {
+            pattern: /virtual-controller-country\s+(\w+)/,
+            formatter: (line, match) => {
+                return `<span style="color: green;"><strong>${line}</strong> (Country Code Set)</span>`;
+            }
+        },
+        'clock timezone none': {
+            pattern: /clock timezone none/,
+            formatter: (line, match) => {
+                return `<span style="color: red; font-style: italic;">${line} (Timezone not set)</span>`;
+            }
+        }
+    };
+    
+    // Parse SSID profiles
+    const lines = configText.split('\n');
+    const ssids = {};
+    let currentSSID = '';
+    let currentConfig = [];
+    
+    lines.forEach(line => {
+        if (line.match(/^wlan ssid-profile\s+(.+)$/)) {
+            if (currentSSID) {
+                ssids[currentSSID] = currentConfig;
+            }
+            currentSSID = line.match(/^wlan ssid-profile\s+(.+)$/)[1];
+            currentConfig = [];
+        } else if (currentSSID) {
+            currentConfig.push(line);
+        }
+    });
+    if (currentSSID) {
+        ssids[currentSSID] = currentConfig;
+    }
+    
+    // Analyze SSIDs and global features
+    const formattedLines = [];
+    
+    // SSID analysis
+    Object.keys(ssids).forEach(ssid => {
+        formattedLines.push(`<br/><span style="color: cyan;">Analyzing SSID: ${ssid}</span>`);
+        formattedLines.push('<span style="color: white;">------------------------</span>');
+        
+        const configContent = ssids[ssid].join('\n');
+        
+        ssidFeatures.forEach(feature => {
+            if (feature === 'g-min-tx-rate') {
+                if (configContent.match(/g-min-tx-rate\s+(\d+)/)) {
+                    const actualValue = configContent.match(/g-min-tx-rate\s+(\d+)/)[1];
+                    if (actualValue === '12') {
+                        formattedLines.push(`<span style="color: green;">✔ g-min-tx-rate 12</span>`);
+                    } else {
+                        formattedLines.push(`<span style="color: red;">✘ g-min-tx-rate ${actualValue}</span>`);
+                    }
+                } else {
+                    formattedLines.push(`<span style="color: red;">✘ g-min-tx-rate not set</span>`);
+                }
+            } else if (feature === 'a-min-tx-rate') {
+                if (configContent.match(/a-min-tx-rate\s+(\d+)/)) {
+                    const actualValue = configContent.match(/a-min-tx-rate\s+(\d+)/)[1];
+                    if (actualValue === '24') {
+                        formattedLines.push(`<span style="color: green;">✔ a-min-tx-rate 24</span>`);
+                    } else {
+                        formattedLines.push(`<span style="color: red;">✘ a-min-tx-rate ${actualValue}</span>`);
+                    }
+                } else {
+                    formattedLines.push(`<span style="color: red;">✘ a-min-tx-rate not set</span>`);
+                }
+            } else if (feature === 'broadcast-filter arp') {
+                if (configContent.match(/broadcast-filter\s+(arp|all)/)) {
+                    const actualValue = configContent.match(/broadcast-filter\s+(arp|all)/)[1];
+                    formattedLines.push(`<span style="color: green;">✔ broadcast-filter ${actualValue}</span>`);
+                } else {
+                    formattedLines.push(`<span style="color: red;">✘ broadcast-filter</span> <span style="color: yellow;">(broadcast filter not set for SSID)</span>`);
+                }
+            } else if (configContent.includes(feature)) {
+                formattedLines.push(`<span style="color: green;">✔ ${feature}</span>`);
+            } else {
+                formattedLines.push(`<span style="color: red;">✘ ${feature}</span>`);
+            }
+        });
+    });
+    
+    // Global feature analysis
+    formattedLines.push(`<br/><span style="color: cyan;">Global Settings Check</span>`);
+    formattedLines.push('<span style="color: white;">------------------------</span>');
+    
+    globalFeatures.forEach(feature => {
+        if (configText.includes(feature)) {
+            if (featureConfig[feature]) {
+                const match = configText.match(featureConfig[feature].pattern);
+                if (match) {
+                    formattedLines.push(featureConfig[feature].formatter(configText.match(feature)[0], match));
+                } else {
+                    formattedLines.push(`<span style="color: green;">✔ ${feature}</span>`);
+                }
+            } else {
+                formattedLines.push(`<span style="color: green;">✔ ${feature}</span>`);
+            }
+        } else {
+            formattedLines.push(`<span style="color: red;">✘ ${feature}</span>`);
+        }
+    });
+    
+    // Join the lines and break them so they're formatted correctly.
+    const formattedContent = formattedLines.join('<br>');
+    wlanVSG.innerHTML = formattedContent || 'Validating. . .';
+    // Ensure non-editable. I have had issues in some browsers not setting this inline in the HTML.
+    wlanVSG.setAttribute('contenteditable', 'false');
+}
+
 
 function updateFullWLAN() {
 	errorCounter = 0;
