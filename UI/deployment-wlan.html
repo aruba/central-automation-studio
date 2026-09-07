@@ -31,12 +31,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
     <title>Central Automation Studio</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-	<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+	<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=260612" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -723,23 +723,23 @@ Aaron Scott (WiFi Downunder) 2021-2025
 			</div>
 			<!--  End Modal -->
 			<!-- Error Log Modal -->
-			<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="row">
-							<div class="col-md-12">
-								<div class="card-header">
+				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content log-modal">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
-
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-								<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-			<!--  End Modal -->
+				<!--  End Modal -->
 			<!-- Universal Search Modal -->
 			<div class="modal fade modal-mini modal-primary" id="UniversalModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -787,59 +787,123 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<h4 class="card-title">Add/Modify WLAN</h4>
 						</div>
 						<div class="card-body ">
-							<form class="form-horizontal">								
-								<div class="form-group">
+							<div class="row">
+								<div class="col-md-1"></div>
+								<div class="card col-md-5">
+									<div class="card-body">
 									<div class="row">
-										<label class="col-md-3">WLAN Name</label>
-										<div class="col-md-6">
-											<input type="text" placeholder="Role Name" class="form-control" id="wlanName">
-										</div>
-									</div>
-									</br>
-									<div class="row">
-										<label class="col-md-3">Configuration</label>
-										<div class="col-md-6">
-											<textarea type="text" placeholder="Configuration go here" class="form-control textarea cli-output" id="wlanConfig" rows="20"></textarea>
-										</div>
-									</div>
-									</br>
-									<div class="row">
-										<label class="col-md-3">Config Shortcuts</label>
-										<div class="col-md-6">
-											<div class="form-check">
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="txbfCheckbox" onclick="txbfConfig()" />
-													<span class="form-check-sign"></span>TxBF
-												</label>
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="mumimoCheckbox" onclick="mumimoConfig()" />
-													<span class="form-check-sign"></span>MU-MIMO
-												</label>
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="ofdmaCheckbox" onclick="ofdmaConfig()" />
-													<span class="form-check-sign"></span>OFDMA
-												</label>
+										<div class="col-12">
+											<div class="card-header">
+												<h4 class="card-title">WLAN Configuration</h4>
+												<p class="card-category">The configuration for the WLAN</p>
+												<p></p>
 											</div>
 										</div>
 									</div>
-									</br>
-									<div class="row">
-										<label class="col-md-3">Apply to Groups</label>
-										<div class="col-md-4">
-											<select multiple data-title="Select Groups" id="modalGroupSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" onchange="checkSelectionCount()">
-											</select>
+									
+									<form class="form-horizontal">								
+										<div class="form-group mt-2">
+											<div class="row">
+												<label class="col-md-3 label-wlan">WLAN Name</label>
+												<div class="col-md-6">
+													<input type="text" placeholder="Role Name" class="form-control" id="wlanName">
+												</div>
+											</div>
+											</br>
+											<div class="row">
+												<label class="col-md-3  label-wlan">Configuration</label>
+												<div class="col-md-8">
+													<textarea type="text" placeholder="Configuration go here" class="form-control textarea cli-output" id="wlanConfig" rows="20"></textarea>
+												</div>
+											</div>
+											</br>
+											<div class="row">
+												<label class="col-md-3  label-wlan">Config Shortcuts</label>
+												<div class="col-md-8">
+													<div class="form-check">
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="txbfCheckbox" onclick="txbfConfig()" />
+															<span class="form-check-sign"></span>TxBF
+														</label>
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="mumimoCheckbox" onclick="mumimoConfig()" />
+															<span class="form-check-sign"></span>MU-MIMO
+														</label>
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="ofdmaCheckbox" onclick="ofdmaConfig()" />
+															<span class="form-check-sign"></span>OFDMA
+														</label>
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="scoCheckbox" onclick="scoConfig()" />
+															<span class="form-check-sign"></span>Denylist-SCO
+														</label>
+													</div>
+												</div>
+											</div>
+											</br>
+											<div class="row">
+												<label class="col-md-3  label-wlan">Apply to Groups</label>
+												<div class="col-md-5">
+													<select multiple data-title="Select Groups" id="modalGroupSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" onchange="checkSelectionCount()">
+													</select>
+												</div>
+												<div class="col-md-3">
+													<div class="form-check">
+														<label class="form-check-label-all ps-3">
+															<input class="form-check-input label-wlan" type="checkbox" value="" id="selectAllGroups" onclick="selectAll()">
+															<span class="form-check-sign"></span>Select All Groups
+														</label>
+													</div>
+												</div>
+											</div>
 										</div>
-										<div class="col-md-2">
-											<div class="form-check">
-												<label class="form-check-label-all">
-													<input class="form-check-input" type="checkbox" value="" id="selectAllGroups" onclick="selectAll()">
-													<span class="form-check-sign"></span>Select All Groups
-												</label>
+									</form>
+									</div>
+								</div>
+								<div class="col-md-1"></div>
+								<!-- Validation Card -->
+								<div class="card col-md-4">
+									<div class="card-body">
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header">
+													<h4 class="card-title">Validated Solutions Guide Check</h4>
+													<p class="card-category">The configuration is validated against the VSG and best practices</p>
+													<p></p>
+												</div>
+											</div>
+										</div>
+										
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header">
+													<h4 class="card-title">Results</h4><a class="refresh-link" onclick="getValidation()"><i class="central-icon ca-reload"></i></a>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12">
+												<div id="wlanVSG" contenteditable="false" class="form-control vsg-textarea cli-output" role="textbox" aria-readonly="true"></div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header ">
+													<h4 class="card-title">Disclaimer:</h4>
+												</div>
+												<div class="card-body">
+													<div class="form-check pad-10">
+														<p class='disclaimer-text'>
+															The validated solutions check is <strong><u>not</u></strong> an indication of incorrect configuration. It is only a guide to call out potential misconfigurations that are identified by a ruleset pulled from VSGs (Validated Solutions Guides).
+														<p>
+													</div>
+												</div>
 											</div>
 										</div>
 									</div>
 								</div>
-							</form>
+								<!-- End Validation Card -->
+							</div>
 						</div>
 						<div class="card-footer ">
 							<div class="col-md-12">
@@ -1172,11 +1236,11 @@ Aaron Scott (WiFi Downunder) 2021-2025
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/version.js?v=250406"></script>
-<script src="assets/js/main.js?v=250406"></script>
+<script src="assets/js/version.js?v=260313"></script>
+<script src="assets/js/main.js?v=260612"></script>
 <script src="assets/js/proxy.js?v=240920"></script>
 <script src="assets/js/hydra.js?v=241203"></script>
-<script src="assets/js/wlan.js?v=241230"></script>
+<script src="assets/js/wlan.js?v=260303"></script>
 
 
 </html>

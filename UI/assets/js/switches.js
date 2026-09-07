@@ -24,14 +24,15 @@ function loadCurrentPageSwitch() {
 	fullList = getSwitches();
 	stacksPromise = new $.Deferred();
 	stackNotification = showLongNotification('ca-switch-stack', 'Getting Switch Stacks...', 'bottom', 'center', 'info');
+	stacks = [];
 	$.when(getStacks(0)).then(function() {
 		if (stackNotification) {
 			stackNotification.update({ message: 'Downloaded Switch Stack Information', type: 'success' });
 			setTimeout(stackNotification.close, 1000);
 		}
-		updateSwitchGraphs();
 		getDevices();
 		getTopSwitches();
+		updateSwitchGraphs();
 	});
 }
 
@@ -182,7 +183,7 @@ function updateSwitchGraphs() {
 			}
 			
 			var fanState = this.fan_speed;
-			if (fanState != 'Ok') {
+			if (fanState !== 'Ok') {
 				highFanCount++;
 				highFan.push(this);
 			}
@@ -244,6 +245,7 @@ function updateSwitchGraphs() {
 		$.each(stacks, function() {
 			var stackDetail = this;
 			stackSwitches = stackInfo[this.id];
+			
 			$.each(stackSwitches, function () {
 				if (this.status === 'Down') downMember++;
 			});
@@ -850,45 +852,71 @@ function showStacks() {
 	.clear();
 	
 	var table = $('#stacks-table').DataTable();
+	
 	// Process Stack Health...
-	
-	
 	$.each(stacks, function() {
-		var downMember = 0;
-		var upMember = 0;
+		var downMembers = [];
+		var upMembers = [];
+		var badFan = [];
+		var goodFan = [];
 		var site;
 		var group; 
 		
 		stackSwitches = stackInfo[this.id];
 		
 		var commander;
+		var commanderSerial;
+		var commanderName = 'Unknown';
 		$.each(stackSwitches, function () {
-			if (this.status === 'Down') downMember++;
-			else upMember++;
+			if (this.status === 'Down') {
+				downMembers.push(this.serial);
+			} else { 
+				upMembers.push(this.serial);
+			}
+			
+			if (this.fan_speed === 'Ok') {
+				goodFan.push(this.serial);
+			} else { 
+				badFan.push(this.serial);
+			}
 			group = this.group_name
 			if (site && site !== this.site) site = 'Multiple Sites';
 			else site = this.site;
 			
-			if (this.switch_role == 2) commander = this.serial
+			if (this.switch_role == 2) {
+				commanderSerial = this.serial;
+				commanderName = this.name;
+			}
 		});
 		
+		if (commanderSerial) commander = findDeviceInMonitoring(commanderSerial);
+		
 		var status = '<i class="fa-solid fa-circle text-danger"></i>';
-		if (this['status'] == 'Up' && downMember == 0) {
-			status = '<i class="fa-solid fa-circle text-success"></i>';
-		} else if (this['status'] == 'Up' && downMember != 0) {
-			status = '<i class="fa-solid fa-circle text-warning"></i>';
+		if (this['status'] == 'Up' && downMembers.length == 0) {
+			if (commander) {
+				var memoryUsage = (((commander['mem_total'] - commander['mem_free']) / commander['mem_total']) * 100).toFixed(0).toString();
+				status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="Commander CPU Usage: ' + commander['cpu_utilization'] + '%<br>Commander Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+			} else status = '<i class="fa-solid fa-circle text-success"></i>';
+		} else if (this['status'] == 'Up' && downMembers.length != 0) {
+			if (commander) {
+				var memoryUsage = (((commander['mem_total'] - commander['mem_free']) / commander['mem_total']) * 100).toFixed(0).toString();
+				status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="Commander CPU Usage: ' + commander['cpu_utilization'] + '%<br>Commander Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-warning"></i></span>';
+			} else status = '<i class="fa-solid fa-circle text-warning"></i>';
 		}
 		
-		
 		var memberStatus = '';
-		if (upMember > 0) memberStatus += '<i class="fa-solid fa-arrow-up fa-fw text-success"></i><span class="text-success me-2"><strong> ' + upMember + ' </strong></span>';
-		if (downMember > 0) memberStatus += '<i class="fa-solid fa-arrow-down fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + downMember + ' </strong></span>';
+		if (upMembers.length > 0) memberStatus += '<span data-toggle="tooltip" data-placement="right" data-html="true" title="Up Switches: ' + upMembers.join(', ') +'"><i class="fa-solid fa-arrow-up fa-fw text-success"></i><span class="text-success me-2"><strong> ' + upMembers.length + ' </strong></span></span>';
+		if (downMembers.length > 0) memberStatus += '<span data-toggle="tooltip" data-placement="right" data-html="true" title="Down Switches: ' + downMembers.join(', ') +'"><i class="fa-solid fa-arrow-down fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + downMembers.length + ' </strong></span></span>';
+		
+		var fanStatus = '';
+		if (goodFan.length > 0) fanStatus += '<span data-toggle="tooltip" data-placement="right" data-html="true" title="No Fan Issues: ' + goodFan.join(', ') +'"><i class="fa-solid fa-fan fa-fw text-success"></i><span class="text-success me-2"><strong> ' + goodFan.length + ' </strong></span></span>';
+		if (badFan.length > 0) fanStatus += '<span data-toggle="tooltip" data-placement="right" data-html="true" title="Fan Issues: ' + badFan.join(', ') +'"><i class="fa-solid fa-fan fa-fw text-danger"></i><span class="text-danger me-2"><strong> ' + badFan.length + ' </strong></span></span>';
 
 		var name = encodeURI(this['name']);
 		var apiURL = localStorage.getItem('base_url');
-		var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + commander + '/'+ this.id +'?cssn=' + commander + '&cdcn=' + name + '&csstn='+ this.id +'&nc=device';
+		var centralURL = centralURLs[apiURL] + '/frontend/#/SWITCHDETAILS/' + commanderSerial + '/'+ this.id +'?cssn=' + commanderSerial + '&cdcn=' + name + '&csstn='+ this.id +'&nc=device';
 
-		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a>', status, this.status, this.split_policy, this.topology, memberStatus, site, group]);
+		table.row.add(['<a href="' + centralURL + '" target="_blank"><strong>' + this['name'] + '</strong></a>', status, this.status, this.split_policy, this.topology, commanderSerial, memberStatus, fanStatus, site, group]);
 	});
 
 	$('#stacks-table')
@@ -898,4 +926,5 @@ function showStacks() {
 		
 		
 	$('#StackModalLink').trigger('click');
+	$('[data-toggle="tooltip"]').tooltip();
 }

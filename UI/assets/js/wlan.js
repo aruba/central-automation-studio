@@ -485,6 +485,12 @@ function getPSKForWLAN(wlanGroup, wlan) {
 				return;
 			}
 		}
+		if (response.hasOwnProperty('description')) {
+			if (response.description.includes('WLAN Northbound API is not enabled')) {
+				console.log('Please ask your SE to allowlist the WLAN Northbound API');
+				showNotification('ca-api', 'Contact your Aruba SE to allowlist the WLAN Northbound API for your Central account', 'top', 'center', 'warning');
+			}
+		}
 		if (response.wlan && response.wlan.wpa_passphrase) {
 			var passphrase = response.wlan.wpa_passphrase;
 			
@@ -496,12 +502,11 @@ function getPSKForWLAN(wlanGroup, wlan) {
 					for (i = 0; i < config.length; i++) {
 						if (config[i].includes('wpa-passphrase')) {
 							this.config[i] = 'wpa-passphrase ' + passphrase;
-							pskCounter--;
-							if (pskCounter <= 0) processForDuplicateWLANs();
 						}
 					}
 				}
 			});
+			processForDuplicateWLANs();
 		}
 	});
 }
@@ -716,6 +721,8 @@ function loadWLANUI(wlanIndex) {
 	checkForTxBFConfig();
 	checkForMUMIMOConfig();
 	checkForOFDMAConfig();
+	checkForSCOConfig();
+	getValidation();
 	
 	$('#WLANModalLink').trigger('click');
 }
@@ -1294,10 +1301,17 @@ function loadDevicesTable(checked) {
 		if (device['status'] == 'Up') {
 			status = '<i class="fa-solid fa-circle text-success"></i>';
 		}
+		
+		// Build Uptime String
+		var uptimeString = '-';
+		if (device['uptime'] > 0) {
+			var uptime = moment.duration(device['uptime'] * 1000);
+			uptimeString = uptime.humanize();
+		}
 
 		// Add AP to table
 		var table = $('#device-table').DataTable();
-		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['model'], device['group_name'], device['site'], device['labels'].join(', '), device['firmware_version']]);
+		table.row.add([checkBoxString, '<strong>' + device['name'] + '</strong>', status, device['status'] ? device['status'] : 'down', device['serial'], device['macaddr'], device['model'], device['group_name'], device['site'], device['labels'].join(', '), device['firmware_version'], uptimeString]);
 	}
 	$('#device-table')
 		.DataTable()
@@ -1317,6 +1331,7 @@ function assignSSIDs() {
 	var selectedSSIDs = [...select.selectedOptions].map(option => option.value.replace(/"/g, ''));
 	selectedSSIDstring = selectedSSIDs.join(',');
 	if (document.getElementById('selectAllSSIDs').checked) selectedSSIDstring = '*';
+	else if (selectedSSIDstring == "") selectedSSIDstring = '_#EMPTY#_';
 
 	// Get selected APs
 	for (const [key, value] of Object.entries(selectedDevices)) {
@@ -1397,4 +1412,161 @@ function ofdmaConfig() {
 	}
 	document.getElementById('wlanConfig').value = newConfig;
 	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
+}
+
+function checkForSCOConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (newConfig.includes('denylist-sco')) {
+		document.getElementById('scoCheckbox').checked = true;
+	} else {
+		document.getElementById('scoCheckbox').checked = false;
+	}
+}
+
+function scoConfig() {
+	var newConfig = document.getElementById('wlanConfig').value;
+	if (document.getElementById('scoCheckbox').checked) {
+		if (!newConfig.includes('denylist-sco')) newConfig += '\ndenylist-sco';
+	} else {
+		if (newConfig.includes('denylist-sco')) newConfig = newConfig.replace('\ndenylist-sco', '');
+	}
+	document.getElementById('wlanConfig').value = newConfig;
+	document.getElementById('wlanConfig').scrollTop = document.getElementById('wlanConfig').scrollHeight;
+}
+
+function getValidation() {
+	var ssid = document.getElementById('wlanName').value;
+	var wlanConfig = document.getElementById('wlanConfig');
+	var wlanVSG = document.getElementById('wlanVSG');
+	var configText = wlanConfig.value;
+	if (configText === '') {
+		showNotification('ca-folder-settings', 'Please add WLAN configuration to begin validation', 'bottom', 'center', 'warning');
+		return;
+	}
+	
+	// Define SSID-specific features
+	const ssidFeatures = [
+		'rf-band-6ghz',
+		'broadcast-filter arp',
+		'broadcast-filter-ipv6 unicast-router-advertisements',
+		'g-min-tx-rate',
+		'a-min-tx-rate',
+		'multicast-rate-optimization',
+		'dynamic-multicast-optimization',	
+		'okc',
+		'dot11k',
+		'dot11r',
+		'delete-pmkcache'
+	];
+	
+	// check Group type 8 or 10?
+	var select = document.getElementById('modalGroupSelector');
+	var selectedGroups = [...select.selectedOptions].map(option => option.value);
+	var groupInfo = getGroupForName(selectedGroups[0]);
+	var groupVersion = 8;
+	if (groupInfo.group_properties && groupInfo.group_properties.AOSVersion === "AOS_10X") {
+		groupVersion = 10;
+	}
+	
+
+	
+	// Analyze SSIDs and global features
+	const formattedLines = [];
+	
+	// SSID analysis
+	if (formattedLines.length == 0) formattedLines.push(`<span style="color: #888888;">Analyzing SSID:</span><span style="color: #888888;font-weight:bold;"> ${ssid}</span>`);
+	else formattedLines.push(`<br/><br/><span style="color: #888888;">Analyzing SSID:</span><span style="color: #888888;font-weight:bold;"> ${ssid}</span>`);
+	formattedLines.push('<span style="color: #888888;">------------------------------------------------</span>');
+	
+	const configContent = configText;
+	
+	ssidFeatures.forEach(feature => {
+		if (feature === 'rf-band-6ghz') {
+			if ((configContent.match(/rf-band-6ghz\s+/)) && ((configContent.match(/wpa3/)) || (configContent.match(/enhanced-open/)))) {
+				const actualValue = configContent.match(/opmode\s+(.+)\s+/)[1];
+				formattedLines.push(`<span style="color: #87CB16;">✔ rf-band-6ghz</span> <span style="color: #FFA534; font-style: italic;">(using ${actualValue})</span>`);
+			} else if (configContent.match(/rf-band-6ghz\s+/)) {
+				formattedLines.push(`<span style="color: #FFA534;"><strong>!</strong> rf-band-6ghz</span> <span style="color: #FFA534; font-style: italic;">(incorrect opmode for 6GHz support)</span>`);
+			} else {
+				formattedLines.push(`<span style="color: #FB404B;">✘ rf-band-6ghz</span>`);
+			}
+		} else if (feature === 'g-min-tx-rate') {
+			if (configContent.match(/g-min-tx-rate\s+(\d+)/)) {
+				const actualValue = configContent.match(/g-min-tx-rate\s+(\d+)/)[1];
+				if (parseInt(actualValue) >= 12) {
+					formattedLines.push(`<span style="color: #87CB16;">✔ g-min-tx-rate ${actualValue}</span>`);
+				} else {
+					formattedLines.push(`<span style="color: #FB404B;">✘ g-min-tx-rate ${actualValue}</span>`);
+				}
+			} else {
+				formattedLines.push(`<span style="color: #FB404B;">✘ g-min-tx-rate</span> <span style="color: #FFA534; font-style: italic;">(using default data rates)</span>`);
+			}
+		} else if (feature === 'a-min-tx-rate') {
+			if (configContent.match(/a-min-tx-rate\s+(\d+)/)) {
+				const actualValue = configContent.match(/a-min-tx-rate\s+(\d+)/)[1];
+				if (parseInt(actualValue) >= 12) {
+					formattedLines.push(`<span style="color: #87CB16;">✔ a-min-tx-rate ${actualValue}</span>`);
+				} else {
+					formattedLines.push(`<span style="color: #FB404B;">✘ a-min-tx-rate ${actualValue}</span>`);
+				}
+			} else {
+				formattedLines.push(`<span style="color: #FB404B;">✘ a-min-tx-rate</span> <span style="color: #FFA534; font-style: italic;">(using default data rates)</span>`);
+			}
+		} else if (feature === 'broadcast-filter arp') {
+			if (configContent.match(/broadcast-filter\s+(arp|all)/)) {
+				const actualValue = configContent.match(/broadcast-filter\s+(arp|all)/)[1];
+				formattedLines.push(`<span style="color: #87CB16;">✔ broadcast-filter ${actualValue}</span>`);
+			} else {
+				formattedLines.push(`<span style="color: #FB404B;">✘ broadcast-filter</span> <span style="color: #FFA534; font-style: italic;">(broadcast filter is disabled)</span>`);
+			}
+		} else if (feature === 'delete-pmkcache') {
+			if (configContent.match(/delete-pmkcache\s+/)) {
+				formattedLines.push(`<span style="color: #FB404B;">✔ delete-pmkcache</span> <span style="color: #FFA534; font-style: italic;">(PMK Caching is disabled)</span>`);
+			} else {
+				formattedLines.push(`<span style="color: #87CB16;">✘ delete-pmkcache</span> <span style="color: #FFA534; font-style: italic;">(PMK Caching is enabled)</span>`);
+			}
+		} else if (feature === 'dynamic-multicast-optimization') {
+			if (configContent.match(/dynamic-multicast-optimization\s+/)) {
+				formattedLines.push(`<span style="color: #87CB16;">✔ ${feature}</span>`);
+				
+				// Additionally check the dmo-channel-utilization-threshold
+				if (configContent.match(/dmo-channel-utilization-threshold\s+(\d+)/)) {
+					const actualValue = configContent.match(/dmo-channel-utilization-threshold\s+(\d+)/)[1];
+					if (parseInt(actualValue) == 90) {
+						formattedLines.push(`<span style="color: #87CB16;">   ✔ dmo-channel-utilization-threshold ${actualValue}</span>`);
+					} else {
+						formattedLines.push(`<span style="color: #FB404B;">   ✘ dmo-channel-utilization-threshold ${actualValue}</span>`);
+					}
+				} else {
+					formattedLines.push(`<span style="color: #FB404B;">   ✘ dmo-channel-utilization-threshold</span> <span style="color: #FFA534; font-style: italic;">(using default threshold - 90%)</span>`);
+				}
+				
+				// Additionally check the dmo-client threshold for 10.x
+				if (groupVersion == 10) {
+					if (configContent.match(/dmo-client-threshold\s+(\d+)/)) {
+						const actualValue = configContent.match(/dmo-client-threshold\s+(\d+)/)[1];
+						if (parseInt(actualValue) == 40) {
+							formattedLines.push(`<span style="color: #87CB16;">   ✔ dmo-client-threshold ${actualValue}</span>`);
+						} else {
+							formattedLines.push(`<span style="color: #FB404B;">   ✘ dmo-client-threshold ${actualValue}</span>`);
+						}
+					} else {
+						formattedLines.push(`<span style="color: #FB404B;">   ✘ dmo-client-threshold</span> <span style="color: #FFA534; font-style: italic;">(using default threshold - 6 Clients)</span>`);
+					}
+				}
+			} else {
+				formattedLines.push(`<span style="color: #FB404B;">✘ ${feature}</span>`);
+			}
+		} else if (configContent.includes(feature)) {
+			formattedLines.push(`<span style="color: #87CB16;">✔ ${feature}</span>`);
+		} else {
+			formattedLines.push(`<span style="color: #FB404B;">✘ ${feature}</span>`);
+		}
+	});
+	
+	// Join the lines and break them so they're formatted correctly.
+	const formattedContent = formattedLines.join('<br>');
+	wlanVSG.innerHTML = formattedContent || 'Validating. . .';
+	// Ensure non-editable. I have had issues in some browsers not setting this inline in the HTML.
+	wlanVSG.setAttribute('contenteditable', 'false');
 }

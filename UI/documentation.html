@@ -29,8 +29,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
     <title>Central Automation Studio: Documentation</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-	<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+	<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
@@ -38,7 +38,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
     <link href="assets/css/demo.css" rel="stylesheet" />
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link href="assets/css/documentation.css" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=260612" rel="stylesheet" />
     </head>
 
     <body class="documentation">
@@ -70,6 +70,10 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</a>
 								<a href="settings.html" class="dropdown-item">
 									<i class="nc-icon nc-settings-gear-64"></i> Settings
+								</a>
+								<i><hr class="menu-divider"></i>
+								<a href="https://www.paypal.com/donate/?hosted_button_id=36C8EVZGZN48J" class="dropdown-item">
+									<i class="central-icon ca-money-coins"></i> Donate
 								</a>
 							</div>
 						</li>
@@ -177,6 +181,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<a href="#kms-row">Key Management Service</a>
 									</li>
 									<li>
+										<a href="#airgroup-row">AirGroup</a>
+									</li>
+									<li>
 										<a href="#inventory-row">Device Inventory</a>
 									</li>
 									<li>
@@ -217,6 +224,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
                                     <li>
                                         <a href="#further-row">Further Information</a>
                                     </li>
+									<li>
+										<a href="#donate-row">Donations</a>
+									</li>
                                 </ul>
                             </div>
                         </div>
@@ -236,7 +246,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									In order for you to use this WebUI, you will need to obtain some API information from your Aruba Central account.
 								</p>
 								<p>
-									Follow the steps in the <a href="https://www.arubanetworks.com/techdocs/central/latest/content/nms/api/creating-app.htm" target="_blank">Aruba Central documentation</a> on creating an API application and token using the "Offline Token Mechanism".
+									Follow the steps in the <a href="https://arubanetworking.hpe.com/techdocs/central/2.5.8/content/nms/api/creating-app.htm#Creating" target="_blank">Aruba Central documentation</a> on creating an API application and token using the "Offline Token Mechanism".
 								</p>
 								<p>
 									Obtain the <i>Customer ID</i> from the Account menu in the top right of the Central UI. The Customer ID is required by some APIs (e.g. ClientMatch).
@@ -258,9 +268,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									The WebUI uses Javascript to make API calls to the API Proxy Server. The API Proxy Server converts those Javascript requests into Python API calls and makes the call to Aruba Central, returning any data back to the WebUI for processing in Javascript.
 								</p>
 								<p>
-									The API Proxy Server is contained within this deployment (This is different to the publicly hosted version of Central Automation Studio)
-								</p>
-								<p>
+									Multiple API Proxy Servers exist for speed and redundancy. The API Proxy Server used depends on the Central instance being communicated with:
+									<ul>
+										<li> APAC-based Central Cluster = https://api.wifidownunder.com (Hosted in Sydney - Azure Australia East)</li>
+										<li> 2x US-based Central Clusters = https://api-usw.wifidownunder.com, https://api-usw-2.wifidownunder.com (Hosted in Washington - Azure US West 2)</li>
+										<li> EU-based Central Cluster = https://api-euw.wifidownunder.com (Hosted in Amsterdam - Azure Europe West)</li>
+									</ul>
 									API Proxy Server Accessibility is available in the footer of each page
 									<div class="img-container">
 										<img src="assets/img/proxy-status.png" alt="...">
@@ -487,13 +500,15 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<li> RF PROFILE</li>
 										<li> RF ZONE</li>
 										<li> INSTALLATION TYPE</li>
+										<li> COUNTRY CODE</li>
 										<li> RADIO 0 MODE</li>
 										<li> RADIO 1 MODE</li>
 										<li> RADIO 2 MODE</li>
 										<li> DUAL 5GHZ MODE</li>
 										<li> SPLIT 5GHZ MODE</li>
-										<li> FLEX DUAL BAND</li>
+										<li> FLEX RADIO MODE</li>
 										<li> ANTENNA WIDTH</li>
+										<li> ANTENNA DIRECTION</li>
 										<li> ALTITUDE</li>
 										<li> IP ADDRESS</li>
 										<li> SUBNET MASK</li>
@@ -503,6 +518,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<li> TIMEZONE</li>
 										<li> AP1X USERNAME</li>
 										<li> AP1X PASSWORD</li>
+										<li> 2.4GHZ CHANNEL</li>
+										<li> 2.4GHZ POWER</li>
+										<li> 5GHZ CHANNEL</li>
+										<li> 5GHZ POWER</li>
+										<li> 6GHZ CHANNEL</li>
+										<li> 6GHZ POWER</li>
 									</ul>
 									Behaviour Notes:
 									<ul>
@@ -518,16 +539,19 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<li>If the RF PROFILE or RF ZONE is missing or is equal to "-", the device will be skipped when assigning an RF Profile to an AOS10 Access Point</li>
 										<li>If the RF PROFILE or RF ZONE is missing or is equal to "-", the device will be skipped when assigning an RF ZONE to an 8.x Instant Access Point</li>
 										<li>If the INSTALLATION TYPE is missing or is equal to "-", the device will be skipped when configuring the installation type of an Access Point</li>
+										<li>If the COUNTRY CODE is missing or is equal to "-", the device will be skipped when configuring the country of an Access Point</li>
 										<li>If any of the RADIO 0/1/2 MODE values are missing or is equal to "-", the device will be skipped when assigning a radio mode for that particular radio to an Access Point. RADIO 2 MODE is only applied to supported AP Models (AP-555, AP-635, AP-655)</li>
 										<li>If the DUAL 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Dual 5GHz mode for that Access Point. <i>Config is only applied to supported AP Models (AP-340 Series)</i></li>
 										<li>If the SPLIT 5GHZ MODE value is missing or is equal to "-", the device will be skipped when assigning Tri-Radio (Split 5GHz) mode for that Access Point. <i>Config is only applied to supported AP Models (AP-555)</i></li>
-										<li>If the FLEX DUAL BAND value is missing or is equal to "-", the device will be skipped when assigning the flexible dual band mode for that Access Point. <i>Config is only applied to supported AP Models (AP-615, AP-605R)</i></li>
+										<li>If the FLEX RADIO MODE value is missing or is equal to "-", the device will be skipped when assigning the flexible radio band mode for that Access Point. <i>Config is only applied to supported AP Models (AP-615, AP-605R, AP-735, AP-755, AP-760 Series)</i></li>
 										<li>If the ANTENNA WIDTH value is missing or is equal to "-", the device will be skipped when assigning the dynamic antenna mode for that Access Point. <i>Config is only applied to supported AP Models (AP-679)</i></li>
+										<li>If the ANTENNA DIRECTION value is missing or is equal to "-", the device will be skipped when assigning the antenna direction mode for that Access Point. <i>Config is only applied to supported AP Models (AP-763/AP-765)</i></li>
 										<li>If the ALTITUDE value is missing or is equal to "-", the device will be skipped when assigning the altitude (in meters) for that Access Point</li>
 										<li>Static IP Addresses will only be <strong>set</strong> if all of the required values are provided (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER). If any of the Static IP values (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER) are missing, the device will be skipped when assigning a static IP address for that Access Point</li>
 										<li>Static IP Address information will <strong>updated</strong> (if the Access Point is already configured for a Static IP) using any supplied fields (IP ADDRESS, SUBNET MASK, DEFAULT GATEWAY, DNS SERVER, DOMAIN NAME). Any fields not supplied will be left as previously configured</li>
 										<li>If the TIMEZONE is missing, the device will be skipped when configuring the Timezone of a Gateway</li>
 										<li>If the AP1X USERNAME or AP1X PASSWORD is missing, the device will be skipped when configuring the Timezone of a Gateway</li>
+										<li>If the 2.4GHZ CHANNEL, 2.4GHZ POWER, 5GHZ CHANNEL, 5GHZ POWER, 6HZ CHANNEL, 6GHZ POWER are all blank, the device will be skipped when configuring the static channel and power</li>
 										<li><b><i>Skipped devices will be listed in the Log for the task/automation</i></b></li>
 									</ul>
 									</br>
@@ -678,15 +702,49 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<li>Disabled</li>
 									</ul>
 								</p>
-								<h4>Set Flexible Dual Band Mode</h4>
+								<h4>Set Flexible Radio Mode</h4>
 								<p>
-									Uses the SERIAL and FLEX DUAL BAND columns in the CSV file to set the mode on the corresponding radio on Access Points in Aruba Central.</br>
-									If the FLEX DUAL BAND is missing, or is equal to "-" for a radio on an AP (or all APs) in the CSV, the AP will not have the mode set.</br>
-									The supported values for the FLEX DUAL BAND are: 
+									Uses the SERIAL and FLEX RADIO MODE columns in the CSV file to set the mode on the corresponding radio on Access Points in Aruba Central.</br>
+									If the FLEX RADIO MODE is missing, or is equal to "-" for a radio on an AP (or all APs) in the CSV, the AP will not have the mode set.</br>
+								</p>
+								<p>
+									The supported values for the FLEX RADIO MODE are:<br  />
+									For AP-605(R/H) and AP-615:
 									<ul>
+										<li>auto</li>
 										<li>5GHz-and-2.4GHz</li>
 										<li>5GHz-and-6GHz</li>
 										<li>2.4GHz-and-6GHz</li>
+									</ul>
+									For AP-735:
+									<ul>
+										<li>auto</li>
+										<li>5GHz-2.4GHz-6GHz</li>
+										<li>5GHzHB-5GHzLB-6GHz</li>
+										<li>5GHz-6GHzHB-6GHzLB</li>
+									</ul>
+									For AP-755:
+									<ul>
+										<li>auto</li>
+										<li>5GHz-2.4GHz-6GHz</li>
+										<li>5GHzHB-5GHzLB-6GHz</li>
+										<li>6GHzLB-5GHz-6GHzHB</li>
+									</ul>
+									For AP-763 and AP-765:
+									<ul>
+										<li>auto</li>
+										<li>5GHz-and-2.4GHz</li>
+										<li>6GHz-and-5GHz</li>
+										<li>6GHz-and-2.4GHz</li>
+									</ul>
+									For AP-764:
+									<ul>
+										<li>auto</li>
+										<li>5GHz-and-2.4GHz</li>
+										<li>6GHz-and-5GHz</li>
+										<li>6GHz-and-2.4GHz</li>
+										<li>Single-5GHz</li>
+										<li>Single-6GHz</li>
 									</ul>
 								</p>
 								<h4>Enable 2.4GHz radios</h4>
@@ -696,6 +754,20 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<h4>Disable 2.4GHz radios</h4>
 								<p>
 									Uses the SERIAL column in the CSV file to disable the 2.4GHz radio (if configured) on the corresponding Access Points in Aruba Central.
+								</p>
+								<h4>Set Radio Channel and Power</h4>
+								<p>
+									Uses the SERIAL, RADIO CONFIG columns (2.4GHZ CHANNEL, 2.4GHZ POWER, 5GHZ CHANNEL, 5GHZ POWER, 6GHZ CHANNEL, 6GHZ POWER) to set the corresponding radio on the Access Points in Aruba Central.<br />
+									If the any piece of the RADIO CONFIG is missing for a radio on an AP in the CSV, then existing config is retained<br />
+									For example, if 2.4GHZ CHANNEL is configured but 2.4GHZ POWER is empty, then the 2.4GHz radio on the AP will be configured for the selected channel but will be configured for the existing Tx power.<br />
+									CSV Value Notes:
+									<ul>
+										<li>If "Automatic" channel is desired, enter the value of "0" or "Automatic" or "Auto" in the CSV.</li>
+										<li>If "Automatic" power is desired, enter the value of "-127" or "Automatic" or "Auto" in the CSV.</li>
+										<li>This task is flex-radio aware, it will configure the correct radio ID based on the selected flex-radio mode of the AP</li>
+										<li>This task is <strong>not dual-band aware</strong>, do not use this task if you have AP-345 in dual 5GHz mode, or AP-555 in spilt 5GHz mode</li>
+									</ul>
+									
 								</p>
 								<h4>Set Antenna Gain</h4>
 								<p>
@@ -712,6 +784,18 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<li>Wide</li>
 										<li>Narrow</li>
 									</ul>
+								</p>
+								<h4>Set Antenna Direction Mode (AP-763/AP-765)</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified AP-763/AP-765 Antenna Direction mode (from the ANTENNA DIRECTION column). The valid values are (case-insensitive): 
+									<ul>
+										<li>Omni</li>
+										<li>Directional</li>
+									</ul>
+								</p>
+								<h4>Set AP Contry Codes</h4>
+								<p>
+									Uses the SERIAL column in the CSV file to configure the specified country code (from the COUNTRY CODE column).
 								</p>
 								<h4>Set AP Altitude</h4>
 								<p>
@@ -852,11 +936,15 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</p>
 								<h4>Enable Split-5GHz Mode (AP-555)</h4>
 								<p>
-									This task configures each AP-555 on the site to be enabled for <a href='https://www.arubanetworks.com/techdocs/central/latest/content/nms/access-points/mrt/ap-tri_radio.htm?Highlight=Split%205GHz%20Mode' target='_blank'>Tri-Radio Mode</a>.
+									This task configures each AP-555 on the site to be enabled for <a href='https://arubanetworking.hpe.com/techdocs/central/2.5.8/content/nms/access-points/mrt/ap-tri_radio-view.htm' target='_blank'>Tri-Radio Mode</a>.
 								</p>
 								<h4>Enable Dual-5GHz Mode (AP-340 Series)</h4>
 								<p>
-									This task configures each AP-340 Series AP on the site to be enabled for <a href='https://www.arubanetworks.com/techdocs/central/latest/content/aos10x/monitoring/dual-5g.htm?Highlight=dual%205ghz' target='_blank'>Dual 5GHz Mode</a>.
+									This task configures each AP-340 Series AP on the site to be enabled for <a href='https://arubanetworking.hpe.com/techdocs/central/2.5.8/content/nms/access-points/cfg/ap-settings/conf_ap_dual.htm' target='_blank'>Dual 5GHz Mode</a>.
+								</p>
+								<h4>Set Flexible Radio Mode</h4>
+								<p>
+									This task configures APs of the selected model for the selected <a href='https://arubanetworking.hpe.com/techdocs/central/2.5.8/content/nms/access-points/cfg/ap-settings/conf_ap_params.htm' target='_blank'>Flexible Radio mode </a>.
 								</p>
 								<h4>Enable 2.4GHz Radios</h4>
 								<p>
@@ -866,6 +954,10 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<p>
 									This task disables the 2.4GHz radios on all APs in the site (that are configured with a 2.4GHz radio).
 								</p>
+								<h4>Set 2.4GHz Radio Mode</h4>
+								<p>
+									This task configures the mode of the 2.4GHz radio in an AP (that are configured with a 2.4GHz radio). Choices: Access / Spectrum / Monitor.
+								</p>
 								<h4>Set Antenna Gain</h4>
 								<p>
 									<div class="img-container">
@@ -873,6 +965,10 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<p>Antenna Gain configuration</p>
 									</div>
 									This task sets the antenna gain either using the Aruba antenna dropdown selector or manual entry of the antenna gain values, along with the model of the AP for which you want to apply the gain. Additionally, it provides a single click to reboot all configured APs after the antenna gain configuration has synced to each AP.
+								</p>
+								<h4>Set AP Altitude</h4>
+								<p>
+									This task sets the altitude of the 6xx and 7xx APs. Required for using 6GHz with external antennas or outdoors (in some countries)
 								</p>
 								<h4>Reboot Devices</h4>
 								<p>
@@ -883,6 +979,10 @@ Aaron Scott (WiFi Downunder) 2021-2025
                                 	The automated tasks are the individual tasks linked together. Refer to the descriptions above for each individual task.
                                 </p>
                                 <h2>Tests</h2>
+								<h4>AP Ethernet Information</h4>
+								<p>
+									This test displays the ethernet information of the APs in the selected Site and provides a easy way to display APs operating at &lt;1Gbps.
+								</p>
                                 <h4>Physical Layer Information</h4>
                                 <p>
 									<div class="img-container">
@@ -1037,8 +1137,11 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</div>
                                 <legend></legend>
                                 <p>
-                                	The <a href="deployment-group.html">AP Group</a> allows for the modification of the wireless configuration for a selected group or Virtual Controller. This allows for entry/modification of configuration that doesn't yet have a UI knob in Central.
+                                	The <a href="deployment-group.html">AP Group</a> page allows for the modification of the wireless configuration for a selected group or Virtual Controller. This allows for entry/modification of configuration that doesn't yet have a UI knob in Central.
                                 </p>
+								<p>
+									The <a href="deployment-group.html">AP Group</a> page also displays a pane that lists out possible misconfigurations for SSIDs and AP global configurations. This does not indicate an incorrect configuration! It uses the <a href="https://arubanetworking.hpe.com/techdocs/VSG/docs/020-campus-deploy/esp-campus-deploy-110-configuring-wireless-access/">Validated Solutions Guides</a> to highlight differences from 'best practices'.
+								</p>
                                 <p>
                                 	<i><strong>Note:</strong> Background updating of the monitoring data is disabled on this page to ensure group and virtual controller lists are not modified whilst editing the group configuration. Use the refresh button in the top right to refresh the data in the page.</i>
                                 </p>
@@ -1311,6 +1414,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									The <a href="deployment-bulk-ap.html">Bulk AP</a> page provides the ability to easily configure multiple APs at a time. The following configuration items are configurable:
 									<ul>
 										<li>RF Profile <button class="btn btn-round btn-sm btn-outline btn-default">for AOS10 APs</button></li>
+										<li>2.4GHz radios</li>
 										<li>Antenna Gain</li>
 										<li>PoE Optimization Config</li>
 										<li>AP1X PEAP Credentials</li>
@@ -1470,6 +1574,27 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									</ul>
 								</p>
 							</div>
+							<div class="tim-row" id="airgroup-row">
+								<h2 class="text-center">AirGroup</h2>
+								<div class="icon-massive text-center icon-warning">
+									<i class="central-icon ca-mirror-display text-warning" id="ag_icon"></i>
+								</div>
+								<legend></legend>
+								<p>					
+									The <a href="deployment-airgroup.html">AirGroup</a> page for AOS10 Deployments provides the ability to configure AirGroup Servers in bulk. The page supports:
+									<ul>
+										<li> CSV Upload of configuration per AirGroup Server</li>
+										<ul>
+											<li>Adding Server Configuration</li>
+											<li>Configuration of Allowed/Disallowed Roles</li>
+											<li>Configuration of the AP List that advertises the AirGroup Server</li>
+										</ul>
+										<li> AirGroup Server List (w/ CSV export)</li>
+										<li> AirGroup status - Global and per Group</li>
+										<li> Ability to enable/disable AirGroup service for Global or specific Groups</li>
+									</ul>
+								</p>
+							</div>
                             <div class="tim-row" id="inventory-row">
                                 <h2 class="text-center">Device Inventory</h2>
                                 <div class="icon-massive text-center icon-warning">
@@ -1537,7 +1662,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 									<li> Client SNR</li>
 									<li> 802.11 version support (Mix) </li>
 									<li> Client Encryption (WPA3 vs WPA2 vs Others)</li>
-									<li> Band Split (2.4Ghz vs 5GHz vs 6GHz)</li>
+									<li> Band Split (2.4GHz vs 5GHz vs 6GHz)</li>
 									<li> Authentication Type</li>
 									<li> 802.11k support</li>
 									<li> 802.11v support</li>
@@ -1556,7 +1681,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<ul>
 									<li> AP Models</li>
 									<li> Tables for Wi-Fi Radios, BLE Beacons and BSSIDs</li>
-									<li> Overview stats for Memory Utilization, CPU Usage, 2.4/5/6Ghz radios that are down </li>
+									<li> Overview stats for Memory Utilization, CPU Usage, 2.4/5/6GHz radios that are down </li>
 									<li> 10 APs with the most Clients</li>
 									<li> 10 APs with the lowest Uptime (with a Troubleshooting action button - processing the "show ap debug system-status" and providing easy access to crash logs)</li>
 									<li> 10 APs with the highest Memory Utilization (with a Reboot action button)</li>
@@ -2000,9 +2125,117 @@ ip dns server-address priority 2 %dns2.ip%
                                 <legend></legend>
                                 <p>
                                 	Changes/Additions to Central Automation Studio will be documented below:</br>
+									<h4>Version 1.48 (2026/08/30)</h4>
+									<ul>
+										<li>Added support for <a href="#airgroup-row">AirGroup Server config</a></li>
+									</ul>
+									<h4>Version 1.47.9 (2026/06/12)</h4>
+									<ul>
+										<li>Added support for Antenna Direction Mode in CSV workflows (for AP-760 series)</li>
+									</ul>
+									<h4>Version 1.47.8 (2026/05/15)</h4>
+									<ul>
+										<li>Performance enhancements when account contains large numbers of APs</li>
+										<li>Improved support for PE mode in Central</li>
+									</ul>
+									<h4>Version 1.47.7 (2026/05/13)</h4>
+									<ul>
+										<li>Added support for config shortcut to Disable Local Management for APs in the <a href="deployment-group.html">AP Group</a> page</li>
+									</ul>
+									<h4>Version 1.47.6 (2026/03/13)</h4>
+									<ul>
+										<li>Added support for config of AOS 10.x AP Country Codes in <a href="#csv-row">CSV Workflows</a></li>
+										<li>Added link to <a href="#donate-row">donate</a> to the Central Automation Studio project</li>
+									</ul>
+									<h4>Version 1.47.5 (2026/02/21)</h4>
+									<ul>
+										<li>Added link to <a href="https://next.wifidownunder.com" target="_blank">CASv2 (CAS for New Central)</a> to the top of the dashboard</li>
+									</ul>
+									<h4>Version 1.47.4 (2026/02/06)</h4>
+									<ul>
+										<li>Improvements to assigning devices to customers in the MSP workflows</li>
+									</ul>
+									<h4>Version 1.47.3 (2025/10/31)</h4>
+									<ul>
+										<li>Added VSG Check to WLAN editing (same as AP Group checking)</li>
+										<li>Added Radio Index to BSSID table and CSV export</li>
+									</ul>
+									<h4>Version 1.47.2 (2025/10/10)</h4>
+									<ul>
+										<li>Added support for 6GHz external antenna config in CSV and Bulk AP workflows (Radio 2)</li>
+										<li>Added CSV export for Visitor accounts</li>
+									</ul>
+									<h4>Version 1.47.1 (2025/09/24)</h4>
+									<ul>
+										<li>Improved handling of rate limiting on CSV based workflows</li>
+										<li>Fix for Tri-radio APs when setting radio mode</li>
+										<li>Fix for RF Neighbours in AP Troubleshooting/AP Statistics</li>
+										<li>Added Base Radio Mac to BSSID export</li>
+									</ul>
+									<h4>Version 1.47 (2025/08/29)</h4>
+									<ul>
+										<li>Added support for config of channel and power for AP radios in <a href="#csv-row">CSV Workflows</a></li>
+										<li>Fix for AP1X credentials not able to be set in both <a href="#csv-row">CSV Workflows</a> and <a href="#bulk-row">Bulk AP</a></li>
+									</ul>
+									<h4>Version 1.46.1 (2025/07/09)</h4>
+									<ul>
+										<li>Improved log window behaviour. Added copy button to the header (next to the log clear button)</li>
+									</ul>
+									<h4>Version 1.46.0 (2025/06/20) - <i>Discover 2025</i></h4>
+									<ul>
+										<li>Client Statistics Collection</li>
+										<ul>
+											<li>Enables statistics to be collected over time for Wireless clients</li>
+											<li>Statistics include: Wi-Fi Standard, 11k/v/r, SNR, Band, Encryption</li>
+											<li>Allows for tending analysis</li>
+											<li>Accessible from Clients Statistics and Events Dashboard pages (graph icon on applicable tiles)</li>
+											<li>Enabled in Settings (Client Statistics Collection)</li>
+										</ul>
+									</ul>
+									<h4>Version 1.45.7 (2025/06/12)</h4>
+									<ul>
+										<li>Key Management Service page now colours the associated AP orange when displaying synced APs </li>
+										<li>FLEX DUAL BAND in <a href="#csv-row">CSV Workflows</a> is now FLEX RADIO MODE</li>
+										<li>Bulk AP Config page now supports Flex Radio Mode config</li>
+										<li>Support for UKWest2 Central Cluster </li>
+									</ul>
+									<h4>Version 1.45.6 (2025/05/24)</h4>
+									<ul>
+										<li>Improved Datapath Session Table in AP and Client Troubleshooting </li>
+									</ul>
+									<h4>Version 1.45.5 (2025/05/14)</h4>
+									<ul>
+										<li>Added AP Ethernet Information test to the Site Workflows to help track down APs running at non-optimal speeds </li>
+									</ul>
+									<h4>Version 1.45.4 (2025/05/07)</h4>
+									<ul>
+										<li>Improvements in CSV format handling that prevented Licensing and Archive tasks from working correctly with certain CSV files </li>
+										<li>Improvements logging for unlicensing task in CSV based Workflows </li>
+									</ul>
+									<h4>Version 1.45.3 (2025/05/06)</h4>
+									<ul>
+										<li>Added support for 2.4GHz radio mode configuration in the <a href="#site-row">Site-based Workflow</a> page </li>
+									</ul>
+									<h4>Version 1.45.2 (2025/05/05)</h4>
+									<ul>
+										<li>Added support for AP selection in the 2.4GHz radio control in the <a href="#site-row">Site-based Workflow</a> page </li>
+										<li>Updated font for improved UI experience</li>
+									</ul>
+									<h4>Version 1.45.1 (2025/05/04)</h4>
+									<ul>
+										<li>Added support for 2.4GHz radio control in the <a href="#bulk-row">Bulk AP Deployment</a> page </li>
+										<li>Added support for Flexible Dual Band and AP Altitude in the <a href="#site-row">Site-based Workflows</a></li>
+										<li>Fix for disabling 2.4GHz radios on dual radio AP models</li>
+										<li>Updated links to Central documentation in this Help file</li>
+									</ul>
+									<h4>Version 1.45 (2025/04/28) - <i>Checking</i></h4>
+									<ul>
+										<li>Added AP config validation (using VSG recommended settings) to AP Group Config page</li>
+										<li>Added Commander, Fan state, and swicth serial numbers in tooltips for Stack table in <a href="monitoring-switches.html">Switch Monitoring</a> page</li>
+									</ul>
 									<h4>Version 1.44.2 (2025/04/05)</h4>
 									<ul>
-										<li>Enable/Disable 2.4GHz radios tasks now intelligently determines which radio ID is operating in 2.4Ghz (if the AP is configured with a 2.4GHz radio)</li>
+										<li>Enable/Disable 2.4GHz radios tasks now intelligently determines which radio ID is operating in 2.4GHz (if the AP is configured with a 2.4GHz radio)</li>
 										<li>Enable/Disable 2.4GHz radios tasks are now available in the Site-based workflows</li>
 									</ul>
 									<h4>Version 1.44.1 (2025/03/29)</h4>
@@ -3163,6 +3396,12 @@ ip dns server-address priority 2 %dns2.ip%
 									</ul>
 								</p>
                             </div>
+							<div class="tim-row" id="donate-row">
+								<h2 class="text-center">Donations</h2>
+								<p>
+									If you would like to help fund the development and hosting of Central Automation Studio, you can donate <a href="https://www.paypal.com/donate/?hosted_button_id=36C8EVZGZN48J" target="_blank">here</a>. Donations are greatly appreciated.
+								</p>
+							</div>
                         </div>
 					</div>   
 				</div>   
@@ -3263,6 +3502,6 @@ ip dns server-address priority 2 %dns2.ip%
 	}
 </script>
 
-<script src="assets/js/version.js?v=250329"></script>
+<script src="assets/js/version.js?v=260313"></script>
 
 </html>

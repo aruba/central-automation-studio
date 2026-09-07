@@ -1,0 +1,285 @@
+<!-- 
+=========================================================
+Light Bootstrap Dashboard PRO - v2.0.1
+=========================================================
+
+Product Page: https://www.creative-tim.com/product/light-bootstrap-dashboard-pro
+Copyright 2019 Creative Tim (https://www.creative-tim.com)
+
+Coded by Creative Tim
+
+=========================================================
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. -->
+
+<!--
+Central Automation v1.6.0
+Updated: 1.12.4
+Copyright Aaron Scott (WiFi Downunder) 2021-2025
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+	<?php include 'hitCounter.php';?>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png" />
+		<link rel="icon" type="image/png" href="../assets/img/favicon-16x16.png" sizes="16x16" />
+		<link rel="icon" type="image/png" href="../assets/img/favicon-32x32.png" sizes="32x32" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<title>Central Automation Studio</title>
+		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
+		<!--     Fonts and icons     -->
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
+		<!-- CSS Files -->
+		<link href="../assets/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="../assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
+		<link href="../assets/css/cas.css?v=241023" rel="stylesheet" />
+		<style>
+			.settings-selector {
+				height: 40px !important;
+				margin-top: 0px !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="wrapper wrapper-full-page">
+			<!-- Navbar -->
+			<nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute">
+				<div class="container">
+					<div class="navbar-wrapper">
+						<a class="navbar-brand" onclick="onFinishSetup()" href="" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio: Discover Settings </a>
+						<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
+							<span class="navbar-toggler-bar burger-lines"></span>
+							<span class="navbar-toggler-bar burger-lines"></span>
+							<span class="navbar-toggler-bar burger-lines"></span>
+						</button>
+					</div>
+					<div class="collapse navbar-collapse justify-content-end" id="navbar">
+						<ul class="navbar-nav">
+							<li class="nav-item">
+								<a class="nav-link" onclick="onFinishSetup()" href="" id="dashboardLink">
+									<i class="central-icon ca-dashboard"></i>
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" onclick="showLog()" href="#">
+									<i class="central-icon ca-research"></i>
+								</a>
+							</li>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<i class="nc-icon nc-bullet-list-67"></i>
+								</a>
+								<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+									<a href="documentation.html" class="dropdown-item"> <i class="central-icon ca-book-open"></i> Help </a>
+									<a href="settings.html" class="dropdown-item"> <i class="nc-icon nc-settings-gear-64"></i> Settings </a>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</nav>
+			<!-- End Navbar -->
+			<!--   you can change the color of the filter page using: data-color="blue | azure | green | orange | red | purple" -->
+			<div class="full-page register-page section-image" data-color="imaginary" data-image="../assets/img/hpe/landmark.png">
+				<div class="content">
+					<div class="container">
+						<div class="row">
+							<div class="col-md-3 mx-auto">
+								<button type="submit" class="btn btn-fill btn-info btn-wd btn-lg" onclick="goToChoices()">Back to the Choices</button>
+								<br /><br />
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-12 mx-auto">
+								<div class="card card-register card-plain">
+									<div class="card-header text-center">
+										<div class="row  justify-content-center">
+											<div class="col-md-12">
+												<div class="header-text">
+													<h2 class="card-title">Global Settings</h2>
+													<h4 class="card-subtitle">General settings for Central Automation Studio: Discover</h4>
+													<hr />
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="card card-body ">
+										<h4 class="card-subtitle-dark">Basic Settings</h4>
+										<div class="row">
+											<div class="col-md-6 mx-auto">
+												<label class="col-md-6 setting-label">Refresh Interval (minutes)</label>
+												<div class="col-md-4 setting-input">
+													<input type="number" placeholder="30" class="form-control" id="refresh_rate" min="5" onchange="saveGlobalSettings()" oninput="this.onchange();" />
+												</div>
+											</div>
+											<div class="col-md-6 mx-auto">
+												<label class="col-md-6 setting-label">Time Scale</label>
+												<div class="col-md-4 setting-input">
+													<select id="timescalePicker" class="selectpicker settings-selector" data-title="Select a timescale..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="saveGlobalSettings()">
+														<!--<option value="5">5 Minutes</option>
+														<option value="10">10 Minutes</option>
+														<option value="30">30 Minutes</option>
+														<option value="60">1 Hour</option>-->
+														<option value="180">3 Hours</option>
+														<option value="1440" selected>1 Day</option>
+														<option value="4320">3 Days</option>
+														<option value="10080">7 Days</option>
+														<option value="" style='color: #cccccc;' disabled>────────</option>
+														<option value="_today_">Today</option>
+														<option value="_yesterday_">Yesterday</option>
+														<!--<option value="custom">Custom Date Range</option>-->
+													</select>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12 mx-auto">
+												<div class="form-check">
+													<label class="form-check-label-options">
+														<input class="form-check-input" type="checkbox" value="" id="atm_rolling" checked="true" onclick="saveGlobalSettings();" />
+														<span class="form-check-sign"></span>Automatic Rolling
+													</label>
+												</div>
+												<label class="col-md-3 setting-label">Rolling Interval (seconds)</label>
+												<div class="col-md-3 setting-input">
+													<input type="number" placeholder="60" class="form-control" id="atm_rollingrate" min="5" onchange="saveGlobalSettings()" oninput="this.onchange();" />
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Error Log Modal -->
+				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content log-modal">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Log</h4>
+										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
+									</div>
+									<div class="card-body log-body" id="errorBody"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
+			</div>
+
+			<footer class="footer">
+				<div class="container">
+					<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
+					<a data-toggle="modal" data-target="#AccountModal" id="AccountModalLink"></a>
+					<nav>
+						<ul class="footer-menu" id="api-footer"></ul>
+						<p class="copyright text-center">
+							©
+							<script>
+								document.write(new Date().getFullYear())
+							</script>
+							<a href="http://www.wifidownunder.com">WiFi Downunder</a>
+						</p>
+						<p class="copyright text-center" id="cas-version"> </p>
+					</nav>
+				</div>
+			</footer>
+		</div>
+	</body>
+	<!--   Core JS Files   -->
+	<script src="../assets/js/core/jquery.3.2.1.min.js" type="text/javascript"></script>
+	<script src="../assets/js/core/popper.min.js" type="text/javascript"></script>
+	<script src="../assets/js/core/bootstrap.min.js" type="text/javascript"></script>
+	<!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
+	<script src="../assets/js/plugins/bootstrap-switch.js"></script>
+	<!--  Chartist Plugin  -->
+	<script src="../assets/js/plugins/chartist.min.js"></script>
+	<!--  Notifications Plugin    -->
+	<script src="../assets/js/plugins/bootstrap-notify.js"></script>
+	<!--  jVector Map  -->
+	<script src="../assets/js/plugins/jquery-jvectormap.js" type="text/javascript"></script>
+	<!--  Plugin for Date Time Picker and Full Calendar Plugin-->
+	<script src="../assets/js/plugins/moment.min.js"></script>
+	<script src="../assets/js/plugins/luxon.min.js"></script>
+	<!--  DatetimePicker   -->
+	<script src="../assets/js/plugins/bootstrap-datetimepicker.js"></script>
+	<!--  Sweet Alert  -->
+	<script src="../assets/js/plugins/sweetalert2.all.min.js" type="text/javascript"></script>
+	<!--  Tags Input  -->
+	<script src="../assets/js/plugins/bootstrap-tagsinput.js" type="text/javascript"></script>
+	<!--  Sliders  -->
+	<script src="../assets/js/plugins/nouislider.js" type="text/javascript"></script>
+	<!--  Bootstrap Select  -->
+	<script src="../assets/js/plugins/bootstrap-selectpicker.js" type="text/javascript"></script>
+	<!--  jQueryValidate  -->
+	<script src="../assets/js/plugins/jquery.validate.min.js" type="text/javascript"></script>
+	<!--  Plugin for the Wizard, full documentation here: https://github.com/VinceG/twitter-bootstrap-wizard -->
+	<script src="../assets/js/plugins/jquery.bootstrap-wizard.js"></script>
+	<!--  Bootstrap Table Plugin -->
+	<script src="../assets/js/plugins/bootstrap-table.js"></script>
+	<!--  DataTable Plugin -->
+	<script src="../assets/js/plugins/jquery.dataTables.min.js"></script>
+	<script src="../assets/js/plugins/ellipsis.js"></script>
+	<!--  Full Calendar   -->
+	<script src="../assets/js/plugins/fullcalendar.min.js"></script>
+	<!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
+	<script src="../assets/js/light-bootstrap-dashboard.js?v=2.0.1" type="text/javascript"></script>
+	<!-- Light Dashboard DEMO methods, don't include it in your project! -->
+	<script src="../assets/js/demo.js"></script>
+	<script>
+		$(document).ready(function() {
+			getCASVersion();
+			openIndexedDB();
+		    demo.checkFullPageBackgroundImage();
+			
+			var refreshRate = localStorage.getItem('refresh_rate');
+			if (refreshRate != null && refreshRate != "undefined") {
+				document.getElementById("refresh_rate").value = refreshRate;
+			}
+			
+			var atm_timescale = localStorage.getItem('atm_timescale');
+			if (atm_timescale != null && atm_timescale != "undefined") {
+				$('#timescalePicker').val(atm_timescale)
+				$('#timescalePicker').selectpicker('refresh');
+			}
+
+			var loadRolling = localStorage.getItem('atm_rolling');
+			if (loadRolling === null || loadRolling === "") {
+				loadRolling = true;
+			} else {
+				loadRolling = JSON.parse(loadRolling)
+			}
+			document.getElementById("atm_rolling").checked = loadRolling;
+	
+			var rollingRate = localStorage.getItem('atm_rollingrate');
+			if (rollingRate != null && rollingRate != "undefined") {
+				document.getElementById("atm_rollingrate").value = rollingRate;
+			} else {
+				document.getElementById("atm_rollingrate").value = "60";
+			}
+	
+	
+		    var reachabilityPromise = new $.Deferred();
+		    $.when(checkReachability(reachabilityPromise)).then(function () {
+	
+			});
+		});
+	</script>
+	<!--   Main JS Files   -->
+	<script src="../assets/js/version.js?v=260313"></script>
+	<script src="../assets/js/main.js?v=260612"></script>
+	<script src="../assets/js/proxy.js?v=240920"></script>
+	<script src="../assets/js/hydra-main.js?v=251126"></script>
+	<script src="../assets/js/hydra.js?v=241203"></script>
+	<script src="../assets/js/atm-settings.js?v=241203"></script>
+</html>

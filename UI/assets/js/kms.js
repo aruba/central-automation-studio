@@ -237,7 +237,7 @@ function getClientRecord(clientMac) {
 				clientNotification.update({ type: 'success', message: 'Cloud Client Record retrieved' });
 				setTimeout(clientNotification.close, 1000);
 			}
-			console.log(response)
+			//console.log(response)
 			var client = findClientForMac(clientMac);
 			// Make link to Central
 			client_name_url = encodeURI(client.name);
@@ -360,7 +360,7 @@ function getRoamCacheClientRecord(clientMac) {
 			// process the response
 			$('#userDetails').empty();
 			$('#keyDetails').empty();
-			console.log(response)
+			//console.log(response)
 			if (response['11r/OKC KEYCACHE ']) {
 				// 11r keycache entry - note the stupid extra space on the key!!
 				var keyCache = response['11r/OKC KEYCACHE '];
@@ -596,7 +596,7 @@ function getCloudEncryptionKey() {
 }
 
 function getKMSDetailsFromAP(deviceSerial) {
-	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 100 }, { command_id: 199 }, { command_id: 200 }, { command_id: 114 }, { command_id: 467}] });
+	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 100 }, { command_id: 199 }, { command_id: 200 }, { command_id: 114 }, { command_id: 467}, { command_id: 497}] });
 
 	var settings = {
 		url: getAPIURL() + '/tools/postCommand',
@@ -659,7 +659,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 			return;
 		}
 		var response = JSON.parse(commandResults.responseBody);
-
+		//console.log(response)
 		if (response.hasOwnProperty('error')) {
 			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 		} else {
@@ -682,6 +682,8 @@ function checkKMSStatus(session_id, deviceSerial) {
 				var pmkCacheTable = results.match(/\b(PMK Cache Table)((.|\n)*)(\bPMK Cache Count:.+\n)/gm)[0];
 				var mpskCacheTable = results.match(/\b(PPSK Cache Table)((.|\n)*)(\bPPSK Cache Count:.+\n)/gm)[0];
 				//console.log(mpskCacheTable);
+				//console.log(pmkCacheTable)
+				//console.log(currentClientMac)
 				if (!pmkCacheTable.includes(currentClientMac)) {
 					// not in PMK Cache - check the MPSK cache too
 					if (!mpskCacheTable.includes(currentClientMac)) {
@@ -722,7 +724,7 @@ function checkKMSStatus(session_id, deviceSerial) {
 							columnHeaders[header] = { start: columnIndexes[i], end: columnIndexes[i + 1] };
 						}
 					}
-
+					
 					// Loop through the lines
 					for (var i = headerIndex + 2; i < lines.length; i++) {
 						if (lines[i].trim() === '') break;
@@ -732,7 +734,8 @@ function checkKMSStatus(session_id, deviceSerial) {
 							if (clientRow.includes(currentClientMac)) {
 								//Pull this row apart
 								$('#pmkUserDetails').empty();
-								$('#pmkUserDetails').append('<li>Mac Address: <strong>' + clientRow.substring(columnHeaders['Client MAC'].start, columnHeaders['Client MAC'].end).trim() + '</strong></li>');
+								if (columnHeaders['Client MAC']) $('#pmkUserDetails').append('<li>Mac Address: <strong>' + clientRow.substring(columnHeaders['Client MAC'].start, columnHeaders['Client MAC'].end).trim() + '</strong></li>');
+								else if (columnHeaders['MAC']) $('#pmkUserDetails').append('<li>Mac Address: <strong>' + clientRow.substring(columnHeaders['MAC'].start, columnHeaders['MAC'].end).trim() + '</strong></li>');
 								$('#pmkUserDetails').append('<li>ESSID: <strong>' + clientRow.substring(columnHeaders['ESSID'].start, columnHeaders['ESSID'].end).trim() + '</strong></li>');
 								$('#pmkUserDetails').append('<li>User Role: <strong>' + clientRow.substring(columnHeaders['Role'].start, columnHeaders['Role'].end).trim() + '</strong></li>');
 								$('#pmkUserDetails').append('<li>VLAN: <strong>' + clientRow.substring(columnHeaders['VLAN'].start, columnHeaders['VLAN'].end).trim() + '</strong></li>');
@@ -742,6 +745,9 @@ function checkKMSStatus(session_id, deviceSerial) {
 								$('#pmkKeyDetails').append('<li>Type: <strong>' + clientRow.substring(columnHeaders['OKC/11r'].start, columnHeaders['OKC/11r'].end).trim() + '</strong></li>');
 								$('#pmkKeyDetails').append('<li>Key: <strong>' + clientRow.substring(columnHeaders['Key'].start, columnHeaders['Key'].end).trim() + '</strong></li>');
 								$('#pmkKeyDetails').append('<li>Expiry: <strong>' + clientRow.substring(columnHeaders['Expiry'].start, columnHeaders['Expiry'].end).trim() + '</strong></li>');
+								
+								if (columnHeaders['Has_R0(R1-count)']) $('#pmkKeyDetails').append('<li>AP has R0: <strong>' + clientRow.substring(columnHeaders['Has_R0(R1-count)'].start, columnHeaders['Has_R0(R1-count)'].end).trim() + '</strong></li>');
+								if (columnHeaders['key_recv_status']) $('#pmkKeyDetails').append('<li>Key Recieved: <strong>' + clientRow.substring(columnHeaders['key_recv_status'].start, columnHeaders['key_recv_status'].end).trim() + '</strong></li>');
 							}
 						}
 					}
@@ -756,6 +762,8 @@ function checkKMSStatus(session_id, deviceSerial) {
 				$('#pmkOKCDetails').empty();
 				$('#pmkOnDemandDetails').empty();
 				$('#pmkLatencyDetails').empty();
+				$('#pmkMobilityStats').empty();
+				$('#pmkFailuresDetails').empty();
 				var startString = 'COMMAND=show ap debug pmk-sync-statistics';
 				var startLocation = results.indexOf(startString) + startString.length;
 				var pmkSyncStats = results
@@ -777,7 +785,19 @@ function checkKMSStatus(session_id, deviceSerial) {
 					else if (this.includes('PMK Key found in DT cache')) $('#pmkRoamingDetails').append('<li>Key found in DT cache: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('PMK Key not found DT in cache')) $('#pmkRoamingDetails').append('<li>Key not found DT in cache: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('PMK Key found in R1 lcoal cache')) $('#pmkRoamingDetails').append('<li>Key found in R1 local cache: <strong>' + this.match(/\d+/g)[1] + '</strong></li>');
+					
+					else if (this.includes('GWKMS PMK Update') && !this.includes('GWKMS PMK Update Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Update: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK Update Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Update Reply: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK Delete') && !this.includes('GWKMS PMK Delete Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Delete: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK Delete Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Delete Reply: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK Fetch') && !this.includes('GWKMS PMK Fetch Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Fetch: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK Fetch Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Fetch Reply: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK Capability Discover') && !this.includes('GWKMS PMK Capability Discover Reply')) $('#pmkRoamingDetails').append('<li>GWKMS PMK Capability Discover: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('GWKMS PMK PAPI Send Fail')) $('#pmkRoamingDetails').append('<li>GWKMS PMK PAPI Send Fail: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('PMK Key found in R1 lcoal cache')) $('#pmkRoamingDetails').append('<li>Key found in R1 local cache: <strong>' + this.match(/\d+/g)[1] + '</strong></li>');
+					
 					else if (this.includes('DT cache threshold hit count')) $('#pmkRoamingDetails').append('<li>AP PMK Cache Threshold Hits: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					
 					// Neighbour Stats
 					else if (this.includes('Neighbor update to central  ')) $('#pmkNeighourDetails').append('<li>Update to Central: <strong>' + this.match(/\d+/g) + '</strong></li>');
 					else if (this.includes('Neighbor update to central fail')) $('#pmkNeighourDetails').append('<li>Update to Central fail: <strong>' + this.match(/\d+/g) + '</strong></li>');
@@ -814,9 +834,9 @@ function checkKMSStatus(session_id, deviceSerial) {
 
 				//console.log(pmkSyncStats);
 				var startString = 'COMMAND=show ap pmkcache syncfailures';
-				var endString = '=== Troubleshooting session completed ==='
+				var endString = '==================================='
 				var startLocation = results.indexOf(startString) + startString.length;
-				var endLocation = results.indexOf(endString);
+				var endLocation = results.indexOf(endString, startLocation);
 				var pmkSyncFailures = results
 					.substring(startLocation, endLocation)
 					.trim()
@@ -829,6 +849,23 @@ function checkKMSStatus(session_id, deviceSerial) {
 							$('#pmkFailuresDetails').append('<li>'+ this.toString() +'</li>');
 						}
 					}
+				});
+				
+				//console.log(pmkSyncStats);
+				var startString = 'COMMAND=show ap debug pmk-mobility-statistics';
+				var endString = '=== Troubleshooting session completed ==='
+				var startLocation = results.indexOf(startString) + startString.length;
+				var endLocation = results.indexOf(endString);
+				var pmkMobilityStats = results
+					.substring(startLocation, endLocation)
+					.trim()
+					.split('\n');
+				$.each(pmkMobilityStats, function() {
+					if (this.includes('Mobility session req sent')) $('#pmkMobilityStats').append('<li>Mobility Session Req Sent: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Mobility Session resp received')) $('#pmkMobilityStats').append('<li>Mobility Session Response Received: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Mobility session req sent failed')) $('#pmkMobilityStats').append('<li>Mobility Session Req Sent Failed: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Mobility session resp timeout')) $('#pmkMobilityStats').append('<li>Mobility Session Response Timeout: <strong>' + this.match(/\d+/g) + '</strong></li>');
+					else if (this.includes('Mobility session clfl resp timeout')) $('#pmkMobilityStats').append('<li>Mobility Session CLFL Response Timeout: <strong>' + this.match(/\d+/g) + '</strong></li>');
 				});	
 
 				showNotification('ca-window-code', response.message, 'bottom', 'center', 'success');
@@ -871,7 +908,7 @@ function getRoamingForClient(clientMac) {
 		}
 
 		var response = JSON.parse(commandResults.responseBody);
-		console.log(response);
+		//console.log(response);
 		if (response.status) showNotification('ca-laptop-1', response.status, 'bottom', 'center', 'warning');
 		else {
 			if (clientNotification) {
@@ -956,6 +993,7 @@ function getRoamingForClient(clientMac) {
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function showSyncedAPFloorplan() {
 	if (vrfSupported) {
+		resetCanvases();
 		$('#SyncAPPlanModalLink').trigger('click');
 	} else {
 		showNotification('ca-new-construction', 'No Floorplans were found in Central', 'bottom', 'center', 'info');
@@ -1272,6 +1310,8 @@ function loadAPsForFloor(offset) {
 function drawAPsOnFloorplan() {
 	// Clear APs from view
 	clearAPCanvas();
+	
+	var selectedClient = findDeviceInMonitoringForMAC(currentClientMac);
 
 	// Draw APs on floorplan
 	vrfSelectedAPs = {};
@@ -1295,6 +1335,8 @@ function drawAPsOnFloorplan() {
 				ctx.fillStyle = apColors[0];
 			}
 		});
+		
+		if (this['serial_number'].toUpperCase() === selectedClient['associated_device'].toUpperCase()) ctx.fillStyle = apColors[2];
 
 		ctx.beginPath();
 		ctx.roundRect(x - 7, y - 7, 14, 14, 2);

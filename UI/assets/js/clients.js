@@ -83,6 +83,8 @@ var snrLabels = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60+'];
 var selectedWLAN;
 var selectedSite;
 
+var timescale;
+
 function loadCurrentPageClient() {
 	getWLANs();
 }
@@ -749,7 +751,7 @@ function updateClientGraphs() {
 					//series: [percentageBand, bandLeft]
 					series: [
 						{
-							meta: '6Ghz',
+							meta: '6GHz',
 							value: percentage6,
 						},
 						{
@@ -1114,8 +1116,6 @@ function updateClientGraphs() {
 			var val = $(this).attr('ct:meta');
 			var valIndex = snrLabels.indexOf(val);
 			selectedClients = snrArray[valIndex];
-			console.log(val)
-			console.log(valIndex)
 			document.getElementById('selected-title').innerHTML = 'Clients with SNR in the Range: ' + snrLabels[valIndex] + 'dB';
 		
 			$.each(selectedClients, function() {
@@ -1701,4 +1701,323 @@ function displaySelectedClientsAuth(selectedLabel) {
 		.rows()
 		.draw();
 	$('#SelectedClientModalLink').trigger('click');
+}
+
+
+/*---------------------------------------------------------------------
+	Stat Collector Functions
+---------------------------------------------------------------------*/
+function showClientStatGraphs() {
+	
+	// show Modal
+	$('#ClientStatsModalLink').trigger('click');
+	
+	
+	// Update Client History Graphs
+	optionsPage = {
+		lineSmooth: false,
+		showPoint: false,
+		showArea: false,
+		fullWidth: true,
+		height: 350,
+		axisY: {
+			offset: 40,
+			onlyInteger: true,
+		},
+		axisX: {
+			showGrid: false,
+		},
+		chartPadding: {
+			top: 0,
+			right: 90,
+			bottom: 30,
+		},
+		lineSmooth: Chartist.Interpolation.simple({
+			divisor: 3,
+		}),
+		low: 0,
+		plugins: [Chartist.plugins.tooltip()],
+	};
+	
+	var labels = [];
+	var seriesK = [];
+	var seriesV = [];
+	var seriesR = [];
+	var series2 = [];
+	var series5 = [];
+	var series6 = [];
+	var seriesAN = [];
+	var seriesGN = [];
+	var seriesAC = [];
+	var seriesAX = [];
+	var seriesBE = [];
+	var snr0 = [];
+	var snr10 = [];
+	var snr20 = [];
+	var snr30 = [];
+	var snr40 = [];
+	var snr50 = [];
+	var snr60 = [];
+	var enc_wpa3 = [];
+	var enc_wpa3_ent = [];
+	var enc_wpa2 = [];
+	var enc_wpa2_ent = [];
+	var enc_owe = [];
+	var enc_open = [];
+	var enc_other = [];
+	
+	
+	var clientStatData = getClientStats();
+	//console.log(clientStatData)
+	clientStatData.sort((a, b) => a.timestamp - b.timestamp)
+	
+	for (var i=0;i<clientStatData.length;i++) {
+		//{timestamp:Date.now(), dot11k:0, dot11v:0, dot11r:0, band2:0, band5:0, band6:0, an:0, gn:0, ac:0, ax:0, be:0, snr0:0, snr10:0, snr20:0, snr30:0, snr40:0, snr50:0, snr60:0enc_wpa3:0, enc_wpa3_ent:0, enc_wpa2:0, enc_wpa2_ent:0, enc_owe:0, enc_open:0, enc_other:0})})
+		//var eventDate = new Date(clientStatData[i].timestamp);
+		var eventDate = new DateTime.fromMillis(clientStatData[i].timestamp);
+		
+		if (!timescale) {
+			if (i == clientStatData.length - 1) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else if (i == Math.floor(clientStatData.length / 2)) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else if (i == 0) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else labels.push('');
+		} else {
+			if (i == clientStatData.length - 1) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else if (i == Math.floor(clientStatData.length / 2) && timescale > 1440) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else if (i == Math.floor(clientStatData.length / 2)) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else if (i == 0 && timescale > 180) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else if (i == 0) labels.push(eventDate.toLocaleString(DateTime.DATETIME_SHORT));
+			else labels.push('');
+		}
+		
+		seriesK.push(clientStatData[i].dot11k);
+		seriesV.push(clientStatData[i].dot11v);
+		seriesR.push(clientStatData[i].dot11r);
+		
+		series6.push(clientStatData[i].band6);
+		series5.push(clientStatData[i].band5);
+		series2.push(clientStatData[i].band2);
+		
+		seriesBE.push(clientStatData[i].be);
+		seriesAX.push(clientStatData[i].ax);
+		seriesAC.push(clientStatData[i].ac);
+		seriesAN.push(clientStatData[i].an);
+		seriesGN.push(clientStatData[i].gn);
+		
+		snr0.push(clientStatData[i].snr0);
+		snr10.push(clientStatData[i].snr10);
+		snr20.push(clientStatData[i].snr20);
+		snr30.push(clientStatData[i].snr30);
+		snr40.push(clientStatData[i].snr40);
+		snr50.push(clientStatData[i].snr50);
+		snr60.push(clientStatData[i].snr60);
+		
+		enc_wpa3.push(clientStatData[i].enc_wpa3);
+		enc_wpa3_ent.push(clientStatData[i].enc_wpa3_ent);
+		enc_wpa2.push(clientStatData[i].enc_wpa2);
+		enc_wpa2_ent.push(clientStatData[i].enc_wpa2_ent);
+		enc_owe.push(clientStatData[i].enc_owe);
+		enc_open.push(clientStatData[i].enc_open);
+		enc_other.push(clientStatData[i].enc_other);
+	}
+	
+	// Band Chart
+	var bandChart;
+	if (document.getElementById('chartBandHistory')) {
+		dataBand = {
+			labels: labels,
+			series: [series6, series5, series2],
+		};
+		
+		bandChart = Chartist.Line('#chartBandHistory', dataBand, optionsPage);
+		
+		bandChart.on('draw', function(data) {
+			if (data.type === 'line' || data.type === 'area') {
+				data.element.animate({
+					d: {
+						begin: 0,
+						dur: 1000,
+						from: data.path
+							.clone()
+							.scale(1, 0)
+							.translate(0, data.chartRect.height())
+							.stringify(),
+						to: data.path.clone().stringify(),
+						easing: Chartist.Svg.Easing.easeOutQuint,
+					},
+				});
+			}
+		});
+		
+		if (document.getElementById('11Legend')) {
+			$('#11BandLegend').empty();
+			$('#11BandLegend').append('<i class="fa-solid fa-circle '+colorArray[0]+'"></i> '+'6GHz &nbsp;'+'\t');
+			$('#11BandLegend').append('<i class="fa-solid fa-circle '+colorArray[1]+'"></i> '+'5GHz &nbsp;'+'\t');
+			$('#11BandLegend').append('<i class="fa-solid fa-circle '+colorArray[2]+'"></i> '+'2.4GHz '+'\t');
+		}
+	}
+	
+	// Standard Chart
+	var standardChart;
+	if (document.getElementById('chart11History')) {
+		dataKVR = {
+			labels: labels,
+			series: [ seriesBE, seriesAX, seriesAC, seriesAN, seriesGN],
+		};
+		
+		standardChart = Chartist.Line('#chart11History', dataKVR, optionsPage);
+		
+		standardChart.on('draw', function(data) {
+			if (data.type === 'line' || data.type === 'area') {
+				data.element.animate({
+					d: {
+						begin: 0,
+						dur: 1000,
+						from: data.path
+							.clone()
+							.scale(1, 0)
+							.translate(0, data.chartRect.height())
+							.stringify(),
+						to: data.path.clone().stringify(),
+						easing: Chartist.Svg.Easing.easeOutQuint,
+					},
+				});
+			}
+		});
+		
+		if (document.getElementById('11Legend')) {
+			$('#11Legend').empty();
+			$('#11Legend').append('<i class="fa-solid fa-circle '+colorArray[0]+'"></i> '+'Wi-FI 7 &nbsp;'+'\t');
+			$('#11Legend').append('<i class="fa-solid fa-circle '+colorArray[1]+'"></i> '+'Wi-FI 6 &nbsp;'+'\t');
+			$('#11Legend').append('<i class="fa-solid fa-circle '+colorArray[2]+'"></i> '+'Wi-FI 5 &nbsp;'+'\t');
+			$('#11Legend').append('<i class="fa-solid fa-circle '+colorArray[3]+'"></i> '+'Wi-Fi 4 (AN) &nbsp;'+'\t');
+			$('#11Legend').append('<i class="fa-solid fa-circle '+colorArray[4]+'"></i> '+'Wi-Fi 4 (GN) '+'\t');
+		}
+	}
+	
+	// k/v/r Chart
+	var kvrChart;
+	if (document.getElementById('chart11kvrHistory')) {
+		dataKVR = {
+			labels: labels,
+			series: [seriesK, seriesV, seriesR],
+		};
+		
+		kvrChart = Chartist.Line('#chart11kvrHistory', dataKVR, optionsPage);
+		
+		kvrChart.on('draw', function(data) {
+			if (data.type === 'line' || data.type === 'area') {
+				data.element.animate({
+					d: {
+						begin: 0,
+						dur: 1000,
+						from: data.path
+							.clone()
+							.scale(1, 0)
+							.translate(0, data.chartRect.height())
+							.stringify(),
+						to: data.path.clone().stringify(),
+						easing: Chartist.Svg.Easing.easeOutQuint,
+					},
+				});
+			}
+		});
+		
+		if (document.getElementById('11kvrLegend')) {
+			$('#11kvrLegend').empty();
+			$('#11kvrLegend').append('<i class="fa-solid fa-circle '+colorArray[0]+'"></i> '+'11k &nbsp;'+'\t');
+			$('#11kvrLegend').append('<i class="fa-solid fa-circle '+colorArray[1]+'"></i> '+'11r &nbsp;'+'\t');
+			$('#11kvrLegend').append('<i class="fa-solid fa-circle '+colorArray[2]+'"></i> '+'11v '+'\t');
+		}
+	}
+	
+	// SNR Chart
+	var snrChart;
+	if (document.getElementById('chartSNRHistory')) {
+		
+		dataSNR = {
+			labels: labels,
+			series: [snr60, snr50, snr40, snr30, snr20, snr20, snr0],
+		};
+		
+		snrChart = Chartist.Line('#chartSNRHistory', dataSNR, optionsPage);
+		
+		snrChart.on('draw', function(data) {
+			if (data.type === 'line' || data.type === 'area') {
+				data.element.animate({
+					d: {
+						begin: 0,
+						dur: 1000,
+						from: data.path
+							.clone()
+							.scale(1, 0)
+							.translate(0, data.chartRect.height())
+							.stringify(),
+						to: data.path.clone().stringify(),
+						easing: Chartist.Svg.Easing.easeOutQuint,
+					},
+				});
+			}
+		});
+		
+		if (document.getElementById('snrLegend')) {
+			$('#snrLegend').empty();
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[0]+'"></i> '+'>60dB &nbsp;'+'\t');
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[1]+'"></i> '+'50-60dB &nbsp;'+'\t');
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[2]+'"></i> '+'40-50dB &nbsp;'+'\t');
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[3]+'"></i> '+'30-40dB &nbsp;'+'\t');
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[4]+'"></i> '+'20-30dB &nbsp;'+'\t');
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[5]+'"></i> '+'10-20dB &nbsp;'+'\t');
+			$('#snrLegend').append('<i class="fa-solid fa-circle '+colorArray[6]+'"></i> '+'0-10dB &nbsp;'+'\t');
+		}
+	}
+	
+	// Encryption Chart
+	var encChart;
+	if (document.getElementById('chartEncryptionHistory')) {
+		dataEnc = {
+			labels: labels,
+			series: [enc_wpa3, enc_wpa3_ent, enc_wpa2, enc_wpa2_ent, enc_owe, enc_open, enc_other],
+		};
+	
+		encChart = Chartist.Line('#chartEncryptionHistory', dataEnc, optionsPage);
+		
+		encChart.on('draw', function(data) {
+			if (data.type === 'line' || data.type === 'area') {
+				data.element.animate({
+					d: {
+						begin: 0,
+						dur: 1000,
+						from: data.path
+							.clone()
+							.scale(1, 0)
+							.translate(0, data.chartRect.height())
+							.stringify(),
+						to: data.path.clone().stringify(),
+						easing: Chartist.Svg.Easing.easeOutQuint,
+					},
+				});
+			}
+		});
+		
+		if (document.getElementById('encLegend')) {
+			$('#encLegend').empty();
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[0]+'"></i> '+'WPA3-Personal &nbsp;'+'\t');
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[1]+'"></i> '+'WPA3-Enterprise &nbsp;'+'\t');
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[2]+'"></i> '+'WPA2-Personal &nbsp;'+'\t');
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[3]+'"></i> '+'WPA2-Enterprise &nbsp;'+'\t');
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[4]+'"></i> '+'OWE &nbsp;'+'\t');
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[5]+'"></i> '+'Open &nbsp;'+'\t');
+			$('#encLegend').append('<i class="fa-solid fa-circle '+colorArray[6]+'"></i> '+'Others &nbsp;'+'\t');
+		}
+	}
+	
+	
+	$('#ClientStatsModal').on('shown.bs.modal', function (e) {
+		if (bandChart) bandChart.update();
+		if (standardChart) standardChart.update();
+		if (kvrChart) kvrChart.update();
+		if (snrChart) snrChart.update();
+		if (encChart) encChart.update();
+	});
 }

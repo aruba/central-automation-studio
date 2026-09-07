@@ -878,7 +878,7 @@ input:focus {
     background: -o-linear-gradient(top, #447DF7 0%, rgba(83, 60, 225, 0.7) 100%);
     background: -ms-linear-gradient(top, #447DF7 0%, rgba(83, 60, 225, 0.7) 100%);
     background: linear-gradient(to bottom, #447DF7 0%, rgba(83, 60, 225, 0.7) 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .sidebar[data-color="azure"]:after,
@@ -890,7 +890,7 @@ input:focus {
     background: -o-linear-gradient(top, #23CCEF 0%, rgba(64, 145, 255, 0.7) 100%);
     background: -ms-linear-gradient(top, #23CCEF 0%, rgba(64, 145, 255, 0.7) 100%);
     background: linear-gradient(to bottom, #23CCEF 0%, rgba(64, 145, 255, 0.7) 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .sidebar[data-color="green"]:after,
@@ -902,7 +902,7 @@ input:focus {
     background: -o-linear-gradient(top, #87CB16 0%, rgba(109, 192, 48, 0.7) 100%);
     background: -ms-linear-gradient(top, #87CB16 0%, rgba(109, 192, 48, 0.7) 100%);
     background: linear-gradient(to bottom, #87CB16 0%, rgba(109, 192, 48, 0.7) 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .sidebar[data-color="orange"]:after,
@@ -914,7 +914,7 @@ input:focus {
     background: -o-linear-gradient(top, #FFA534 0%, rgba(255, 82, 33, 0.7) 100%);
     background: -ms-linear-gradient(top, #FFA534 0%, rgba(255, 82, 33, 0.7) 100%);
     background: linear-gradient(to bottom, #FFA534 0%, rgba(255, 82, 33, 0.7) 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .sidebar[data-color="red"]:after,
@@ -938,7 +938,7 @@ input:focus {
     background: -o-linear-gradient(top, #9368E9 0%, rgba(148, 59, 234, 0.7) 100%);
     background: -ms-linear-gradient(top, #9368E9 0%, rgba(148, 59, 234, 0.7) 100%);
     background: linear-gradient(to bottom, #9368E9 0%, rgba(148, 59, 234, 0.7) 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .main-panel {
@@ -1287,7 +1287,7 @@ input:focus {
     background: -o-linear-gradient(top, #797979 0%, #797979 100%);
     background: -ms-linear-gradient(top, #797979 0%, #797979 100%);
     background: linear-gradient(to bottom, #797979 0%, #797979 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-color="blue"]:after {
@@ -1298,7 +1298,7 @@ input:focus {
     background: -o-linear-gradient(top, #1F77D0 0%, #533ce1 100%);
     background: -ms-linear-gradient(top, #1F77D0 0%, #533ce1 100%);
     background: linear-gradient(to bottom, #1F77D0 0%, #533ce1 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-color="azure"]:after {
@@ -1309,7 +1309,7 @@ input:focus {
     background: -o-linear-gradient(top, #1DC7EA 0%, #4091ff 100%);
     background: -ms-linear-gradient(top, #1DC7EA 0%, #4091ff 100%);
     background: linear-gradient(to bottom, #1DC7EA 0%, #4091ff 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-color="green"]:after {
@@ -1320,7 +1320,7 @@ input:focus {
     background: -o-linear-gradient(top, #87CB16 0%, #6dc030 100%);
     background: -ms-linear-gradient(top, #87CB16 0%, #6dc030 100%);
     background: linear-gradient(to bottom, #87CB16 0%, #6dc030 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-color="orange"]:after {
@@ -1331,7 +1331,7 @@ input:focus {
     background: -o-linear-gradient(top, #FFA534 0%, #ff5221 100%);
     background: -ms-linear-gradient(top, #FFA534 0%, #ff5221 100%);
     background: linear-gradient(to bottom, #FFA534 0%, #ff5221 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-color="red"]:after {
@@ -1342,7 +1342,7 @@ input:focus {
     background: -o-linear-gradient(top, #FB404B 0%, #bb0502 100%);
     background: -ms-linear-gradient(top, #FB404B 0%, #bb0502 100%);
     background: linear-gradient(to bottom, #FB404B 0%, #bb0502 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-color="purple"]:after {
@@ -1353,7 +1353,7 @@ input:focus {
     background: -o-linear-gradient(top, #9368E9 0%, #943bea 100%);
     background: -ms-linear-gradient(top, #9368E9 0%, #943bea 100%);
     background: linear-gradient(to bottom, #9368E9 0%, #943bea 100%);
-    background-size: 150% 150%;
+    background-size: 100% 100%;
 }
 
 .full-page[data-image]:after,

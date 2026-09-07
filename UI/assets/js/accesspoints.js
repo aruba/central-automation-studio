@@ -33,7 +33,11 @@ function loadCurrentPageAP() {
 	updateAPGraphs();
 	loadBSSIDs();
 	getDevices();
-	getTopAPs();
+	$.when(authRefresh()).then(function() {
+		getTopAPs();
+		getAppRFMappings();
+	});
+	
 }
 
 function loadCurrentPageGroup() {
@@ -386,7 +390,6 @@ function updateAPGraphs() {
 		var table = $('#selected-device-table').DataTable();
 		var selectedAPs = [];
 		var val = $(this).attr('ct:meta');
-		console.log(this)
 		selectedAPs = apModels[val];
 		document.getElementById('selected-title').innerHTML = 'AP-' + val + ' model Access Points';
 
@@ -739,7 +742,8 @@ function loadBSSIDTable(currentBSSIDs) {
 		.remove();
 	var table = $('#bssid-table').DataTable();
 	$.each(currentBSSIDs, function() {
-		var ap = findDeviceInMonitoring(this.serial);
+		var bssidAP = this;
+		var ap = findDeviceInMonitoring(bssidAP.serial.toString());
 		if (ap) {
 			var status = '<i class="fa-solid fa-circle text-danger"></i>';
 			if (ap['status'] && ap['status'] == 'Up') {
@@ -752,18 +756,51 @@ function loadBSSIDTable(currentBSSIDs) {
 			var name = encodeURI(ap['name']);
 			var apiURL = localStorage.getItem('base_url');
 			var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
+			
 			$.each(this.radio_bssids, function() {
 				var radio = this;
+				
 				$.each(radio.bssids, function() {
 					// Add row to table
-					table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], this['macaddr'], ap['site'], ap['group_name']]);
+					var bssidMac = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Base Radio MAC: ' + radio['macaddr'] + '">'+this['macaddr']+'</span>'
+					
+					table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + '</strong></a>', status, ap['status'], ip_address, ap['model'], ap['serial'], this['essid'], bssidMac, radio.index, ap['site'], ap['group_name']]);
 	
-					apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], bssid: this['macaddr'] ,site: ap['site'], group: ap['group_name']});
+					apBSSIDs.push({ name: ap['name'], status: ap['status'], ip_address: ip_address, model: ap['model'], serial: ap['serial'], essid: this['essid'], base_mac:radio['macaddr'], bssid: this['macaddr'] ,site: ap['site'], group: ap['group_name'], radio:radio.index});
 				});
 			});
 			if (document.getElementById('bssid_count')) {
 				document.getElementById('bssid_count').innerHTML = apBSSIDs.length;
-	
+			
+				if (apBSSIDs.length > 0) {
+					$(document.getElementById('bssid_icon')).addClass('text-primary');
+					$(document.getElementById('bssid_icon')).removeClass('text-warning');
+					$(document.getElementById('bssid_icon')).removeClass('text-danger');
+				} else {
+					$(document.getElementById('bssid_icon')).removeClass('text-success');
+					$(document.getElementById('bssid_icon')).removeClass('text-warning');
+					$(document.getElementById('bssid_icon')).addClass('text-danger');
+				}
+			}
+		} else {
+			var status = '<i class="fa-solid fa-circle text-neutral"></i>';
+			var ip_address = '';
+			
+			$.each(this.radio_bssids, function() {
+				var radio = this;
+				
+				$.each(radio.bssids, function() {
+					// Add row to table
+					var bssidMac = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Base Radio MAC: ' + radio['macaddr'] + '">'+this['macaddr']+'</span>'
+					
+					table.row.add([bssidAP.name, status, '-', '-', '-', bssidAP['serial'], this['essid'], bssidMac, '-', '-']);
+			
+					apBSSIDs.push({ bssidAP, status: 'Unknown', ip_address: '-', model: '-', serial: bssidAP['serial'], essid: this['essid'], base_mac:radio['macaddr'], bssid: this['macaddr'] ,site: '-', group: '-', radio:radio.index});
+				});
+			});
+			if (document.getElementById('bssid_count')) {
+				document.getElementById('bssid_count').innerHTML = apBSSIDs.length;
+			
 				if (apBSSIDs.length > 0) {
 					$(document.getElementById('bssid_icon')).addClass('text-primary');
 					$(document.getElementById('bssid_icon')).removeClass('text-warning');
@@ -1016,7 +1053,7 @@ function downloadRadios() {
 	var csvLink = document.createElement('a');
 	csvLink.href = csvURL;
 
-	var table = $('#bssid-table').DataTable();
+	var table = $('#radios-table').DataTable();
 	var filter = table.search();
 	if (filter !== '') csvLink.setAttribute('download', 'Radios-' + filter.replace(/ /g, '_') + '.csv');
 	else csvLink.setAttribute('download', 'Radios.csv');
@@ -1082,7 +1119,9 @@ function buildCSVData(selectedGroup, selectedSite) {
 	var modelKey = 'MODEL';
 	var serialKey = 'SERIAL';
 	var essidKey = 'ESSID';
+	var baseKey = 'BASE RADIO MAC';
 	var bssidKey = 'BSSID';
+	var radioKey = 'RADIO INDEX';
 	var siteKey = 'SITE';
 	var groupKey = 'GROUP'
 
@@ -1094,7 +1133,7 @@ function buildCSVData(selectedGroup, selectedSite) {
 	// For each row in the filtered set
 	$.each(filteredRows[0], function() {
 		var row = apBSSIDs[this];
-		csvDataBuild.push({ [nameKey]: row.name, [statusKey]: row.status, [ipKey]: row.ip_address, [modelKey]: row.model, [serialKey]: row.serial, [essidKey]: row.essid, [bssidKey]: row.bssid, [siteKey]: row.site, [groupKey]: row.group});
+		csvDataBuild.push({ [nameKey]: row.name, [statusKey]: row.status, [ipKey]: row.ip_address, [modelKey]: row.model, [serialKey]: row.serial, [essidKey]: row.essid, [baseKey]:row.base_mac, [bssidKey]: row.bssid, [radioKey]: row.radio, [siteKey]: row.site, [groupKey]: row.group});
 	});
 
 	return csvDataBuild;

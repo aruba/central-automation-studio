@@ -164,6 +164,58 @@ function openIOTBulkConfig() {
 	$('#BulkIOTConfigModalLink').trigger('click');
 }
 
+function openFlexRadioConfig() {
+	// For each row in the filtered set
+	var table = $('#inventory-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+	
+	
+	select = document.getElementById('flexAPSelector');
+	if (select) select.options.length = 0;
+	
+	select = document.getElementById('flexModeSelector');
+	if (select) select.options.length = 0;
+	$('#flexModeSelector').selectpicker('refresh');
+
+	var apModels = [];
+	$.each(filteredRows[0], function() {
+		var device = filteredList[this];
+
+		if (device['model'] && ((device['model'].includes('615')) || (device['model'].includes('605')) || (device['model'].includes('735')) || (device['model'].includes('755')) || (device['model'].includes('763')) || (device['model'].includes('764')) || (device['model'].includes('765')))) {
+			if (!apModels.includes(device['model'])) apModels.push(device['model']);
+		}
+	});
+	
+	if (apModels.length == 0) {
+		showNotification('ca-ap-icon', 'No Flex Radio APs available at in the selected APs', 'bottom', 'center', 'warning');
+		return;
+	}
+
+	if ($('#flexAPSelector')) {
+		apModels.sort((a, b) => {
+			const apA = a.toUpperCase(); // ignore upper and lowercase
+			const apB = b.toUpperCase(); // ignore upper and lowercase
+			// Sort on Group name
+			if (apA < apB) {
+				return -1;
+			}
+			if (apA > apB) {
+				return 1;
+			}
+			return 0;
+		});
+		$.each(apModels, function() {
+			// Add group to the dropdown selector
+			$('#flexAPSelector').append($('<option>', { value: this.toString(), text: 'AP-'+this.toString() }));
+			if ($('#flexAPSelector').length != 0) {
+				$('#flexAPSelector').selectpicker('refresh');
+			}
+		});
+	}
+	
+	$('#FlexModeConfigModalLink').trigger('click');
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Antenna Action 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -301,6 +353,103 @@ function applyAP1xBulkChanges() {
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	2.4GHz Action 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function bulk24() {
+	var select = document.getElementById('groupselector');
+	manualGroup = select.value;
+	Swal.fire({
+		title: 'What to do?',
+		text: 'Choose an action to take on the 2.4GHz radios',
+		icon: 'question',
+		showDenyButton: true,
+		showCancelButton: true,
+		confirmButtonColor: '#3085d6',
+		denyButtonColor: '#d33',
+		cancelButtonColor: '#888',
+		confirmButtonText: 'Enable 2.4GHz',
+		denyButtonText: 'Disable 2.4GHz'
+	}).then(result => {
+		if (result.isConfirmed) {
+			applyEnable24Radio();
+		} if (result.isDenied) {
+			applyDisable24Radio();
+		}
+	});
+}
+
+function applyEnable24Radio() {
+	logStart('Enabling 2.4GHz radios...');
+	currentWorkflow = '';
+	// Build CSV with selected group name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(manualGroup, 'radio24');
+
+	processCSV(csvDataBlob);
+	// Enabling 2.4GHz radios
+	enable24radios();
+}
+
+function applyDisable24Radio() {
+	logStart('Disabling 2.4GHz radios...');
+	currentWorkflow = '';
+	// Build CSV with selected group name replaced in CSV
+	// Build into structure for processing in main.js
+	var csvDataBlob = {};
+	csvDataBlob['data'] = buildCSVData(manualGroup, 'radio24');
+
+	processCSV(csvDataBlob);
+	// Disable 2.4GHz radios
+	disable24radios();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Flex Radio Action 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+function applyFlexBandChanges() {
+	logStart('Configuring flex radios...');
+	
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var flexKey = 'FLEX RADIO MODE';
+	
+	
+	// For each row in the filtered set
+	// Build list of APs that match the selected model
+	var table = $('#inventory-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+	
+	select = document.getElementById('flexAPSelector');
+	var selectedModel = select.value;
+	if (selectedModel === '') {
+		showNotification('ca-compare-items', 'Select an AP model to continue', 'bottom', 'center', 'warning');
+		return;
+	}
+	
+	select = document.getElementById('flexModeSelector');
+	var selectedMode = select.value;
+	if (selectedMode === '') {
+		showNotification('ca-compare-items', 'Select a flex radio mode to configure the AP-'+selectedModel, 'bottom', 'center', 'warning');
+		return;
+	}
+
+	var csvDataBuild = [];	
+	$.each(filteredRows[0], function() {
+		var device = filteredList[this];
+		if (selectedModel === device['model']) {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [flexKey]: selectedMode });
+		}
+	});
+	
+	csvData = csvDataBuild;
+	setFlexRadioMode();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Build CSV with any required changes (group or site action)
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -328,7 +477,7 @@ function buildCSVData(selectedGroup, mode) {
 		// Find monitoring data if there is any
 		if (mode === 'antenna') {
 			if (device['model'].match(/^..4.*$/gi) || device['model'].match(/^..8.*$/gi)) {
-				csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [antenna0Key]: document.getElementById('antennaGain0').value, [antenna1Key]: document.getElementById('antennaGain1').value });
+				csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [antenna0Key]: document.getElementById('antennaGain0').value, [antenna1Key]: document.getElementById('antennaGain1').value, [antenna2Key]: document.getElementById('antennaGain2').value });
 			}
 		} else if (mode === 'rfprofile') {
 			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [rfProfileKey]: document.getElementById('radioSelector').value });
@@ -336,6 +485,8 @@ function buildCSVData(selectedGroup, mode) {
 			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [poeOptKey]: document.getElementById('poeopt').checked });
 		} else if (mode === 'ap1x') {
 			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [ap1xUsernameKey]: document.getElementById('ap1xUsername').value, [ap1xPasswordKey]: document.getElementById('ap1xPassword').value });
+		} else if (mode === 'radio24') {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr']});
 		}
 	});
 
@@ -387,3 +538,4 @@ function applyIOTBulkChanges() {
 	// Call 'main' function for association
 	associateAPsToCollector(selectedAPs, iotCollectors[selectedIOTCollector]);
 }	
+

@@ -42,9 +42,16 @@ var graphHeightMultiplier = 1;
 	Dashboard Functions
 ---------------------------------------------------------------------*/
 
-function loadDashboardData(refreshrate) {
+function loadEventDashboardData(refreshrate) {
+	if (checkClientStatsCollection()) {
+		console.log('Loading Client Statistics')
+		loadDataFromDB('collected_stats');
+	}
+	
 	if (!localStorage.getItem('dashboard_update')) {
+		
 		getDashboardData();
+		
 	} else {
 		var lastRefresh = new Date(parseInt(localStorage.getItem('dashboard_update')));
 		var now = new Date();
@@ -939,27 +946,33 @@ function loadClientCountForNetwork(network) {
 	var avgClientCounter = 0;
 	// filter the dashboard data based on the selected time window
 
-	var labelCounter = 0;
+	// Filter to just the selected network
+	var networkData = [];
 	for (const [key, value] of graphData) {
 		if (value[network]) {
-			var currentTimestamp = key * 1000;
-			var eventDate = new Date(+currentTimestamp);
-
-			if (labelCounter == graphData.length - 1) labels.push(moment(eventDate).format('LT'));
-			else if (labelCounter == Math.floor(graphData.length / 2) && timescale > 1440) labels.push(moment(eventDate).format('MMM D H:MM A'));
-			else if (labelCounter == Math.floor(graphData.length / 2)) labels.push(moment(eventDate).format('LT'));
-			else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
-			else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
-			else labels.push('');
-
-			series1.push(value[network]['client_count']);
-			labelCounter++;
-			
-			if (value[network]['client_count']) {
-				if (value[network]['client_count'] > maxClient) maxClient = value[network]['client_count'];
-				avgClient = avgClient + value[network]['client_count'];
-				avgClientCounter++;
-			}
+			networkData.push([key, value])
+		}
+	}
+	var labelCounter = 0;
+	for (const [key, value] of networkData) {
+		var currentTimestamp = key * 1000;
+		var eventDate = new Date(+currentTimestamp);
+		
+		if (labelCounter == networkData.length - 1) labels.push(moment(eventDate).format('LT'));
+		else if (labelCounter == Math.floor(networkData.length / 2) && timescale > 1440) labels.push(moment(eventDate).format('MMM D H:MM A'));
+		else if (labelCounter == Math.floor(networkData.length / 2)) labels.push(moment(eventDate).format('LT'));
+		else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
+		else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
+		else labels.push('');
+		
+		if (value[network]['client_count']) series1.push(value[network]['client_count']);
+		else series1.push(0)
+		labelCounter++;
+		
+		if (value[network]['client_count']) {
+			if (value[network]['client_count'] > maxClient) maxClient = value[network]['client_count'];
+			avgClient = avgClient + value[network]['client_count'];
+			avgClientCounter++;
 		}
 	}
 	
@@ -1198,31 +1211,36 @@ function loadBandwidthForNetwork(network) {
 	var totalThroughputUp = 0;
 	var totalThroughputDown = 0;
 	// filter the dashboard data based on the selected time window
-
-	var labelCounter = 0;
+	
+	// Filter to just the selected network
+	var networkData = [];
 	for (const [key, value] of graphData) {
 		if (value[network]) {
-			var currentTimestamp = key * 1000;
-			var eventDate = new Date(+currentTimestamp);
-
-			if (labelCounter == graphData.length - 1) labels.push(moment(eventDate).format('LT'));
-			else if (labelCounter == Math.floor(graphData.length / 2) && timescale > 1440) labels.push(moment(eventDate).format('MMM D H:MM A'));
-			else if (labelCounter == Math.floor(graphData.length / 2)) labels.push(moment(eventDate).format('LT'));
-			else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
-			else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
-			else labels.push('');
-			//console.log(value[network])
-			series1.push(value[network]['rx_data_bytes'] / 1024 / 1024);
-			series2.push(value[network]['tx_data_bytes'] / 1024 / 1024);
-			if (value[network]['rx_data_bytes'] && value[network]['tx_data_bytes']) {
-				// Calculate Throughput counts
-				if (value[network]['rx_data_bytes'] > peakThroughputUp) peakThroughputUp = value[network]['rx_data_bytes'];
-				if (value[network]['tx_data_bytes'] > peakThroughputDown) peakThroughputDown = value[network]['tx_data_bytes'];
-				totalThroughputUp = totalThroughputUp + value[network]['rx_data_bytes'];
-				totalThroughputDown = totalThroughputDown + value[network]['tx_data_bytes'];
-			}
-			labelCounter++;
+			networkData.push([key, value])
 		}
+	}
+	var labelCounter = 0;
+	for (const [key, value] of networkData) {
+		var currentTimestamp = key * 1000;
+		var eventDate = new Date(+currentTimestamp);
+		
+		if (labelCounter == networkData.length - 1) labels.push(moment(eventDate).format('LT'));
+		else if (labelCounter == Math.floor(networkData.length / 2) && timescale > 1440) labels.push(moment(eventDate).format('MMM D H:MM A'));
+		else if (labelCounter == Math.floor(networkData.length / 2)) labels.push(moment(eventDate).format('LT'));
+		else if (labelCounter == 0 && timescale > 180) labels.push(moment(eventDate).format('MMM D H:MM A'));
+		else if (labelCounter == 0) labels.push(moment(eventDate).format('LT'));
+		else labels.push('');
+		
+		series1.push(value[network]['rx_data_bytes'] / 1024 / 1024);
+		series2.push(value[network]['tx_data_bytes'] / 1024 / 1024);
+		if (value[network]['rx_data_bytes'] && value[network]['tx_data_bytes']) {
+			// Calculate Throughput counts
+			if (value[network]['rx_data_bytes'] > peakThroughputUp) peakThroughputUp = value[network]['rx_data_bytes'];
+			if (value[network]['tx_data_bytes'] > peakThroughputDown) peakThroughputDown = value[network]['tx_data_bytes'];
+			totalThroughputUp = totalThroughputUp + value[network]['rx_data_bytes'];
+			totalThroughputDown = totalThroughputDown + value[network]['tx_data_bytes'];
+		}
+		labelCounter++;
 	}
 	
 	$('#bandwidthDetails').empty();

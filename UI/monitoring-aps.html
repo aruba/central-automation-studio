@@ -31,12 +31,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=260612" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -729,7 +729,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 													Configure Country Codes
 												</button>
 											</a>
-											<button type="submit" class="btn btn-fill btn-warning" name="showBSSIDBtn" id="showBSSIDBtn" onclick="loadBSSIDTable()">Show BSSID Table</button>
+											<button type="submit" class="btn btn-fill btn-warning" name="showBSSIDBtn" id="showBSSIDBtn" onclick="showBSSIDs()">Show BSSID Table</button>
 											<button type="submit" class="btn btn-fill btn-info" id="downloadAPBtn" onclick="downloadDeviceCSV(DeviceType.AP)">
 												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
 												Download Device CSV
@@ -996,6 +996,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 														<th>Serial Number</th>
 														<th>ESSID</th>
 														<th>BSSID</th>
+														<th>Radio Index</th>
 														<th>Site</th>
 														<th>Group</th>
 													</thead>
@@ -1194,14 +1195,15 @@ Aaron Scott (WiFi Downunder) 2021-2025
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
-						<div class="modal-content">
+						<div class="modal-content log-modal">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-									<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
 								</div>
 							</div>
 						</div>
@@ -1572,7 +1574,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 													<div class="card-body">
 														<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 															<div class="fresh-datatables">
-																<table id="bssid-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+																<table id="neighbour-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 																	<thead>
 																		<th>AP/BSSID</th>
 																		<th>ESSID</th>
@@ -1582,6 +1584,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 																		<th>Tx Power</th>
 																		<th>Path Loss</th>
 																		<th>Discovery</th>
+																		<th>Last Update</th>
 																	</thead>
 																	<tbody></tbody>
 																</table>
@@ -1614,13 +1617,29 @@ Aaron Scott (WiFi Downunder) 2021-2025
 																<span class="form-check-sign"></span>Reveal Usernames
 															</label>
 														</div>
+														<div class="form-check float-right pe-3">
+															<label class="form-check-label-usernames">
+																<input class="form-check-input" type="checkbox" value="" id="showDatapathColumns" onclick="showDatapathColumns()" />
+																<span class="form-check-sign"></span>Show All Columns
+															</label>
+														</div>
 													</div>
 													<div class="card-body">
+														<div class="row">
+															<div class="col-md-2">
+																<select id="trafficselector" class="selectpicker" data-title="Select a traffic type..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="loadDatapathTable()">
+																	<option value="all" selected>All Traffic</option>
+																	<option value="lan">Local Network Only</option>
+																	<option value="wan">Internet Only</option>
+																</select>
+															</div>
+														</div>
 														<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
 															<div class="fresh-datatables">
 																<table id="datapath-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
 																	<thead>
 																		<th>#</th>
+																		<th> </th>
 																		<th> </th>
 																		<th>Src IP</th>
 																		<th>Dest IP</th>
@@ -2094,7 +2113,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 					searchPlaceholder: "Search Entries",
 				},
 				search: { caseInsensitive: true },
-				columnDefs: [{ type: 'ip-address', targets: [2,3] }, { type: 'title-string', targets: 1}, {'targets': [7,8], 'className': 'maxWidth-150' }],
+				columnDefs: [{ type: 'ip-address', targets: [2,3] }, { type: 'title-string', targets: 1}, {'targets': [7,8], 'className': 'maxWidth-150' }, { orderable: false, targets: 14 }, { "targets": [10,11,12,16], "visible": false }],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
 
@@ -2142,11 +2161,11 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		  });
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250406"></script>
-	<script src="assets/js/main.js?v=250406"></script>
+	<script src="assets/js/version.js?v=260313"></script>
+	<script src="assets/js/main.js?v=260612"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
 	<script src="assets/js/visualrf.js?v=241009"></script>
-	<script src="assets/js/troubleshooting-ap.js?v=241203"></script>
-	<script src="assets/js/accesspoints.js?v=250312"></script>
+	<script src="assets/js/troubleshooting-ap.js?v=260227"></script>
+	<script src="assets/js/accesspoints.js?v=251031"></script>
 </html>

@@ -145,7 +145,9 @@ function refreshClientDataTable() {
 function loadCurrentPageClient() {
 	populateOSSelector();
 	generateIPtoUsernameMapping();
-	getAppRFMappings();
+	$.when(authRefresh()).then(function() {
+		getAppRFMappings();
+	});
 }
 
 function populateOSSelector() {
@@ -453,7 +455,6 @@ function checkDisconnectStatus(taskID) {
 		}
 	
 		var response = JSON.parse(commandResults.responseBody);
-		console.log(response);
 		if (response.state === "SUCCESS") {
 			if (disconnectNotification) {
 				disconnectNotification.update({ type: 'success', message: disconnectingClient.name + ' was successfully disconnected' });
@@ -825,7 +826,6 @@ function getMobilityForClient(clientMac) {
 			table.row.add(['<span title="' + this['ts'] + '"</span>'+eventTime.toLocaleString(), this['network'], '<a href="' + centralURL + '" target="_blank"><strong>' + currentDevice.name + '</strong></a>', this['channel'], this['rssi'], this['previous_ap_name'] ? this['previous_ap_name']:'-', this['roaming_type'], this['latency']]);
 		});
 		$('[data-toggle="tooltip"]').tooltip();
-		console.log(response.trails);
 		
 		$('#mobility-table')
 		.DataTable()
@@ -899,6 +899,10 @@ function refreshDatapath() {
 function getDatapathForClient(clientMac, deviceSerial) {
 	datapathNotification = showLongNotification('ca-firewall', 'Getting Client Datapath information...', 'bottom', 'center', 'info');
 	var currentAP = findDeviceInMonitoring(deviceSerial);
+	if (!currentAP) {
+		datapathNotification.update({ message: "Unable to determine Client's AP", type: 'warning' });
+		return;
+	}
 	var data = JSON.stringify({ device_type: 'IAP', commands: [{ command_id: 45 }, { command_id: 211 }] });
 	includePAN = false;
 	if (currentAP.firmware_version.includes('10.6') || currentAP.firmware_version.includes('10.7') || currentAP.firmware_version.includes('10.8')) {
@@ -1108,33 +1112,49 @@ function loadDatapathTable() {
 			// Map protocol to name
 			sessionRow[2] = networkProtocols[sessionRow[2]];
 			
+			var srcIP = sessionRow[0];
+			var dstIP = sessionRow[1];
+			
+			// Add icon for local vs internet
+			var lanTraffic = false;
+			var wanTraffic = false;
+			if (isPrivateIP(srcIP) && isPrivateIP(dstIP)) {
+				if (sessionRow[12].includes('D')) sessionRow.unshift('<span title="LAN"</span><i class="fa-solid fa-network-wired text-danger"></i>');
+				else sessionRow.unshift('<span title="LAN"</span><i class="fa-solid fa-network-wired text-success"></i>');
+				lanTraffic = true;
+			} else {
+				if (sessionRow[12].includes('D')) sessionRow.unshift('<span title="LAN"</span><i class="fa-solid fa-globe text-danger"></i>');
+				else sessionRow.unshift('<span title="Internet"</span><i class="fa-solid fa-globe text-success"></i>');
+				wanTraffic = true;
+			}
+			
 			// Add session direction arrow (and colour red is Denied)
-			if (isPrivateIP(sessionRow[0])) {
+			if (srcIP === selectedClient['ip_address']) {
 				sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up"></i>');
 			} else {
+				if (sessionRow[14].includes('D')) sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down text-danger"></i>');
 				sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down"></i>');
 			}
 			// Add the session pair number as the first element in the row, then add row to table
 			sessionRow.unshift(i+1);
-			var srcIP = sessionRow[2];
-			var dstIP = sessionRow[3];
+			
 			if (document.getElementById('revealUsernames').checked) {
-				if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+srcIP+'">'+ipToUsername[srcIP]+'</span>';
-				if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+dstIP+'">'+ipToUsername[dstIP]+'</span>';
+				if (ipToUsername[srcIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+srcIP+'">'+ipToUsername[srcIP]+'</span>';
+				if (ipToUsername[dstIP]) sessionRow[4] = '<span data-toggle="tooltip" data-placement="top" title="'+dstIP+'">'+ipToUsername[dstIP]+'</span>';
 			} else {
-				if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
-				if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
+				if (ipToUsername[srcIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
+				if (ipToUsername[dstIP]) sessionRow[4] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
 			}
 			if (includePAN) {
-				if (ipToPAN[srcIP]) sessionRow[15] = ipToPAN[srcIP];
-				else sessionRow[15] = '-';
+				if (ipToPAN[srcIP]) sessionRow[16] = ipToPAN[srcIP];
+				else sessionRow[16] = '-';
 			} else {
-				sessionRow[15] = '-'
+				sessionRow[16] = '-'
 			}
-			if (sessionRow[14].includes('D')) sessionRow.splice(14, 0, '<i class="fa-solid fa-circle text-danger"></i>');
-			else sessionRow.splice(14, 0, '<i class="fa-solid fa-circle text-success"></i>');
-			
-			var rowNode = table.row.add(sessionRow).draw().node();
+		
+			// Add to table if traffic type matches
+			trafficMode = document.getElementById('trafficselector').value;
+			if ((trafficMode === 'all') || ((trafficMode === 'wan') && wanTraffic) || ((trafficMode === 'lan') && lanTraffic)) table.row.add(sessionRow).draw().node();
 			
 			
 		});
@@ -1164,6 +1184,18 @@ function generateIPtoUsernameMapping() {
 	$.each(allClients, function() {
 		if (this.ip_address && this.name !== this.macaddr) ipToUsername[this.ip_address] = this.name;
 	});
+}
+
+function showDatapathColumns() {
+	var table = $('#datapath-table').DataTable();
+	let column = table.column(10);
+	column.visible(!column.visible());
+	column = table.column(11);
+	column.visible(!column.visible());
+	column = table.column(12);
+	column.visible(!column.visible());
+	column = table.column(17);
+	column.visible(!column.visible());
 }
 
 

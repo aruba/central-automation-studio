@@ -19,11 +19,14 @@ var meshNotifications = {};
 var allWiredClients = [];
 var allWirelessClients = [];
 
+var radioDictionary = {};
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Override functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function loadCurrentPageAP() {
+	generateRadioDictionary();
 	getPortalAPs();
 
 	// Support focus mode (clicking on an AP)
@@ -64,20 +67,20 @@ function loadCurrentPageClient() {
 		Utility functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
-function findAPForRadio(radiomac) {
-	// Check APs for radio mac
-	var foundDevice = null;
+function generateRadioDictionary() {
 	var aps = getAPs();
-	$.each(aps, function() {
-		for (var i = 0, len = this.radios.length; i < len; i++) {
-			if (this.radios[i]['macaddr'] === radiomac) {
-				foundDevice = this;
-				return false; // break  out of the for loop
-			}
+	radioDictionary = {};
+	
+	for (const obj of aps) {
+		for (const radio of obj.radios) {
+			const radioMac = radio.macaddr.toUpperCase();
+			radioDictionary[radioMac] = obj;
 		}
-	});
+	}
+}
 
-	return foundDevice;
+function findAPForRadio(radiomac) {
+	return radioDictionary[radiomac.toUpperCase()];
 }
 
 function findAPForBSSID(bssidMac) {

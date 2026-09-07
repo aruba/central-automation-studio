@@ -30,12 +30,12 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=260612" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -92,6 +92,8 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 									<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
 										<a href="documentation.html" class="dropdown-item"> <i class="central-icon ca-book-open"></i> Help </a>
 										<a href="settings.html" class="dropdown-item"> <i class="nc-icon nc-settings-gear-64"></i> Settings </a>
+										<i><hr class="menu-divider"></i>
+										<a href="https://www.paypal.com/donate/?hosted_button_id=36C8EVZGZN48J" class="dropdown-item"> <i class="central-icon ca-money-coins"></i> Donate </a>
 									</div>
 								</li>
 							</ul>
@@ -482,7 +484,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 																<i class="central-icon ca-compare-items"></i>
 															</div>
 														</td>
-														<td>Set Flexible Dual Band Mode</td>
+														<td>Set Flexible Radio Mode</td>
 													</tr>
 													<tr class="clickable-row" data-href="enable24">
 														<td>
@@ -500,6 +502,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 														</td>
 														<td>Disable 2.4GHz radios</td>
 													</tr>
+													<tr class="clickable-row" data-href="configureStatic">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-wifi"></i>
+															</div>
+														</td>
+														<td>Set Radio Channel and Power</td>
+													</tr>
 													<tr class="clickable-row" data-href="antennaGain">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -516,6 +526,22 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 														</td>
 														<td>Set Dynamic Antenna Mode (AP-679)</td>
 													</tr>
+													<tr class="clickable-row" data-href="antennaDirection">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-antDirectionMode"></i>
+															</div>
+														</td>
+														<td>Set Antenna Direction Mode (AP-763/AP-765)</td>
+													</tr>
+													<tr class="clickable-row" data-href="csvcountrycode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-world-pin"></i>
+															</div>
+														</td>
+														<td>Set AP Country Codes</td>
+													</tr>
 													<tr class="clickable-row" data-href="apAltitude">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -524,14 +550,6 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 														</td>
 														<td>Set AP Altitude</td>
 													</tr>
-													<tr class="clickable-row" data-href="setSwarmMode">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-networking"></i>
-															</div>
-														</td>
-														<td>Set AP Swarm Mode</td>
-													</tr>
 													<tr class="clickable-row" data-href="installType">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -539,6 +557,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 															</div>
 														</td>
 														<td>Set AP Installation Type</td>
+													</tr>
+													<tr class="clickable-row" data-href="setSwarmMode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-networking"></i>
+															</div>
+														</td>
+														<td>Set AP Swarm Mode</td>
 													</tr>
 													<tr class="clickable-row" data-href="staticIP">
 														<td>
@@ -594,8 +620,16 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 										<div class="table-full-width">
 											<table class="table table-hover">
 												<tbody>
+													<tr class="clickable-row" data-href="gatewayTimezones">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-pin-time"></i>
+															</div>
+														</td>
+														<td>Set Gateway Timezones</td>
+													</tr>
 													<tr class="clickable-row" data-href="ledOff">
-														<td style="width:92px;">
+														<td>
 															<div class="icon-big text-center icon-warning">
 																<i class="central-icon ca-bulb-61"></i>
 															</div>
@@ -609,14 +643,6 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 															</div>
 														</td>
 														<td>Turn on AP LEDs</td>
-													</tr>
-													<tr class="clickable-row" data-href="gatewayTimezones">
-														<td>
-															<div class="icon-big text-center icon-warning">
-																<i class="central-icon ca-pin-time"></i>
-															</div>
-														</td>
-														<td>Set Gateway Timezones</td>
 													</tr>
 													<tr class="clickable-row" data-href="iotAssociation">
 														<td>
@@ -1079,7 +1105,7 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
 
 									</div>
-									<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
 								</div>
 							</div>
 						</div>
@@ -1143,10 +1169,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 														<label class="col-md-8" data-toggle="tooltip" data-placement="bottom" data-html="true" title="2.4GHz Radio"><strong>Radio 1</strong></label>
 														<input type="text" placeholder="5" class="form-control" id="antennaGain1" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');">
 													</div>
-													<!--<div class="col-md-3">
-														<label class="col-md-8"><strong>Radio 2</strong></label>
+													<div class="col-md-3">
+														<label class="col-md-8" data-toggle="tooltip" data-placement="bottom" data-html="true" title="6GHz Radio"><strong>Radio 2</strong></label>
 														<input type="text" placeholder="5" class="form-control" id="antennaGain2" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');">
-													</div>-->
+													</div>
 												</div>
 											</div>
 										</form>
@@ -1497,8 +1523,8 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250406"></script>
-	<script src="assets/js/main.js?v=250406"></script>
+	<script src="assets/js/version.js?v=260313"></script>
+	<script src="assets/js/main.js?v=260612"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
 </html>

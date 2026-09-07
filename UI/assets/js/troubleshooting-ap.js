@@ -13,6 +13,8 @@ var apBSSIDs = {};
 var neighbourCache = {};
 var radioClients = {};
 
+var radioDictionary = {};
+
 var currentAP;
 var selectedAP;
 var currentAPSerial;
@@ -39,6 +41,8 @@ var vrfAccountID;
 var floorplanImgs = {};
 
 var cliCommands;
+var cliSkipped = [216,217,485,461,460,494,486,487,488,496,366,165,272,367,491,489,490,493,446,449,416,417,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442];
+
 
 var snr0 = [];
 var snr10 = [];
@@ -53,20 +57,20 @@ var snrLabels = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60+'];
 		Utility functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
-function findAPForRadio(radiomac) {
-	// Check APs for radio mac
-	var foundDevice = null;
+function generateRadioDictionary() {
 	var aps = getAPs();
-	$.each(aps, function() {
-		for (var i = 0, len = this.radios.length; i < len; i++) {
-			if (this.radios[i]['macaddr'] === radiomac) {
-				foundDevice = this;
-				return false; // break  out of the for loop
-			}
+	radioDictionary = {};
+	
+	for (const obj of aps) {
+		for (const radio of obj.radios) {
+			const radioMac = radio.macaddr.toUpperCase();
+			radioDictionary[radioMac] = obj;
 		}
-	});
+	}
+}
 
-	return foundDevice;
+function findAPForRadio(radiomac) {
+	return radioDictionary[radiomac.toUpperCase()];
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,11 +80,14 @@ function loadCurrentPageAP() {
 	apImage = new Image();
 	apImage.src = 'assets/img/ap-icon.svg';
 	
-	getDevices();
-	refreshBSSIDs();
-	getAppRFMappings();
-	getCLICommands();
-	getCampus(false);
+	$.when(authRefresh()).then(function() {
+		generateRadioDictionary();
+		getDevices();
+		refreshBSSIDs();
+		getAppRFMappings();
+		getCLICommands();
+		getCampus(false);
+	});
 	$('[data-toggle="tooltip"]').tooltip();
 }
 
@@ -245,6 +252,9 @@ function getCLICommands() {
 			logError('Central Server Error (503): ' + commandResults.reason + ' (/troubleshooting/v1/commands?device_type=IAP)');
 			apiErrorCount++;
 			return;
+		} else if (commandResults.hasOwnProperty('error') && commandResults.error === '"invalid_token"') {
+			authRefresh()
+			return;
 		} else if (commandResults.hasOwnProperty('error_code')) {
 			logError(commandResults.description);
 			apiErrorCount++;
@@ -272,7 +282,7 @@ function getCLICommands() {
 			
 			
 			$.each(cliCommands, function() {
-				if (!this.arguments && !this['command'].includes('show ap')) $('#cliselector').append($('<option>', { value: this['command_id'], text: this['command'] }));
+				if (!this.arguments && !cliSkipped.includes(this['command_id'])) $('#cliselector').append($('<option>', { value: this['command_id'], text: this['command'] }));
 			});
 			
 			if ($('#cliselector').length != 0) {
@@ -482,7 +492,9 @@ function showAPDetails(currentAP, apData) {
 		$(selectedCol).append('<li>Status: <strong>'+interfaceStatusString+'</strong></li>');
 		$(selectedCol).append('<li>Operational State: <strong>'+operStatusString+'</strong></li>');
 		$(selectedCol).append('<li>Admin State: <strong>'+adminStatusString+'</strong></li>');
-		$(selectedCol).append('<li>Link Speed: <strong>' + this.link_speed + '</strong></li>');
+		var linkSpeed = this.link_speed;
+		if (linkSpeed < 1000) linkSpeed = '<span style="color:red;">'+linkSpeed+'</span>'
+		$(selectedCol).append('<li>Link Speed: <strong>' + linkSpeed + '</strong></li>');
 		$(selectedCol).append('<li>Duplex Mode: <strong>' + this.duplex_mode + '</strong></li>');
 		$(selectedCol).append('<li>MAC Address: <strong>' + this.macaddr + '</strong></li>');
 		$(selectedCol).append('<li>&nbsp;</li>');
@@ -579,14 +591,14 @@ function locateAP(apSerial) {
 				}
 			} else {
 				if (visualRFNotification) {
-					visualRFNotification.update({ message: 'AP was not able to be located', type: 'warning' });
+					visualRFNotification.update({ message: 'AP was not able to be located on a floorplan', type: 'warning' });
 					setTimeout(visualRFNotification.close, 3000);
 				}
 			}
 		});
 	} else {
 		if (visualRFNotification) {
-			visualRFNotification.update({ message: 'AP was not able to be located', type: 'warning' });
+			visualRFNotification.update({ message: 'AP was not able to be located on a floorplan', type: 'warning' });
 			setTimeout(visualRFNotification.close, 3000);
 		}
 	}
@@ -1074,7 +1086,6 @@ function displayRadioStats(radioId) {
 		var radioBtns = $('button[id^="radioBtn"]')
 		$.each(radioBtns, function() {
 			if (this.id === 'radioBtn'+radioId) {
-				console.log('found')
 				$(document.getElementById(this.id)).removeClass('btn-outline');
 				$(document.getElementById(this.id)).addClass('btn-fill');
 			} else {
@@ -1215,14 +1226,25 @@ function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
 				// General Column
 				$('#generalRFIssues').empty();
 				$('#generalRFIssues').append('<li>Total Radio Resets: <strong>' + output['Total Radio Resets'] + '</strong></li>');
-				$('#generalRFIssues').append('<li>Power Changes: <strong>' + output['TX Power Changes'] + '</strong></li>');
-				$('#generalRFIssues').append('<li>Channel Changes: <strong>' + output['Channel Changes'] + '</strong></li>');
+				
+				var powerChanges = 0;
+				if (output['TX Power Changes']) powerChanges = output['TX Power Changes'];
+				$('#generalRFIssues').append('<li>Power Changes: <strong>' + powerChanges + '</strong></li>');
+				
+				var chChanges = 0;
+				if (output['Channel Changes']) chChanges = output['Channel Changes'];
+				$('#generalRFIssues').append('<li>Channel Changes: <strong>' + chChanges + '</strong></li>');
 				$('#generalRFIssues').append('<li>&nbsp;</li>');
 				$('#generalRFIssues').append('<li>EIRP: <strong>' + output['EIRP'] + 'dBm</strong></li>');
 				$('#generalRFIssues').append('<li>Noise Floor: <strong>-' + output['Current Noise Floor'] + 'dBm</strong></li>');
 
 				// Tx Column
 				$('#txIssues').empty();
+				var retryRate =  parseInt(output['Tx Data Transmitted Retried'])/parseInt(output['Tx Data Transmitted'])*100;
+				if ((retryRate.toFixed(2) > 0) && (retryRate.toFixed(4) < 1)) retryRate = '<1';
+				else retryRate = retryRate.toFixed(0);
+				$('#txIssues').append('<li>Retry Rate: <strong>' +retryRate + '%</strong></li>');
+				$('#txIssues').append('<li>&nbsp;</li>');
 				$('#txIssues').append('<li>Channel Busy 1s: <strong>' + output['Channel Busy 1s'] + '</strong></li>');
 				$('#txIssues').append('<li>Channel Busy 4s: <strong>' + output['Channel Busy 4s'] + '</strong></li>');
 				$('#txIssues').append('<li>Channel Busy 64s: <strong>' + output['Channel Busy 64s'] + '</strong></li>');
@@ -1250,6 +1272,12 @@ function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
 
 				// Rx Column
 				$('#rxIssues').empty();
+				retryRate =  parseInt(output['Rx Retry Frames'])/parseInt(output['Rx Frames Received'])*100;
+				if ((retryRate.toFixed(2) > 0) && (retryRate.toFixed(4) < 1)) retryRate = '<1';
+				else retryRate = retryRate.toFixed(0);
+				$('#rxIssues').append('<li>Retry Rate: <strong>' +retryRate + '%</strong></li>');
+				$('#rxIssues').append('<li>&nbsp;</li>');
+				
 				var lprt = 0;
 				if (output['Probe Request Rejects']) lprt = output['Probe Request Rejects'];
 				if (lprt > 0) $('#rxIssues').append('<li>Low Probe Threshold Rejects: <strong>' + lprt + '</strong></li>');
@@ -1258,7 +1286,9 @@ function checkDebugRadioResult(session_id, deviceSerial, radioBand) {
 				if (output['Auth Request Rejects']) art = output['Auth Request Rejects'];
 				if (art > 0) $('#rxIssues').append('<li>Auth Request Rejects: <strong>' + art + '</strong></li>');
 
-				$('#rxIssues').append('<li>Radar Events: <strong>' + output['Rx RADAR Events'] + '</strong></li>');
+				var radarEvents = 0;
+				if (output['Rx RADAR Events']) radarEvents = output['Rx RADAR Events'];
+				$('#rxIssues').append('<li>Radar Events: <strong>' + radarEvents + '</strong></li>');
 
 				var assocRejects = 0;
 				if (output['ANUL Assoc Rejects']) assocRejects = output['ANUL Assoc Rejects'];
@@ -1938,7 +1968,6 @@ function checkDebugTech(session_id, deviceSerial) {
 				showNotification('ca-window-code', response.message.replace(' Please try after sometime', '.'), 'bottom', 'center', 'info');
 				setTimeout(checkDebugTech, 10000, session_id, response.serial);
 			} else if (response.status === 'COMPLETED') {
-				console.log(response.output);
 				/*//var results = decodeURI(response.output);
 				var results = response.output;
 
@@ -2227,11 +2256,11 @@ function checkDebugNeighbours(session_id, deviceSerial) {
 				neighbourTableData = [];
 				currentAP = findDeviceInMonitoring(response.serial);
 				
-				$('#bssid-table')
+				$('#neighbour-table')
 					.DataTable()
 					.rows()
 					.remove();
-				var table = $('#bssid-table').DataTable();
+				var table = $('#neighbour-table').DataTable();
 
 				var results = response.output;
 
@@ -2270,7 +2299,8 @@ function checkDebugNeighbours(session_id, deviceSerial) {
 						var pathLoss = this.substring(pathLossLocation, flagsLocation).trim();
 						var flags = this.substring(flagsLocation, updateLocation).trim();
 						var update = this.substring(updateLocation).trim();
-
+						update = update.split('(')[0];
+						
 						var ap = apBSSIDs[bssid];
 						if (ap) {
 							// Make AP Name as a link to Central
@@ -2278,17 +2308,17 @@ function checkDebugNeighbours(session_id, deviceSerial) {
 							var apiURL = localStorage.getItem('base_url');
 							var centralURL = centralURLs[apiURL] + '/frontend/#/APDETAILV2/' + ap['serial'] + '?casn=' + ap['serial'] + '&cdcn=' + name + '&nc=access_point';
 
-							table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank" data-toggle="tooltip" data-placement="right" title="' + bssid + '"><strong>' + ap['name'] + '</strong></a>', essid, band, channel, snr, txPower, pathLoss, flags]);
+							table.row.add([ap['swarm_master'] ? '<a href="' + centralURL + '" target="_blank"><strong>' + ap['name'] + ' (VC)</strong></a>' : '<a href="' + centralURL + '" target="_blank" data-toggle="tooltip" data-placement="right" title="' + bssid + '"><strong>' + ap['name'] + '</strong></a>', essid, band, channel, snr, txPower, pathLoss, flags, update]);
 							
-							neighbourTableData.push([ap['name'], essid, band, channel, snr, txPower, pathLoss, flags]);
+							neighbourTableData.push([ap['name'], essid, band, channel, snr, txPower, pathLoss, flags, update]);
 						} else {
-							table.row.add([bssid, essid, band, channel, snr, txPower, pathLoss, flags]);
-							neighbourTableData.push([bssid, essid, band, channel, snr, txPower, pathLoss, flags]);
+							table.row.add([bssid, essid, band, channel, snr, txPower, pathLoss, flags, update]);
+							neighbourTableData.push([bssid, essid, band, channel, snr, txPower, pathLoss, flags, update]);
 						}
 					});
 				});
 
-				$('#bssid-table')
+				$('#neighbour-table')
 					.DataTable()
 					.rows()
 					.draw();
@@ -2522,6 +2552,7 @@ function checkDatapathStatus(session_id, deviceSerial) {
 				var dpiResults = results.substring(pos);
 				var dpiLines = dpiResults.split('\n');
 				var tableIndex = dpiLines.indexOf('----------------  --------------  ---- ----- ----- -------------------------- ------------------------- ------ ------- ----- ------- ------ ------------- ---------');
+				if (tableIndex == -1) tableIndex = dpiLines.indexOf('----------------  --------------  ---- ----- ----- -------------------------- ------------------------- ------ ------------ ------------ ------------ ------- ----- ------- ---------- ------ ------------- ---------');
 				dpiLines.splice(0,tableIndex+1);
 				var tableIndex = dpiLines.indexOf('');
 				dpiLines.splice(tableIndex);
@@ -2612,41 +2643,58 @@ function loadDatapathTable() {
 			// Map protocol to name
 			sessionRow[2] = networkProtocols[sessionRow[2]];
 			
+			var srcIP = sessionRow[0];
+			var dstIP = sessionRow[1];
+			
+			// Add icon for local vs internet
+			var lanTraffic = false;
+			var wanTraffic = false;
+			
+			// Add icon for lan vs internet traffic and colour it based on D in flags
+			if (isPrivateIP(srcIP) && isPrivateIP(dstIP)) {
+				if (sessionRow[12].includes('D')) sessionRow.unshift('<span title="LAN"</span><i class="fa-solid fa-network-wired text-danger"></i>');
+				else sessionRow.unshift('<span title="LAN"</span><i class="fa-solid fa-network-wired text-success"></i>');
+				lanTraffic = true;
+			} else {
+				if (sessionRow[12].includes('D')) sessionRow.unshift('<span title="LAN"</span><i class="fa-solid fa-globe text-danger"></i>');
+				else sessionRow.unshift('<span title="Internet"</span><i class="fa-solid fa-globe text-success"></i>');
+				wanTraffic = true;
+			}
+			
 			// Add session direction arrow (and colour red is Denied)
-			if (isPrivateIP(sessionRow[0])) {
+			if (isPrivateIP(srcIP)) {
 				sessionRow.unshift('<span title="Outbound"</span><i class="fa-solid fa-caret-up"></i>');
 			} else {
-				if (sessionRow[13].includes('D')) sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down text-danger"></i>');
+				if (sessionRow[14].includes('D')) sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down text-danger"></i>');
 				sessionRow.unshift('<span title="Inbound"</span><i class="fa-solid fa-caret-down"></i>');
 			}
 			// Add the session pair number as the first element in the row, then add row to table
 			sessionRow.unshift(i+1);
-			var srcIP = sessionRow[2];
-			var dstIP = sessionRow[3];
 			if (document.getElementById('revealUsernames').checked) {
-				if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+srcIP+'">'+ipToUsername[srcIP]+'</span>';
-				if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+dstIP+'">'+ipToUsername[dstIP]+'</span>';
+				if (ipToUsername[srcIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+srcIP+'">'+ipToUsername[srcIP]+'</span>';
+				if (ipToUsername[dstIP]) sessionRow[4] = '<span data-toggle="tooltip" data-placement="top" title="'+dstIP+'">'+ipToUsername[dstIP]+'</span>';
 			} else {
-				if (ipToUsername[srcIP]) sessionRow[2] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
-				if (ipToUsername[dstIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
+				if (ipToUsername[srcIP]) sessionRow[3] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[srcIP]+'">'+srcIP+'</span>';
+				if (ipToUsername[dstIP]) sessionRow[4] = '<span data-toggle="tooltip" data-placement="top" title="'+ipToUsername[dstIP]+'">'+dstIP+'</span>';
 			}
 			if (includePAN) {
-				if (ipToPAN[srcIP]) sessionRow[15] = ipToPAN[srcIP];
-				else sessionRow[15] = '-'
+				if (ipToPAN[srcIP]) sessionRow[16] = ipToPAN[srcIP];
+				else sessionRow[16] = '-'
 			} else {
-				sessionRow[15] = '-'
+				sessionRow[16] = '-'
 			}
 				
-			if (sessionRow[14].includes('D')) sessionRow.splice(14, 0, '<i class="fa-solid fa-circle text-danger"></i>');
-			else sessionRow.splice(14, 0, '<i class="fa-solid fa-circle text-success"></i>');
 			
-			var rowNode = table.row.add(sessionRow).draw().node();
+			// Add to table if traffic type matches
+			trafficMode = document.getElementById('trafficselector').value;
+			if ((trafficMode === 'all') || ((trafficMode === 'wan') && wanTraffic) || ((trafficMode === 'lan') && lanTraffic)) table.row.add(sessionRow).draw().node();
 			
 			
 		});
 	}
 	
 	$('#datapath-table').DataTable().columns.adjust().draw();
+	$('[data-toggle="tooltip"]').tooltip();
 }
 
 function isIpAddress(ip) { 
@@ -2670,6 +2718,18 @@ function generateIPtoUsernameMapping() {
 	$.each(allClients, function() {
 		if (this.ip_address && this.name !== this.macaddr) ipToUsername[this.ip_address] = this.name;
 	});
+}
+
+function showDatapathColumns() {
+	var table = $('#datapath-table').DataTable();
+	let column = table.column(10);
+	column.visible(!column.visible());
+	column = table.column(11);
+	column.visible(!column.visible());
+	column = table.column(12);
+	column.visible(!column.visible());
+	column = table.column(17);
+	column.visible(!column.visible());
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------

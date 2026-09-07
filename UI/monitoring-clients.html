@@ -31,12 +31,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=260612" rel="stylesheet" />
 		<link href="assets/css/chartist-plugin-tooltip.css" rel="stylesheet" />
 	</head>
 
@@ -297,7 +297,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-6">
 								<div class="card">
 									<div class="card-header ">
-										<h4 class="card-title">Client Signal-to-Noise Ratio</h4>
+										<h4 class="card-title">Client Signal-to-Noise Ratio</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-snr'><i class="central-icon ca-chart-bar-32"></i></a>
 										<p class="card-category">SNR in dB</p>
 										<p></p>
 									</div>
@@ -311,7 +311,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-3">
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
-										<h4 class="card-title">Wi-Fi Protocol</h4>
+										<h4 class="card-title">Wi-Fi Protocol</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-standard'><i class="central-icon ca-chart-bar-32"></i></a>
 										<p class="card-category">Breakdown of 802.11 support</p>
 										<p></p>
 									</div>
@@ -327,7 +327,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-3">
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
-										<h4 class="card-title">Client Encryption</h4>
+										<h4 class="card-title">Client Encryption</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-encryption'><i class="central-icon ca-chart-bar-32"></i></a>
 										<p class="card-category">Percentage of Clients</p>
 										<p></p>
 									</div>
@@ -343,8 +343,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-3">
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
-										<h4 class="card-title">Radio Band</h4>
-										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz</p>
+										<h4 class="card-title">Radio Band</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-band'><i class="central-icon ca-chart-bar-32"></i></a>
+										<p class="card-category">6GHz vs 5GHz vs 2.4GHz</p>
 										<p></p>
 									</div>
 
@@ -352,7 +352,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										<div id="chartBand" class="ct-chart ct-perfect-fifth" style="height:300px; padding:0px; margin:0px;"></div>
 									</div>
 									<div class="card-footer ">
-										<div class="legend"><a onclick="displaySelectedClientsBand('6GHz')"><i class="fa-solid fa-circle text-info"></i> 6Ghz</a> <a onclick="displaySelectedClientsBand('5GHz')"><i class="fa-solid fa-circle text-danger"></i> 5GHz</a> <a onclick="displaySelectedClientsBand('2.4GHz')"><i class="fa-solid fa-circle text-warning"></i> 2.4GHz</a></div>
+										<div class="legend"><a onclick="displaySelectedClientsBand('6GHz')"><i class="fa-solid fa-circle text-info"></i> 6GHz</a> <a onclick="displaySelectedClientsBand('5GHz')"><i class="fa-solid fa-circle text-danger"></i> 5GHz</a> <a onclick="displaySelectedClientsBand('2.4GHz')"><i class="fa-solid fa-circle text-warning"></i> 2.4GHz</a></div>
 									</div>
 								</div>
 							</div>
@@ -360,7 +360,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
 										<h4 class="card-title">Authentication Types</h4>
-										<p class="card-category">6GHz vs 5GHz vs 2.4Ghz vs Wired</p>
+										<p class="card-category">6GHz vs 5GHz vs 2.4GHz vs Wired</p>
 										<p></p>
 									</div>
 
@@ -378,7 +378,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-3">
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
-										<h4 class="card-title">802.11k Support</h4>
+										<h4 class="card-title">802.11k Support</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-k'><i class="central-icon ca-chart-bar-32"></i></a>
 										<p class="card-category">Percentage of Clients</p>
 										<p></p>
 									</div>
@@ -394,7 +394,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-3">
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
-										<h4 class="card-title">802.11v Support</h4>
+										<h4 class="card-title">802.11v Support</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-v'><i class="central-icon ca-chart-bar-32"></i></a>
 										<p class="card-category">Percentage of Clients</p>
 										<p></p>
 									</div>
@@ -410,7 +410,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							<div class="col-md-3">
 								<div class="card" style="height:540px;">
 									<div class="card-header ">
-										<h4 class="card-title">802.11r Support</h4>
+										<h4 class="card-title">802.11r Support</h4><a class="refresh-link" onclick="showClientStatGraphs()" id='history-r'><i class="central-icon ca-chart-bar-32"></i></a>
 										<p class="card-category">Percentage of Clients</p>
 										<p></p>
 									</div>
@@ -777,14 +777,15 @@ Aaron Scott (WiFi Downunder) 2021-2025
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
-						<div class="modal-content">
+						<div class="modal-content log-modal">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-									<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
 								</div>
 							</div>
 						</div>
@@ -863,11 +864,114 @@ Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Client Stats Modal -->
+				<div class="modal fade modal-mini modal-primary" id="ClientStatsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Wi-Fi Client Stats</h4><a class="refresh-link" onclick="clearClientStats()"><i class="central-icon ca-bin"></i></a>
+									</div>
+									<div class="card-body" id="clientStatsBody">
+										<div class="row" id='band'>
+											<div class="col-md-12">
+												<div class="card" id="graph1">
+													<div class="card-header ">
+														<h4 class="card-title">Radio Band</h4>
+														<p></p>
+													</div>
+													
+													<div class="card-body" style="height:400px; width:100%">
+														<div id="chartBandHistory" class="ct-chart"></div>
+													</div>
+													<div class="card-footer ">
+														<div class="legend" id="11BandLegend"> </div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row" id="standard">	
+											<div class="col-md-12">
+												<div class="card">
+													<div class="card-header ">
+														<h4 class="card-title">Wi-Fi Protocol</h4>
+														<p></p>
+													</div>
+													
+													<div class="card-body" style="height:400px; width:100%">
+														<div id="chart11History" class="ct-chart"></div>
+													</div>
+													<div class="card-footer ">
+														<div class="legend" id="11Legend"> </div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row" id="kvr">	
+											<div class="col-md-12">
+												<div class="card">
+													<div class="card-header ">
+														<h4 class="card-title">802.11k/v/r</h4>
+														<p></p>
+													</div>
+													
+													<div class="card-body" style="height:400px; width:100%">
+														<div id="chart11kvrHistory" class="ct-chart"></div>
+													</div>
+													<div class="card-footer ">
+														<div class="legend" id="11kvrLegend"> </div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row" id="snr">	
+											<div class="col-md-12">
+												<div class="card">
+													<div class="card-header ">
+														<h4 class="card-title">Signal-to-Noise Ratio</h4>
+														<p></p>
+													</div>
+													
+													<div class="card-body" style="height:400px; width:100%">
+														<div id="chartSNRHistory" class="ct-chart"></div>
+													</div>
+													<div class="card-footer ">
+														<div class="legend" id="snrLegend"> </div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row" id="enc">	
+											<div class="col-md-12">
+												<div class="card">
+													<div class="card-header ">
+														<h4 class="card-title">Client Encryption</h4>
+														<p></p>
+													</div>
+													
+													<div class="card-body" style="height:400px; width:100%">
+														<div id="chartEncryptionHistory" class="ct-chart"></div>
+													</div>
+													<div class="card-footer ">
+														<div class="legend" id="encLegend"> </div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<footer class="footer">
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" id="ErrorModalLink"></a>
 						<a data-toggle="modal" data-target="#UniversalModal" id="UniversalModalLink"></a>
 						<a data-toggle="modal" data-target="#SelectedClientModal" id="SelectedClientModalLink"></a>
+						<a data-toggle="modal" data-target="#ClientStatsModal" id="ClientStatsModalLink"></a>
 
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
@@ -963,7 +1067,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 			// Reload the WLAN list until the WLAN list can be pulled again
 			var networks = [];
 			var wlanList = localStorage.getItem('networks');
-			if (wlanList) networks = JSON.parse(wlanList);
+			if (wlanList && wlanList !== 'undefined') networks = JSON.parse(wlanList);
 			for (var i = 0; i < networks.length; i++) {
 				$('#client-wlanselector').append($('<option>', { value: networks[i]['essid'], text: networks[i]['essid'] }));
 				if ($('#client-wlanselector').length != 0) {
@@ -1214,9 +1318,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 	});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250406"></script>
-	<script src="assets/js/main.js?v=250406"></script>
+	<script src="assets/js/version.js?v=260313"></script>
+	<script src="assets/js/main.js?v=260612"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
-	<script src="assets/js/clients.js?v=250116"></script>
+	<script src="assets/js/clients.js?v=250624"></script>
 </html>

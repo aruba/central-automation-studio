@@ -144,7 +144,7 @@ function getLicensingData() {
 		var table = $('#subscription-table').DataTable();
 		$.each(response.subscriptions, function() {
 			// Add row to table
-			if ((this.acpapp_name === 'nms') && (!this.license_type.includes('UXI') && !this.license_type.includes('Device-Insight'))) {
+			if ((this.acpapp_name === 'nms') && /*(!this.license_type.includes('UXI') && */!this.license_type.includes('Device-Insight')) {
 				keys.push(this);
 				var status = '<span data-toggle="tooltip" data-placement="top" title="' + titleCase(this.status) + '"><i class="fa-solid fa-circle text-danger"></i></span>';
 				
@@ -154,7 +154,7 @@ function getLicensingData() {
 					var endDate = moment(this.end_date);
 					if (today.isBefore(endDate) && endDate.diff(today, 'days') <= 90) {
 						status = '<span data-toggle="tooltip" data-placement="top" title="Expiring Within 90 days"><i class="fa-solid fa-circle text-warning"></i></span>';
-						showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> expiring soon...', 'bottom', 'center', 'warning');
+						showNotification('ca-license-key', 'Subscription Key <strong>' + this.subscription_key + '</strong> is expiring soon...', 'bottom', 'center', 'warning');
 						totalExpiring += this.quantity;
 					} else {
 						status = '<span data-toggle="tooltip" data-placement="top" title="' + this.status + '"><i class="fa-solid fa-circle text-success"></i></span>';

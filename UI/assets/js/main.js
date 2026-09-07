@@ -22,8 +22,10 @@ var centralURLs =
 		'https://apigw-eucentral2.central.arubanetworks.com': 'https://app-eucentral2.central.arubanetworks.com',
 		'https://apigw-eucentral3.central.arubanetworks.com': 'https://app-eucentral3.central.arubanetworks.com',
 		'https://apigw-uaenorth1.central.arubanetworks.com': 'https://app-uaenorth1.central.arubanetworks.com',
+		'https://apigw-ukwest2.central.arubanetworks.com': 'https://app-ukwest2.central.arubanetworks.com',
 		'https://internal-apigw.central.arubanetworks.com': 'https://internal-ui.central.arubanetworks.com',
 		'https://apigw-cordelia.arubadev.cloud.hpe.com': 'https://app-cordelia.arubadev.cloud.hpe.com',
+		'https://apigw-brooke.arubadev.cloud.hpe.com': 'https://app-brooke.arubadev.cloud.hpe.com',
 		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'https://cmcsa1.aruba.b4b.comcast.net',
 		'https://apigw-stgthdnaas.central.arubanetworks.com': 'https://app-stgthdnaas.central.arubanetworks.com',
 		'https://apigw-thdnaas.central.arubanetworks.com': 'https://app-thdnaas.central.arubanetworks.com',
@@ -51,12 +53,14 @@ var centralClusters =
 		'Canada-1': {url: 'https://apigw-ca.central.arubanetworks.com', type: 'Public'},
 		'CN-North': {url: 'https://apigw.central.arubanetworks.com.cn', type: 'Public'},
 		'UAE-North': {url: 'https://apigw-uaenorth1.central.arubanetworks.com', type: 'Public'},
+		'UKWEST2': {url: 'https://apigw-ukwest2.central.arubanetworks.com', type: 'Public'},
+		'GCPUSWEST1':{url: 'https://apigw-gcpuswest1.central.arubanetworks.com', type: 'Public'},
 		'Internal': {url: 'https://internal-apigw.central.arubanetworks.com', type: 'Private'},
 		'Cordelia':{url: 'https://apigw-cordelia.arubadev.cloud.hpe.com', type: 'Private'},
+		'Brooke':{url: 'https://apigw-brooke.arubadev.cloud.hpe.com', type: 'Private'},
 		'CMCSA1': {url: 'https://apigw-cmcsa1api.aruba.b4b.comcast.net', type: 'Private'},
 		'STGTHDNAAS':{url: 'https://apigw-stgthdnaas.central.arubanetworks.com', type: 'Private'},
 		'THDNAAS':{url: 'https://apigw-thdnaas.central.arubanetworks.com', type: 'Private'},
-		'GCPUSWEST1':{url: 'https://apigw-gcpuswest1.central.arubanetworks.com', type: 'Private'},
 		'Central On-Prem': {url: 'COP', type: 'Private'},
 	};
 
@@ -76,8 +80,10 @@ var clusterNames =
 		'https://apigw-ca.central.arubanetworks.com': 'Canada-1',
 		'https://apigw.central.arubanetworks.com.cn': 'CN-North',
 		'https://apigw-uaenorth1.central.arubanetworks.com': 'UAE-North',
+		'https://apigw-ukwest2.central.arubanetworks.com': 'UKWEST2',
 		'https://internal-apigw.central.arubanetworks.com': 'Internal',
 		'https://apigw-cordelia.arubadev.cloud.hpe.com': 'Cordelia',
+		'https://apigw-brooke.arubadev.cloud.hpe.com': 'Brooke',
 		'https://apigw-cmcsa1api.aruba.b4b.comcast.net': 'CMCSA1',
 		'https://apigw-stgthdnaas.central.arubanetworks.com':'STGTHDNAAS',
 		'https://apigw-thdnaas.central.arubanetworks.com':'THDNAAS',
@@ -131,7 +137,7 @@ const networkProtocols = ['HOPOPT','ICMP','IGMP','GGP','IPv4','ST','TCP','CBT','
 
 // Constants
 const DeviceType = { AP: 0, Switch: 1, Gateway: 2, Controller: 3};
-const ConfigType = { All: 0, IP: 1, Antenna: 2, Width: 3 };
+const ConfigType = { All: 0, IP: 1, Antenna: 2, Width: 3, Direction: 4 };
 const ScaleType = { Full: 0, Scale: 1, Custom: 2, Group: 3};
 const vrfUnits = 'FEET';
 const ratio = window.devicePixelRatio;
@@ -146,6 +152,14 @@ const class2Switches = ['S3L77A', 'S3L75A', 'S3L76A'];
 const class3Switches = [];
 const class4Switches = [];
 const class5Switches = [];
+
+const flex6xx = ['auto','5GHz-and-2.4GHz','5GHz-and-6GHz','2.4GHz-and-6GHz'];
+const flex764 = ['auto','5GHz-and-2.4GHz','6GHz-and-5GHz','6GHz-and-2.4GHz'];
+const flex76x = ['auto','5GHz-and-2.4GHz','6GHz-and-5GHz','6GHz-and-2.4GHz','Single-5GHz','Single-6GHz'];
+const flex735 = ['auto','5GHz-2.4GHz-6GHz','5GHzHB-5GHzLB-6GHz','5GHz-6GHzHB-6GHzLB'];
+const flex755 = ['auto','5GHz-2.4GHz-6GHz','5GHzHB-5GHzLB-6GHz','6GHzLB-5GHz-6GHzHB'];
+
+const newRadioModeModels = ['605','615','634','635','654','655','674','675','677','679','725','734','735','754','755','763','764','765'];
 
 var DateTime = luxon.DateTime;
 
@@ -182,6 +196,7 @@ var antennaCounter = 0;
 var gpsCounter = 0;
 var ap1xCounter = 0;
 var installCounter = 0;
+var countryCodeCounter = 0;
 var ledCounter = 0;
 var ipCounter = 0;
 var rebootCounter = 0;
@@ -212,6 +227,7 @@ var rfPromise;
 var bssidPromise;
 var mspPromise;
 var autoLicenseCheckPromise;
+var clientStatsPromise;
 
 var updateCounter = 0;
 var updateCount = 0;
@@ -276,6 +292,8 @@ const commandRetries = 5;
 var devicesToReboot = [];
 
 var needAntennaConfig = [];
+
+var settingsList = {};
 
 var iotCollectorsArray = [];
 var iotCollectors = {};
@@ -357,6 +375,7 @@ var rebootNotification;
 var configNotification;
 var ipNotification;
 var visitorNotification;
+var countryCodeNotification
 var siteNotification;
 var labelNotification;
 var iotNotification;
@@ -369,6 +388,8 @@ var autoLicenseState = false;
 var indexedDB;
 var dbRequest;
 var db;
+
+var collectedStats = {};
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Cluster Utility functions
@@ -502,21 +523,55 @@ function deleteDataFomDB(indexKey) {
 	};
 }
 
+function loadDataFromDB(indexKey, triggerPromise) {
+	const transaction = db.transaction('general', 'readonly');
+	const store = transaction.objectStore('general');
+	const dataQuery = store.get(indexKey);
+	dataQuery.onsuccess = function() {
+		if (dataQuery.result) {
+			loadSavedData(indexKey, dataQuery.result.data);
+		} else {
+			loadSavedData(indexKey, null);
+		}
+	}
+	return triggerPromise.promise();
+}
+
 
 function loadMonitoringData(refreshrate) {
 	// Check if we need to get the latest data - or can we just load it from localStorage
 	apiMessage = false;
 
 	if (!localStorage.getItem('monitoring_update')) {
-		getMonitoringData();
+		
+		// If enabling client Stat collection over time
+		if (checkClientStatsCollection()) {
+			clientStatsPromise = new $.Deferred();
+			console.log('Loading Client Statistics')
+			$.when(loadDataFromDB('collected_stats', clientStatsPromise)).then(function() {
+				console.log('Client Statistics loaded')
+				getMonitoringData();
+			});
+		} else {
+			getMonitoringData();
+		}
 	} else {
 		var lastRefresh = new Date(parseInt(localStorage.getItem('monitoring_update')));
 		var now = new Date();
 		var diffTime = Math.abs(now - lastRefresh);
 		var diffMinutes = Math.ceil(diffTime / (1000 * 60));
 		if (diffMinutes > refreshrate) {
-			//console.log("Reading new monitoring data from Central");
-			getMonitoringData();
+			
+			// If enabling client Stat collection over time
+			if (checkClientStatsCollection()) {
+				clientStatsPromise = new $.Deferred();
+				$.when(loadDataFromDB('collected_stats', clientStatsPromise)).then(function() {
+					console.log('Client Statistics loaded')
+					getMonitoringData();
+				});
+			} else {
+				getMonitoringData();
+			}
 		} else {
 			console.log('Reading monitoring data from IndexedDB');
 			
@@ -746,6 +801,9 @@ function loadMonitoringData(refreshrate) {
 							switchInventory = JSON.parse(this.data);
 						} else if (this.key === 'inventory_gateway') {
 							gatewayInventory = JSON.parse(this.data);
+						}  else if (this.key === 'collected_stats') {
+							loadSavedData('collected_stats', this.data);
+							console.log('Client Statistics loaded')
 						}
 					});
 				}
@@ -969,6 +1027,19 @@ function clearErrorLog() {
 	}
 }
 
+function copyLog() {
+	const divElement = document.getElementById('errorBody');
+	const textToCopy = divElement.innerText;
+	
+	navigator.clipboard.writeText(textToCopy)
+		.then(() => {
+			showNotification('ca-document-copy', 'Log copied to clipboard', 'top', 'center', 'success')
+		})
+		.catch(err => {
+			showNotification('ca-document-copy', 'Log failed to be copied to clipboard', 'top', 'center', 'danger')
+		});
+}
+
 function showLog() {
 	$('#ErrorModalLink').trigger('click');
 }
@@ -1110,7 +1181,7 @@ function loadCSVFile(clickedRow) {
 				currentWorkflow = '';
 				setRadioMode('all');
 			} else if (clickedRow === 'setFlexMode') {
-				logStart('Configuring radios...');
+				logStart('Configuring flex radios...');
 				currentWorkflow = '';
 				setFlexRadioMode();
 			} else if (clickedRow === 'enable24') {
@@ -1121,6 +1192,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Disabling 2.4GHz radios...');
 				currentWorkflow = '';
 				disable24radios();
+			} else if (clickedRow === 'configureStatic') {
+				logStart('Configuring radios...');
+				currentWorkflow = '';
+				configureStatic();
 			} else if (clickedRow === 'setSwarmMode') {
 				logStart('Configuring Swarm Mode...');
 				currentWorkflow = '';
@@ -1141,6 +1216,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Updating country codes...');
 				currentWorkflow = '';
 				updateCountryCodes();
+			} else if (clickedRow === 'csvcountrycode') {
+				logStart('Updating AP country codes...');
+				currentWorkflow = '';
+				configureCountryCodes();
 			} else if (clickedRow === 'antennaGain') {
 				logStart('Configuring antenna gain...');
 				currentWorkflow = '';
@@ -1151,6 +1230,10 @@ function loadCSVFile(clickedRow) {
 				logStart('Configuring antenna width...');
 				currentWorkflow = '';
 				updateAntennaWidth();
+			} else if (clickedRow === 'antennaDirection') {
+				logStart('Configuring antenna direction mode...');
+				currentWorkflow = '';
+				updateAntennaDirection();
 			} else if (clickedRow === 'apAltitude') {
 				logStart('Configuring AP altitude...');
 				currentWorkflow = '';
@@ -1394,13 +1477,14 @@ function generateCSVForSite(clickedRow) {
 			currentWorkflow = '';
 			setSwarmMode();
 		} else if (clickedRow === 'enable24') {
-			logStart('Enabling 2.4GHz radios...');
 			currentWorkflow = '';
-			enable24radios();
+			enable24RadiosForSite();
 		} else if (clickedRow === 'disable24') {
-			logStart('Disabling 2.4GHz radios...');
 			currentWorkflow = '';
-			disable24radios();
+			disable24RadiosForSite();
+		} else if (clickedRow === 'monitor24') {
+			currentWorkflow = '';
+			set24ModeForSite();
 		} else if (clickedRow === 'split5GhzMode') {
 			logStart('Configuring 5GHz radios...');
 			currentWorkflow = '';
@@ -1430,15 +1514,19 @@ function generateCSVForSite(clickedRow) {
 			});
 			setRadioMode('dual');
 		} else if (clickedRow === 'setFlexMode') {
-			logStart('Configuring radios...');
+			logStart('Configuring flex radios...');
 			currentWorkflow = '';
-			setFlexRadioMode();
+			setFlexRadioModeSite();
 		} else if (clickedRow === 'antennaGain') {
 			logStart('Configuring antenna gain...');
 			currentWorkflow = '';
 			buildAntennaAPList();
 			loadAntennas();
 			$('#AntennaConfigModalLink').trigger('click');
+		} else if (clickedRow === 'apAltitude') {
+			logStart('Configuring AP altitude...');
+			currentWorkflow = '';
+			updateAPAltitudeForSite();
 		} else if (clickedRow === 'rebootDevices') {
 			logStart('Rebooting devices...');
 			currentWorkflow = '';
@@ -1471,6 +1559,10 @@ function generateCSVForSite(clickedRow) {
 			logStart('Moving devices, renaming APs and updating port descriptions...');
 			currentWorkflow = 'auto-site-autorenameap-portdescriptions';
 			siteAndAutoRenameAndPortDescriptions();
+		} else if (clickedRow === 'ap-ethernet') {
+			logStart('Checking AP Ethernet Links...');
+			currentWorkflow = 'ap-ethernet';
+			getAPEthernetDetails();
 		} else if (clickedRow === 'test-layer-one') {
 			logStart('Testing layer one...');
 			currentWorkflow = 'test-layer-one';
@@ -2165,7 +2257,7 @@ function getLicensingStats() {
 		if (response) {
 			if (response.expiring) {
 				if (expiryNotification == null) {
-					expiryNotification = showLongNotification('ca-license-key', 'A Subscription Key expiring soon...', 'top', 'center', 'warning', '/monitoring-licensing.html');
+					expiryNotification = showLongNotification('ca-license-key', 'A Subscription Key is expiring soon...', 'top', 'center', 'warning', '/monitoring-licensing.html');
 					setTimeout(clearExpiryNotification, 20000);
 				}
 			}
@@ -2205,6 +2297,8 @@ function getLicensingData() {
 			$.when(authRefresh()).then(function() {
 				if (!failedAuth) {
 					getLicensingData();
+				} else {
+					if (licenseNotification) licenseNotification.close();
 				}
 			});
 			return;
@@ -2229,7 +2323,7 @@ function getLicensingData() {
 }
 
 function clearExpiryNotification() {
-	expiryNotification.close();
+	if (expiryNotification) expiryNotification.close();
 	expiryNotification = null;
 }
 
@@ -2312,7 +2406,6 @@ function updateClientUI() {
 function getWirelessClientData(lastMac) {
 	if (showTimingData) {
 		var wirelessDate = Date.now();
-		console.log('Requesting Wireless Clients :' + lastMac)
 	}
 	
 	//console.log('Getting Client block:' + offset);
@@ -2322,6 +2415,12 @@ function getWirelessClientData(lastMac) {
 		wirelessNotification = showProgressNotification('ca-laptop-1', 'Obtaining wireless clients...', 'bottom', 'center', 'info');
 		wirelessClients = [];
 		clientsURL = '/monitoring/v2/clients?calculate_total=true&offset=0&limit=' + apiClientLimit + '&timerange=3H&client_type=WIRELESS&client_status=CONNECTED&show_usage=true&show_manufacturer=true&show_signal_db=true';
+		if (checkClientStatsCollection()) {
+			if (!collectedStats[localStorage.getItem('client_id')]) collectedStats[localStorage.getItem('client_id')] = [];
+			var accountStats = collectedStats[localStorage.getItem('client_id')];
+			accountStats.push({timestamp:Date.now(), dot11k:0, dot11v:0, dot11r:0, band2:0, band5:0, band6:0, an:0, gn:0, ac:0, ax:0, be:0, snr0:0, snr10:0, snr20:0, snr30:0, snr40:0, snr50:0, snr60:0, enc_wpa3:0, enc_wpa3_ent:0, enc_wpa2:0, enc_wpa2_ent:0, enc_owe:0, enc_open:0, enc_other:0})
+			collectedStats[localStorage.getItem('client_id')] = accountStats;
+		}
 	} else {
 		clientsURL = '/monitoring/v2/clients?calculate_total=true&offset=0&limit=' + apiClientLimit + '&last_client_mac=' + encodeURIComponent(lastMac)+ '&timerange=3H&client_type=WIRELESS&client_status=CONNECTED&show_usage=true&show_manufacturer=true&show_signal_db=true';
 	}
@@ -2379,6 +2478,7 @@ function getWirelessClientData(lastMac) {
 				clients.push(this);
 				wirelessClients.push(this);
 				loadClientsUI(this);
+				updateClientStatsWithClient(this);
 			});
 
 			if ((wirelessClients.length < response.total) && response.last_client_mac) {
@@ -2390,6 +2490,7 @@ function getWirelessClientData(lastMac) {
 			} else {
 				wirelessNotification.update({ progress: 100 });
 				updateClientUI();
+				saveClientStats();
 				saveDataToDB('monitoring_wirelessClients', JSON.stringify(wirelessClients));
 				if (wirelessNotification) wirelessNotification.close();
 				checkForMonitoringUpdateCompletion();
@@ -2711,6 +2812,8 @@ function refreshAPData() {
 		if (!failedAuth) {
 			if (document.getElementById('ap_count')) document.getElementById('ap_count').innerHTML = '0';
 			getAPData(0, false);
+		} else {
+			if (apNotification) apNotification.close();
 		}
 	});
 }
@@ -2771,20 +2874,13 @@ function getBSSIDData(offset) {
 
 		//console.log(response);
 		if (response.hasOwnProperty('message')) {
-			if (!apiMessage) {
-				apiMessage = true;
-				var level = 'danger';
-				if (response.message.includes('API rate limit exceeded')) level = 'warning';
-				showNotification('ca-api', response.message, 'top', 'center', level);
-			}
-			saveDataToDB('monitoring_bssids', JSON.stringify([]));
+			if (response.message.includes('API rate limit exceeded')) getBSSIDData(offset);
 		} else {
 			if (offset === 0) {
 				bssids = [];
 			}
-
+			
 			bssids = bssids.concat(response.aps);
-
 			offset += apiLimit;
 			if (offset < response.total) getBSSIDData(offset);
 			else {
@@ -2804,15 +2900,19 @@ function getBSSIDs() {
 // Updated: 1.6.0
 function loadSwitchUI(device) {
 	//console.log(device);
-	var memoryUsage = (((device['mem_total'] - device['mem_free']) / device['mem_total']) * 100).toFixed(0).toString();
+	var memoryUsage = (((device['mem_total'] - device['mem_free']) / device['mem_total']) * 100).toFixed(0);
 	var status = '<i class="fa-solid fa-circle text-danger"></i>';
 	var deviceUp = true;
-	if (device['status'] == 'Up') {
-		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage:' + memoryUsage + '%"><i class="fa-solid fa-circle text-success"></i></span>';
+	if ((device['status'] == 'Up') && ((memoryUsage < 75) && (device['cpu_utilization'] < 50) && (device.fan_speed === 'Ok'))) {
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage: ' + memoryUsage + '%<br>Fans: ' + device.fan_speed + '"><i class="fa-solid fa-circle text-success"></i></span>';
+	} else if ((device['status'] == 'Up') && ((memoryUsage >= 75) || (device['cpu_utilization'] >= 50) || (device.fan_speed !== 'Ok'))) {
+		status = '<span data-toggle="tooltip" data-placement="right" data-html="true" title="CPU Usage: ' + device['cpu_utilization'] + '%<br>Memory Usage: ' + memoryUsage + '%<br>Fans: ' + device.fan_speed + '"><i class="fa-solid fa-circle text-warning"></i></span>';
 	} else {
 		downSwitchCount++;
 		deviceUp = false;
 	}
+	
+	
 
 	// Build Uptime String
 	var uptimeString = '-';
@@ -2902,7 +3002,6 @@ function getSwitchData(offset, needClients) {
 
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			$(document.getElementById('switch_icon')).addClass('text-warning');
 			$(document.getElementById('switch_icon')).removeClass('text-success');
 			$(document.getElementById('switch_icon')).removeClass('text-danger');
@@ -2975,6 +3074,8 @@ function refreshSwitchData() {
 		if (!failedAuth) {
 			if (document.getElementById('switch_count')) document.getElementById('switch_count').innerHTML = '0';
 			getSwitchData(0, false);
+		} else {
+			if (switchNotification) switchNotification.close();
 		}
 	});
 }
@@ -3128,7 +3229,6 @@ function getGatewayData(offset) {
 
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-primary');
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
@@ -3225,7 +3325,6 @@ function getGatewayDetails(gatewayIndex) {
 		var response = JSON.parse(commandResults.responseBody);
 		
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-primary');
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
@@ -3294,6 +3393,8 @@ function refreshGatewayData() {
 				.remove();
 	
 			getGatewayData(0);
+		} else {
+			if (gatewayNotification) gatewayNotification.close();
 		}
 	});
 }
@@ -3428,7 +3529,6 @@ function getControllerData(offset) {
 
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			$(document.getElementById('controller_icon')).addClass('text-warning');
 			$(document.getElementById('controller_icon')).removeClass('text-primary');
 			$(document.getElementById('controller_icon')).removeClass('text-success');
@@ -3521,7 +3621,6 @@ function getControllerDetails(controllerIndex) {
 
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			$(document.getElementById('gateway_icon')).addClass('text-warning');
 			$(document.getElementById('gateway_icon')).removeClass('text-primary');
 			$(document.getElementById('gateway_icon')).removeClass('text-success');
@@ -3573,6 +3672,8 @@ function refreshControllerData() {
 				.remove();
 	
 			getControllerData(0);
+		} else {
+			if (gatewayNotification) gatewayNotification.close();
 		}
 	});
 }
@@ -3813,11 +3914,10 @@ function getSiteData(offset) {
 
 		//console.log(response);
 		if (response.hasOwnProperty('error')) {
-			showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			if (document.getElementById('site_count')) document.getElementById('site_count').innerHTML = '-';
 			$(document.getElementById('site_icon')).addClass('text-warning');
 			$(document.getElementById('site_icon')).removeClass('text-primary');
-			showNotification('ca-ca-world-pin', response.error, 'top', 'center', 'danger');
+			showNotification('ca-world-pin', response.error, 'top', 'center', 'danger');
 			if (siteNotification) siteNotification.close();
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
@@ -4007,7 +4107,6 @@ function getGroupData(offset) {
 		}
 		var response = JSON.parse(commandResults.responseBody);
 
-		//console.log(response);
 		if (response.hasOwnProperty('error')) {
 			if (response.error === 'invalid_token') {
 				// Access Token expired - get a new one and try again.
@@ -4019,7 +4118,6 @@ function getGroupData(offset) {
 			} else showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
 			$(document.getElementById('group_icon')).addClass('text-warning');
 			$(document.getElementById('group_icon')).removeClass('text-primary');
-			showNotification('ca-folder-settings', response.error, 'top', 'center', 'danger');
 			if (groupNotification) groupNotification.close();
 		} else if (response.hasOwnProperty('message')) {
 			if (!apiMessage) {
@@ -4047,7 +4145,7 @@ function getGroupData(offset) {
 				select = document.getElementById('groupselector');
 				if (select) select.options.length = 0;
 			}
-
+			
 			offset += apiGroupLimit;
 			if (offset < response.total) {
 				getGroupData(offset);
@@ -4070,6 +4168,14 @@ function updateGroupData() {
 
 function getGroups() {
 	return groups;
+}
+
+function getGroupForName(groupName) {
+	var foundGroup = null;
+	$.each(groups, function() {
+		if (this['group'] === groupName) foundGroup = this;
+	});
+	return foundGroup;
 }
 
 // Updated: 1.5.0
@@ -4317,6 +4423,8 @@ function getSwarmData(offset) {
 				$.when(authRefresh()).then(function() {
 					if (!failedAuth) {
 						getSwarmData(offset);
+					} else {
+						if (vcNotification) vcNotification.close();
 					}
 				});
 			} else showNotification('ca-unlink', response.error_description, 'top', 'center', 'danger');
@@ -4503,7 +4611,7 @@ function getAPInventory(offset) {
 				inventoryAPProgress = 100;
 				console.log('AP Inventory Complete');
 				inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
-				inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+				inventoryNotification.update({ message: 'Obtaining device inventory... (AP:'+inventoryAPProgress.toFixed(0)+'%/SW:'+inventorySwitchProgress.toFixed(0)+'%/GW:'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 				saveDataToDB('inventory_ap', JSON.stringify(apInventory));
 				apPromise.resolve();
 			}
@@ -4544,7 +4652,7 @@ function getAPInventory(offset) {
 			console.log('AP Inventory Progress: '+inventoryAPProgress.toFixed(2) +'%')
 			inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
 			console.log('Total Inventory Progress: '+inventoryProgress.toFixed(2) +'%')
-			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... (AP:'+inventoryAPProgress.toFixed(0)+'%/SW:'+inventorySwitchProgress.toFixed(0)+'%/GW:'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 			if (offset < response.total) getAPInventory(offset); // if there are still objects to get
 			//console.log(response.devices);
 		}
@@ -4577,7 +4685,7 @@ function getSwitchInventory(offset) {
 				inventorySwitchProgress = 100;
 				console.log('Switch Inventory Complete');
 				inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
-				inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+				inventoryNotification.update({ message: 'Obtaining device inventory... (AP:'+inventoryAPProgress.toFixed(0)+'%/SW:'+inventorySwitchProgress.toFixed(0)+'%/GW:'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 				saveDataToDB('inventory_switch', JSON.stringify(switchInventory));
 				switchPromise.resolve();
 			}
@@ -4650,7 +4758,7 @@ function getGatewayInventory(offset) {
 				inventoryGatewayProgress = 100;
 				console.log('Gateway Inventory Complete')
 				inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
-				inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+				inventoryNotification.update({ message: 'Obtaining device inventory... (AP:'+inventoryAPProgress.toFixed(0)+'%/SW:'+inventorySwitchProgress.toFixed(0)+'%/GW:'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 				saveDataToDB('inventory_gateway', JSON.stringify(gatewayInventory));
 				gatewayPromise.resolve();
 			}
@@ -4691,7 +4799,7 @@ function getGatewayInventory(offset) {
 			console.log('Gateway Inventory Progress: '+inventoryGatewayProgress.toFixed(2) +'%')
 			inventoryProgress = (inventoryAPProgress + inventorySwitchProgress + inventoryGatewayProgress)/3;
 			console.log('Total Inventory Progress: '+inventoryProgress.toFixed(2) +'%')
-			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... ('+inventoryAPProgress.toFixed(0)+'%/'+inventorySwitchProgress.toFixed(0)+'%/'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
+			if (inventoryNotification) inventoryNotification.update({ message: 'Obtaining device inventory... (AP:'+inventoryAPProgress.toFixed(0)+'%/SW:'+inventorySwitchProgress.toFixed(0)+'%/GW'+inventoryGatewayProgress.toFixed(0)+'%)', progress: inventoryProgress });
 			if (offset < response.total) getGatewayInventory(offset); // if there are still objects to get
 			//console.log(apInventory)
 		}
@@ -5095,8 +5203,11 @@ function addDevices() {
 		if (!this['SERIAL'] || !this['MAC']) {
 			return false;
 		}
-		if (currentClusterName === 'Central On-Prem') devices.push({ mac: cleanMACAddress(this['MAC']), serial: this['SERIAL'].trim(), partNumber: this['MODEL'].trim() });
-		else devices.push({ mac: cleanMACAddress(this['MAC']), serial: this['SERIAL'].trim() });
+		var currentSerial = this['SERIAL'];
+		currentSerial = currentSerial.toUpperCase().trim();
+		
+		if (currentClusterName === 'Central On-Prem') devices.push({ mac: cleanMACAddress(this['MAC']), serial: currentSerial, partNumber: this['MODEL'].trim() });
+		else devices.push({ mac: cleanMACAddress(this['MAC']), serial: currentSerial });
 	});
 	//console.log('About to add: ' + JSON.stringify(devices));
 	var settings = {
@@ -5230,7 +5341,10 @@ function archiveDevices() {
 		if (!this['SERIAL']) {
 			return false;
 		}
-		devices.push(this['SERIAL'].trim());
+		
+		var currentSerial = this['SERIAL'];
+		currentSerial = currentSerial.toUpperCase();
+		devices.push(currentSerial.trim());
 	});
 	console.log('About to archive: ' + JSON.stringify(devices));
 	var settings = {
@@ -5323,7 +5437,9 @@ function unarchiveDevices() {
 		if (!this['SERIAL']) {
 			return false;
 		}
-		devices.push(this['SERIAL'].trim());
+		var currentSerial = this['SERIAL'];
+		currentSerial = currentSerial.toUpperCase();
+		devices.push(currentSerial.trim());
 	});
 	console.log('About to archive: ' + JSON.stringify(devices));
 	var settings = {
@@ -5603,7 +5719,8 @@ function licenseDevicesFromCSV(msp,updateExisting,apOnly) {
 		// find device in inventory to get device type
 		// only process if the Serial is filled in - e.g. not a blank row!
 		if (this['SERIAL']) {
-			var currentSerial = this['SERIAL'].trim();
+			var currentSerial = this['SERIAL'];
+			currentSerial = currentSerial.toUpperCase().trim();
 			if (currentSerial === '') {
 				// Blank row
 				licenseCounter++;
@@ -6089,13 +6206,13 @@ function checkForUnlicensingCompletion() {
 			if (apiErrorCount != 0) {
 				showLog();
 				Swal.fire({
-					title: 'License Failure',
+					title: 'Licensing Failure',
 					text: 'Some or all devices failed to be unassigned licenses',
 					icon: 'error',
 				});
 			} else {
 				Swal.fire({
-					title: 'Add Success',
+					title: 'Licensing Success',
 					text: 'All devices had licenses unassigned',
 					icon: 'success',
 					showCancelButton: true,
@@ -6127,10 +6244,17 @@ function unlicenseDevicesFromCSV() {
 	// unassign license from each device
 	$.each(csvData, function() {
 		if (this['SERIAL']) {
+			var currentSerial = this['SERIAL'];
+			currentSerial = currentSerial.toUpperCase().trim();
+			if (currentSerial === '') {
+				// Blank row
+				licenseCounter++;
+				return true;
+			}
 			// find the device to be able to get current license assigned.
-			var device = findDeviceInInventory(this['SERIAL']);
+			var device = findDeviceInInventory(currentSerial);
 			if (!device) {
-				logError('Unable to find device ' + this['SERIAL'] + ' in the device inventory');
+				logError('Unable to find device ' + currentSerial + ' in the device inventory');
 				apiErrorCount++;
 				licenseCounter++;
 				checkForUnlicensingCompletion();
@@ -6144,9 +6268,10 @@ function unlicenseDevicesFromCSV() {
 
 				// Add serial to the list that matches the services.
 				var serials = serviceList[serviceName];
-				serials.push(this['SERIAL']);
+				serials.push(currentSerial);
 				serviceList[serviceName] = serials;
 			} else {
+				logInformation('Device ('+currentSerial+') does not have a license assigned');
 				licenseCounter++; // skipping devices without licenses.
 				checkForUnlicensingCompletion(); // just in case none have licenses assigned.
 			}
@@ -6155,7 +6280,7 @@ function unlicenseDevicesFromCSV() {
 			checkForUnlicensingCompletion();
 		}
 	});
-
+	
 	for (const [key, value] of Object.entries(serviceList)) {
 		var serials = value;
 
@@ -6176,7 +6301,6 @@ function unlicenseDevicesFromCSV() {
 		licenseCounter = licenseCounter + value.length;
 
 		$.ajax(settings).done(function(response, textStatus, jqXHR) {
-			//console.log(response);
 			if (Array.isArray(response.status)) {
 				if (response.status[0].message.msg) {
 					logError(response.status[0].message.msg);
@@ -6190,6 +6314,17 @@ function unlicenseDevicesFromCSV() {
 					apiErrorCount++;
 					logError('Central Server Error (503): ' + response.reason + ' (/platform/licensing/v1/subscriptions/unassign)');
 				}
+			}
+			
+			if (response.hasOwnProperty('error_code')) {
+				if (response.error_code == 400) {
+					apiErrorCount++;
+					logError(response.message);
+				}
+			}
+			
+			if (response.hasOwnProperty('response') && response.response.includes('success')) {
+				logInformation('The following devices were unlicensed successfully from ' + JSON.parse(key) + ': '+value.join(', '));
 			}
 			checkForUnlicensingCompletion();
 		});
@@ -6271,7 +6406,9 @@ function moveDevicesToGroup() {
 				groupDevices = groupsToUse[selectedGroup];
 			}
 			// add device to the list
-			groupDevices.push(this['SERIAL'].trim());
+			var currentSerial = this['SERIAL'];
+			currentSerial = currentSerial.toUpperCase().trim();
+			groupDevices.push(currentSerial);
 			// save the list back into the dictionary
 			groupsToUse[selectedGroup] = groupDevices;
 			devicesToMove++;
@@ -6390,7 +6527,9 @@ function preprovisionDevicesToGroup() {
 				groupDevices = groupsToUse[selectedGroup];
 			}
 			// add device to the list
-			groupDevices.push(this['SERIAL'].trim());
+			var currentSerial = this['SERIAL'];
+			currentSerial = currentSerial.toUpperCase().trim();
+			groupDevices.push(currentSerial);
 			// save the list back into the dictionary
 			groupsToUse[selectedGroup] = groupDevices;
 			devicesToMove++;
@@ -6401,52 +6540,58 @@ function preprovisionDevicesToGroup() {
 		var serialArray = serialsToMove;
 
 		// Need to split up into 50 device blocks (API limitation)
+		var i = 0;
 		while (serialArray.length > 0) {
 			var serialBlock = [];
 			serialBlock = serialArray.splice(0, 50);
-			logInformation('Adding Devices to ' + groupName + ': ' + serialBlock.join(', '));
-
-			// Move the block of serials in separate function to avoid variable changing between API call and response (due to looping) - enables better error and completion tracking
-			$.when(performDevicePreprovision(groupName, serialBlock, new $.Deferred())).then(function() {
-				// check for completion after each bulk move
-
-				var moveProgress = (moveCounter / devicesToMove) * 100;
-				moveNotification.update({ progress: moveProgress });
-
-				if (moveCounter == devicesToMove) {
-					if (moveNotification) moveNotification.close();
-					if (currentWorkflow === '') {
-						if (apiErrorCount != 0) {
-							showLog();
-							Swal.fire({
-								title: 'Move Failure',
-								text: 'Some or all devices failed to move to the specified group(s)',
-								icon: 'error',
-							});
-						} else {
-							Swal.fire({
-								title: 'Move Success',
-								text: 'All devices were to moved to the specified group(s)',
-								icon: 'success',
-							});
-						}
-						//console.log(manualGroup)
-						if (manualGroup) {
-							manualGroup = '';
-							var mgd = document.getElementById('manualGroupDiv');
-							if (mgd) mgd.style.display = 'none';
-						}
-					} else {
-						logEnd('Automation: Move to Group complete');
-						autoGroupPromise.resolve();
-					}
-				}
-			});
+			setTimeout(preprovisionDeviceBlock, apiDelay * i, groupName, serialBlock);
+			i++;
 		}
 	}
 	if (currentWorkflow !== '') {
 		return autoGroupPromise.promise();
 	}
+}
+
+function preprovisionDeviceBlock(groupName, serialBlock) {
+	logInformation('Adding Devices to ' + groupName + ': ' + serialBlock.join(', '));
+	
+	// Move the block of serials in separate function to avoid variable changing between API call and response (due to looping) - enables better error and completion tracking
+	$.when(performDevicePreprovision(groupName, serialBlock, new $.Deferred())).then(function() {
+		// check for completion after each bulk move
+	
+		var moveProgress = (moveCounter / devicesToMove) * 100;
+		moveNotification.update({ progress: moveProgress });
+	
+		if (moveCounter == devicesToMove) {
+			if (moveNotification) moveNotification.close();
+			if (currentWorkflow === '') {
+				if (apiErrorCount != 0) {
+					showLog();
+					Swal.fire({
+						title: 'Move Failure',
+						text: 'Some or all devices failed to move to the specified group(s)',
+						icon: 'error',
+					});
+				} else {
+					Swal.fire({
+						title: 'Move Success',
+						text: 'All devices were to moved to the specified group(s)',
+						icon: 'success',
+					});
+				}
+				//console.log(manualGroup)
+				if (manualGroup) {
+					manualGroup = '';
+					var mgd = document.getElementById('manualGroupDiv');
+					if (mgd) mgd.style.display = 'none';
+				}
+			} else {
+				logEnd('Automation: Move to Group complete');
+				autoGroupPromise.resolve();
+			}
+		}
+	});
 }
 
 function performDevicePreprovision(groupName, serialNumbers, movePromiseVar) {
@@ -6870,7 +7015,10 @@ function moveDevicesToSite() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL'] && this['SITE']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
 				var currentSite = this['SITE'].trim();
 				if (!currentSite) {
 					logError('Device with Serial Number: ' + currentSerial + ' has no site name in the CSV file');
@@ -6982,7 +7130,9 @@ function removeDevicesFromSite() {
 	$.each(csvData, function() {
 		// find device in inventory to get device type
 		if (this['SERIAL']) {
-			var currentSerial = this['SERIAL'].trim();
+			var currentSerial = this['SERIAL'];
+			currentSerial = currentSerial.toUpperCase().trim();
+			
 			var found = false;
 			// Check APs
 			// Find the device and type
@@ -7094,7 +7244,10 @@ function assignLabelsToDevices() {
 				// support case of multiple labels per device
 				var currentLabels = this['LABELS'].split(':');
 				if (this['LABELS'].includes(',')) currentLabels = this['LABELS'].split(',');
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
 				$.each(currentLabels, function() {
 					var currentLabel = this.trim();
 					if (currentLabel !== '') {
@@ -7210,7 +7363,10 @@ function removeLabelsFromDevices() {
 				// support case of multiple labels per device
 				var currentLabels = this['LABELS'].split(':');
 				if (this['LABELS'].includes(',')) currentLabels = this['LABELS'].split(',');
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
 				$.each(currentLabels, function() {
 					var currentLabel = this.trim();
 					if (currentLabel !== '') {
@@ -7370,7 +7526,7 @@ function renameDevices() {
 
 		for (var i=0; i< csvData.length; i++) {			
 			// Spread out the requests to not hit 7/sec api limit
-			setTimeout(singleRename, apiDelay*i, csvData[i]);
+			setTimeout(singleRename, apiDelay*i, csvData[i], hostnameVariable);
 		}
 	});
 	if (currentWorkflow !== '') {
@@ -7378,7 +7534,7 @@ function renameDevices() {
 	}
 }
 
-function singleRename(csvRow) {
+function singleRename(csvRow, hostnameVariable) {
 	if (csvRow['SERIAL'] && csvRow['DEVICE NAME']) {
 		var currentSerial = csvRow['SERIAL'].trim();
 		var newHostname = csvRow['DEVICE NAME'].trim();
@@ -7530,8 +7686,9 @@ function magicRenameDevices() {
 
 		$.each(csvData, function() {
 			// find device in inventory to get device type
-			var currentSerial = this['SERIAL'].trim();
-			var currentMac = this['MAC'].trim();
+			var currentSerial = this['SERIAL'];
+			currentSerial = currentSerial.toUpperCase().trim();
+			var currentMac = cleanMACAddress(this['MAC']);
 			var currentdevice = this;
 			$.when(getAnyTopologyNeighbors(currentSerial)).then(function() {
 				//console.log(neighborSwitches)
@@ -7960,7 +8117,10 @@ function updatePortDescription(magic) {
 	showNotification('ca-card-update', 'Renaming switch ports for connected APs...', 'bottom', 'center', 'info');
 
 	$.each(csvData, function() {
-		var currentSerial = this['SERIAL'].trim();
+		
+		var currentSerial = this['SERIAL'];
+		currentSerial = currentSerial.toUpperCase().trim();
+		
 		var hostname = this['DEVICE NAME'].trim();
 		var device = findDeviceInMonitoring(currentSerial);
 		if (deviceType === 'IAP') {
@@ -8231,7 +8391,10 @@ function setAPZone() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
 				var newZonename = this['ZONE'].trim();
 				newZonename = newZonename.replace(/\s*,\s*/g, ',');
 				if (!newZonename || newZonename === '-') {
@@ -8371,7 +8534,9 @@ function setAPZone() {
 										}
 									}
 									if (response !== currentSerial) {
-										logError(currentSerial + ' was not assigned to AP Zone/SSIDs "' + newZonename + '". Reason: ' + response.reason);
+										if (response.reason) logError(currentSerial + ' was not assigned to AP Zone/SSIDs "' + newZonename + '". Reason: ' + response.reason);
+										else if (response.description) logError(currentSerial + ' was not assigned to AP Zone/SSIDs "' + newZonename + '". Reason: ' + response.description.replace('zones', 'zones/SSIDs'));
+										else logError(currentSerial + ' was not assigned to AP Zone/SSIDs "' + newZonename + '".');
 										//console.log(response.reason);
 										apiErrorCount++;
 									} else {
@@ -8458,7 +8623,10 @@ function setRFProfile() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
 				var newProfileName = null;
 				if (this['RF PROFILE']) newProfileName = this['RF PROFILE'].trim();
 				else if (this['RF ZONE']) newProfileName = this['RF ZONE'].trim(); 
@@ -8831,12 +8999,11 @@ function processAP1XCredentials(currentSerial, newUsername, newPassword) {
 		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
 			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
 			apiErrorCount++;
-			return;
-		} else if (commandResults.hasOwnProperty('error_code')) {
-			logError(commandResults.description);
-			apiErrorCount++;
+			ap1xCounter++;
+			checkForAP1XCompletion();
 			return;
 		}
+		
 		var response = JSON.parse(commandResults.responseBody);
 		
 		if (response.hasOwnProperty('error_code')) {
@@ -8847,21 +9014,22 @@ function processAP1XCredentials(currentSerial, newUsername, newPassword) {
 		} else {
 			var apCLIResponse = response;
 			
+			var commandLocation = -1;
 			// Look for existing config
 			for (var i=0;i<apCLIResponse.length;i++) {
 				if (apCLIResponse[i].includes('ap1x-peap-user')) commandLocation = i
 			}
-			
+
 			var needsUpdate = false;
 			// check if we need to add the command or replace the current command
 			if (commandLocation == -1) {
 				apCLIResponse.push('  ap1x-peap-user '+newUsername+' '+newPassword);
 				needsUpdate = true;
-			} else if (!apCLIResponse[commandLocation].includes(newUsername) || !apCLIResponse[commandLocation].includes(newPassword)) {
+			} else if (apCLIResponse[commandLocation] != '  ap1x-peap-user '+newUsername+' '+newPassword) {
 				apCLIResponse.splice(commandLocation, 1, '  ap1x-peap-user '+newUsername+' '+newPassword);
 				needsUpdate = true;
 			}
-
+			
 			// Only push back changes if it was updated.
 			if (needsUpdate) {
 				// Update ap settings
@@ -9102,186 +9270,358 @@ function setRadioMode(specificMode) {
 	/*  
 		if AP - grab ap settings via API, then update the wifi0-mode, wifi1-mode, wifi2-mode, split-5ghz-mode and dual-5ghz-mode
 	*/
-	var settingsList = {};
+	
 	radioModeCounter = 0;
 	$.when(updateInventory(false)).then(function() {
 		radioNotification = showProgressNotification('ca-router', 'Setting Radio Mode...', 'bottom', 'center', 'info');
 		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
-		$.each(csvData, function() {
-			// find device in inventory to get device type
-			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
-				var newRadio0Mode = this['RADIO 0 MODE'];
-				var newRadio1Mode = this['RADIO 1 MODE'];
-				var newRadio2Mode = this['RADIO 2 MODE'];
-				var dualRadioMode = this['DUAL 5GHZ MODE'];
-				var splitRadioMode = this['SPLIT 5GHZ MODE'];
-				if ((!newRadio0Mode || newRadio0Mode === '-') && (!newRadio1Mode || newRadio1Mode === '-') && (!newRadio2Mode || newRadio2Mode === '-')) {
-					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
-					logInformation('Device with Serial Number: ' + currentSerial + ' has no Radio Mode in the CSV file');
+		for (let i = 0; i < csvData.length; i++) {
+			if (csvData[i]['SERIAL']) {
+				setTimeout(setAPRadioMode, apiDelay * i, specificMode, csvData[i]);
+			} else {
+				radioModeCounter++;
+				checkForRadioModeModeCompletion();
+			}
+		}
+	});
+	if (currentWorkflow !== '') {
+		return autoRadioModeModePromise.promise();
+	}
+}
+
+function setAPRadioMode(specificMode, csvRow) {	
+	var currentSerial = csvRow['SERIAL'];
+	currentSerial = currentSerial.toUpperCase().trim();
+	
+	var newRadio0Mode = csvRow['RADIO 0 MODE'];
+	var newRadio1Mode = csvRow['RADIO 1 MODE'];
+	var newRadio2Mode = csvRow['RADIO 2 MODE'];
+	var dualRadioMode = csvRow['DUAL 5GHZ MODE'];
+	var splitRadioMode = csvRow['SPLIT 5GHZ MODE'];
+	if ((!newRadio0Mode || newRadio0Mode === '-') && (!newRadio1Mode || newRadio1Mode === '-') && (!newRadio2Mode || newRadio2Mode === '-')) {
+		// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+		logInformation('Device with Serial Number: ' + currentSerial + ' has no Radio Mode in the CSV file');
+		radioModeCounter++;
+		checkForRadioModeCompletion();
+	} else {
+		var device = findDeviceInInventory(currentSerial);
+		if (!device) {
+			logError('Unable to find device ' + currentSerial + ' in the device inventory');
+			apiErrorCount++;
+			radioModeCounter++;
+			checkForRadioModeCompletion();
+		} else if (deviceType === 'IAP') {
+			settingsList[device.macaddr.toLowerCase()] = csvRow;
+			// if AP then get AP settings
+			var settings = {
+				url: getAPIURL() + '/tools/getCommandwHeaders',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+					access_token: localStorage.getItem('access_token'),
+				}),
+			};
+
+			$.ajax(settings).done(function(commandResults, statusText, xhr) {
+				if (commandResults.hasOwnProperty('headers')) {
+					updateAPILimits(JSON.parse(commandResults.headers));
+				}
+				if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+					logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+					apiErrorCount++;
+					return;
+				} else if (commandResults.hasOwnProperty('error_code')) {
+					logError(commandResults.description);
+					apiErrorCount++;
+					return;
+				}
+				var response = JSON.parse(commandResults.responseBody);
+
+				if (response.hasOwnProperty('error_code')) {
+					logError(response.description);
+					apiErrorCount++;
 					radioModeCounter++;
 					checkForRadioModeCompletion();
-				} else {
-					var device = findDeviceInInventory(currentSerial);
-					if (!device) {
-						logError('Unable to find device ' + currentSerial + ' in the device inventory');
-						apiErrorCount++;
+				} else if (response.hasOwnProperty('message')) {
+					if (response.message === 'API rate limit exceeded' ) {
+						setAPRadioMode(specificMode, csvRow);
+					} else {
+						logError(commandResults.message);
 						radioModeCounter++;
 						checkForRadioModeCompletion();
-					} else if (deviceType === 'IAP') {
-						settingsList[device.macaddr.toLowerCase()] = this;
-						// if AP then get AP settings
-						var settings = {
-							url: getAPIURL() + '/tools/getCommandwHeaders',
-							method: 'POST',
-							timeout: 0,
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							data: JSON.stringify({
-								url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
-								access_token: localStorage.getItem('access_token'),
-							}),
-						};
+					}
+				} else {
+					var apCLIResponse = response;
+					// Pull in the new settings from the settingsList (ensures correct settings are used)
+					var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
+					var newSettings = settingsList[newSettingsKey];
 
-						$.ajax(settings).done(function(commandResults, statusText, xhr) {
-							if (commandResults.hasOwnProperty('headers')) {
-								updateAPILimits(JSON.parse(commandResults.headers));
-							}
-							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
-								apiErrorCount++;
-								return;
-							} else if (commandResults.hasOwnProperty('error_code')) {
-								logError(commandResults.description);
-								apiErrorCount++;
-								return;
-							}
-							var response = JSON.parse(commandResults.responseBody);
+					var currentSerial = newSettings['SERIAL'].trim();
+					var newRadio0Mode = newSettings['RADIO 0 MODE'];
+					var newRadio1Mode = newSettings['RADIO 1 MODE'];
+					var newRadio2Mode = newSettings['RADIO 2 MODE'];
+					var dualRadioMode = newSettings['DUAL 5GHZ MODE'];
+					var splitRadioMode = newSettings['SPLIT 5GHZ MODE'];
 
-							if (response.hasOwnProperty('error_code')) {
-								logError(response.description);
-								apiErrorCount++;
-								radioModeCounter++;
-								checkForRadioModeCompletion();
+					// rebuild each line required for the radio config
+					var wifi0mode = -1;
+					var wifi1mode = -1;
+					var wifi2mode = -1;
+					// Radio 0
+					if (newRadio0Mode && newRadio0Mode !== '-' && (specificMode === 'all' || specificMode === 'split' || specificMode === 'dual')) {
+						// remove the old settings
+						if (apCLIResponse.indexOf('  radio-0-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-0-disable'), 1);
+						if (apCLIResponse.indexOf('  dot11a-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11a-radio-disable'), 1);
+						for (i = 0; i < apCLIResponse.length; i++) {
+							if (apCLIResponse[i].includes('wifi0-mode')) wifi0mode = i;
+						}
+						if (wifi0mode != -1) apCLIResponse.splice(wifi0mode, 1);
+
+						// add in the new config but only on supported AP models
+						var newRadioMode = newRadio0Mode.trim().toLowerCase();
+						if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+							apCLIResponse.push('  wifi0-mode ' + newRadioMode);
+						} else if (newRadioMode === 'off') {
+							if (device['model'].includes('725') || device['model'].includes('734') || device['model'].includes('735') || device['model'].includes('755') || device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-0-disable');
+							else apCLIResponse.push('  dot11a-radio-disable');
+						}
+					}
+
+					// Radio 1
+					if (newRadio1Mode && newRadio1Mode !== '-' && (specificMode === 'all' || specificMode === 'dual')) {
+						// remove the old settings
+						if (apCLIResponse.indexOf('  radio-1-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-1-disable'), 1);
+						if (apCLIResponse.indexOf('  dot11g-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11g-radio-disable'), 1);
+						for (i = 0; i < apCLIResponse.length; i++) {
+							if (apCLIResponse[i].includes('wifi1-mode')) wifi1mode = i;
+						}
+						if (wifi1mode != -1) apCLIResponse.splice(wifi1mode, 1);
+
+						// add in the new config but only on supported AP models
+						var newRadioMode = newRadio1Mode.trim().toLowerCase();
+						if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+							apCLIResponse.push('  wifi1-mode ' + newRadioMode);
+						} else if (newRadioMode === 'off') {
+							if (device['model'].includes('725') || device['model'].includes('735') || device['model'].includes('755') || device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-1-disable');
+							else apCLIResponse.push('  dot11g-radio-disable');
+						}
+					}
+
+					// Radio 2
+					if (newRadio2Mode && newRadio2Mode !== '-' && (specificMode === 'all' || specificMode === 'split')) {
+						// remove the old settings
+						if (apCLIResponse.indexOf('  radio-2-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-2-disable'), 1);
+						for (i = 0; i < apCLIResponse.length; i++) {
+							if (apCLIResponse[i].includes('wifi2-mode')) wifi2mode = i;
+						}
+						if (wifi2mode != -1) apCLIResponse.splice(wifi2mode, 1);
+
+						// Check if Split radio is enabled - which allow use of radio2
+						var split555 = false;
+						if (splitRadioMode && splitRadioMode !== '-') {
+							var newRadioMode = splitRadioMode.trim().toLowerCase();
+							if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled' || newRadioMode === 'enable') split555 = true;
+						}
+						// add in the new config but only on supported AP models
+						if (device['model'].includes('725') || device['model'].includes('735') || device['model'].includes('735') || device['model'].includes('755') || device.model.includes('635') || device.model.includes('655') || split555) {
+							var newRadioMode = newRadio2Mode.trim().toLowerCase();
+							if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
+								apCLIResponse.push('  wifi2-mode ' + newRadioMode);
+							} else if (newRadioMode === 'off') {
+								apCLIResponse.push('  radio-2-disable');
+							}
+						}
+					}
+
+					// Dual 5GHz Mode
+					if (dualRadioMode && dualRadioMode !== '-' && (specificMode === 'all' || specificMode === 'dual')) {
+						// remove the old settings
+						if (apCLIResponse.indexOf('  dual-5GHz-mode disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode disable'), 1);
+						if (apCLIResponse.indexOf('  dual-5GHz-mode enable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode enable'), 1);
+
+						// add in the new config but only on supported AP models
+						if (device.model.includes('344') || device.model.includes('345')) {
+							// Standardize inputs for correct setting
+							var newRadioMode = dualRadioMode.trim().toLowerCase();
+							if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
+							if (newRadioMode === 'false' || newRadioMode === 'no' || newRadioMode === 'n' || newRadioMode === 'disabled') newRadioMode = 'disable';
+							if (newRadioMode === 'enable' || newRadioMode === 'disable') {
+								apCLIResponse.push('  dual-5GHz-mode ' + newRadioMode);
+							}
+						}
+					}
+
+					// Split 5GHz Mode on 555
+					if (splitRadioMode && splitRadioMode !== '-' && (specificMode === 'all' || specificMode === 'split')) {
+						// remove the old settings
+						if (apCLIResponse.indexOf('  split-5ghz-mode enabled') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  split-5ghz-mode enabled'), 1);
+
+						// add in the new config but only on supported AP models
+						if (device.model.includes('555')) {
+							// Standardize inputs for correct setting
+							var newRadioMode = splitRadioMode.trim().toLowerCase();
+							if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
+							if (newRadioMode === 'enable') {
+								apCLIResponse.push('  split-5ghz-mode enabled');
+							}
+						}
+					}
+					//console.log(apCLIResponse);
+
+					// Update ap settings
+					postRadioModeForAP(currentSerial, apCLIResponse);
+				}
+			});
+		} else {
+			// Either switch or controller/gateway
+			radioModeCounter++;
+			checkForRadioModeCompletion();
+		}
+	}
+}
+
+function postRadioModeForAP(currentSerial, apCLIResponse) {
+	// Update ap settings
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify({ clis: apCLIResponse }),
+		}),
+	};
+	
+	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+			}
+		} else if (response.message === 'API rate limit exceeded' ) {
+			// retry due to api rate limiting
+			postRadioModeForAP(currentSerial, apCLIResponse);
+		} else {
+			if (response !== currentSerial) {
+				logError(currentSerial + ' was not assigned the new Radio Modes. Reason: ' + response.reason);
+				//console.log(response.reason);
+				apiErrorCount++;
+			} else {
+				logInformation(currentSerial + ' was assigned the new Radio Modes ');
+			}
+			radioModeCounter++;
+			checkForRadioModeCompletion();
+		}
+	});
+}
+
+function set24RadioMode(selectedMode) {
+	/*  
+		if AP - grab ap settings via API, then update the correct wifi0-mode/wifi1-mode as the correct mode
+	*/
+	settingsList = {};
+	radioModeCounter = 0;
+	$.when(updateInventory(false)).then(function() {
+		radioNotification = showProgressNotification('ca-router', 'Setting 2.4GHz Radio Mode...', 'bottom', 'center', 'info');
+		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
+		
+		$.each(csvData, function() {
+			if (this['SERIAL']) {
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
+				var device = findDeviceInInventory(currentSerial);
+				
+				if (!device) {
+					logError('Unable to find device ' + currentSerial + ' in the device inventory');
+					apiErrorCount++;
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				} else if (deviceType === 'IAP') {
+					// if AP then get AP settings
+					var settings = {
+						url: getAPIURL() + '/tools/getCommandwHeaders',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+							access_token: localStorage.getItem('access_token'),
+						}),
+					};
+			
+					$.ajax(settings).done(function(commandResults, statusText, xhr) {
+						if (commandResults.hasOwnProperty('headers')) {
+							updateAPILimits(JSON.parse(commandResults.headers));
+						}
+						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+							apiErrorCount++;
+							return;
+						} else if (commandResults.hasOwnProperty('error_code')) {
+							logError(commandResults.description);
+							apiErrorCount++;
+							return;
+						}
+						var response = JSON.parse(commandResults.responseBody);
+			
+						//console.log(response);
+						if (response.hasOwnProperty('error_code')) {
+							logError(response.description);
+							apiErrorCount++;
+							radioCounter = radioCounter + 1;
+							checkForRadioCompletion();
+						} else {
+							var apCLIResponse = response;
+							
+							// check if radio is already disabled and if a 2.4GHz radio is configured
+							var foundType = -1;
+							var radioID = 1;
+							for (i = 0; i < apCLIResponse.length; i++) {
+								if (apCLIResponse[i].includes('dot11g-radio-disable') || apCLIResponse[i].includes('radio-1-disable')) {
+									foundType = i;
+								} else if (apCLIResponse[i].includes('2.4GHz-and')) {
+									radioID = 0;
+								} else if (apCLIResponse[i].includes('and-2.4GHz')) {
+									radioID = 1;
+								} else if (apCLIResponse[i].includes('5GHz-and-6GHz')) {
+									radioID = -1;
+								} else if (apCLIResponse[i].includes('6GHz-and-5GHz')) {
+									radioID = -1;
+								} else if (apCLIResponse[i].includes('dual-5GHz-mode enable')) {
+									radioID = -1;
+								}
+							}
+							//console.log(apCLIResponse)
+							if (foundType !== -1) {
+								logInformation('Device ' + currentSerial + ' 2.4GHz radio is disabled');
+								radioCounter = radioCounter + 1;
+								checkForRadioCompletion();
+							} else if (radioID == -1) {
+								logInformation('Device ' + currentSerial + ' is not configured with a 2.4GHz radio');
+								radioCounter = radioCounter + 1;
+								checkForRadioCompletion();
 							} else {
-								var apCLIResponse = response;
-								// Pull in the new settings from the settingsList (ensures correct settings are used)
-								var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
-								var newSettings = settingsList[newSettingsKey];
-
-								var currentSerial = newSettings['SERIAL'].trim();
-								var newRadio0Mode = newSettings['RADIO 0 MODE'];
-								var newRadio1Mode = newSettings['RADIO 1 MODE'];
-								var newRadio2Mode = newSettings['RADIO 2 MODE'];
-								var dualRadioMode = newSettings['DUAL 5GHZ MODE'];
-								var splitRadioMode = newSettings['SPLIT 5GHZ MODE'];
-
-								// rebuild each line required for the radio config
-								var wifi0mode = -1;
-								var wifi1mode = -1;
-								var wifi2mode = -1;
-								// Radio 0
-								if (newRadio0Mode && newRadio0Mode !== '-' && (specificMode === 'all' || specificMode === 'split' || specificMode === 'dual')) {
-									// remove the old settings
-									if (apCLIResponse.indexOf('  radio-0-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-0-disable'), 1);
-									if (apCLIResponse.indexOf('  dot11a-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11a-radio-disable'), 1);
-									for (i = 0; i < apCLIResponse.length; i++) {
-										if (apCLIResponse[i].includes('wifi0-mode')) wifi0mode = i;
-									}
-									if (wifi0mode != -1) apCLIResponse.splice(wifi0mode, 1);
-
-									// add in the new config but only on supported AP models
-									var newRadioMode = newRadio0Mode.trim().toLowerCase();
-									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
-										apCLIResponse.push('  wifi0-mode ' + newRadioMode);
-									} else if (newRadioMode === 'off') {
-										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-0-disable');
-										else apCLIResponse.push('  dot11a-radio-disable');
-									}
+								// Get AP model to determine which command to push
+								var apModel = device['model'];
+								if ((apModel.includes("AP-555")) || (apModel.includes("AP-6")) || (apModel.includes("AP-7"))) {
+									apCLIResponse.push('  wifi'+radioID+'-mode '+selectedMode);
+								} else {
+									// cover older dual radio APs
+									apCLIResponse.push('  wifi1-mode '+selectedMode);
 								}
-
-								// Radio 1
-								if (newRadio1Mode && newRadio1Mode !== '-' && (specificMode === 'all' || specificMode === 'dual')) {
-									// remove the old settings
-									if (apCLIResponse.indexOf('  radio-1-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-1-disable'), 1);
-									if (apCLIResponse.indexOf('  dot11g-radio-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dot11g-radio-disable'), 1);
-									for (i = 0; i < apCLIResponse.length; i++) {
-										if (apCLIResponse[i].includes('wifi1-mode')) wifi1mode = i;
-									}
-									if (wifi1mode != -1) apCLIResponse.splice(wifi1mode, 1);
-
-									// add in the new config but only on supported AP models
-									var newRadioMode = newRadio1Mode.trim().toLowerCase();
-									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
-										apCLIResponse.push('  wifi1-mode ' + newRadioMode);
-									} else if (newRadioMode === 'off') {
-										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-1-disable');
-										else apCLIResponse.push('  dot11g-radio-disable');
-									}
-								}
-
-								// Radio 2
-								if (newRadio2Mode && newRadio2Mode !== '-' && (specificMode === 'all' || specificMode === 'split')) {
-									// remove the old settings
-									if (apCLIResponse.indexOf('  radio-2-disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  radio-2-disable'), 1);
-									for (i = 0; i < apCLIResponse.length; i++) {
-										if (apCLIResponse[i].includes('wifi2-mode')) wifi2mode = i;
-									}
-									if (wifi2mode != -1) apCLIResponse.splice(wifi2mode, 1);
-
-									// Check if Split radio is enabled - which allow use of radio2
-									var split555 = false;
-									if (splitRadioMode && splitRadioMode !== '-') {
-										var newRadioMode = splitRadioMode.trim().toLowerCase();
-										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled' || newRadioMode === 'enable') split555 = true;
-									}
-									// add in the new config but only on supported AP models
-									if (device.model.includes('635') || device.model.includes('655') || split555) {
-										var newRadioMode = newRadio2Mode.trim().toLowerCase();
-										if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
-											apCLIResponse.push('  wifi2-mode ' + newRadioMode);
-										} else if (newRadioMode === 'off') {
-											apCLIResponse.push('  radio-2-disable');
-										}
-									}
-								}
-
-								// Dual 5GHz Mode
-								if (dualRadioMode && dualRadioMode !== '-' && (specificMode === 'all' || specificMode === 'dual')) {
-									// remove the old settings
-									if (apCLIResponse.indexOf('  dual-5GHz-mode disable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode disable'), 1);
-									if (apCLIResponse.indexOf('  dual-5GHz-mode enable') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  dual-5GHz-mode enable'), 1);
-
-									// add in the new config but only on supported AP models
-									if (device.model.includes('344') || device.model.includes('345')) {
-										// Standardize inputs for correct setting
-										var newRadioMode = dualRadioMode.trim().toLowerCase();
-										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
-										if (newRadioMode === 'false' || newRadioMode === 'no' || newRadioMode === 'n' || newRadioMode === 'disabled') newRadioMode = 'disable';
-										if (newRadioMode === 'enable' || newRadioMode === 'disable') {
-											apCLIResponse.push('  dual-5GHz-mode ' + newRadioMode);
-										}
-									}
-								}
-
-								// Split 5GHz Mode on 555
-								if (splitRadioMode && splitRadioMode !== '-' && (specificMode === 'all' || specificMode === 'split')) {
-									// remove the old settings
-									if (apCLIResponse.indexOf('  split-5ghz-mode enabled') != -1) apCLIResponse.splice(apCLIResponse.indexOf('  split-5ghz-mode enabled'), 1);
-
-									// add in the new config but only on supported AP models
-									if (device.model.includes('555')) {
-										// Standardize inputs for correct setting
-										var newRadioMode = splitRadioMode.trim().toLowerCase();
-										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled') newRadioMode = 'enable';
-										if (newRadioMode === 'enable') {
-											apCLIResponse.push('  split-5ghz-mode enabled');
-										}
-									}
-								}
-								//console.log(apCLIResponse);
-
+								
 								// Update ap settings
 								var settings = {
 									url: getAPIURL() + '/tools/postCommand',
@@ -9296,8 +9636,8 @@ function setRadioMode(specificMode) {
 										data: JSON.stringify({ clis: apCLIResponse }),
 									}),
 								};
-
-								$.ajax(settings).done(function(response, statusText, xhr) {
+			
+								$.ajax(settings).done(function(response, textStatus, jqXHR) {
 									if (response.hasOwnProperty('status')) {
 										if (response.status === '503') {
 											apiErrorCount++;
@@ -9305,26 +9645,26 @@ function setRadioMode(specificMode) {
 										}
 									}
 									if (response !== currentSerial) {
-										logError(currentSerial + ' was not assigned the new Radio Modes. Reason: ' + response.reason);
+										logError('2.4GHz radio on AP "' + currentSerial + '" was not configured for '+titleCase(selectedMode)+' mode. Reason: ' + response.reason);
 										//console.log(response.reason);
 										apiErrorCount++;
 									} else {
-										logInformation(currentSerial + ' was assigned the new Radio Modes ');
+										logInformation('2.4GHz radio on AP "' + currentSerial + '" was configured for '+titleCase(selectedMode)+' mode');
 									}
-									radioModeCounter++;
-									checkForRadioModeCompletion();
+									radioCounter = radioCounter + 1;
+									checkForRadioCompletion();
 								});
 							}
-						});
-					} else {
-						// Either switch or controller/gateway
-						radioModeCounter++;
-						checkForRadioModeCompletion();
-					}
+						}
+					});
+				} else {
+					// Either switch or controller/gateway
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
 				}
 			} else {
-				radioModeCounter++;
-				checkForRadioModeModeCompletion();
+				radioCounter = radioCounter + 1;
+				checkForRadioCompletion();
 			}
 		});
 	});
@@ -9337,150 +9677,325 @@ function setFlexRadioMode() {
 	/*  
 		if AP - grab ap settings via API, then update the flex-dual-band
 	*/
-	var settingsList = {};
+	settingsList = {};
 	radioModeCounter = 0;
 	$.when(updateInventory(false)).then(function() {
-		radioNotification = showProgressNotification('ca-router', 'Setting Flexible Dual Band Mode...', 'bottom', 'center', 'info');
+		radioNotification = showProgressNotification('ca-router', 'Setting Flexible Radio Band Mode...', 'bottom', 'center', 'info');
 		if (csvData.length == 0) showNotification('ca-router', 'No matching APs available', 'bottom', 'center', 'warning');
-		$.each(csvData, function() {
-			// find device in inventory to get device type
-			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
-				var flexMode = this['FLEX DUAL BAND'];
-				if (!flexMode || flexMode === '-') {
-					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
-					logInformation('Device with Serial Number: ' + currentSerial + ' has no Radio Mode in the CSV file');
-					radioModeCounter++;
-					checkForRadioModeCompletion();
-				} else if ((flexMode != '5GHz-and-2.4GHz') && (flexMode != '5GHz-and-6GHz') && (flexMode != '2.4GHz-and-6GHz')) {
-					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
-					logError('Device with Serial Number: ' + currentSerial + ' has no supported mode in the CSV');
-					apiErrorCount++;
-					radioModeCounter++;
-					checkForRadioModeCompletion();
-				} else {
-					var device = findDeviceInInventory(currentSerial);
-					if (!device) {
-						logError('Unable to find device ' + currentSerial + ' in the device inventory');
-						apiErrorCount++;
-						radioModeCounter++;
-						checkForRadioModeCompletion();
-					} else if (deviceType === 'IAP') {
-						if (!device['model'].includes('615') && (!device['model'].includes('605'))) {
-							logError('Device with Serial Number: ' + currentSerial + ' does not support Flex Dual Band configuration');
-							apiErrorCount++;
-							radioModeCounter++;
-							checkForRadioModeCompletion();
-						} else {
-							settingsList[device.macaddr.toLowerCase()] = this;
-							// if AP then get AP settings
-							var settings = {
-								url: getAPIURL() + '/tools/getCommandwHeaders',
-								method: 'POST',
-								timeout: 0,
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								data: JSON.stringify({
-									url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
-									access_token: localStorage.getItem('access_token'),
-								}),
-							};
-	
-							$.ajax(settings).done(function(commandResults, statusText, xhr) {
-								if (commandResults.hasOwnProperty('headers')) {
-									updateAPILimits(JSON.parse(commandResults.headers));
-								}
-								if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-									logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
-									apiErrorCount++;
-									return;
-								} else if (commandResults.hasOwnProperty('error_code')) {
-									logError(commandResults.description);
-									apiErrorCount++;
-									return;
-								}
-								var response = JSON.parse(commandResults.responseBody);
-	
-								if (response.hasOwnProperty('error_code')) {
-									logError(response.description);
-									apiErrorCount++;
-									radioModeCounter++;
-									checkForRadioModeCompletion();
-								} else {
-									var apCLIResponse = response;
-									
-									// Pull in the new settings from the settingsList (ensures correct settings are used)
-									var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
-									var newSettings = settingsList[newSettingsKey];
-	
-									var currentSerial = newSettings['SERIAL'].trim();
-									var newFlexMode = newSettings['FLEX DUAL BAND'];
-	
-									// rebuild each line required for the radio config
-									if (newFlexMode && newFlexMode !== '-') {
-										// remove the old settings
-										var commandLocation = -1;
-										for (var i=0;i<apCLIResponse.length;i++) {
-											if (apCLIResponse[i].includes('flex-dual-band')) commandLocation = i
-										}
-										if (commandLocation != -1) apCLIResponse.splice(commandLocation, 1);
-	
-										// add in the new config but only on supported AP models
-										apCLIResponse.push('  flex-dual-band ' + newFlexMode);
-									}
-									//console.log(apCLIResponse);
-									
-									// Update ap settings
-									var settings = {
-										url: getAPIURL() + '/tools/postCommand',
-										method: 'POST',
-										timeout: 0,
-										headers: {
-											'Content-Type': 'application/json',
-										},
-										data: JSON.stringify({
-											url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
-											access_token: localStorage.getItem('access_token'),
-											data: JSON.stringify({ clis: apCLIResponse }),
-										}),
-									};
-	
-									$.ajax(settings).done(function(response, statusText, xhr) {
-										if (response.hasOwnProperty('status')) {
-											if (response.status === '503') {
-												apiErrorCount++;
-												logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
-											}
-										}
-										if (response !== currentSerial) {
-											logError(currentSerial + ' was not assigned the new Flexible Dual Band Modes. Reason: ' + response.reason);
-											//console.log(response.reason);
-											apiErrorCount++;
-										} else {
-											logInformation(currentSerial + ' was assigned the '+ newFlexMode+ ' mode');
-										}
-										radioModeCounter++;
-										checkForRadioModeCompletion();
-									});
-								}
-							});
-						}
-					} else {
-						// Either switch or controller/gateway
-						radioModeCounter++;
-						checkForRadioModeCompletion();
-					}
-				}
+		for (let i = 0; i < csvData.length; i++) {
+			if (csvData[i]['SERIAL']) {
+				setTimeout(setFlexRadioModeForAP, apiDelay * i, csvData[i]);
 			} else {
 				radioModeCounter++;
 				checkForRadioModeModeCompletion();
 			}
-		});
+		}
 	});
 	if (currentWorkflow !== '') {
 		return autoRadioModeModePromise.promise();
 	}
+}
+
+function setFlexRadioModeForAP(newData) {
+	var currentSerial = newData['SERIAL'];
+	currentSerial = currentSerial.toUpperCase().trim();
+	
+	var flexMode = newData['FLEX RADIO MODE'];
+	if (!flexMode || flexMode === '-') {
+		// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+		logInformation('Device with Serial Number: ' + currentSerial + ' has no Radio Mode in the CSV file');
+		radioModeCounter++;
+		checkForRadioModeCompletion();
+	} else if ((!flex6xx.includes(flexMode)) && (!flex76x.includes(flexMode)) && (!flex735.includes(flexMode)) && (!flex755.includes(flexMode))) {
+		// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+		logError('Device with Serial Number: ' + currentSerial + ' has no supported flex radio mode in the CSV');
+		apiErrorCount++;
+		radioModeCounter++;
+		checkForRadioModeCompletion();
+	} else {
+		var device = findDeviceInInventory(currentSerial);
+		
+		if (!device) {
+			logError('Unable to find device ' + currentSerial + ' in the device inventory');
+			apiErrorCount++;
+			radioModeCounter++;
+			checkForRadioModeCompletion();
+		} else if (deviceType === 'IAP') {
+			// Check if model supports flex radio, then check if selected mode is supported for the exact model.
+			if (!device['model'].includes('735') && (!device['model'].includes('755')) && (!device['model'].includes('763')) && (!device['model'].includes('764')) && (!device['model'].includes('765')) && (!device['model'].includes('615')) && (!device['model'].includes('605'))) {
+				logError('Device with Serial Number: ' + currentSerial + ' does not support Flex Radio configuration');
+				apiErrorCount++;
+				radioModeCounter++;
+				checkForRadioModeCompletion();
+			} else if ((device['model'].includes('615') || (device['model'].includes('605'))) && !flex6xx.includes(flexMode)) {
+				logError('Device with Serial Number: ' + currentSerial + ' does not support the selected Flex Radio configuration');
+				apiErrorCount++;
+				radioModeCounter++;
+				checkForRadioModeCompletion();
+			} else if (device['model'].includes('735') && !flex735.includes(flexMode)) {
+				logError('Device with Serial Number: ' + currentSerial + ' does not support the selected Flex Radio configuration');
+				apiErrorCount++;
+				radioModeCounter++;
+				checkForRadioModeCompletion();
+			} else if (device['model'].includes('755') && !flex755.includes(flexMode)) {
+				logError('Device with Serial Number: ' + currentSerial + ' does not support the selected Flex Radio configuration');
+				apiErrorCount++;
+				radioModeCounter++;
+				checkForRadioModeCompletion();
+			} else if ((device['model'].includes('763') || device['model'].includes('765')) && !flex76x.includes(flexMode)) {
+				logError('Device with Serial Number: ' + currentSerial + ' does not support the selected Flex Radio configuration');
+				apiErrorCount++;
+				radioModeCounter++;
+				checkForRadioModeCompletion();
+			} else if (device['model'].includes('764') && !flex764.includes(flexMode)) {
+				logError('Device with Serial Number: ' + currentSerial + ' does not support the selected Flex Radio configuration');
+				apiErrorCount++;
+				radioModeCounter++;
+				checkForRadioModeCompletion();
+			} else {
+				settingsList[device.macaddr.toLowerCase()] = newData;
+				// if AP then get AP settings
+				var settings = {
+					url: getAPIURL() + '/tools/getCommandwHeaders',
+					method: 'POST',
+					timeout: 0,
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					data: JSON.stringify({
+						url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+						access_token: localStorage.getItem('access_token'),
+					}),
+				};
+	
+				$.ajax(settings).done(function(commandResults, statusText, xhr) {
+					if (commandResults.hasOwnProperty('headers')) {
+						updateAPILimits(JSON.parse(commandResults.headers));
+					}
+					if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+						logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+						apiErrorCount++;
+						return;
+					} else if (commandResults.hasOwnProperty('error_code')) {
+						logError(commandResults.description);
+						apiErrorCount++;
+						return;
+					}
+					var response = JSON.parse(commandResults.responseBody);
+	
+					if (response.hasOwnProperty('error_code')) {
+						logError(response.description);
+						apiErrorCount++;
+						radioModeCounter++;
+						checkForRadioModeCompletion();
+					} else {
+						var apCLIResponse = response;
+						
+						// Pull in the new settings from the settingsList (ensures correct settings are used)
+						var newSettingsKey = [apCLIResponse[0].replace('per-ap-settings ', '')];
+						var newSettings = settingsList[newSettingsKey];
+						var currentSerial = newSettings['SERIAL'].trim();
+						
+						var newFlexMode = newSettings['FLEX RADIO MODE'];
+						
+						var flexCommand = 'flex-dual-band';
+						if (flex735.includes(newFlexMode)) flexCommand = 'flex-tri-band';
+						else if (flex755.includes(newFlexMode)) flexCommand = 'flex-tri-band';
+	
+						// rebuild each line required for the radio config
+						var updateRequired = true;
+						if (newFlexMode && newFlexMode !== '-') {
+							// remove the old settings
+							var commandLocation = -1;
+							for (var i=0;i<apCLIResponse.length;i++) {
+								if (apCLIResponse[i].includes(flexCommand)) {
+									commandLocation = i;
+									if (apCLIResponse[i].includes(newFlexMode)) updateRequired = false;
+								}
+							}
+							if (commandLocation != -1) apCLIResponse.splice(commandLocation, 1);
+	
+							// add in the new config but only on supported AP models
+							apCLIResponse.push('  '+ flexCommand +' ' + newFlexMode);
+						}
+						//console.log(apCLIResponse);
+						
+						if (updateRequired) {
+							postFlexRadioModeForAP(currentSerial, apCLIResponse, newFlexMode)
+						} else {
+							logInformation(currentSerial + ' was already assigned the '+ newFlexMode+ ' mode');
+							radioModeCounter++;
+							checkForRadioModeCompletion();
+						}
+					}
+				});
+			}
+		} else {
+			// Either switch or controller/gateway
+			radioModeCounter++;
+			checkForRadioModeCompletion();
+		}
+	}
+}
+
+function postFlexRadioModeForAP(currentSerial, apCLIResponse, newFlexMode) {
+	// Update ap settings
+	var settings = {
+		url: getAPIURL() + '/tools/postCommand',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+			access_token: localStorage.getItem('access_token'),
+			data: JSON.stringify({ clis: apCLIResponse }),
+		}),
+	};
+	
+	$.ajax(settings).done(function(response, statusText, xhr) {
+		if (response.hasOwnProperty('status')) {
+			if (response.status === '503') {
+				apiErrorCount++;
+				logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+			}
+		} else if (response.message === 'API rate limit exceeded' ) {
+			// retry due to api rate limiting
+			postFlexRadioModeForAP(currentSerial, apCLIResponse, newFlexMode);
+		} else {
+			if (response !== currentSerial) {
+				logError(currentSerial + ' was not assigned the new Flexible Radio Modes. Reason: ' + response.reason);
+				//console.log(response.reason);
+				apiErrorCount++;
+			} else {
+				logInformation(currentSerial + ' was assigned the '+ newFlexMode+ ' mode');
+			}
+			radioModeCounter++;
+			checkForRadioModeCompletion();
+		}
+	});
+}
+
+
+function setFlexRadioModeSite() {
+	// Build the list of AP models that support Flex radio mode
+	var select = document.getElementById('siteselector');
+	var selectedSite = select.value;
+	var siteAPs = getAPsForSite(selectedSite);
+	
+	select = document.getElementById('flexAPSelector');
+	if (select) select.options.length = 0;
+	
+	select = document.getElementById('flexModeSelector');
+	if (select) select.options.length = 0;
+	$('#flexModeSelector').selectpicker('refresh');
+
+	var apModels = [];
+	$.each(siteAPs, function() {
+		var device = this;
+		if (deviceType === 'IAP' && device['model'] && ((device['model'].includes('615')) || (device['model'].includes('605')) || (device['model'].includes('735')) || (device['model'].includes('755')) || (device['model'].includes('763')) || (device['model'].includes('764')) || (device['model'].includes('765')))) {
+			if (!apModels.includes(device['model'])) apModels.push(device['model']);
+		}
+	});
+	
+	if (apModels.length == 0) {
+		showNotification('ca-ap-icon', 'No Flex Radio APs available at '+selectedSite, 'bottom', 'center', 'warning');
+		return;
+	}
+
+	if ($('#flexAPSelector')) {
+		apModels.sort((a, b) => {
+			const apA = a.toUpperCase(); // ignore upper and lowercase
+			const apB = b.toUpperCase(); // ignore upper and lowercase
+			// Sort on Group name
+			if (apA < apB) {
+				return -1;
+			}
+			if (apA > apB) {
+				return 1;
+			}
+			return 0;
+		});
+		$.each(apModels, function() {
+			// Add group to the dropdown selector
+			$('#flexAPSelector').append($('<option>', { value: this.toString(), text: 'AP-'+this.toString() }));
+			if ($('#flexAPSelector').length != 0) {
+				$('#flexAPSelector').selectpicker('refresh');
+			}
+		});
+	}
+	
+	$('#FlexModeConfigModalLink').trigger('click');
+}
+
+function flexAPModelSelected() {
+	var select = document.getElementById('flexAPSelector');
+	var selectedModel = select.value;
+	
+	select = document.getElementById('flexModeSelector');
+	if (select) select.options.length = 0;
+	
+	if ((selectedModel.includes('615')) || (selectedModel.includes('605'))) {
+		$('#flexModeSelector').append($('<option>', { value: 'auto', text: "Automatic" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-and-2.4GHz', text: "5GHz + 2.4GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-and-6GHz', text: "5GHz + 6GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '2.4GHz-and-6GHz', text: "2.4GHz + 6GHz" }));
+	} else if (selectedModel.includes('735')) {
+		$('#flexModeSelector').append($('<option>', { value: 'auto', text: "Automatic" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-2.4GHz-6GHz', text: "2.4GHz + 5GHz + 6GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHzHB-5GHzLB-6GHz', text: "Dual 5GHz + 6GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-6GHzHB-6GHzLB', text: "Dual 6GHz + 5GHz" }));
+	} else if (selectedModel.includes('755')) {
+		$('#flexModeSelector').append($('<option>', { value: 'auto', text: "Automatic" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-2.4GHz-6GHz', text: "2.4GHz + 5GHz + 6GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHzHB-5GHzLB-6GHz', text: "Dual 5GHz + 6GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '6GHzLB-5GHz-6GHzHB', text: "Dual 6GHz + 5GHz" }));
+	} else if ((selectedModel.includes('763')) || (selectedModel.includes('765'))) {
+		$('#flexModeSelector').append($('<option>', { value: 'auto', text: "Automatic" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-and-2.4GHz', text: "5GHz + 2.4GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '6GHz-and-5GHz', text: "6GHz + 5GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '6GHz-and-2.4GHz', text: "6GHz + 2.4GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: 'Single-5GHz', text: "5GHz (4x4)" }));
+		$('#flexModeSelector').append($('<option>', { value: 'Single-6GHz', text: "6GHz (4x4)" }));
+	} else if (selectedModel.includes('764')) {
+		$('#flexModeSelector').append($('<option>', { value: 'auto', text: "Automatic" }));
+		$('#flexModeSelector').append($('<option>', { value: '5GHz-and-2.4GHz', text: "5GHz + 2.4GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '6GHz-and-5GHz', text: "6GHz + 5GHz" }));
+		$('#flexModeSelector').append($('<option>', { value: '6GHz-and-2.4GHz', text: "6GHz + 2.4GHz" }));
+	}
+	
+	if ($('#flexModeSelector').length != 0) {
+		$('#flexModeSelector').selectpicker('refresh');
+	}
+}
+
+function applyFlexBandChanges() {
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var flexKey = 'FLEX RADIO MODE';
+	
+	// Build list of APs that match the selected model
+	var select = document.getElementById('siteselector');
+	var selectedSite = select.value;
+	var siteAPs = getAPsForSite(selectedSite);
+	
+	select = document.getElementById('flexAPSelector');
+	var selectedModel = select.value;
+	
+	select = document.getElementById('flexModeSelector');
+	var selectedMode = select.value;
+
+	var csvDataBuild = [];	
+	$.each(siteAPs, function() {
+		var device = this;
+		if (selectedModel === device['model']) {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [flexKey]: selectedMode });
+		}
+	});
+	
+	csvData = csvDataBuild;
+	setFlexRadioMode();
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -9558,7 +10073,13 @@ function antennaSelected() {
 	var selectedAntenna = antennas[document.getElementById('antennaSelector').value];
 	if (selectedAntenna.five) document.getElementById('antennaGain0').value = selectedAntenna.five;
 	if (selectedAntenna.two) document.getElementById('antennaGain1').value = selectedAntenna.two;
-	//if (selectedAntenna.six) document.getElementById('antennaGain2').value = selectedAntenna.six;
+	if (selectedAntenna.six) {
+		document.getElementById('antennaGain2').disabled = false;
+		document.getElementById('antennaGain2').value = selectedAntenna.six;
+	} else {
+		document.getElementById('antennaGain2').disabled = true;
+		document.getElementById('antennaGain2').value = '';
+	}
 }
 
 function applyAntennaGains() {
@@ -9579,7 +10100,7 @@ function applyAntennaGains() {
 	$.each(csvData, function() {
 		var device = findDeviceInMonitoring(this['SERIAL']);
 		if (device['model'].match(/^..4.*$/gi) || device['model'].match(/^..8.*$/gi)) {
-			if (selectedAPModel === device['model'] || selectedAPModel === 'All') csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [antenna0Key]: document.getElementById('antennaGain0').value, [antenna1Key]: document.getElementById('antennaGain1').value });
+			if (selectedAPModel === device['model'] || selectedAPModel === 'All') csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [antenna0Key]: document.getElementById('antennaGain0').value, [antenna1Key]: document.getElementById('antennaGain1').value , [antenna2Key]: document.getElementById('antennaGain2').value });
 		}
 	});
 
@@ -9604,6 +10125,12 @@ function checkForAntennaCompletion(antennaChange) {
 				});
 			} else {
 				if (antennaChange === ConfigType.Width) {
+					Swal.fire({
+						title: 'Antenna Configuration Success',
+						text: 'All devices were set to the correct antenna configurations',
+						icon: 'success'
+					});
+				} else if (antennaChange === ConfigType.Direction) {
 					Swal.fire({
 						title: 'Antenna Configuration Success',
 						text: 'All devices were set to the correct antenna configurations',
@@ -9636,7 +10163,7 @@ function setAntennaGain() {
 	/*  
 		if AP - grab ap settings via API, then update the antenna gain values
 	*/
-	var settingsList = {};
+	settingsList = {};
 	antennaCounter = 0;
 	$.when(updateInventory(false)).then(function() {
 		antennaNotification = showProgressNotification('ca-antenna', 'Setting Antenna Gains...', 'bottom', 'center', 'info');
@@ -9644,13 +10171,18 @@ function setAntennaGain() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
 
 				// Determine Radio 0 gain
 				var newRadio0Gain = this['RADIO 0 GAIN'];
 
 				// Determine Radio 1 gain
 				var newRadio1Gain = this['RADIO 1 GAIN'];
+				
+				// Determine Radio 2 gain
+				var newRadio1Gain = this['RADIO 2 GAIN'];
 
 				if ((!newRadio0Gain || newRadio0Gain === '-') && (!newRadio1Gain || newRadio1Gain === '-')) {
 					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
@@ -9709,10 +10241,12 @@ function setAntennaGain() {
 								var currentSerial = newSettings['SERIAL'].trim();
 								var newRadio0Gain = newSettings['RADIO 0 GAIN'];
 								var newRadio1Gain = newSettings['RADIO 1 GAIN'];
+								var newRadio2Gain = newSettings['RADIO 2 GAIN'];
 
 								// rebuild each line required for the radio config
 								var gAntenna = -1;
 								var aAntenna = -1;
+								var sixAntenna = -1;
 								// Radio 0
 								if (newRadio0Gain && newRadio0Gain !== '-') {
 									// remove the old settings
@@ -9738,6 +10272,21 @@ function setAntennaGain() {
 									var newRadioGain = newRadio1Gain.trim();
 									apCLIResponse.push('  g-external-antenna ' + newRadioGain);
 								}
+								
+								// Radio 2
+								if (device.model.includes(634) || device.model.includes(654) || device.model.includes(734) || device.model.includes(754)) {
+									if (newRadio2Gain && newRadio2Gain !== '-') {
+										// remove the old settings
+										for (i = 0; i < apCLIResponse.length; i++) {
+											if (apCLIResponse[i].includes('external-antenna-6ghz')) sixAntenna = i;
+										}
+										if (sixAntenna != -1) apCLIResponse.splice(sixAntenna, 1);
+									
+										// add in the new config but only on supported AP models
+										var newRadioGain = newRadio2Gain.trim();
+										apCLIResponse.push('  external-antenna-6ghz ' + newRadioGain);
+									}
+								}
 
 								// Update ap settings
 								var settings = {
@@ -9753,7 +10302,7 @@ function setAntennaGain() {
 										data: JSON.stringify({ clis: apCLIResponse }),
 									}),
 								};
-
+								
 								$.ajax(settings).done(function(response, statusText, xhr) {
 									if (response.hasOwnProperty('status')) {
 										if (response.status === '503') {
@@ -9804,7 +10353,10 @@ function testAntennaGain() {
 	needAntennaConfig = [];
 	var externalAPs = 0;
 	$.each(siteAPs, function() {
-		var currentSerial = this['serial'];
+		
+		var currentSerial = this['SERIAL'];
+		currentSerial = currentSerial.toUpperCase().trim();
+		
 		// If external antenna model
 		if (this['model'].match(/^..4.*$/gi) || this['model'].match(/^..8.*$/gi)) {
 			externalAPs++;
@@ -9963,7 +10515,8 @@ function updateAntennaWidth() {
 	});
 
 	csvData = csvDataBuild;
-	setAntennaWidth();
+	if (csvData.length > 0) setAntennaWidth();
+	else showNotification('ca-antenna-width', 'No APs that support dynamic antenna mode found in the CSV', 'bottom', 'center', 'warning');
 }
 
 function setAntennaWidth() {
@@ -9976,7 +10529,9 @@ function setAntennaWidth() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
 				
 				// Determine antenna width
 				var newAntennaWidth = this['ANTENNA WIDTH'];
@@ -10096,6 +10651,164 @@ function setAntennaWidth() {
 	}
 }
 
+function updateAntennaDirection() {
+	apiErrorCount = 0;
+	// CSV header
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var antennaKey = 'ANTENNA DIRECTION';
+
+	var csvDataBuild = [];
+	
+	// For each row in the supplied device CSV
+	// Rebuild the CSV only having selected APs and set antenna gains
+	$.each(csvData, function() {
+		var device = findDeviceInMonitoring(this['SERIAL']);
+		if (device['model'].match(/^763.*$/gi) || device['model'].match(/^765.*$/gi)) {
+			var newAntenna = this['ANTENNA DIRECTION'];
+			if ((newAntenna || newAntenna !== '-')) {
+				csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [antennaKey]: newAntenna });
+			}
+		}
+	});
+	
+	csvData = csvDataBuild;
+	if (csvData.length > 0) setAntennaDirection();
+	else showNotification('ca-antenna-width', 'No APs that support antenna direction mode found in the CSV', 'bottom', 'center', 'warning');
+}
+
+function setAntennaDirection() {
+	/*  
+		if AP - grab ap settings via API, then update the antenna gain values
+	*/
+	antennaCounter = 0;
+	$.when(updateInventory(false)).then(function() {
+		antennaNotification = showProgressNotification('ca-antenna-width', 'Setting Antenna Direction Mode...', 'bottom', 'center', 'info');
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
+				// Determine antenna width
+				var newAntenna = this['ANTENNA DIRECTION'];
+				console.log(this)
+				if ((!newAntenna || newAntenna === '-')) {
+					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
+					logInformation('Device with Serial Number: ' + currentSerial + ' has no antenna direction mode in the CSV file');
+					antennaCounter++;
+					checkForAntennaCompletion(ConfigType.Direction);
+				} else {
+					var device = findDeviceInInventory(currentSerial);
+					if (!device) {
+						logError('Unable to find device ' + currentSerial + ' in the device inventory');
+						apiErrorCount++;
+						antennaCounter++;
+						checkForAntennaCompletion(ConfigType.Direction);
+					} else if (deviceType === 'IAP') {
+						// if AP then get AP settings
+						var settings = {
+							url: getAPIURL() + '/tools/getCommandwHeaders',
+							method: 'POST',
+							timeout: 0,
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							data: JSON.stringify({
+								url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+								access_token: localStorage.getItem('access_token'),
+							}),
+						};
+
+						$.ajax(settings).done(function(commandResults, statusText, xhr) {
+							if (commandResults.hasOwnProperty('headers')) {
+								updateAPILimits(JSON.parse(commandResults.headers));
+							}
+							if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+								logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+								apiErrorCount++;
+								return;
+							} else if (commandResults.hasOwnProperty('error_code')) {
+								logError(commandResults.description);
+								apiErrorCount++;
+								return;
+							}
+							var response = JSON.parse(commandResults.responseBody);
+
+							if (response.hasOwnProperty('error_code')) {
+								logError(response.description);
+								apiErrorCount++;
+								antennaCounter++;
+								checkForAntennaCompletion(ConfigType.Direction);
+							} else {
+								var apCLIResponse = response;
+								
+								// remove old installation type if there
+								var foundType = -1;
+								for (i = 0; i < apCLIResponse.length; i++) {
+									if (apCLIResponse[i].includes('ant-direction-mode')) {
+										foundType = i;
+										break;
+									}
+								}
+								if (foundType !== -1) apCLIResponse.splice(foundType, 1);
+								
+								// Add install type to the response if it is not "Automatic"
+								newAntenna = newAntenna.toLowerCase();
+								if (!newAntenna.includes('omni')) apCLIResponse.push('  ant-direction-mode directional');
+								console.log(apCLIResponse)
+								// Update ap settings
+								var settings = {
+									url: getAPIURL() + '/tools/postCommand',
+									method: 'POST',
+									timeout: 0,
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									data: JSON.stringify({
+										url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + currentSerial,
+										access_token: localStorage.getItem('access_token'),
+										data: JSON.stringify({ clis: apCLIResponse }),
+									}),
+								};
+								
+								$.ajax(settings).done(function(response, statusText, xhr) {
+									if (response.hasOwnProperty('status')) {
+										if (response.status === '503') {
+											apiErrorCount++;
+											logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+										}
+									}
+									if (response !== currentSerial) {
+										logError(currentSerial + ' was not assigned the new antenna direction mode. Reason: ' + response.reason);
+										//console.log(response.reason);
+										apiErrorCount++;
+									} else {
+										logInformation(currentSerial + ' was assigned the new antenna direction mode');
+									}
+									antennaCounter++;
+									checkForAntennaCompletion(ConfigType.Direction);
+								});
+							}
+						});
+					} else {
+						// Either switch or controller/gateway
+						antennaCounter++;
+						checkForAntennaCompletion(ConfigType.Direction);
+					}
+				}
+			} else {
+				antennaCounter++;
+				checkForAntennaCompletion(ConfigType.Direction);
+			}
+		});
+	});
+	if (currentWorkflow !== '') {
+		return autoAntennaPromise.promise();
+	}
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		GPS functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -10180,84 +10893,129 @@ function setAPAltitude(serial, altitude) {
 			logError(commandResults.description);
 			apiErrorCount++;
 			return;
-		}
-		var response = JSON.parse(commandResults.responseBody);
-	
-		var apCLIResponse = response;
-		// Check if gps command block exists in the config
-		var gpsIndex = apCLIResponse.indexOf('gps')
-		var altitudeIndex = -1;
-		var postRequired = false;
-		if (gpsIndex == -1) {
-			apCLIResponse.push('gps');
-			apCLIResponse.push('  ap-altitude '+ altitude);
-			postRequired = true;
 		} else {
-			for (var i=gpsIndex+1; i < apCLIResponse.length; i++) {
-				if (apCLIResponse[i].startsWith('  ')) {
-					if (apCLIResponse[i].includes('ap-altitude')) {
-						if (!apCLIResponse[i].includes(altitude)) {
-							apCLIResponse[i] = '  ap-altitude '+ altitude;
-							postRequired = true;
-						}
-						altitudeIndex = i;
-						break;
-					}
-				} else if (!apCLIResponse[i].startsWith('  ')) {
-					// No longer in the gps command block
-					break;
-				}
-			}
-			if (altitudeIndex == -1) {
-				apCLIResponse.splice(gpsIndex+1, 0, '  ap-altitude '+ altitude);
-				postRequired = true;
-			}
+			var response = JSON.parse(commandResults.responseBody);
 			
-		}
-		
-		if (postRequired) {	
-			// Update ap cli as the LED state is altered
-			var settings = {
-				url: getAPIURL() + '/tools/postCommand',
-				method: 'POST',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify({
-					url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentSerial,
-					access_token: localStorage.getItem('access_token'),
-					data: JSON.stringify({ clis: apCLIResponse }),
-				}),
-			};
-		
-			$.ajax(settings).done(function(response, statusText, xhr) {
-				if (response.hasOwnProperty('status')) {
-					if (response.status === '503') {
-						apiErrorCount++;
-						logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<SERIAL>)');
-					}
-				}
-				if (response !== currentSerial) {
-					logError('Altitude for AP ' + currentSerial + ' was not correctly configured. Reason: ' + response.reason);
-					//console.log(response.reason);
-					apiErrorCount++;
+			if (response.hasOwnProperty('message')) {
+				if (response.message === 'API rate limit exceeded' ) {
+					setAPAltitude(serial, altitude);
 				} else {
-					logInformation('Altitude for AP ' + currentSerial + ' was configured');
+					logError(commandResults.message);
+					gpsCounter++;
+					checkForGPSCompletion();
 				}
-				gpsCounter++;
-				checkForGPSCompletion();
-			});
-		} else {
-			logInformation('Altitude for AP ' + currentSerial + ' was already configured correctly');
-			gpsCounter++;
-			checkForGPSCompletion();
+			} else {
+		
+				var apCLIResponse = response;
+				// Check if gps command block exists in the config
+				var gpsIndex = apCLIResponse.indexOf('gps')
+				var altitudeIndex = -1;
+				var postRequired = false;
+				if (gpsIndex == -1) {
+					apCLIResponse.push('gps');
+					apCLIResponse.push('  ap-altitude '+ altitude);
+					postRequired = true;
+				} else {
+					for (var i=gpsIndex+1; i < apCLIResponse.length; i++) {
+						if (apCLIResponse[i].startsWith('  ')) {
+							if (apCLIResponse[i].includes('ap-altitude')) {
+								if (!apCLIResponse[i].includes(altitude)) {
+									apCLIResponse[i] = '  ap-altitude '+ altitude;
+									postRequired = true;
+								}
+								altitudeIndex = i;
+								break;
+							}
+						} else if (!apCLIResponse[i].startsWith('  ')) {
+							// No longer in the gps command block
+							break;
+						}
+					}
+					if (altitudeIndex == -1) {
+						apCLIResponse.splice(gpsIndex+1, 0, '  ap-altitude '+ altitude);
+						postRequired = true;
+					}
+					
+				}
+				
+				if (postRequired) {	
+					// Update ap cli as the LED state is altered
+					var settings = {
+						url: getAPIURL() + '/tools/postCommand',
+						method: 'POST',
+						timeout: 0,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						data: JSON.stringify({
+							url: localStorage.getItem('base_url') + '/configuration/v1/ap_cli/' + currentSerial,
+							access_token: localStorage.getItem('access_token'),
+							data: JSON.stringify({ clis: apCLIResponse }),
+						}),
+					};
+				
+					$.ajax(settings).done(function(response, statusText, xhr) {
+						if (response.hasOwnProperty('status')) {
+							if (response.status === '503') {
+								apiErrorCount++;
+								logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_cli/<SERIAL>)');
+							}
+						}
+						if (response !== currentSerial) {
+							logError('Altitude for AP ' + currentSerial + ' was not correctly configured. Reason: ' + response.reason);
+							//console.log(response.reason);
+							apiErrorCount++;
+						} else {
+							logInformation('Altitude for AP ' + currentSerial + ' was configured');
+						}
+						gpsCounter++;
+						checkForGPSCompletion();
+					});
+				} else {
+					logInformation('Altitude for AP ' + currentSerial + ' was already configured correctly');
+					gpsCounter++;
+					checkForGPSCompletion();
+				}
+			}
 		}
 	});
 }
 
+function updateAPAltitudeForSite() {
+	$('#AltitudeConfigModalLink').trigger('click');
+}
+
+function applyAPAltitude() {
+	var altitudeValue = document.getElementById('altitudeValue').value;
+	if (altitudeValue === '') {
+		showNotification('ca-ap-altitude', 'Enter a value for the altitude', 'bottom', 'center', 'warning');
+		return;
+	}
+	
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var altitudeKey = 'ALTITUDE';
+	
+	// Build list of APs that match the selected model
+	var select = document.getElementById('siteselector');
+	var selectedSite = select.value;
+	var siteAPs = getAPsForSite(selectedSite);
+
+	var csvDataBuild = [];	
+	$.each(siteAPs, function() {
+		var device = this;
+		if (deviceType === 'IAP' && device['model'] && (device['model'].match(/^6...*$/gi) || device['model'].match(/^7...*$/gi))) {
+			csvDataBuild.push({ [serialKey]: device['serial'], [macKey]: device['macaddr'], [altitudeKey]: altitudeValue });
+		}
+	});
+	
+	csvData = csvDataBuild;
+	$('#AltitudeConfigModal').modal('hide');
+	updateAPAltitude();
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		2.4GHz Radio functions
+		Radio functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function checkForRadioCompletion() {
@@ -10270,19 +11028,19 @@ function checkForRadioCompletion() {
 			if (apiErrorCount != 0) {
 				showLog();
 				Swal.fire({
-					title: '2.4GHz Radio Failure',
-					text: 'Some or all devices failed to have the 2.4GHz radio configured',
+					title: 'Radio Config Failure',
+					text: 'Some or all devices failed to have the radios configured',
 					icon: 'error',
 				});
 			} else {
 				Swal.fire({
-					title: '2.4GHz Radio Success',
-					text: 'All devices had the 2.4GHz radio configured',
+					title: 'Radio Config Success',
+					text: 'All devices had the radios configured',
 					icon: 'success',
 				});
 				Swal.fire({
-					title: '2.4GHz Radio Success',
-					text: 'All devices had the 2.4GHz radio configured',
+					title: 'Radio Config Success',
+					text: 'All devices had the radios configured',
 					icon: 'success',
 					showCancelButton: true,
 					confirmButtonColor: '#3085d6',
@@ -10298,228 +11056,6 @@ function checkForRadioCompletion() {
 		}
 	}
 }
-// 1.44.2: Old Enable/Disable code. Will be removed in later release
-/*
-function disable24radios() {
-	
-	//	if AP - grab AP settings via API, then disable the 2.4GHz radio
-	
-
-	radioCounter = 0;
-	$.when(updateInventory(false)).then(function() {
-		radioNotification = showProgressNotification('ca-wifi-off', 'Disabling 2.4GHz radios...', 'bottom', 'center', 'info');
-
-		$.each(csvData, function() {
-			// find device in inventory to get device type
-			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
-				var device = findDeviceInInventory(currentSerial);
-				if (!device) {
-					logError('Unable to find device ' + currentSerial + ' in the device inventory');
-					apiErrorCount++;
-					radioCounter = radioCounter + 1;
-					checkForRadioCompletion();
-				} else if (deviceType === 'IAP') {
-					// if AP then get AP settings
-					var settings = {
-						url: getAPIURL() + '/tools/getCommandwHeaders',
-						method: 'POST',
-						timeout: 0,
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						data: JSON.stringify({
-							url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-							access_token: localStorage.getItem('access_token'),
-						}),
-					};
-
-					$.ajax(settings).done(function(commandResults, statusText, xhr) {
-						if (commandResults.hasOwnProperty('headers')) {
-							updateAPILimits(JSON.parse(commandResults.headers));
-						}
-						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-							apiErrorCount++;
-							return;
-						} else if (commandResults.hasOwnProperty('error_code')) {
-							logError(commandResults.description);
-							apiErrorCount++;
-							return;
-						}
-						var response = JSON.parse(commandResults.responseBody);
-
-						//console.log(response);
-						if (response.hasOwnProperty('error_code')) {
-							logError(response.description);
-							apiErrorCount++;
-							radioCounter = radioCounter + 1;
-							checkForRadioCompletion();
-						} else if (response.dot11g_radio_disable) {
-							// no need to do anything as the name already matches
-							logInformation('Device ' + currentSerial + ' 2.4GHz radio is already disabled');
-							radioCounter = radioCounter + 1;
-							checkForRadioCompletion();
-						} else {
-							// Update ap settings
-							var settings = {
-								url: getAPIURL() + '/tools/postCommand',
-								method: 'POST',
-								timeout: 0,
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								data: JSON.stringify({
-									url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-									access_token: localStorage.getItem('access_token'),
-									data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: true, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: response.hostname }),
-								}),
-							};
-
-							$.ajax(settings).done(function(response, textStatus, jqXHR) {
-								if (response.hasOwnProperty('status')) {
-									if (response.status === '503') {
-										apiErrorCount++;
-										logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-									}
-								}
-								if (response !== currentSerial) {
-									logError('2.4GHz radio on AP "' + currentSerial + '" was not disabled. Reason: ' + response.reason);
-									//console.log(response.reason);
-									apiErrorCount++;
-								} else {
-									logInformation('2.4GHz radio on AP "' + currentSerial + '" was disabled');
-								}
-								radioCounter = radioCounter + 1;
-								checkForRadioCompletion();
-							});
-						}
-					});
-				} else {
-					// Either switch or controller/gateway
-					radioCounter = radioCounter + 1;
-					checkForRadioCompletion();
-				}
-			} else {
-				radioCounter = radioCounter + 1;
-				checkForRadioCompletion();
-			}
-		});
-	});
-	if (currentWorkflow !== '') {
-		return autoRadioPromise.promise();
-	}
-}
-
-function enable24radios() {
-	//	if AP - grab AP settings via API, then disable the 2.4GHz radio
-	
-
-	radioCounter = 0;
-	$.when(updateInventory(false)).then(function() {
-		radioNotification = showProgressNotification('ca-wifi', 'Enabling 2.4GHz radios...', 'bottom', 'center', 'info');
-
-		$.each(csvData, function() {
-			// find device in inventory to get device type
-			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
-				var device = findDeviceInInventory(currentSerial);
-				if (!device) {
-					logError('Unable to find device ' + currentSerial + ' in the device inventory');
-					apiErrorCount++;
-					radioCounter = radioCounter + 1;
-					checkForRadioCompletion();
-				} else if (deviceType === 'IAP') {
-					// if AP then get AP settings
-					var settings = {
-						url: getAPIURL() + '/tools/getCommandwHeaders',
-						method: 'POST',
-						timeout: 0,
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						data: JSON.stringify({
-							url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-							access_token: localStorage.getItem('access_token'),
-						}),
-					};
-
-					$.ajax(settings).done(function(commandResults, statusText, xhr) {
-						if (commandResults.hasOwnProperty('headers')) {
-							updateAPILimits(JSON.parse(commandResults.headers));
-						}
-						if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
-							logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-							apiErrorCount++;
-							return;
-						} else if (commandResults.hasOwnProperty('error_code')) {
-							logError(commandResults.description);
-							apiErrorCount++;
-							return;
-						}
-						var response = JSON.parse(commandResults.responseBody);
-						//console.log(response);
-						if (response.hasOwnProperty('error_code')) {
-							logError(response.description);
-							apiErrorCount++;
-							radioCounter = radioCounter + 1;
-							checkForRadioCompletion();
-						} else if (!response.dot11g_radio_disable) {
-							// no need to do anything as the name already matches
-							logInformation('Device ' + currentSerial + ' 2.4GHz radio is already enabled');
-							radioCounter = radioCounter + 1;
-							checkForRadioCompletion();
-						} else {
-							// Update ap settings
-							var settings = {
-								url: getAPIURL() + '/tools/postCommand',
-								method: 'POST',
-								timeout: 0,
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								data: JSON.stringify({
-									url: localStorage.getItem('base_url') + '/configuration/v2/ap_settings/' + currentSerial,
-									access_token: localStorage.getItem('access_token'),
-									data: JSON.stringify({ achannel: response.achannel, atxpower: response.atxpower, dot11a_radio_disable: response.dot11a_radio_disable, dot11g_radio_disable: false, gchannel: response.gchannel, gtxpower: response.gtxpower, ip_address: response.ip_address, usb_port_disable: response.usb_port_disable, zonename: response.zonename, hostname: response.hostname }),
-								}),
-							};
-
-							$.ajax(settings).done(function(response, textStatus, jqXHR) {
-								if (response.hasOwnProperty('status')) {
-									if (response.status === '503') {
-										apiErrorCount++;
-										logError('Central Server Error (503): ' + response.reason + ' (/configuration/v2/ap_settings/<SERIAL>)');
-									}
-								}
-								if (response !== currentSerial) {
-									logError('2.4GHz radio on AP "' + currentSerial + '" was not enabled. Reason: ' + response.reason);
-									//console.log(response.reason);
-									apiErrorCount++;
-								} else {
-									logInformation('2.4GHz radio on AP "' + currentSerial + '" was enabled');
-								}
-								radioCounter = radioCounter + 1;
-								checkForRadioCompletion();
-							});
-						}
-					});
-				} else {
-					// Either switch or controller/gateway
-					radioCounter = radioCounter + 1;
-					checkForRadioCompletion();
-				}
-			} else {
-				radioCounter = radioCounter + 1;
-				checkForRadioCompletion();
-			}
-		});
-	});
-	if (currentWorkflow !== '') {
-		return autoRadioPromise.promise();
-	}
-}
-*/
 
 /* New Versions 1.44.2 */
 function disable24radios() {
@@ -10534,8 +11070,11 @@ function disable24radios() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
 				var device = findDeviceInInventory(currentSerial);
+				
 				if (!device) {
 					logError('Unable to find device ' + currentSerial + ' in the device inventory');
 					apiErrorCount++;
@@ -10607,9 +11146,14 @@ function disable24radios() {
 								radioCounter = radioCounter + 1;
 								checkForRadioCompletion();
 							} else {
-								// cover both old style and new style
-								apCLIResponse.push('  dot11g-radio-disable');
-								apCLIResponse.push('  radio-'+radioID+'-disable');
+								// Get AP model to determine which command to push
+								var apModel = device['model'];
+								if ((apModel.includes("AP-555")) || (apModel.includes("AP-6")) || (apModel.includes("AP-7"))) {
+									apCLIResponse.push('  radio-'+radioID+'-disable');
+								} else {
+									// cover older dual radio APs
+									apCLIResponse.push('  dot11g-radio-disable');
+								}
 								
 								// Update ap settings
 								var settings = {
@@ -10674,7 +11218,9 @@ function enable24radios() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
 				var device = findDeviceInInventory(currentSerial);
 				if (!device) {
 					logError('Unable to find device ' + currentSerial + ' in the device inventory');
@@ -10811,6 +11357,230 @@ function enable24radios() {
 	}
 }
 
+// DO NOT USE - this needs work to be converted to /configuration/v1/ap_settings_cli/{serial_number} to support newer AP models
+function configureStatic() {
+	/*  
+		if AP - grab AP CLI via API, then update channel and power
+	*/
+
+	radioCounter = 0;
+	$.when(updateInventory(false)).then(function() {
+		radioNotification = showProgressNotification('ca-wifi', 'Configuring radios...', 'bottom', 'center', 'info');
+		var i=0;
+		$.each(csvData, function() {
+			// find device in inventory to get device type
+			if (this['SERIAL']) {
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				var device = findDeviceInInventory(currentSerial);
+				if (!device) {
+					logError('Unable to find device ' + currentSerial + ' in the device inventory');
+					apiErrorCount++;
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				} else if (deviceType === 'IAP') {
+					// If any of the values are set
+					if ((this['2.4GHZ CHANNEL'] != '') || (this['2.4GHZ POWER'] != '') || (this['5GHZ CHANNEL'] != '') || (this['5GHZ POWER'] != '') || (this['6GHZ CHANNEL'] != '') || (this['6GHZ POWER'] != '')) {
+						setTimeout(configureStaticRadiosForAP, i*apiDelay, device, this['2.4GHZ CHANNEL'], this['2.4GHZ POWER'], this['5GHZ CHANNEL'], this['5GHZ POWER'], this['6GHZ CHANNEL'], this['6GHZ POWER']);
+					} else {
+						//setTimeout(configureStaticRadiosForAP, i*apiDelay, device, '0', '-127', '0', '-127', '0', '-127');
+						logInformation('No changes required for ' + this['SERIAL'])
+						radioCounter = radioCounter + 1;
+						checkForRadioCompletion();
+					}
+				} else {
+					// Either switch or controller/gateway
+					radioCounter = radioCounter + 1;
+					checkForRadioCompletion();
+				}
+			} else {
+				radioCounter = radioCounter + 1;
+				checkForRadioCompletion();
+			}
+			i++;
+		});
+	});
+	if (currentWorkflow !== '') {
+		return autoRadioPromise.promise();
+	}
+}
+
+function configureStaticRadiosForAP(device, channel2, power2, channel5, power5, channel6, power6) {
+	//console.log(band)
+
+	// Get current AP settings
+	var settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + device['serial'],
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+			apiErrorCount++;
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			apiErrorCount++;
+			return;
+		}
+		var response = JSON.parse(commandResults.responseBody);
+		
+		// Check for "Automatic"
+		if ((channel2.toLowerCase().trim() == 'automatic') || (channel2.toLowerCase().trim() == 'auto')) channel2 = '0';
+		if ((channel5.toLowerCase().trim() == 'automatic') || (channel5.toLowerCase().trim() == 'auto')) channel5 = '0';
+		if ((channel6.toLowerCase().trim() == 'automatic') || (channel6.toLowerCase().trim() == 'auto')) channel6 = '0';
+		if ((power2.toLowerCase().trim() == 'automatic') || (power2.toLowerCase().trim() == 'auto')) power2 = '-127';
+		if ((power5.toLowerCase().trim() == 'automatic') || (power5.toLowerCase().trim() == 'auto')) power5 = '-127';
+		if ((power6.toLowerCase().trim() == 'automatic') || (power6.toLowerCase().trim() == 'auto')) power6 = '-127';
+
+		// strip out old configs
+		var flexMode = null;
+		var radioLines = [];
+		var exitsing0Power = '-127';
+		var exitsing1Power = '-127';
+		var exitsing2Power = '-127';
+		var exitsing0Channel = '0';
+		var exitsing1Channel = '0';
+		var exitsing2Channel = '0';
+		for (var i=0; i<response.length; i++) {
+			if (device['model'].includes('725') || device['model'].includes('735') || device['model'].includes('745') || device['model'].includes('755') || device.model.includes('635') || device.model.includes('655') || device.model.includes('605') || device.model.includes('615'))  {
+				if (response[i].includes('flex-dual-band')) flexMode = response[i].match(/\bflex-dual-band\s+(.*)$/)[1];
+				if (response[i].includes('radio-0-channel')) {
+					radioLines.push(response[i]);
+					var existingValues = response[i].match(/\bradio-0-channel\s+(.*)$/)[1].split(' ');
+					exitsing0Channel = existingValues[0];
+					exitsing0Power = existingValues[1];
+				}
+				if (response[i].includes('radio-1-channel')) {
+					radioLines.push(response[i]);
+					var existingValues = response[i].match(/\bradio-1-channel\s+(.*)$/)[1].split(' ');
+					exitsing1Channel = existingValues[0];
+					exitsing1Power = existingValues[1];
+				}
+				if (response[i].includes('radio-2-channel')) {
+					radioLines.push(response[i]);
+					var existingValues = response[i].match(/\bradio-2-channel\s+(.*)$/)[1].split(' ');
+					exitsing2Channel = existingValues[0];
+					exitsing2Power = existingValues[1];
+				}
+			} else {
+				if (response[i].includes('a-channel')) {
+					radioLines.push(response[i]);
+					var existingValues = response[i].match(/\ba-channel\s+(.*)$/)[1].split(' ');
+					exitsing0Channel = existingValues[0];
+					exitsing0Power = existingValues[1];
+				}
+				if (response[i].includes('g-channel')) {
+					radioLines.push(response[i]);
+					var existingValues = response[i].match(/\bg-channel\s+(.*)$/)[1].split(' ');
+					exitsing1Channel = existingValues[0];
+					exitsing1Power = existingValues[1];
+				}
+			}
+		}
+		response = response.filter(item => !radioLines.includes(item));
+		
+		// Add new lines
+		if (device['model'].includes('725') || device['model'].includes('735') || device['model'].includes('745') || device['model'].includes('755') || device.model.includes('635') || device.model.includes('655') || device.model.includes('605') || device.model.includes('615')) {
+			if (flexMode == '5GHz-and-2.4GHz') {
+				if ((channel5 != '') && (power5 != '')) response.push('  radio-0-channel ' + channel5 + ' '+ power5);
+				else if (channel5 != '') response.push('  radio-0-channel '+ channel5 + ' '+ exitsing0Power);
+				else if (power5 != '') response.push('  radio-0-channel '+ exitsing0Channel + ' ' + power5);
+				
+				if ((channel2 != '') && (power2 != '')) response.push('  radio-1-channel ' + channel2 + ' '+ power2);
+				else if (channel2 != '') response.push('  radio-1-channel '+ channel2 + ' '+ exitsing1Power);
+				else if (power2 != '') response.push('  radio-1-channel '+ exitsing1Channel + ' ' + power2);
+			} else if (flexMode == '5GHz-and-6GHz') {
+				if ((channel5 != '') && (power5 != '')) response.push('  radio-0-channel ' + channel5 + ' '+ power5);
+				else if (channel5 != '') response.push('  radio-0-channel '+ channel5 + ' '+ exitsing0Power);
+				else if (power5 != '') response.push('  radio-0-channel '+ exitsing0Channel + ' ' + power5);
+				
+				if ((channel6 != '') && (power6 != '')) response.push('  radio-1-channel ' + channel6 + ' '+ power6);
+				else if (channel6 != '') response.push('  radio-1-channel '+ channel6 + ' '+ exitsing1Power);
+				else if (power6 != '') response.push('  radio-1-channel '+ exitsing1Channel + ' ' + power6);
+			} else if (flexMode == '2.4GHz-and-6GHz') {
+				if ((channel2 != '') && (power2 != '')) response.push('  radio-0-channel ' + channel2 + ' '+ power2);
+				else if (channel2 != '') response.push('  radio-0-channel '+ channel2 + ' '+ exitsing0Power);
+				else if (power2 != '') response.push('  radio-0-channel '+ exitsing0Channel + ' ' + power2);
+				
+				if ((channel6 != '') && (power6 != '')) response.push('  radio-1-channel ' + channel6 + ' '+ power6);
+				else if (channel6 != '') response.push('  radio-1-channel '+ channel6 + ' '+ exitsing1Power);
+				else if (power6 != '') response.push('  radio-1-channel '+ exitsing1Channel + ' ' + power6);
+			} else {
+				// Fixed radio AP
+				if ((channel5 != '') && (power5 != '')) response.push('  radio-0-channel ' + channel5 + ' '+ power5);
+				else if (channel5 != '') response.push('  radio-0-channel '+ channel5 + ' '+ exitsing0Power);
+				else if (power5 != '') response.push('  radio-0-channel '+ exitsing0Channel + ' ' + power5);
+				
+				if ((channel2 != '') && (power2 != '')) response.push('  radio-1-channel ' + channel2 + ' '+ power2);
+				else if (channel2 != '') response.push('  radio-1-channel '+ channel2 + ' '+ exitsing1Power);
+				else if (power2 != '') response.push('  radio-1-channel '+ exitsing1Channel + ' ' + power2);
+			
+				if ((channel6 != '') && (power6 != '')) response.push('  radio-2-channel ' + channel6 + ' '+ power6);
+				else if (channel6 != '') response.push('  radio-2-channel '+ channel6 + ' '+ exitsing2Power);
+				else if (power6 != '') response.push('  radio-2-channel '+ exitsing2Channel + ' ' + power6);
+			}
+		} else {
+			// Basic dual radio AP
+			if ((channel5 != '') && (power5 != '')) response.push('  a-channel ' + channel5 + ' '+ power5);
+			else if (channel5 != '') response.push('  a-channel '+ channel5 + ' '+ exitsing0Power);
+			else if (power5 != '') response.push('  a-channel '+ exitsing0Channel + ' ' + power5);
+			
+			if ((channel2 != '') && (power2 != '')) response.push('  g-channel ' + channel2 + ' '+ power2);
+			else if (channel2 != '') response.push('  g-channel '+ channel2 + ' '+ exitsing1Power);
+			else if (power2 != '') response.push('  g-channel '+ exitsing1Channel + ' ' + power2);
+		}
+
+		// Update ap settings
+		var settings = {
+			url: getAPIURL() + '/tools/postCommand',
+			method: 'POST',
+			timeout: 0,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({
+				url: localStorage.getItem('base_url') + '/configuration/v1/ap_settings_cli/' + device['serial'],
+				access_token: localStorage.getItem('access_token'),
+				data: JSON.stringify({ clis: response }),
+			}),
+		};
+
+		$.ajax(settings).done(function(response, statusText, xhr) {
+			if (response.hasOwnProperty('status')) {
+				if (response.status === '503') {
+					apiErrorCount++;
+					radioCounter = radioCounter + 1;
+					logError('Central Server Error (503): ' + response.reason + ' (/configuration/v1/ap_settings_cli/<SERIAL>)');
+					return;
+				}
+			}
+			if (response !== device['serial']) {
+				logError(device['serial'] + ' radios were not configured correctly');
+				//console.log(response.reason);
+				apiErrorCount++;
+			} else {
+				logInformation(device['serial'] + ' radios were configured')
+			}
+			radioCounter = radioCounter + 1;
+			checkForRadioCompletion();
+		});
+	});
+}
+
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Indoor / Outdoor functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -10887,7 +11657,10 @@ function setInstallationType() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
+				
 				var newInstallType = this['INSTALLATION TYPE'].trim();
 				if (!newInstallType || newInstallType === '-') {
 					// "-" zone comes from the downloaded CSV from Central - equals to no configured zone.
@@ -11163,6 +11936,130 @@ function updateCountryCodes() {
 	var selectedSite = select.value;
 	$.when(configureSite(selectedSite)).then(function() {
 		checkSiteUpdateDone();
+	});
+}
+
+function configureCountryCodes() {
+	countryCodeCounter = 0;
+	countryCodeNotification = showProgressNotification('ca-world-pin', 'Configuring Country Codes...', 'bottom', 'center', 'info');
+	for (let i = 0; i < csvData.length; i++) {
+		var device = csvData[i];
+		if (device['SERIAL'] && device['COUNTRY CODE']) setTimeout(configureDeviceWithCountryCode, apiDelay * i, device['SERIAL'], device['COUNTRY CODE'].trim().toUpperCase()); // As to not go over the 7 calls/sec speed limit
+		else {
+			logError('Country for AP "' + device['SERIAL'] + '" does not have a Country Code defined in the CSV');
+			countryCodeCounter++;
+			checkForCountryCodeCompletion();
+		}
+	}
+}
+
+function checkForCountryCodeCompletion() {
+	var countryProgress = (countryCodeCounter / csvData.length) * 100;
+	countryCodeNotification.update({ progress: countryCodeCounter });
+
+	if (countryCodeCounter == csvData.length) {
+		if (countryCodeNotification) countryCodeNotification.close();
+		if (currentWorkflow === '') {
+			if (apiErrorCount != 0) {
+				showLog();
+				Swal.fire({
+					title: 'Country Code Configuration Failure',
+					text: 'Some or all devices failed to have the country code configured',
+					icon: 'error',
+				});
+			} else {
+				Swal.fire({
+					title: 'Country Code Configuration Success',
+					text: 'All devices country codes were configured',
+					icon: 'success',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#888888',
+					confirmButtonText: 'OK',
+					cancelButtonText: 'Show Log',
+				}).then(result => {
+					if (result.isDismissed) {
+						showLog();
+					}
+				});
+			}
+		}
+	}
+}
+
+function configureDeviceWithCountryCode(serial, countryCode) {
+	let currentDevice = findDeviceInMonitoring(serial);
+	// for each VC
+	let settings = {
+		url: getAPIURL() + '/tools/getCommandwHeaders',
+		method: 'POST',
+		timeout: 0,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		data: JSON.stringify({
+			url: localStorage.getItem('base_url') + '/configuration/v1/iap_variables/' + serial,
+			access_token: localStorage.getItem('access_token'),
+		}),
+	};
+
+	$.ajax(settings).done(function(commandResults, statusText, xhr) {	
+		if (commandResults.hasOwnProperty('headers')) {
+			updateAPILimits(JSON.parse(commandResults.headers));
+		}
+		if (commandResults.hasOwnProperty('status') && commandResults.status === '503') {
+			logError('Central Server Error (503): ' + commandResults.reason + ' (/configuration/v1/iap_variables/<DEVICE-SERIAL>)');
+			countryCodeCounter++;
+			apiErrorCount++;
+			checkForCountryCodeCompletion();
+			return;
+		} else if (commandResults.hasOwnProperty('error_code')) {
+			logError(commandResults.description);
+			countryCodeCounter++;
+			apiErrorCount++;
+			checkForCountryCodeCompletion();
+			return;
+		}
+		let response = JSON.parse(commandResults.responseBody);
+		let currentVariables = response.variables[0];
+		if (currentVariables.country === countryCode) {
+			// No need to update the country code
+			logInformation('Country for AP "' + currentDevice.name + '" does not need updating.');
+			countryCodeCounter++;
+			checkForCountryCodeCompletion();
+		} else {
+			// Create the updated JSON
+			currentVariables.country = countryCode;
+			let variablesArray = [];
+			variablesArray.push(currentVariables);
+			let uploadData = { variables: variablesArray };
+
+			var settings = {
+				url: getAPIURL() + '/tools/postCommand',
+				method: 'POST',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				data: JSON.stringify({
+					url: localStorage.getItem('base_url') + '/configuration/v1/iap_variables/' + serial,
+					access_token: localStorage.getItem('access_token'),
+					data: JSON.stringify(uploadData),
+				}),
+			};
+
+			$.ajax(settings).done(function(response, statusText, xhr) {
+				if (response === serial) {
+					// success
+					logInformation('Country for AP "' + currentDevice.name + '" was configured to ' + countryCode);
+				} else {
+					apiErrorCount++;
+					logError('Country for AP "' + currentDevice.name + '" failed to be configured configured to ' + countryCode);
+				}
+				countryCodeCounter++;
+				checkForCountryCodeCompletion();
+			});
+		}
 	});
 }
 
@@ -11521,7 +12418,7 @@ function renameAndRadioMode() {
 		if AP - grab ap settings via API, then update the wifi0-mode, wifi1-mode, wifi2-mode, + hostname
 		Modified version of setRadioMode function (includes Hostname changes)
 	*/
-	var settingsList = {};
+	settingsList = {};
 	radioModeCounter = 0;
 	$.when(updateInventory(false)).then(function() {
 		showNotification('ca-contactless-card', 'Setting Hostname and Radio Mode...', 'bottom', 'center', 'info');
@@ -11529,7 +12426,9 @@ function renameAndRadioMode() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
 				var newAPHostname = this['DEVICE NAME'].trim();
 				var newRadio0Mode = this['RADIO 0 MODE'];
 				var newRadio1Mode = this['RADIO 1 MODE'];
@@ -11617,7 +12516,7 @@ function renameAndRadioMode() {
 									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
 										apCLIResponse.push('  wifi0-mode ' + newRadioMode);
 									} else if (newRadioMode === 'off') {
-										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-0-disable');
+										if ((device.model.includes("AP-555")) || (device.model.includes("AP-6")) || (device.model.includes("AP-7"))) apCLIResponse.push('  radio-0-disable');
 										else apCLIResponse.push('  dot11a-radio-disable');
 									}
 								}
@@ -11637,7 +12536,7 @@ function renameAndRadioMode() {
 									if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
 										apCLIResponse.push('  wifi1-mode ' + newRadioMode);
 									} else if (newRadioMode === 'off') {
-										if (device.model.includes('635') || device.model.includes('655')) apCLIResponse.push('  radio-1-disable');
+										if ((device.model.includes("AP-555")) || (device.model.includes("AP-6")) || (device.model.includes("AP-7"))) apCLIResponse.push('  radio-1-disable');
 										else apCLIResponse.push('  dot11g-radio-disable');
 									}
 								}
@@ -11657,7 +12556,7 @@ function renameAndRadioMode() {
 										var newRadioMode = splitRadioMode.trim().toLowerCase();
 										if (newRadioMode === 'true' || newRadioMode === 'yes' || newRadioMode === 'y' || newRadioMode === 'enabled' || newRadioMode === 'enable') split555 = true;
 									}
-									if (device.model.includes('635') || device.model.includes('655') || split555) {
+									if ((device.model.includes("AP-6")) || (device.model.includes("AP-7")) || split555) {
 										var newRadioMode = newRadio2Mode.trim().toLowerCase();
 										if (newRadioMode === 'access' || newRadioMode === 'monitor' || newRadioMode === 'spectrum') {
 											apCLIResponse.push('  wifi2-mode ' + newRadioMode);
@@ -12212,7 +13111,7 @@ function rebootSelectedDeviceTypes() {
 	logStart('Rebooting devices...');
 	for (let i = 0; i < csvData.length; i++) {
 		var device = csvData[i];
-		console.log(device);
+		//console.log(device);
 		setTimeout(rebootSingleDevice, apiDelay * i, device); // As to not go over the 7 calls/sec speed limit
 	}
 	$('#RebootDeviceModal').modal('hide');
@@ -12718,7 +13617,7 @@ function setStaticIPConfig() {
 	/*  
 		if AP - grab ap settings via API, then update the IP address values
 	*/
-	var settingsList = {};
+	settingsList = {};
 	devicesToReboot = [];
 	ipCounter = 0;
 	$.when(updateInventory(false)).then(function() {
@@ -12726,7 +13625,9 @@ function setStaticIPConfig() {
 		$.each(csvData, function() {
 			// find device in inventory to get device type
 			if (this['SERIAL']) {
-				var currentSerial = this['SERIAL'].trim();
+				
+				var currentSerial = this['SERIAL'];
+				currentSerial = currentSerial.toUpperCase().trim();
 
 				// get IP details
 				var ipAddress = this['IP ADDRESS'];
@@ -13314,6 +14215,7 @@ function buildDeviceCSVData(downloadType) {
 	var nameKey = 'DEVICE NAME';
 	var serialKey = 'SERIAL';
 	var macKey = 'MAC';
+	var modelKey = 'MODEL';
 	var groupKey = 'GROUP';
 	var siteKey = 'SITE';
 	var labelKey = 'LABELS';
@@ -13327,7 +14229,7 @@ function buildDeviceCSVData(downloadType) {
 	var radio2Key = 'RADIO 2 MODE';
 	var dualKey = 'DUAL 5GHZ MODE';
 	var splitKey = 'SPLIT 5GHZ MODE';
-	var flexKey = 'FLEX DUAL BAND';
+	var flexKey = 'FLEX RADIO MODE';
 	var ipKey = 'IP ADDRESS';
 	var smKey = 'SUBNET MASK';
 	var dgwKey = 'DEFAULT GATEWAY';
@@ -13338,6 +14240,132 @@ function buildDeviceCSVData(downloadType) {
 
 	var csvDataBuild = [];
 
+	var filteredRows = table.rows({ filter: 'applied' });
+	
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var device = deviceDisplay[this];
+		// Find monitoring data if there is any
+		var inventoryInfo = findDeviceInInventory(device.serial);
+		var groupToUse = device['group_name'] ? device['group_name'] : '';
+		var siteToUse = device['site'] ? device['site'] : '';
+		
+		var labels = '';
+		if (device.labels) labels = device.labels.join(', ');
+		
+		var swarmMode = '';
+		if (downloadType == DeviceType.AP) swarmMode = device['swarm_id'] ? 'Cluster':'Standalone';
+		
+		var licenseString = '';
+		if (inventoryInfo) {
+			if (inventoryInfo['tier_type'] && inventoryInfo['tier_type'] === 'other') licenseString = inventoryInfo['services'][0];
+			else if (inventoryInfo['tier_type']) licenseString = titleCase(inventoryInfo['tier_type']);
+		}
+
+		csvDataBuild.push({ [nameKey]: device['name'] ? device['name'] : device['macaddr'], [serialKey]: device['serial'], [macKey]: device['macaddr'], [modelKey]: device['model'], [groupKey]: groupToUse, [siteKey]: siteToUse, [labelKey]: labels, [licenseKey]: licenseString, [zoneKey]:'', [swarmKey]:swarmMode, [rfKey]:'', [installationKey]:'', [radio0Key]:'', [radio1Key]:'', [radio2Key]:'', [dualKey]:'', [splitKey]:'', [flexKey]:'', [ipKey]:device['ip_address'] ? device['ip_address']:'', [smKey]:device['subnet_mask'] ? device['subnet_mask']:'', [dgwKey]:'', [dnsKey]:'', [domainKey]:'', [timezoneKey]:'', [altitudeKey]:'' });
+	});
+
+	return csvDataBuild;
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Detailed Device Download Action
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+function downloadDeviceDetailsCSV(downloadType) {
+
+	var table = $('#ap-table').DataTable();	
+	var filename = 'ap-details';
+	if (downloadType == DeviceType.AP) {
+		table = $('#ap-table').DataTable();
+		filename = 'ap-details';
+	} else if (downloadType == DeviceType.Switch) {
+		table = $('#switch-table').DataTable();
+		filename = 'switch-details';
+	} else if (downloadType == DeviceType.Gateway) {
+		table = $('#gateway-table').DataTable();
+		filename = 'gateway-details';
+	} else if (downloadType == DeviceType.Controller) {
+		table = $('#controller-table').DataTable();
+		filename = 'controller-details';
+	}
+	
+	$.when(updateInventory(false)).then(function() {
+		csvData = buildDeviceDetailCSVData(downloadType);
+		var csv = Papa.unparse(csvData);
+		var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		var csvURL = window.URL.createObjectURL(csvBlob);
+		var csvLink = document.createElement('a');
+		csvLink.href = csvURL;
+		
+		var filter = table.search();
+		if (filter !== '') csvLink.setAttribute('download', filename + '-' + filter.replace(/ /g, '_') + '.csv');
+		else csvLink.setAttribute('download', filename+'.csv');
+		csvLink.click();
+		window.URL.revokeObjectURL(csvLink);
+	});
+}
+
+function buildDeviceCSVData(downloadType) {
+	
+	var table = $('#ap-table').DataTable();	
+	var filename = 'ap';
+	var deviceDisplay = [];
+	if (downloadType == DeviceType.AP) {
+		table = $('#ap-table').DataTable();
+		filename = 'ap';
+		deviceDisplay = getAPs();
+		return buildDetailAPCSV();
+	} else if (downloadType == DeviceType.Switch) {
+		table = $('#switch-table').DataTable();
+		filename = 'switch';
+		deviceDisplay = getSwitches();
+		return buildDetailSwitchCSV();
+	} else if (downloadType == DeviceType.Gateway) {
+		table = $('#gateway-table').DataTable();
+		filename = 'gateway';
+		deviceDisplay = getGateways();
+		return buildDetailGatewayCSV();
+	} else if (downloadType == DeviceType.Controller) {
+		table = $('#controller-table').DataTable();
+		filename = 'controller';
+		deviceDisplay = getControllers();
+		return buildDetailControllerCSV();
+	} else {
+		return [];
+	}
+}
+
+function buildDetailAPCSV() {
+	//CSV header
+	var nameKey = 'DEVICE NAME';
+	var serialKey = 'SERIAL';
+	var macKey = 'MAC';
+	var groupKey = 'GROUP';
+	var siteKey = 'SITE';
+	var labelKey = 'LABELS';
+	var licenseKey = 'LICENSE';
+	var zoneKey = 'ZONE';
+	var swarmKey = 'SWARM MODE';
+	var rfKey = 'RF PROFILE';
+	var installationKey = 'INSTALLATION TYPE';
+	var radio0Key = 'RADIO 0 MODE';
+	var radio1Key = 'RADIO 1 MODE';
+	var radio2Key = 'RADIO 2 MODE';
+	var dualKey = 'DUAL 5GHZ MODE';
+	var splitKey = 'SPLIT 5GHZ MODE';
+	var flexKey = 'FLEX RADIO MODE';
+	var ipKey = 'IP ADDRESS';
+	var smKey = 'SUBNET MASK';
+	var dgwKey = 'DEFAULT GATEWAY';
+	var dnsKey = 'DNS SERVER';
+	var domainKey = 'DOMAIN NAME';
+	var timezoneKey = 'TIMEZONE';
+	var altitudeKey = 'ALTITUDE';
+
+	var csvDataBuild = [];
+	
+	var table = $('#ap-table').DataTable();
 	var filteredRows = table.rows({ filter: 'applied' });
 
 	// For each row in the filtered set
@@ -13564,4 +14592,115 @@ function performIOTAssociation(uploadDevices, associatePromise)	{
 		associatePromise.resolve();
 	});
 	return associatePromise.promise();
+}
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	Client Stats Collector functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function checkClientStatsCollection() {
+	var statCollection = localStorage.getItem('stat_collection');
+	if (statCollection === null || statCollection === "") {
+		statCollection = false;
+	} else {
+		statCollection = JSON.parse(statCollection)
+	}
+	
+	//Update UI
+	if (statCollection) {
+		if (document.getElementById('history-snr')) document.getElementById('history-snr').hidden = false;
+		if (document.getElementById('history-standard')) document.getElementById('history-standard').hidden = false;
+		if (document.getElementById('history-encryption')) document.getElementById('history-encryption').hidden = false;
+		if (document.getElementById('history-band')) document.getElementById('history-band').hidden = false;
+		if (document.getElementById('history-k')) document.getElementById('history-k').hidden = false;
+		if (document.getElementById('history-v')) document.getElementById('history-v').hidden = false;
+		if (document.getElementById('history-r')) document.getElementById('history-r').hidden = false;
+	} else {
+		if (document.getElementById('history-snr')) document.getElementById('history-snr').hidden = true;
+		if (document.getElementById('history-standard')) document.getElementById('history-standard').hidden = true;
+		if (document.getElementById('history-encryption')) document.getElementById('history-encryption').hidden = true;
+		if (document.getElementById('history-band')) document.getElementById('history-band').hidden = true;
+		if (document.getElementById('history-k')) document.getElementById('history-k').hidden = true;
+		if (document.getElementById('history-v')) document.getElementById('history-v').hidden = true;
+		if (document.getElementById('history-r')) document.getElementById('history-r').hidden = true;
+	}
+	return statCollection;
+}
+
+function loadSavedData(indexKey, data) {
+	if (data) {
+		var loadedStats = JSON.parse(data);
+		if (!loadedStats) loadedStats = {};
+		if (!loadedStats[localStorage.getItem('client_id')]) loadedStats[localStorage.getItem('client_id')] = [];
+	} else loadedStats = {};
+	collectedStats = loadedStats;
+	if (clientStatsPromise) clientStatsPromise.resolve();
+}
+
+function getClientStats() {
+	return collectedStats[localStorage.getItem('client_id')];
+}
+
+function saveClientStats() {
+	saveDataToDB('collected_stats',JSON.stringify(collectedStats));
+}
+
+function clearClientStats() {
+	if ($('#ClientStatsModal')) $('#ClientStatsModal').modal('hide');
+	collectedStats = {};
+	saveClientStats();
+}
+
+function updateClientStatsWithClient(client) {
+	if (checkClientStatsCollection) {
+		var latestStats = {};
+		var accountStats = [];
+		if (collectedStats) {
+			accountStats = collectedStats[localStorage.getItem('client_id')];
+			if (accountStats) latestStats = accountStats[accountStats.length-1];
+			else accountStats = [];
+		}
+		if (!latestStats) latestStats = {};
+		//{timestamp:Date.now(), dot11k:0, dot11v:0, dot11r:0, band2:0, band5:0, band6:0, an:0, gn:0, ac:0, ax:0, be:0, snr0:0, snr10:0, snr20:0, snr30:0, snr40:0, snr50:0, snr60:0, enc_wpa3:0, enc_wpa3_ent:0, enc_wpa2:0, enc_wpa2_ent:0, enc_owe:0, enc_open:0, enc_other:0})
+		// 11k/v/r
+		if (client.connection && client.connection.includes('802.11k')) latestStats['dot11k'] = latestStats['dot11k']+1;
+		else if (client.connection && client.connection.includes('802.11v')) latestStats['dot11v'] = latestStats['dot11v']+1;
+		else if (client.connection && client.connection.includes('802.11r')) latestStats['dot11r'] = latestStats['dot11r']+1;
+		
+		// Standard Split
+		if (client.connection && client.connection.includes('802.11be')) latestStats['be'] = latestStats['be']+1;
+		else if (client.connection && client.connection.includes('802.11ax')) latestStats['ax'] = latestStats['ax']+1;
+		else if (client.connection && client.connection.includes('802.11ac')) latestStats['ac'] = latestStats['ac']+1;
+		else if (client.connection && client.connection.includes('802.11gn')) latestStats['gn'] = latestStats['gn']+1;
+		else if (client.connection && client.connection.includes('802.11an')) latestStats['an'] = latestStats['an']+1;
+		
+		// Standard Split
+		if (client.band && client.band == 5) latestStats['band5'] = latestStats['band5']+1;
+		else if (client.band && client.band == 6) latestStats['band6'] = latestStats['band6']+1;
+		else if (client.band && client.band == 2.4) latestStats['band2'] = latestStats['band2']+1;
+		
+		if (client.snr) {
+			
+			if (client.snr >= 0 && client.snr < 10) latestStats['snr0'] = latestStats['snr0']+1;
+			else if (client.snr >= 10 && client.snr < 20) latestStats['snr10'] = latestStats['snr10']+1;
+			else if (client.snr >= 20 && client.snr < 30) latestStats['snr20'] = latestStats['snr20']+1;
+			else if (client.snr >= 30 && client.snr < 40) latestStats['snr30'] = latestStats['snr30']+1;
+			else if (client.snr >= 40 && client.snr < 50) latestStats['snr40'] = latestStats['snr40']+1;
+			else if (client.snr >= 50 && client.snr < 60) latestStats['snr50'] = latestStats['snr50']+1;
+			else if (client.snr >= 60) latestStats['snr60'] = latestStats['snr60']+1;
+		}
+		
+		if (client.encryption_method) {
+			if (client.encryption_method.includes('WPA3_SAE')) latestStats['enc_wpa3'] = latestStats['enc_wpa3']+1;
+			else if (client.encryption_method.includes('WPA3_ENTERPRISE')) latestStats['enc_wpa3_ent'] = latestStats['enc_wpa3_ent']+1;
+			else if (client.encryption_method.includes('WPA2_ENTERPRISE')) latestStats['enc_wpa2_ent'] = latestStats['enc_wpa2_ent']+1;
+			else if (client.encryption_method.includes('WPA2')) latestStats['enc_wpa2'] = latestStats['enc_wpa2']+1;
+			else if (client.encryption_method.includes('OWE')) latestStats['enc_owe'] = latestStats['enc_owe']+1;
+			else if (client.encryption_method.includes('OPEN')) latestStats['enc_open'] = latestStats['enc_open']+1;
+			else latestStats['enc_other'] = latestStats['enc_other']+1;
+		} else {
+			latestStats['enc_open'] = latestStats['enc_open']+1;
+		}
+		accountStats[accountStats.length-1] = latestStats;
+		collectedStats[localStorage.getItem('client_id')] = accountStats;
+	}
 }

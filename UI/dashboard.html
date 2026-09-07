@@ -19,7 +19,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 <!--
 Central Automation v1.x
-Updated: 1.30
+Updated: 1.45.1
 Aaron Scott (WiFi Downunder) 2021-2025
 -->
 
@@ -35,12 +35,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
     <title>Central Automation Studio</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-	<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+	<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+    <link href="assets/css/cas.css?v=260612" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
@@ -58,6 +58,11 @@ Aaron Scott (WiFi Downunder) 2021-2025
                         <a class="navbar-brand" onclick="goToDashboard(event)" id="titleText" data-toggle="tooltip" data-placement="bottom" title=""> Central Automation Studio</a>
                     </div>
                     <div class="collapse navbar-collapse justify-content-end">
+						<ul class="navbar-nav">
+							<li class="nav-item active ">
+								<a class="btn btn-round btn-sm btn-outline btn-info" href="https://next.wifidownunder.com" target="_blank"><i class="fa-regular fa-globe-pointer"></i> CAS for New Central</a>
+							</li>
+						</ul>
                     	<ul class="nav navbar-nav">
                             <form class="navbar-form navbar-left navbar-search-form" id="searchForm" onSubmit="return false;">
                                 <div class="input-group">
@@ -90,6 +95,10 @@ Aaron Scott (WiFi Downunder) 2021-2025
                                     </a>
 									<a href="settings.html" class="dropdown-item">
 										<i class="nc-icon nc-settings-gear-64"></i> Settings
+									</a>
+									<i><hr class="menu-divider"></i>
+									<a href="https://www.paypal.com/donate/?hosted_button_id=36C8EVZGZN48J" class="dropdown-item">
+										<i class="central-icon ca-money-coins"></i> Donate
 									</a>
                                 </div>
                             </li>
@@ -658,7 +667,28 @@ Aaron Scott (WiFi Downunder) 2021-2025
 								</a>
 							</div>
 						</div>
-						<!-- End ClientMatch Page -->
+						<!-- End KMS Page -->
+						<!-- AirGroup Page -->
+						<div class="col-sm-3" id="kms_card">
+							<div class="card  card-tasks">
+								<a href="deployment-airgroup.html">
+								<div class="card-header ">
+									<h4 class="card-title">AirGroup</h4>
+									<p class="card-category">Bulk Updates & Visibility<p>
+								</div>
+								<div class="card-body ">
+									<div class="row">
+										<div class="col-12">
+											<div class="icon-very-big text-center icon-warning">
+												<i class="central-icon ca-mirror-display text-warning" id="workflow_ag_icon"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+								</a>
+							</div>
+						</div>
+						<!-- End AirGroup Page -->
 						<!-- Device Inventory Page -->
 						<div class="col-sm-3" id='inventory_card'>
 							<div class="card  card-tasks">
@@ -1434,23 +1464,23 @@ Aaron Scott (WiFi Downunder) 2021-2025
 			</div>
 			<!--  End Modal -->
 			<!-- Error Log Modal -->
-			<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="row">
-							<div class="col-md-12">
-								<div class="card-header">
+				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content log-modal">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
-
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-								<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-			<!--  End Modal -->
+				<!--  End Modal -->
 			<!-- Add Site Modal -->
 			<div class="modal fade modal-700 modal-primary" id="AddSiteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -1873,8 +1903,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
     });
 </script>
 <!--   Main JS Files   -->
-<script src="assets/js/version.js?v=250406"></script>
-<script src="assets/js/main.js?v=250406"></script>
+<script src="assets/js/version.js?v=260313"></script>
+<script src="assets/js/main.js?v=260612"></script>
 <script src="assets/js/proxy.js?v=240920"></script>
 <script src="assets/js/hydra.js?v=241203"></script>
 <script src="assets/js/msp.js?v=231210"></script>

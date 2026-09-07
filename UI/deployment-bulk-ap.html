@@ -31,12 +31,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=260612" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -133,13 +133,33 @@ Aaron Scott (WiFi Downunder) 2021-2025
 										</div>
 									</div>
 									<div class="card-footer ">
-										<div class="col-md-12">
-											<button type="submit" class="btn btn-fill btn-info" id="bulkProfileBtn" onclick="openProfileBulkConfig()">RF Profile Config</button>
-											<button type="submit" class="btn btn-fill btn-info" id="bulkRadioBtn" onclick="openRadioBulkConfig()" hidden>Radio Mode Config</button>
-											<button type="submit" class="btn btn-fill btn-info" id="bulkAntennaBtn" onclick="openAntennaBulkConfig()">Antenna Config</button>
-											<button type="submit" class="btn btn-fill btn-info" id="bulkAntennaBtn" onclick="openPOEBulkConfig()">POE Optimization Config</button>
-											<button type="submit" class="btn btn-fill btn-info" id="bulkAP1xBtn" onclick="openAP1XBulkConfig()">AP1X PEAP Credentials</button>
-											<button type="submit" class="btn btn-fill btn-info" id="bulkIOTBtn" onclick="openIOTBulkConfig()">IoT Collector Assignment</button>
+										<div class="row ps-2">
+											<div class="col-md-5">
+												<div class="row">
+													<label class="col-md-12">Radio</label>
+												</div>
+												<div class="row">
+													<div class="col-md-12">
+														<button type="submit" class="btn btn-fill btn-info" id="bulkProfileBtn" onclick="openProfileBulkConfig()">RF Profile Config</button>
+														<button type="submit" class="btn btn-fill btn-info" id="bulkRadioBtn" onclick="openRadioBulkConfig()" hidden>Radio Mode Config</button>
+														<button type="submit" class="btn btn-fill btn-info" id="bulk24radioBtn" onclick="bulk24()">2.4GHz radios</button>
+														<button type="submit" class="btn btn-fill btn-info" id="bulkAntennaBtn" onclick="openAntennaBulkConfig()">Antenna Config</button>
+														<button type="submit" class="btn btn-fill btn-info" id="bulkFlexRadioBtn" onclick="openFlexRadioConfig()">Flex Radio Mode</button>
+													</div>
+												</div>
+											</div>
+											<div class="col-md-7">
+												<div class="row">
+													<label class="col-md-12">Other</label>
+												</div>
+												<div class="row">
+													<div class="col-md-12">
+														<button type="submit" class="btn btn-fill btn-element" id="bulkAntennaBtn" onclick="openPOEBulkConfig()">POE Optimization Config</button>
+														<button type="submit" class="btn btn-fill btn-purple" id="bulkAP1xBtn" onclick="openAP1XBulkConfig()">AP1X PEAP Credentials</button>
+														<button type="submit" class="btn btn-fill btn-primary" id="bulkIOTBtn" onclick="openIOTBulkConfig()">IoT Collector Assignment</button>
+													</div>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -377,6 +397,46 @@ Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Antenna Modal -->
+				<!-- Bulk Flex Radio Modal -->
+				<div class="modal fade modal-700 modal-primary" id="FlexModeConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Flex Radio Configuration</h4>
+									</div>
+									<div class="card-body" id="groupBody">
+										<form class="form-horizontal">								
+											<div class="form-group">
+												<div class="row">
+													<label class="col-md-3">AP Model</label>
+													<div class="col-md-9">
+														<select data-title="Select AP Model..." id="flexAPSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="flexAPModelSelected()">
+														</select>
+													</div>
+												</div>
+												<div class="row">
+													<label class="col-md-3">Flex Radio Mode</label>
+													<div class="col-md-9">
+														<select data-title="Select mode..." id="flexModeSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+														</select>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="applyFlexBandChanges" onclick="applyFlexBandChanges()">Apply Flex Radio Mode</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Flex Band Modal -->
 				<!-- Bulk POE Modal -->
 				<div class="modal fade modal-700 modal-primary" id="BulkPOEConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -434,7 +494,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 												<div class="row">
 													<label class="col-md-3">Password</label>
 													<div class="col-md-6">
-														<input type="text" placeholder="Password" class="form-control" id="ap1xPassword">
+														<input type="password" placeholder="Password" class="form-control" id="ap1xPassword">
 													</div>
 												</div>
 											</div>
@@ -488,15 +548,15 @@ Aaron Scott (WiFi Downunder) 2021-2025
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
-						<div class="modal-content">
+						<div class="modal-content log-modal">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
-
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-									<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
 								</div>
 							</div>
 						</div>
@@ -512,6 +572,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 						<a data-toggle="modal" data-target="#BulkPOEConfigModal" id="BulkPOEConfigModalLink"></a>
 						<a data-toggle="modal" data-target="#BulkAP1XConfigModal" id="BulkAP1XModalLink"></a>
 						<a data-toggle="modal" data-target="#BulkIOTConfigModal" id="BulkIOTConfigModalLink"></a>
+						<a data-toggle="modal" data-target="#FlexModeConfigModal" id="FlexModeConfigModalLink"></a>
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
 							<p class="copyright text-center">
@@ -634,9 +695,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250406"></script>
-	<script src="assets/js/main.js?v=250406"></script>
+	<script src="assets/js/version.js?v=260313"></script>
+	<script src="assets/js/main.js?v=260612"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
-	<script src="assets/js/bulk-ap.js?v=250121"></script>
+	<script src="assets/js/bulk-ap.js?v=251010"></script>
 </html>

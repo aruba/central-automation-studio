@@ -14,6 +14,10 @@ var graphDataDB = {};
 var performanceStats = {};
 var performanceCSVData = [];
 
+var radioDictionary = {};
+
+var historyData = [];
+
 var statusNotification;
 var balanceNotification;
 var balanceHistoryNotification;
@@ -41,8 +45,20 @@ var wrongSrcTotalKey = 'WRONG SRC';
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function generateRadioDictionary() {
+	var aps = getAPs();
+	radioDictionary = {};
+	
+	for (const obj of aps) {
+		for (const radio of obj.radios) {
+			const radioMac = radio.macaddr.toUpperCase();
+			radioDictionary[radioMac] = obj;
+		}
+	}
+}
 
 function findAPForRadio(radiomac) {
+	/*
 	// Check APs for radio mac
 	var foundDevice = null;
 	var aps = getAPs();
@@ -54,8 +70,13 @@ function findAPForRadio(radiomac) {
 			}
 		}
 	});
-
+	
 	return foundDevice;
+	*/
+	
+	// new code - use single process to generate the AP dictionary. then quicker lookup
+	return radioDictionary[radiomac.toUpperCase()];
+
 }
 
 function findAPForBSSID(bssidMac) {
@@ -68,6 +89,13 @@ function findAPForBSSID(bssidMac) {
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 function loadCurrentPageClient() {
 	// override on visible page - used as a notification
+	generateRadioDictionary();
+	updateClientMatchData();
+}
+
+function loadCurrentPageAP() {
+	// override on visible page - used as a notification
+	generateRadioDictionary();
 	updateClientMatchData();
 }
 
@@ -371,21 +399,26 @@ function getLoadBalanceHistory() {
 					fromAP = findAPForRadio(fromRadioClean);
 					var fromBand = '';
 					var fromChannel = '';
-					for (var i = 0, len = fromAP.radios.length; i < len; i++) {
-						if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
-							fromChannel = fromAP.radios[i].channel;
-							if (fromAP.radios[i].band == 3) fromBand = '6GHz';
-							else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
-							else fromBand = '5GHz';
+					if (fromAP && fromAP.radios) {
+						for (var i = 0, len = fromAP.radios.length; i < len; i++) {
+							if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
+								fromChannel = fromAP.radios[i].channel;
+								if (fromAP.radios[i].band == 3) fromBand = '6GHz';
+								else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
+								else fromBand = '5GHz';
+							}
 						}
 					}
 					var fromPrefFlags = fromRadio[4];
 					if (fromPrefFlags !== '') fromPrefFlags = '<br>Pref Flag: '+ fromRadio[4];
-					// Make AP Name as a link to Central
-					var apName = encodeURI(fromAP['name']);
-					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
-					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + fromPrefFlags +'">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
 					
+					// Make AP Name as a link to Central
+					var fromAPString = fromRadioClean + '<br>RSSI: -' + fromRadio[1] + 'dBm';
+					if (fromAP) {
+						var apName = encodeURI(fromAP['name']);
+						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+						fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + fromPrefFlags +'">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
+					}
 					
 					// "To" Radio
 					var toRadio = historyString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
@@ -394,21 +427,25 @@ function getLoadBalanceHistory() {
 					
 					var toBand = '';
 					var toChannel = '';
-					for (var i = 0, len = toAP.radios.length; i < len; i++) {
-						if (toAP.radios[i]['macaddr'] === toRadioClean) {
-							toChannel = toAP.radios[i].channel;
-							if (toAP.radios[i].band == 3) toBand = '6GHz';
-							else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
-							else toBand = '5GHz';
+					if (toAP && toAP.radios) {
+						for (var i = 0, len = toAP.radios.length; i < len; i++) {
+							if (toAP.radios[i]['macaddr'] === toRadioClean) {
+								toChannel = toAP.radios[i].channel;
+								if (toAP.radios[i].band == 3) toBand = '6GHz';
+								else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
+								else toBand = '5GHz';
+							}
 						}
 					}
 					var toPrefFlags = toRadio[4];
 					if (toPrefFlags !== '') toPrefFlags = '<br>Pref Flag: '+ toRadio[4];
 					// Make AP Name as a link to Central
-					var apName = encodeURI(toAP['name']);
-					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
-					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + fromPrefFlags + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
-					
+					var toAPString = toRadioClean + '<br>RSSI: -' + toRadio[1] + 'dBm';
+					if (toAP) {
+						var apName = encodeURI(toAP['name']);
+						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+						toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + fromPrefFlags + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
+					}
 					// Make link to Central
 					var client_name_url = encodeURI(client_name);
 					var apiURL = localStorage.getItem('base_url');
@@ -603,6 +640,8 @@ function getSteerHistory() {
 	graphDataDB = {};
 	performanceStats = {};
 	
+	historyData = [];
+	
 	$('#history-table')
 		.DataTable()
 		.clear();
@@ -644,11 +683,11 @@ function getSteerHistory() {
 			var centralHostURL = localStorage.getItem('base_url');
 
 			$.each(response.result.SteerHistory, function() {
-				
+				//console.log(response.result.SteerHistory)
 				if (!this.hasOwnProperty('TimeNow')) {
 					// process item
 					// Date and time string
-					var m = moment(Object.keys(this)[0], 'YYYY-MM-DD hh:mm:ss.SSS Z');
+					var m = moment(Object.keys(this)[0], 'YYYY-MM-DD hh:mm:ss.SSS');
 					//Event string
 
 					var client_name;
@@ -709,43 +748,66 @@ function getSteerHistory() {
 					var fromRadio = steerString.match(/FromRadio=\((.+?)\)/)[1].split(', ');
 					var fromRadioClean = fromRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					fromAP = findAPForRadio(fromRadioClean);
+					if (!fromAP) console.log('missing AP for: '+ fromRadioClean);
 					var fromBand = '';
 					var fromChannel = '';
-					for (var i = 0, len = fromAP.radios.length; i < len; i++) {
-						if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
-							fromChannel = fromAP.radios[i].channel;
-							if (fromAP.radios[i].band == 3) fromBand = '6GHz';
-							else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
-							else fromBand = '5GHz';
+					if (fromAP && fromAP.radios) {
+						for (var i = 0, len = fromAP.radios.length; i < len; i++) {
+							if (fromAP.radios[i]['macaddr'] === fromRadioClean) {
+								fromChannel = fromAP.radios[i].channel;
+								if (fromAP.radios[i].band == 3) fromBand = '6GHz';
+								else if (fromAP.radios[i].band == 0) fromBand = '2.4GHz';
+								else fromBand = '5GHz';
+							}
 						}
 					}
+					
 					// Make AP Name as a link to Central
-					var apName = encodeURI(fromAP['name']);
-					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
-					var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromAP['name'] + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
+					var fromName = fromRadioClean;
+					var fromSerial = '-'
+					var fromAPString = fromRadioClean + '<br>RSSI: -' + fromRadio[1] + 'dBm';
+					if (fromAP) {
+						fromName = fromAP.name;
+						fromSerial = fromAP.serial;
+						var apName = encodeURI(fromAP['name']);
+						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + fromAP['serial'] + '?casn=' + fromAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+						var fromAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(fromRadio[0]) + '<br>Band: ' + fromBand + '<br>Channel: ' + fromChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + fromName + '</strong></a>' + '<br>RSSI: -' + fromRadio[1] + 'dBm</span>';
+					}
 
 					var toRadio = steerString.match(/ToRadio=\((.+?)\)/)[1].split(', ');
 					var toRadioClean = toRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					toAP = findAPForRadio(toRadioClean);
+					if (!toAP) console.log('missing AP for: '+ toRadioClean);
 					
 					var toBand = '';
 					var toChannel = '';
-					for (var i = 0, len = toAP.radios.length; i < len; i++) {
-						if (toAP.radios[i]['macaddr'] === toRadioClean) {
-							toChannel = toAP.radios[i].channel;
-							if (toAP.radios[i].band == 3) toBand = '6GHz';
-							else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
-							else toBand = '5GHz';
+					if (toAP && toAP.radios) {
+						for (var i = 0, len = toAP.radios.length; i < len; i++) {
+							if (toAP.radios[i]['macaddr'] === toRadioClean) {
+								toChannel = toAP.radios[i].channel;
+								if (toAP.radios[i].band == 3) toBand = '6GHz';
+								else if (toAP.radios[i].band == 0) toBand = '2.4GHz';
+								else toBand = '5GHz';
+							}
 						}
 					}
 					// Make AP Name as a link to Central
-					var apName = encodeURI(toAP['name']);
-					var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
-					var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toAP['name'] + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
+					var toName = toRadioClean;
+					var toSerial = '-'
+					var toAPString = toRadioClean + '<br>RSSI: -' + toRadio[1] + 'dBm';
+					if (toAP) {
+						toName = toAP.name;
+						toSerial = toAP.serial;
+						var apName = encodeURI(toAP['name']);
+						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + toAP['serial'] + '?casn=' + toAP['serial'] + '&cdcn=' + apName + '&nc=access_point';
+						var toAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(toRadio[0]) + '<br>Band: ' + toBand + '<br>Channel: ' + toChannel + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + toName + '</strong></a>' + '<br>RSSI: -' + toRadio[1] + 'dBm</span>';
+					}
 
 					var destRadio = steerString.match(/DstRadio=\((.+?)\)/)[1].split(', ');
 					var destRadioClean = destRadio[0].replace(/(..)/g, '$1:').slice(0, -1);
 					destAP = findAPForRadio(destRadioClean);
+					if (!destAP) console.log('missing AP for: '+ destRadioClean);
+					
 					destStatus = titleCase(steerString.match(/DstAcceptable=(.+?),/)[1]);
 					var destBand = '';
 					var destChannel = '';
@@ -761,9 +823,11 @@ function getSteerHistory() {
 					}
 
 					var dstName = destRadioClean;
-					var destAPString = '-';
+					var dstSerial = '-'
+					var destAPString = destRadioClean + '<br>RSSI: -' + destRadio[1] + 'dBm';
 					if (destAP) {
 						dstName = destAP.name;
+						dstSerial = destAP.serial;
 						var centralURL = centralURLs[centralHostURL] + '/frontend/#/APDETAILV2/' + destAP['serial'] + '?casn=' + destAP['serial'] + '&cdcn=' + dstName + '&nc=access_point';
 						destAPString = '<span data-toggle="tooltip" data-placement="top" data-html="true" title="Radio MAC: ' + cleanMACAddress(destRadio[0]) + '<br>Band: ' + destBand + '<br>Channel: ' + destChannel + '<br>' + 'Destination Acceptable: ' + destStatus + '">' + '<a href="' + centralURL + '" target="_blank"><strong>' + dstName + '</strong></a>' + '<br>RSSI: -' + destRadio[1] + 'dBm</span>';
 					}
@@ -818,7 +882,13 @@ function getSteerHistory() {
 
 					// Add row to table
 					var table = $('#history-table').DataTable();
-					table.row.add([m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime, actionBtns]);
+					table.row.add(['<span style="display:none;">' + m.valueOf() + '</span>' + m.format('LLL'), macaddr === 'Unknown' ? client_name : '<a href="' + clientURL + '" target="_blank"><strong>' + client_name + '</strong></a>', type, mode, statusString, fromAPString, toAPString, destAPString, roamTime, actionBtns]);
+					
+					historyData.push({'TIME':m.valueOf(), 'CLIENT MAC': macaddr, 'TYPE':type, 'MODE':mode, 'STATUS':status, 
+					'FROM AP':fromName, 'FROM SERIAL':fromSerial, 'FROM MAC':cleanMACAddress(fromRadio[0]), 'FROM BAND':fromBand, 'FROM CHANNEL':fromChannel, 'FROM RSSI':fromRadio[1], 
+					'TO AP':toName, 'TO SERIAL':toSerial, 'TO MAC':cleanMACAddress(toRadio[0]), 'TO BAND':toBand, 'TO CHANNEL':toChannel, 'TO RSSI':toRadio[1], 
+					'DEST AP':dstName, 'DEST SERIAL':dstSerial, 'DEST MAC':cleanMACAddress(destRadio[0]), 'DEST BAND':destBand, 'DEST CHANNEL':destChannel, 'DEST RSSI':destRadio[1], 'DEST ACCEPTABLE':destStatus, 
+					'ROAM TIME': roamTime});
 					
 					// Store for performance stats table
 					// Create dictionary with counters for each mod
@@ -883,6 +953,23 @@ function getSteerHistory() {
 		
 		updateStatisticsTable();
 	});
+}
+
+function downloadHistory() {
+
+	var csv = Papa.unparse(historyData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+
+	csvLink.setAttribute('download', 'CM-History.csv');
+	//csvLink.setAttribute('Inventory', 'inventory.csv');
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
 }
 
 function getStationRecord(clientMac) {
@@ -1306,7 +1393,6 @@ function displayIndividualDataSet(dataDBSet) {
 					currentCounts.splice(indexLocation, 1, currentCount);
 					
 				});
-				console.log(currentCounts)
 				massagedData.push(currentCounts);
 				legendIndex++;
 			}

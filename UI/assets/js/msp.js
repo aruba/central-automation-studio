@@ -12,6 +12,12 @@ var gatewayDisplay = [];
 var mspCustomerCounter = 0;
 var mspCustomerTotal = 0;
 
+var moveNotification;
+var moveCounter;
+
+const apiMoveDelay = 2000;
+const apiMoveLimit = 50;
+
 function loadCurrentPageAP() {
 	loadMSPAPUI();
 }
@@ -306,11 +312,14 @@ function loadMSPAPUI() {
 			var firmwareVersion = '';
 			if (monitoringInfo.firmware_version) firmwareVersion = monitoringInfo.firmware_version;
 			
-			var subscriptionKey = this.subscription_key;
-			if (!subscriptionKey) subscriptionKey = fullInventoryInfo.subscription_key;
+			var subscriptionKey = '';
+			if (this.subscription_key) subscriptionKey = this.subscription_key;
+			if (!subscriptionKey && fullInventoryInfo.subscription_key) subscriptionKey = fullInventoryInfo.subscription_key;
 			
 			var subEndDate = '';
-			if (subscriptionKeys[subscriptionKey]) subEndDate = subscriptionKeys[subscriptionKey]['end_date'];
+			if (subscriptionKey !== '') {
+				if (subscriptionKeys[subscriptionKey]) subEndDate = subscriptionKeys[subscriptionKey]['end_date'];
+			}
 			
 			table.row.add([this.customer_name, '<strong>' + this.serial + '</strong>', this.macaddr, this.device_type, this.aruba_part_no, this.model, status, monitoringInfo.status ? monitoringInfo.status:'Down', uptimeString, monitoringInfo.ip_address ? monitoringInfo.ip_address : '', monitoringInfo.name ? monitoringInfo.name : '', monitoringInfo.group_name ? monitoringInfo.group_name : '', monitoringInfo.site ? monitoringInfo.site : '', labels, clientCount, firmwareVersion, publicIP, this.tier_type ? titleCase(this.tier_type) : '', subscriptionKey ? subscriptionKey : '', subscriptionKey ? '<span style="display:none;">' + subEndDate + '</span>' + moment(subEndDate).format('L') : '']);
 		} else {
@@ -926,6 +935,9 @@ function checkForCustomerMoveCompletion() {
 	/*  
 		UI cleanup after processing moves
 	*/
+	
+	var moveProgress = (moveCounter/ csvData.length) * 100;
+	moveNotification.update({ progress: moveProgress });
 
 	if (moveCounter == csvData.length) {
 		if (currentWorkflow === '') {
@@ -1060,6 +1072,7 @@ function assignDevicesToSingleCustomer(devices, customerId) {
 	/*  
 		Assign supplied devices back to a single customer
 	*/
+	let devicesCount = devices.length;
 	var settings = {
 		url: getAPIURL() + '/tools/putCommand',
 		method: 'POST',
@@ -1073,9 +1086,12 @@ function assignDevicesToSingleCustomer(devices, customerId) {
 			data: JSON.stringify({ devices: devices }),
 		}),
 	};
-
+	//console.log(devices);
 	return $.ajax(settings).done(function(response, textStatus, jqXHR) {
-		if (response.status != 202) {
+		//console.log(response)
+		if (response.response === 'success') {
+			logInformation('Successfully moved '+ devicesCount+ ' devices');
+		} else if (response.status != 202) {
 			if (response.status === '503') {
 				apiErrorCount++;
 				logError('Central Server Error (503): ' + response.reason + ' (/platform/device_inventory/v1/msp/<CUSTOMER_ID>/devices)');
@@ -1085,7 +1101,7 @@ function assignDevicesToSingleCustomer(devices, customerId) {
 				logError(response.reason);
 			}
 		}
-		moveCounter = moveCounter + 1;
+		moveCounter += devicesCount;
 		checkForCustomerMoveCompletion();
 	});
 }
@@ -1103,18 +1119,18 @@ function assignDevicesToCustomer() {
 		if (this['CUSTOMER']) selectedCustomer = this['CUSTOMER'].trim();
 
 		if (foundDevice && foundDevice.customer_name === selectedCustomer) {
-			console.log('No need to change Customer');
+			logInformation('No need to change Customer for device: '+ currentSerial);
 			moveCounter = moveCounter + 1;
 			checkForCustomerMoveCompletion();
 		} else if (foundDevice && foundDevice.customer_name !== selectedCustomer && getIDforCustomer(foundDevice.customer_name) != -1) {
-			console.log('Assigning device back to MSP');
+			logInformation('Assigning device back to MSP');
 			$.when(unassignDeviceFromCustomer(foundDevice)).then(function() {
 				// now assign to new Customer ID
-				console.log('Assigning device to ' + selectedCustomer);
+				logInformation('Assigning device to ' + selectedCustomer);
 				assignDeviceToCustomer(foundDevice, getIDforCustomer(selectedCustomer));
 			});
 		} else {
-			console.log('assigning customer');
+			logInformation('Assigning device to ' + selectedCustomer);
 			assignDeviceToCustomer(foundDevice, getIDforCustomer(selectedCustomer));
 		}
 	});
@@ -1127,7 +1143,6 @@ function assignAllDevicesToCustomer() {
 	/*  
 		Move each device to the selected customer
 	*/
-	showNotification('ca-exchange', 'Assigning devices to a single customer...', 'bottom', 'center', 'info');
 	moveCounter = 0;
 	var devicesArray = [];
 	var unassignDevicesArray = [];
@@ -1138,18 +1153,40 @@ function assignAllDevicesToCustomer() {
 		}
 		devicesArray.push({ serial: this['SERIAL'].trim(), mac: cleanMACAddress(this['MAC']) });
 	});
-
+	
+	
+	
 	var selectedCustomer = manualCustomer;
-	//console.log("assigning all devices back to MSP")
+	moveNotification = showProgressNotification('ca-exchange', 'Assigning devices to '+selectedCustomer+'...', 'bottom', 'center', 'info');
+		
+	var timeoutCounter = 0;
 	if (unassignDevicesArray.length != 0) {
+		logInformation('Unassigning '+devicesArray.length+' devices from existing customer');
 		$.when(unassignDevicesFromCustomers(unassignDevicesArray)).then(function() {
 			// now assign to new Customer ID
-			console.log('Assigning all devices to ' + selectedCustomer);
-			assignDevicesToSingleCustomer(devicesArray, getIDforCustomer(selectedCustomer));
+			logInformation('Assigning '+devicesArray.length+' devices to ' + selectedCustomer);
+			
+			while (devicesArray.length > 0) {
+				var devicesBlock = [];
+				devicesBlock = devicesArray.splice(0, apiMoveLimit);
+				
+				// Update licensing
+				setTimeout(assignDevicesToSingleCustomer, apiMoveDelay * timeoutCounter, devicesBlock, getIDforCustomer(selectedCustomer));
+				timeoutCounter++;
+			}
 		});
 	} else {
-		assignDevicesToSingleCustomer(devicesArray, getIDforCustomer(selectedCustomer));
+		logInformation('Assigning '+devicesArray.length+' devices to ' + selectedCustomer);
+		while (devicesArray.length > 0) {
+			var devicesBlock = [];
+			devicesBlock = devicesArray.splice(0, apiMoveLimit);
+
+			// Update licensing
+			setTimeout(assignDevicesToSingleCustomer, apiMoveDelay * timeoutCounter, devicesBlock, getIDforCustomer(selectedCustomer));
+			timeoutCounter++;
+		}
 	}
+	
 	if (currentWorkflow !== '') {
 		return autoCustomerPromise.promise();
 	}

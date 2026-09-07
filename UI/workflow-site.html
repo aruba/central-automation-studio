@@ -31,12 +31,12 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=260612" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -323,6 +323,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 														</td>
 														<td>Enable Dual-5GHz Mode (AP-340 Series)</td>
 													</tr>
+													<tr class="clickable-row" data-href="setFlexMode">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-compare-items"></i>
+															</div>
+														</td>
+														<td>Set Flexible Radio Mode</td>
+													</tr>
 													<tr class="clickable-row" data-href="enable24">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -339,6 +347,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 														</td>
 														<td>Disable 2.4GHz radios</td>
 													</tr>
+													<tr class="clickable-row" data-href="monitor24">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-radar"></i>
+															</div>
+														</td>
+														<td>Set 2.4GHz Radio Mode</td>
+													</tr>
 													<tr class="clickable-row" data-href="antennaGain">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -346,6 +362,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 															</div>
 														</td>
 														<td>Set Antenna Gain</td>
+													</tr>
+													<tr class="clickable-row" data-href="apAltitude">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-ap-altitude"></i>
+															</div>
+														</td>
+														<td>Set AP Altitude</td>
 													</tr>
 													<tr class="clickable-row" data-href="rebootDevices">
 														<td>
@@ -403,6 +427,14 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 										<div class="table-full-width">
 											<table class="table table-hover">
 												<tbody>
+													<tr class="clickable-row" data-href="ap-ethernet">
+														<td>
+															<div class="icon-big text-center icon-warning">
+																<i class="central-icon ca-cable"></i>
+															</div>
+														</td>
+														<td>AP Ethernet Information</td>
+													</tr>
 													<tr class="clickable-row" data-href="test-layer-one">
 														<td>
 															<div class="icon-big text-center icon-warning">
@@ -787,18 +819,86 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Modal -->
-				<!-- Error Log Modal -->
-				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<!-- Group Modal -->
+				<div class="modal fade modal-mini modal-primary" id="SelectedDevicesModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
 						<div class="modal-content">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
+										<h4 class="card-title">2.4GHz Radios State Change</h4>
+										<a class="refresh-link" onclick="refreshAPData()"><i class="central-icon ca-reload"></i></a>
+									</div>
+									<div class="card-body">
+										<label class="col-md-3">Which APs?</label>
+										<div class="col-md-6">
+											<div class="form-check form-check-radio">
+												<label class="form-check-label">
+													<input class="form-check-input" type="radio" name="choice" id="allAP" value="all" onclick="apDisableChange(this)" checked>
+													<span class="form-check-sign"></span>
+													All
+												</label>
+												<label class="form-check-label">
+													<input class="form-check-input" type="radio" name="choice" id="selectedAP" value="selected" onclick="apDisableChange(this)">
+													<span class="form-check-sign"></span>
+													Selected
+												</label>
+											</div>
+										</div>
+										<hr id="apHr" hidden />
+										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width" id='apTable' hidden>
+											<div class="fresh-datatables">
+												<table id="selected-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th><input type="checkbox" name="select_all" value="1" id="device-select-all" /></th>
+														<th>Name</th>
+														<th>Status</th>
+														<th>Status Text</th>
+														<th>Serial Number</th>
+														<th>MAC Address</th>
+														<th>Group</th>
+														<th>Site</th>
+														<th>Firmware</th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
+										</div>
+										<hr id='modeHr' hidden/>
+										<div class="col-md-6" id='modeSelector' hidden>
+											<label class="col-md-3 setting-label">2.4GHz Radio Mode</label>
+											<div class="col-md-3 setting-input">
+												<select id="radioModeSelector" class="selectpicker " data-title="Select a radio mode..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+													<option value="access" selected>Access</option>
+													<option value="spectrum" >Spectrum</option>
+													<option value="monitor">Monitor</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" id="button24" onclick="getSelectedAP()">Disable 2.4GHz Radios</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
+				<!-- Error Log Modal -->
+				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content log-modal">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
-
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-									<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
 								</div>
 							</div>
 						</div>
@@ -843,6 +943,54 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Uplink Modal -->
+				<div class="modal fade modal-mini modal-primary" id="APEthernetModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title" id='apEthernetTitle'>AP Ethernet Information</h4>
+									</div>
+									<div class="card-body">
+										<div class="form-check">
+											<label class="form-check-label">
+												<input class="form-check-input" type="checkbox" value="" id="show100" onclick="show100()"/>
+												<span class="form-check-sign"></span>Only show APs operating at &lt;1Gbps
+											</label>
+										</div>
+										<div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+											<div class="fresh-datatables">
+												<table id="ap-ethernet-table" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%" style="width:100%">
+													<thead>
+														<th>Access Point</th>
+														<th>Status</th>
+														<th>Ethernet MAC</th>
+														<th>Port</th>
+														<th>Admin State</th>
+														<th>Op State</th>
+														<th>Port Speed (Mbps)</th>
+														<th>Duplex Mode</th>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="downloadGatewayBtn" onclick="downloadUplinks()">
+												<span class="btn-label"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+												Download CSV
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Modal -->
 				<!-- Layer One Modal -->
 				<div class="modal fade modal-mini modal-primary" id="LayerOneModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -879,6 +1027,46 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Modal -->
+				<!-- Bulk Flex Radio Modal -->
+				<div class="modal fade modal-700 modal-primary" id="FlexModeConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">Flex Radio Configuration</h4>
+									</div>
+									<div class="card-body" id="groupBody">
+										<form class="form-horizontal">								
+											<div class="form-group">
+												<div class="row">
+													<label class="col-md-3">AP Model</label>
+													<div class="col-md-9">
+														<select data-title="Select AP Model..." id="flexAPSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="flexAPModelSelected()">
+														</select>
+													</div>
+												</div>
+												<div class="row">
+													<label class="col-md-3">Flex Radio Mode</label>
+													<div class="col-md-9">
+														<select data-title="Select mode..." id="flexModeSelector" class="selectpicker" data-style="btn-default btn-outline" data-menu-style="dropdown-orange">
+														</select>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="applyFlexBandChanges" onclick="applyFlexBandChanges()">Apply Flex Radio Mode</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Flex Band Modal -->
 				<!-- Bulk Antenna Modal -->
 				<div class="modal fade modal-700 modal-primary" id="AntennaConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -935,6 +1123,39 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 					</div>
 				</div>
 				<!--  End Antenna Modal -->
+				<!-- Bulk Altitude Modal -->
+				<div class="modal fade modal-700 modal-primary" id="AltitudeConfigModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="card-header">
+										<h4 class="card-title">AP Altitude Configuration</h4>
+									</div>
+									<div class="card-body" id="groupBody">
+										<form class="form-horizontal">								
+											<div class="form-group">
+												<div class="row" id='customGain'>
+													<label class="col-md-3">AP Altitude</label>
+													<div class="col-md-3">
+														<input type="text" placeholder="Enter a value..." class="form-control" id="altitudeValue" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');">
+													</div>
+													<label class="col-md-2 text-muted">(in Meters)</label>
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="card-footer ">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" id="applyAPAltitude" onclick="applyAPAltitude()">Apply AP Altitude Gain</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--  End Altitude Modal -->
 				<!-- Bulk Reboot Modal -->
 				<div class="modal fade modal-700 modal-primary" id="RebootDeviceModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
@@ -1068,11 +1289,15 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 					<div class="container">
 						<a data-toggle="modal" data-target="#ErrorModal" href="" id="ErrorModalLink"></a>
 						<a data-toggle="modal" data-target="#UniversalModal" href="" id="UniversalModalLink"></a>
+						<a data-toggle="modal" data-target="#APEthernetModal" href="" id="APEthernetModalLink"></a>
 						<a data-toggle="modal" data-target="#LayerOneModal" href="" id="LayerOneModalLink"></a>
 						<a data-toggle="modal" data-target="#AntennaConfigModal" id="AntennaConfigModalLink"></a>
 						<a data-toggle="modal" data-target="#RebootDeviceModal" id="RebootDeviceModalLink"></a>
 						<a data-toggle="modal" data-target="#APAntennaConfigModal" id="APAntennaConfigModalLink"></a>
 						<a data-toggle="modal" data-target="#APStaticIPConfigModal" id="APStaticIPConfigModalLink"></a>
+						<a data-toggle="modal" data-target="#FlexModeConfigModal" id="FlexModeConfigModalLink"></a>
+						<a data-toggle="modal" data-target="#AltitudeConfigModal" id="AltitudeConfigModalLink"></a>
+						<a data-toggle="modal" data-target="#SelectedDevicesModel" id="SelectedDevicesModelLink"></a>
 						
 						<nav>
 							<ul class="footer-menu" id="api-footer"></ul>
@@ -1324,6 +1549,50 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 				columnDefs: [{ type: 'ip-address', targets: [3,4] }, { "targets": 2, "visible": false }],
 				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
 			});
+			
+			$('#apuplink-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"]],
+				"oSearch": { "bSmart": false, "bRegex": true },
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search Interfaces",
+				},
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
+			
+			$('#device-select-all').on('click', function(){
+				// Get all rows with search applied
+				var table = $('#selected-table').DataTable();
+				var rows = table.rows({ 'search': 'applied' }).nodes();
+				$('input[type="checkbox"]', rows).prop('checked', this.checked);
+				var selectAllCheckbox = this.checked;
+				$.each(rows, function() {
+					var data = table.row(this).data();
+					updateSelectedDevices(data[4]);
+				})
+			});
+			
+			$('#selected-table').DataTable({
+				"pagingType": "simple_numbers",
+				"autoWidth": false,
+				"lengthMenu": [[25, 50, 100, 500, -1], [25, 50, 100, 500, "All"]],
+				responsive: true,
+				language: {
+					search: "_INPUT_",
+					searchPlaceholder: "Search APs",
+				},
+				"columnDefs": [{
+				   'targets': 0,
+				   'searchable':false,
+				   'orderable':false,
+				   'className': 'dt-body-center'
+				},{ "targets": 3, "visible": false }],
+				'order': [[1, 'asc']],
+				"fnDrawCallback": function (oSettings) { $('[data-toggle="tooltip"]').tooltip(); }
+			});
 
 			document.getElementById('searchForm').addEventListener('submit', function(e) {
 				e.preventDefault();
@@ -1367,9 +1636,10 @@ Copyright Aaron Scott (WiFi Downunder) 2021-2025
 	});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250406"></script>
-	<script src="assets/js/main.js?v=250406"></script>
+	<script src="assets/js/version.js?v=260313"></script>
+	<script src="assets/js/main.js?v=260612"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
 	<script src="assets/js/countrycode.js?v=231109"></script>
+	<script src="assets/js/site.js?v=250524"></script>
 </html>

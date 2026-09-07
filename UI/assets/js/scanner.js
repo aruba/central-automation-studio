@@ -121,7 +121,7 @@ function buildCSVData() {
 	var radio2Key = 'RADIO 2 MODE';
 	var dualKey = 'DUAL 5GHZ MODE';
 	var splitKey = 'SPLIT 5GHZ MODE';
-	var flexKey = 'FLEX DUAL BAND';
+	var flexKey = 'FLEX RADIO MODE';
 	var ipKey = 'IP ADDRESS';
 	var smKey = 'SUBNET MASK';
 	var dgwKey = 'DEFAULT GATEWAY';

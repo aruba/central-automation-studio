@@ -1,28 +1,30 @@
 /*
 Central Automation v1.34
-Updated:
+Updated: 1.47.8
 Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
 var aps = [];
 var apsDict = {}
-/*  --------------------------------------------------
+var radioDictionary = {};
+
+/*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
-	-------------------------------------------------- */
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function generateRadioDictionary() {
+	radioDictionary = {};
+	
+	for (const obj of aps) {
+		for (const radio of obj.radios) {
+			const radioMac = radio.macaddr.toUpperCase();
+			radioDictionary[radioMac] = obj;
+		}
+	}
+}
 
 function findAPForRadio(radiomac) {
-	// Check APs for radio mac
-	var foundDevice = null;
-	for (var a=0; a< aps.length;a++) {
-		for (var i = 0, len = aps[a].radios.length; i < len; i++) {
-			if (aps[a].radios[i]['macaddr'] === radiomac) {
-				foundDevice = aps[a];
-				break;
-			}
-		}
-		if (foundDevice) break;
-	}
-	return foundDevice;
+	return radioDictionary[radiomac.toUpperCase()];
 }
 
 /*  --------------------------------------------------
@@ -33,6 +35,7 @@ function findAPForRadio(radiomac) {
 addEventListener("message", e => {
 	const optData = e.data;
 	aps = optData.aps;
+	generateRadioDictionary();
 	processAPs();
 	processOptimization(optData.opt, optData.vrf);
 	close()

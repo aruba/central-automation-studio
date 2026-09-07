@@ -4,6 +4,39 @@ Updated: 1.37
 Copyright Aaron Scott (WiFi Downunder) 2021-2025
 */
 
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/Nunito-VariableFont_wght.ttf');
+  font-weight: 400;
+}
+
+body,
+h1,
+.h1,
+h2,
+.h2,
+h3,
+.h3,
+h4,
+.h4,
+h5,
+.h5,
+h6,
+.h6,
+p,
+.navbar,
+.brand,
+.btn-simple,
+.alert,
+a,
+.td-name,
+td,
+button.close {
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    font-family: "Nunito", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+}
 
 /*--------------------------------
 
@@ -840,6 +873,10 @@ Generated using nucleoapp.com
   content: "\eaac";
 }
 
+.ca-statistics::before {
+  content: "\eaae";
+}
+
 .ca-bulb-61::before {
   content: "\eaaf";
 }
@@ -960,6 +997,34 @@ Generated using nucleoapp.com
   content: "\eacc";
 }
 
+.ca-gear-3::before {
+  content: "\eacd";
+}
+
+.ca-circle-chevron-right::before {
+  content: "\eace";
+}
+
+.ca-grid-5::before {
+  content: "\eacf";
+}
+
+.ca-stats-gateway::before {
+  content: "\ead0";
+}
+
+.ca-money-coins::before {
+  content: "\ead1";
+}
+
+.ca-antDirectionMode::before {
+  content: "\ead2";
+}
+
+.ca-mirror-display::before {
+  content: "\ead3";
+}
+
 /*------------------------
 	Extra Styling
 -------------------------*/
@@ -974,6 +1039,22 @@ svg.ct-chart-bar, svg.ct-chart-line{
   overflow: hidden;
   display: block;
   width: 120px !important;
+}
+
+.log-modal {
+  
+  overflow-y: hidden;
+  max-height: -moz-calc(100vh - 120px);
+  max-height: -webkit-calc(100vh - 120px);
+  max-height: calc(100vh - 120px);
+}
+
+.log-body {
+  overflow-y: scroll;
+  max-height: -moz-calc(100vh - 120px);
+  max-height: -webkit-calc(100vh - 120px);
+  max-height: calc(100vh - 120px);
+  padding-bottom: 70px;
 }
 
 
@@ -1012,6 +1093,13 @@ svg.ct-chart-bar, svg.ct-chart-line{
 
 .textarea-170 {
   height: 170px !important;
+}
+
+.data-tables table tbody .btn-text-sm{
+  font-size: 14px !important;
+  margin-top:8px !important;
+  padding-left:8px !important;
+  padding-right: 8px !important;
 }
 
 .card {
@@ -1059,6 +1147,16 @@ svg.ct-chart-bar, svg.ct-chart-line{
   margin-top: 1rem !important;
 }
 
+.me-1 {
+  margin-left: 0.25rem !important;
+}
+.me-2 {
+  margin-left: 0.5rem !important;
+}
+.me-3 {
+  margin-left: 1rem !important;
+}
+
 .p-0 {
   padding: 0px;
 }
@@ -1092,7 +1190,11 @@ svg.ct-chart-bar, svg.ct-chart-line{
 }
 
 .ps-2 {
-  padding-left: 0.25rem !important;
+  padding-left: 0.5rem !important;
+}
+
+.ps-3 {
+  padding-left: 1rem !important;
 }
 
 .fa-fw {
@@ -1106,6 +1208,77 @@ svg.ct-chart-bar, svg.ct-chart-line{
   text-align: center;
   font-size: 14px;
   cursor: pointer;
+}
+
+.quad[data-color="element"] {
+    background: #4aa583;
+    background: -moz-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #4aa583), color-stop(100%, rgba(74, 165, 131, 0.7)));
+    background: -webkit-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: -o-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: -ms-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: linear-gradient(to bottom, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background-size: 100% 100%;
+}
+
+.quad[data-color="element-light"] {
+    background: #5dc997;
+    background: -moz-linear-gradient(top, #5dc997 0%, rgba(93,201,151, 0.7) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #5dc997), color-stop(100%, rgba(93,201,151, 0.7)));
+    background: -webkit-linear-gradient(top, #5dc997 0%, rgba(93,201,151, 0.7) 100%);
+    background: -o-linear-gradient(top, #5dc997 0%, rgba(93,201,151, 0.7) 100%);
+    background: -ms-linear-gradient(top, #5dc997 0%, rgba(93,201,151, 0.7) 100%);
+    background: linear-gradient(to bottom, #5dc997 0%, rgba(93,201,151, 0.7) 100%);
+    background-size: 100% 100%;
+}
+
+.quad[data-color="blue-light"] {
+    background: #86e2f4;
+    background: -moz-linear-gradient(top, #86e2f4 0%, rgba(134, 226, 244, 0.7) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #86e2f4), color-stop(100%, rgba(134, 226, 244, 0.7)));
+    background: -webkit-linear-gradient(top, #86e2f4 0%, rgba(134, 226, 244, 0.7) 100%);
+    background: -o-linear-gradient(top, #86e2f4 0%, rgba(134, 226, 244, 0.7) 100%);
+    background: -ms-linear-gradient(top, #86e2f4 0%, rgba(134, 226, 244, 0.7) 100%);
+    background: linear-gradient(to bottom, #86e2f4 0%, rgba(134, 226, 244, 0.7) 100%);
+    background-size: 100% 100%;
+}
+
+.quad[data-color="blue-dark"] {
+    background: #2f6ef0;
+    background: -moz-linear-gradient(top, #2f6ef0 0%, rgba(47, 110, 240, 0.7) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #2f6ef0), color-stop(100%, rgba(47, 110, 240, 0.7)));
+    background: -webkit-linear-gradient(top, #2f6ef0 0%, rgba(47, 110, 240, 0.7) 100%);
+    background: -o-linear-gradient(top, #2f6ef0 0%, rgba(47, 110, 240, 0.7) 100%);
+    background: -ms-linear-gradient(top, #2f6ef0 0%, rgba(47, 110, 240, 0.7) 100%);
+    background: linear-gradient(to bottom, #2f6ef0 0%, rgba(47, 110, 240, 0.7) 100%);
+    background-size: 100% 100%;
+}
+
+.quad[data-color="hpe-purple"] {
+    background: #7465f4;
+    background: -moz-linear-gradient(top, #7465f4 0%, rgba(116, 101, 244, 0.7) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #7465f4), color-stop(100%, rgba(116, 101, 244, 0.7)));
+    background: -webkit-linear-gradient(top, #7465f4 0%, rgba(116, 101, 244, 0.7) 100%);
+    background: -o-linear-gradient(top, #7465f4 0%, rgba(116, 101, 244, 0.7) 100%);
+    background: -ms-linear-gradient(top, #7465f4 0%, rgba(116, 101, 244, 0.7) 100%);
+    background: linear-gradient(to bottom, #7465f4 0%, rgba(116, 101, 244, 0.7) 100%);
+    background-size: 100% 100%;
+}
+
+.full-page[data-color="element"]:after {
+    background: #4aa583;
+    background: -moz-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #4aa583), color-stop(100%, rgba(74, 165, 131, 0.7)));
+    background: -webkit-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: -o-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: -ms-linear-gradient(top, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background: linear-gradient(to bottom, #4aa583 0%, rgba(74, 165, 131, 0.7) 100%);
+    background-size: 100% 100%;
+}
+
+.text-element,
+.text-element:hover {
+    color: #4aa583 !important;
 }
 
 .dropdown-menu .dropdown-item i[class*="central-icon"] {
@@ -1287,6 +1460,17 @@ svg.ct-chart-bar, svg.ct-chart-line{
     text-transform: capitalize;
 }
 
+.form-check .form-check-label-all {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    padding-left: 35px;
+    padding-top: 14px;
+    line-height: 26px;
+    margin-bottom: 0;
+    text-transform: capitalize;
+}
+
 .form-check .form-check-label-secrets {
     display: inline-block;
     position: relative;
@@ -1320,6 +1504,15 @@ svg.ct-chart-bar, svg.ct-chart-line{
     text-transform: capitalize;
     font-size: 14px !important;
     font-weight: bold;
+}
+
+.disclaimer-text {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 0;
+    font-size: 14px !important;
+    color: #999999 !important;
 }
 
 .text-neutral,
@@ -1529,6 +1722,11 @@ input[type=search]::-webkit-search-cancel-button {
 	text-align: right;
 }
 
+.form-group .label-wlan {
+  margin-top: 12px;
+  text-align: right;
+}
+
 .form-group notice {
   padding-top: 8px;
   text-align: center;
@@ -1541,6 +1739,13 @@ input[type=search]::-webkit-search-cancel-button {
 
 .form-control.textarea {
   height: 300px;
+}
+
+.form-control.vsg-textarea {
+  height: 600px;
+  white-space: pre-wrap; 
+  user-select: text; 
+  overflow-y: auto;
 }
 
 .section-header {
@@ -1926,6 +2131,13 @@ pre {
 
 .pad-16 {
   margin-top:16px;
+}
+
+hr.menu-divider {
+  border: none; /* Removes default border */
+  height: 1px; /* Sets the line thickness */
+  background-color: #CCC; /* Sets the line color */
+  margin: 2px 2px; /* Adds spacing above and below */
 }
 
 

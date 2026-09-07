@@ -7,6 +7,7 @@ Aaron Scott (WiFi Downunder) 2021-2025
 var visitorPortals = {};
 var csvData;
 var csvDataCount = 0;
+var visitors = [];
 
 var portalNotification;
 var visitorNotification;
@@ -179,6 +180,7 @@ function getVisitors(offset) {
 
 				// Add AP to table
 				table.row.add([this['id'], '<strong>' + this['name'] + '</strong>', this['company_name'], status, this['is_enabled'] ? 'Enabled' : 'Disabled', email, phone, expires, actionBtns]);
+				visitors.push({id:this['id'], name:this['name'], company:this['company_name'], status:this['status'], enable:this['is_enabled'] ? 'Enabled' : 'Disabled', email:email, phone:phone, expires:expires});
 			});
 
 			if (offset + apiLimit < response.total) getVisitors(offset + apiLimit);
@@ -265,4 +267,55 @@ function uploadVisitors() {
 function loadCurrentPageVisitors() {
 	// Get visitor accounts for selected portal
 	getVisitors(0);
+}
+
+/*  --------------------------------
+	Download Actions
+--------------------------------- */
+
+function downloadVisitors() {
+	csvData = buildCSVData();
+
+	var csv = Papa.unparse(csvData);
+
+	var csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	var csvURL = window.URL.createObjectURL(csvBlob);
+
+	var csvLink = document.createElement('a');
+	csvLink.href = csvURL;
+	
+	var select = document.getElementById('portalselector');
+	var currentPortal = visitorPortals[select.value];
+
+	var table = $('#visitor-table').DataTable();
+	var filter = table.search();
+	if (filter !== '') csvLink.setAttribute('download', currentPortal.name+ '-visitors-' + filter.replace(/ /g, '_') + '.csv');
+	else csvLink.setAttribute('download', currentPortal.name+ '-visitors.csv');
+
+	csvLink.click();
+	window.URL.revokeObjectURL(csvLink);
+}
+
+function buildCSVData() {
+	//CSV header
+	var nameKey = 'NAME';
+	var companyKey = 'COMPANY';
+	var statusKey = 'STATUS';
+	var enabledKey = 'ENABLED';
+	var emailKey = 'EMAIL';
+	var phoneKey = 'PHONE';
+	var expiresKey = 'EXPIRES';
+
+	var csvDataBuild = [];
+
+	var table = $('#visitor-table').DataTable();
+	var filteredRows = table.rows({ filter: 'applied' });
+	// For each row in the filtered set
+	$.each(filteredRows[0], function() {
+		var visitor = visitors[this.toString()];
+		csvDataBuild.push({ [nameKey]: visitor['name'], [companyKey]: visitor['company'], [statusKey]: titleCase(visitor['status']), [enabledKey]: visitor['enable'], [emailKey]: visitor['email'], [phoneKey]: visitor['phone'], [expiresKey]: visitor['expires']});
+	});
+
+	return csvDataBuild;
 }

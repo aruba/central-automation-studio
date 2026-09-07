@@ -14,6 +14,8 @@ var powerLabels = [];
 var rfNeighbours = {};
 var channelAPs = {};
 
+var radioDictionary = {};
+
 var neighbourMode = ScaleType.Full; // 0 = All, 1 = Per Radio
 var apRFNeighbours = [];
 
@@ -92,21 +94,20 @@ var drawingLocation;
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		Utility functions
 	------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+function generateRadioDictionary() {
+	var aps = getAPs();
+	radioDictionary = {};
+	
+	for (const obj of aps) {
+		for (const radio of obj.radios) {
+			const radioMac = radio.macaddr.toUpperCase();
+			radioDictionary[radioMac] = obj;
+		}
+	}
+}
 
 function findAPForRadio(radiomac) {
-	// Check APs for radio mac
-	var foundDevice = null;
-	var aps = getAPs();
-	$.each(aps, function() {
-		for (var i = 0, len = this.radios.length; i < len; i++) {
-			if (this.radios[i]['macaddr'] === radiomac) {
-				foundDevice = this;
-				return false; // break  out of the for loop
-			}
-		}
-	});
-
-	return foundDevice;
+	return radioDictionary[radiomac.toUpperCase()];
 }
 
 /*  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -114,6 +115,7 @@ function findAPForRadio(radiomac) {
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function loadCurrentPageAP() {
+	generateRadioDictionary();
 	updateAirMatchData();
 }
 
@@ -837,7 +839,7 @@ function getAirmatchOptimization() {
 					});
 	
 					if (rfBand === '2.4GHz') {
-						// Add together all the 2.4Ghz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
+						// Add together all the 2.4GHz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
 						timestamp = currentData['timestamp'];
 						airMatchEpoch = currentData['timestamp'];
 						if (currentData['timestamp'] >= airMatchEpoch) {
@@ -852,7 +854,7 @@ function getAirmatchOptimization() {
 						runmode = currentData['runmode'];
 						results = results.concat(currentResult);
 					} else if (rfBand === '5GHz') {
-						// Add together all the 5Ghz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
+						// Add together all the 5GHz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
 						timestamp = currentData['timestamp'];
 						airMatchEpoch = currentData['timestamp'];
 						if (currentData['timestamp'] >= airMatchEpoch) {
@@ -867,7 +869,7 @@ function getAirmatchOptimization() {
 						runmode = currentData['runmode'];
 						results = results.concat(currentResult);
 					} else if (rfBand === '6GHz') {
-						// Add together all the 6Ghz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
+						// Add together all the 6GHz data - AP counts, Radio counts, Improvement (will be averaged across all rf domains and partitions)
 						timestamp = currentData['timestamp'];
 						airMatchEpoch = currentData['timestamp'];
 						if (currentData['timestamp'] >= airMatchEpoch) {

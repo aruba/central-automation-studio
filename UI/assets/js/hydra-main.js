@@ -34,6 +34,7 @@ function saveGlobalSettings() {
 	localStorage.setItem('data_optimization', document.getElementById('scaleselector').value);
 	localStorage.setItem('load_clients', document.getElementById('load_clients_wireless').checked);
 	localStorage.setItem('load_clients_wired', document.getElementById('load_clients_wired').checked);
+	localStorage.setItem('stat_collection', document.getElementById('stat_collection').checked);
 	localStorage.setItem('load_aps', document.getElementById('load_aps').checked);
 	localStorage.setItem('load_switches', document.getElementById('load_switches').checked);
 	localStorage.setItem('load_gateways', document.getElementById('load_gateways').checked);
@@ -62,6 +63,9 @@ function saveGlobalSettings() {
 		saveDataToDB('monitoring_gateways', JSON.stringify([]));
 		saveDataToDB('monitoring_controllers', JSON.stringify([]));
 	}
+	if (!document.getElementById('stat_collection').checked) {
+		saveDataToDB('collected_stats', JSON.stringify({}));
+	}
 	logInformation('Central Automation Studio settings saved');
 	
 	// remove that update is in progress
@@ -86,6 +90,7 @@ function updateScaleSettings() {
 	if (scale === "full") {
 		document.getElementById('load_clients_wireless').checked = true;
 		document.getElementById('load_clients_wired').checked = true;
+		document.getElementById('stat_collection').checked = true;
 		document.getElementById('load_aps').checked = true;
 		document.getElementById('load_switches').checked = true;
 		document.getElementById('load_gateways').checked = true;
@@ -97,6 +102,7 @@ function updateScaleSettings() {
 	} else if (scale === "group") {
 		document.getElementById('load_clients_wireless').checked = false;
 		document.getElementById('load_clients_wired').checked = false;
+		document.getElementById('stat_collection').checked = false;
 		document.getElementById('load_aps').checked = false;
 		document.getElementById('load_switches').checked = false;
 		document.getElementById('load_gateways').checked = false;
@@ -108,6 +114,7 @@ function updateScaleSettings() {
 	} else if (scale === "scale") {
 		document.getElementById('load_clients_wireless').checked = false;
 		document.getElementById('load_clients_wired').checked = false;
+		document.getElementById('stat_collection').checked = false;
 		document.getElementById('load_aps').checked = true;
 		document.getElementById('load_switches').checked = true;
 		document.getElementById('load_gateways').checked = true;
@@ -280,7 +287,7 @@ function authRefreshForAccount(clientID) {
 				if (response.hasOwnProperty('error')) {
 					logError(response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"');
 					showNotification('ca-padlock', response.error_description.replace('refresh_token', 'Refresh Token') + ' for Central Account "' + getNameforClientID(clientID) + '"', 'bottom', 'center', 'danger');
-					cluster['refresh_token'] = '';
+					//cluster['refresh_token'] = '';
 					cluster['access_token'] = '';
 					cluster['expires_at'] = '';
 					updateAccountDetails(cluster);

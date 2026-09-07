@@ -32,12 +32,12 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		<title>Central Automation Studio</title>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no" name="viewport" />
 		<!--     Fonts and icons     -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
-		<script src="https://kit.fontawesome.com/470cd80fb0.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,200" rel="stylesheet" />
+		<script src="https://kit.fontawesome.com/0f9dea581e.js" crossorigin="anonymous"></script>
 		<!-- CSS Files -->
 		<link href="assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="assets/css/light-bootstrap-dashboard.css?v=2.0.1" rel="stylesheet" />
-		<link href="assets/css/cas.css?v=250329" rel="stylesheet" />
+		<link href="assets/css/cas.css?v=260612" rel="stylesheet" />
 		<!-- CSS Just for demo purpose, don't include it in your project -->
 		<link href="assets/css/demo.css" rel="stylesheet" />
 	</head>
@@ -254,74 +254,128 @@ Aaron Scott (WiFi Downunder) 2021-2025
 							</div>
 						</div>
 						<!-- End Overview Cards -->
-						<!-- Change PSK Card -->
-						<div class="card col-md-8">
-							<div class="card-body">
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Group / Virtual Controller Selection</h4>
-											<p class="card-category">Choose a group or Virtual Controller to obtain the Wireless config</p>
-											<p></p>
-										</div>
-
-										<div class="card-body">
-											<select id="groupselector" class="selectpicker" data-title="Select a group or VC..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getConfigforGroup()"> </select>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Configuration</h4><a class="refresh-link" onclick="getConfigforGroup()"><i class="central-icon ca-reload"></i></a>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<textarea type="text" placeholder="Configuration goes here" class="form-control textarea cli-output" id="wlanConfig" rows="20"></textarea>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-12">
-										<div class="card-header ">
-											<h4 class="card-title">Config Shortcuts</h4>
-										</div>
-										<div class="card-body">
-											<div class="form-check pad-10">
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="clearAWCheckbox" onclick="clearAWConfig()" />
-													<span class="form-check-sign"></span><span data-toggle="tooltip" data-placement="right" data-html="true" title="Only available if selected Group contains Airwave configuration">Clear Airwave Configuration</span>
-												</label>
-												<label class="form-check-label">
-													<input class="form-check-input" type="checkbox" value="" id="clearAutoDRTCheckbox" onclick="clearAutoDRTConfig()" />
-													<span class="form-check-sign"></span>Disable Auto DRT Update
-												</label>
-											</div>
-											<div class="row">
-												<div class='form-check pad-10 pt-1'>
-													<label class="form-check-label">SSH Ciphers</label>
+						
+						<div class="col-lg-12">
+							<div class="row">
+								<!--  WLAN config Card -->
+								<div class="card col-md-7">
+									<div class="card-body">
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header ">
+													<h4 class="card-title">Group / Virtual Controller Selection</h4>
+													<p class="card-category">Choose a group or Virtual Controller to obtain the Wireless config</p>
+													<p></p>
 												</div>
-												<div class='form-check col-3'>
-													<select id="sshselector" class="selectpicker" data-title="Select cipher suite..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="changeSSHConfig()"> 
-														<option value="both">Both (AES-CBC & AES-CTR)</option>
-														<option value="aes-ctr">AES-CBC Only</option>
-														<option value="aes-cbc">AES-CTR Only</option>
-													</select>
+												<div class="card-body">
+													<select id="groupselector" class="selectpicker" data-title="Select a group or VC..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="getConfigforGroup()"> </select>
 												</div>
 											</div>
 										</div>
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header ">
+													<h4 class="card-title">Configuration</h4><a class="refresh-link" onclick="getConfigforGroup()"><i class="central-icon ca-reload"></i></a>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12">
+												<textarea type="text" placeholder="Configuration goes here" class="form-control textarea cli-output" id="wlanConfig" rows="20"></textarea>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header ">
+													<h4 class="card-title">Config Shortcuts</h4>
+												</div>
+												<div class="card-body">
+													<div class="form-check pad-10">
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="clearAWCheckbox" onclick="clearAWConfig()" />
+															<span class="form-check-sign"></span><span data-toggle="tooltip" data-placement="right" data-html="true" title="Only available if selected Group contains Airwave configuration">Clear Airwave Configuration</span>
+														</label>
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="clearAutoDRTCheckbox" onclick="clearAutoDRTConfig()" />
+															<span class="form-check-sign"></span>Disable Auto DRT Update
+														</label>
+														<label class="form-check-label">
+															<input class="form-check-input" type="checkbox" value="" id="disableManagementCheckbox" onclick="clearDisableManagementConfig()" />
+															<span class="form-check-sign"></span>Disable Local Management
+														</label>
+													</div>
+													<div class="row">
+														<div class='form-check pad-10 pt-1'>
+															<label class="form-check-label">SSH Ciphers</label>
+														</div>
+														<div class='form-check col-4'>
+															<select id="sshselector" class="selectpicker" data-title="Select cipher suite..." data-style="btn-default btn-outline" data-menu-style="dropdown-orange" onchange="changeSSHConfig()"> 
+																<option value="both">Both (AES-CBC & AES-CTR)</option>
+																<option value="aes-ctr">AES-CBC Only</option>
+																<option value="aes-cbc">AES-CTR Only</option>
+															</select>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<hr />
+									</div>
+									<div class="card-footer">
+										<div class="col-md-12">
+											<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="saveWLANBtn" id="saveWLANBtn" id="saveWLANBtn" onclick="updateFullWLAN()">Update Configuration</button>
+										</div>
 									</div>
 								</div>
-								<hr />
-							</div>
-							<div class="card-footer">
-								<div class="col-md-12">
-									<button type="submit" class="btn btn-fill btn-info" data-dismiss="modal" name="saveWLANBtn" id="saveWLANBtn" id="saveWLANBtn" onclick="updateFullWLAN()">Update Configuration</button>
+								<!-- End WLAN config Card -->
+								<div class="col-md-1"></div>
+								<!-- Validation Card -->
+								<div class="card col-md-4">
+									<div class="card-body">
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header">
+													<h4 class="card-title">Validated Solutions Guide Check</h4>
+													<p class="card-category">The configuration is validated against the VSG and best practices</p>
+													<p></p>
+												</div>
+											</div>
+										</div>
+										
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header">
+													<h4 class="card-title">Results</h4><a class="refresh-link" onclick="getValidation()"><i class="central-icon ca-reload"></i></a>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-12">
+												<div id="wlanVSG" contenteditable="false" class="form-control vsg-textarea cli-output" role="textbox" aria-readonly="true"></div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-12">
+												<div class="card-header ">
+													<h4 class="card-title">Disclaimer:</h4>
+												</div>
+												<div class="card-body">
+													<div class="form-check pad-10">
+														<p class='disclaimer-text'>
+															The validated solutions check is <strong><u>not</u></strong> an indication of incorrect configuration. It is only a guide to call out potential misconfigurations that are identified by a ruleset pulled from VSGs (Validated Solutions Guides).
+														<p>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="card-footer">
+		
+									</div>
 								</div>
+								<!-- End Validation Card -->
 							</div>
 						</div>
-						<!-- End Change PSK Card -->
 					</div>
 				</div>
 				<!-- Client Modal -->
@@ -666,14 +720,15 @@ Aaron Scott (WiFi Downunder) 2021-2025
 				<!-- Error Log Modal -->
 				<div class="modal fade modal-mini modal-primary" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 					<div class="modal-dialog">
-						<div class="modal-content">
+						<div class="modal-content log-modal">
 							<div class="row">
 								<div class="col-md-12">
 									<div class="card-header">
 										<h4 class="card-title">Log</h4>
 										<a class="refresh-link" onclick="clearErrorLog()"><i class="central-icon ca-bin"></i></a>
+										<a class="refresh-link pe-3" onclick="copyLog()"><i class="central-icon ca-document-copy"></i></a>
 									</div>
-									<div class="card-body" id="errorBody"></div>
+									<div class="card-body log-body" id="errorBody"></div>
 								</div>
 							</div>
 						</div>
@@ -796,8 +851,8 @@ Aaron Scott (WiFi Downunder) 2021-2025
 			// If more than one account build Account list and show menu in top right
 			loadAccountList();
 
-		  	var reachabilityPromise = new $.Deferred();
-		    $.when(checkReachability(reachabilityPromise)).then(function () {
+			  var reachabilityPromise = new $.Deferred();
+			$.when(checkReachability(reachabilityPromise)).then(function () {
 			
 
 				$(".clickable-row").click(function() {
@@ -994,14 +1049,14 @@ Aaron Scott (WiFi Downunder) 2021-2025
 				loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
 	
 				document.addEventListener("visibilitychange", function handleVisibilityChange() {
-			  	if (!document.hidden) {
+				  if (!document.hidden) {
 					var reachabilityPromise = new $.Deferred();
 					$.when(checkReachability(reachabilityPromise)).then(function () {
 						loadIntervalID = setInterval(getMonitoringData, parseInt(refreshrate)*60000);
 					});
-			  	} else {
+				  } else {
 					clearInterval(loadIntervalID);
-			  	}
+				  }
 				}, false);
 	
 				checkForAWConfig();
@@ -1017,9 +1072,9 @@ Aaron Scott (WiFi Downunder) 2021-2025
 		});
 	</script>
 	<!--   Main JS Files   -->
-	<script src="assets/js/version.js?v=250406"></script>
-	<script src="assets/js/main.js?v=250406"></script>
+	<script src="assets/js/version.js?v=260313"></script>
+	<script src="assets/js/main.js?v=260612"></script>
 	<script src="assets/js/proxy.js?v=240920"></script>
 	<script src="assets/js/hydra.js?v=241203"></script>
-	<script src="assets/js/wlan-group.js?v=250312"></script>
+	<script src="assets/js/wlan-group.js?v=260723"></script>
 </html>
