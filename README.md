@@ -1,6 +1,6 @@
 # Central Automation Studio (CAS)
 
-Central Automation Studio uses a Docker container to provide a portable, customizable platform for users to explore Classic Central APIs. <br>
+Central Automation Studio uses a Docker container to provide a portable, customizable platform for users to explore **Classic Central** APIs. <br>
 
 Central Automation Studio is a Dockerization of Aaron Scott's Central Automation platform (https://central.wifidownunder.com). <br>
 Source code by Aaron Scott at https://central.wifidownunder.com/source <br>
